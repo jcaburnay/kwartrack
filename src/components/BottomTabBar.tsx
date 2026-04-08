@@ -12,15 +12,15 @@ import { useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "react-router";
 
 const TABS = [
-	{ label: "Dashboard", icon: LayoutDashboard, to: "/dashboard" },
+	{ label: "Overview", icon: LayoutDashboard, to: "/overview" },
+	{ label: "Transactions", icon: ArrowLeftRight, to: "/transactions" },
 	{ label: "Accounts", icon: Building2, to: "/accounts" },
-	{ label: "Recurring", icon: CalendarClock, to: "/recurring" },
 	{ label: "Budget", icon: PiggyBank, to: "/budget" },
 	{ label: "More", icon: Menu, to: null },
 ] as const;
 
 const MORE_ITEMS = [
-	{ label: "Transactions", icon: ArrowLeftRight, to: "/transactions" },
+	{ label: "Recurring", icon: CalendarClock, to: "/recurring" },
 	{ label: "Debts & Splits", icon: HandCoins, to: "/debts" },
 	{ label: "Settings", icon: Settings, to: "/settings" },
 ];
@@ -46,7 +46,7 @@ export function BottomTabBar() {
 	}, [moreOpen]);
 
 	return (
-		<div className="dock sm:hidden z-50">
+		<div className="dock md:hidden z-50">
 			{TABS.map((tab) => {
 				const Icon = tab.icon;
 

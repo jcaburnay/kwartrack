@@ -85,7 +85,7 @@ describe("MobileHeader (D-02)", () => {
 		);
 		const header = container.querySelector("header");
 		expect(header).toBeInTheDocument();
-		expect(header?.className).toContain("sm:hidden");
+		expect(header?.className).toContain("md:hidden");
 	});
 
 	it('contains text "Kwartrack"', async () => {
@@ -135,20 +135,20 @@ describe("BottomTabBar (D-01)", () => {
 			</MemoryRouter>,
 		);
 		// BottomTabBar uses DaisyUI "dock" class on a div
-		const dock = container.querySelector(".dock.sm\\:hidden");
+		const dock = container.querySelector(".dock.md\\:hidden");
 		expect(dock).toBeInTheDocument();
 	});
 
-	it("contains 5 tab items (Dashboard, Accounts, Recurring, Budget, More)", async () => {
+	it("contains 5 tab items (Overview, Transactions, Accounts, Budget, More)", async () => {
 		const { BottomTabBar } = await import("../components/BottomTabBar");
 		render(
 			<MemoryRouter initialEntries={["/accounts"]}>
 				<BottomTabBar />
 			</MemoryRouter>,
 		);
-		expect(screen.getByText("Dashboard")).toBeInTheDocument();
+		expect(screen.getByText("Overview")).toBeInTheDocument();
+		expect(screen.getByText("Transactions")).toBeInTheDocument();
 		expect(screen.getByText("Accounts")).toBeInTheDocument();
-		expect(screen.getByText("Recurring")).toBeInTheDocument();
 		expect(screen.getByText("Budget")).toBeInTheDocument();
 		expect(screen.getByText("More")).toBeInTheDocument();
 	});
@@ -163,7 +163,7 @@ describe("BottomTabBar (D-01)", () => {
 		// DaisyUI dock handles fixed positioning via its own CSS
 		const dock = container.querySelector(".dock");
 		expect(dock).toBeInTheDocument();
-		expect(dock?.className).toContain("sm:hidden");
+		expect(dock?.className).toContain("md:hidden");
 	});
 
 	it("renders all expected tab labels", async () => {
@@ -174,7 +174,7 @@ describe("BottomTabBar (D-01)", () => {
 			</MemoryRouter>,
 		);
 		// Verify tab labels are rendered (DaisyUI dock handles sizing)
-		expect(screen.getByText("Dashboard")).toBeInTheDocument();
+		expect(screen.getByText("Overview")).toBeInTheDocument();
 		expect(screen.getByText("Accounts")).toBeInTheDocument();
 		expect(screen.getByText("More")).toBeInTheDocument();
 	});
@@ -189,6 +189,7 @@ describe("BottomTabBar (D-01)", () => {
 		);
 		await user.click(screen.getByRole("button", { name: /More/i }));
 		expect(screen.getByText("Settings")).toBeInTheDocument();
+		expect(screen.getByText("Recurring")).toBeInTheDocument();
 		expect(screen.getByText("Debts & Splits")).toBeInTheDocument();
 	});
 });
@@ -205,8 +206,7 @@ describe("AppShell (D-03)", () => {
 			</MemoryRouter>,
 		);
 		const root = container.firstElementChild;
-		expect(root?.className).toContain("flex-col");
-		expect(root?.className).toContain("sm:flex-row");
+		expect(root?.className).toContain("drawer");
 	});
 
 	it("main element has pb-16 sm:pb-0 classes", async () => {
@@ -219,7 +219,7 @@ describe("AppShell (D-03)", () => {
 		const main = container.querySelector("main");
 		expect(main).toBeInTheDocument();
 		expect(main?.className).toContain("pb-16");
-		expect(main?.className).toContain("sm:pb-0");
+		expect(main?.className).toContain("md:pb-0");
 	});
 
 	it("renders MobileHeader, Sidebar, and BottomTabBar children", async () => {
@@ -229,14 +229,11 @@ describe("AppShell (D-03)", () => {
 				<AppShell />
 			</MemoryRouter>,
 		);
-		// MobileHeader renders a <header> with sm:hidden
-		const header = container.querySelector("header.sm\\:hidden");
+		// MobileHeader renders a <header> with md:hidden
+		const header = container.querySelector("header.md\\:hidden");
 		expect(header).toBeInTheDocument();
-		// Sidebar renders a div with hidden sm:flex
-		const sidebar = container.querySelector(".hidden.sm\\:flex");
-		expect(sidebar).toBeInTheDocument();
-		// BottomTabBar renders a div with dock and sm:hidden classes
-		const dock = container.querySelector(".dock.sm\\:hidden");
+		// BottomTabBar renders a div with dock and md:hidden classes
+		const dock = container.querySelector(".dock.md\\:hidden");
 		expect(dock).toBeInTheDocument();
 	});
 });

@@ -2,7 +2,7 @@ import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import { describe, expect, it } from "vitest";
 import App from "../App";
-import { DashboardPage } from "../pages/DashboardPage";
+import { OverviewPage } from "../pages/OverviewPage";
 import { SignInPage } from "../pages/SignInPage";
 
 // AUTH-01: User can sign up and sign in via Clerk
@@ -23,13 +23,13 @@ describe("AUTH-01: Sign-in page renders", () => {
 // AUTH-02: Session persists across browser refreshes
 // Full e2e verification: Sign in, refresh page, verify still logged in (manual only)
 describe("AUTH-02: App renders authenticated shell", () => {
-	it("renders DashboardPage without crashing", () => {
+	it("renders OverviewPage without crashing", () => {
 		render(
 			<MemoryRouter initialEntries={["/"]}>
-				<DashboardPage />
+				<OverviewPage />
 			</MemoryRouter>,
 		);
-		expect(screen.getByText("Dashboard")).toBeInTheDocument();
+		expect(screen.getByText("Overview")).toBeInTheDocument();
 	});
 });
 

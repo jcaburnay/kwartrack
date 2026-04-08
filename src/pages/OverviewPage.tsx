@@ -15,7 +15,7 @@ function getMonthHeading(): string {
 	return new Intl.DateTimeFormat("en-PH", { month: "long", year: "numeric" }).format(new Date());
 }
 
-export function DashboardPage() {
+export function OverviewPage() {
 	const [accounts, isAccountsReady] = useTable(tables.my_accounts);
 	const [partitions, isPartitionsReady] = useTable(tables.my_partitions);
 	const [transactions, isTransactionsReady] = useTable(tables.my_transactions);
@@ -44,7 +44,7 @@ export function DashboardPage() {
 		<div className="p-4 sm:p-6 animate-card-enter">
 			{/* Section header */}
 			<h1 className="text-xs font-medium tracking-widest text-base-content/35 uppercase mb-5">
-				Dashboard
+				Overview
 			</h1>
 
 			{/* Hero: Total Net Balance */}

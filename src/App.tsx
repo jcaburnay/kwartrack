@@ -12,8 +12,8 @@ const AccountsPage = lazy(() =>
 const BudgetPage = lazy(() =>
 	import("./pages/BudgetPage").then((m) => ({ default: m.BudgetPage })),
 );
-const DashboardPage = lazy(() =>
-	import("./pages/DashboardPage").then((m) => ({ default: m.DashboardPage })),
+const OverviewPage = lazy(() =>
+	import("./pages/OverviewPage").then((m) => ({ default: m.OverviewPage })),
 );
 const DebtSplitPage = lazy(() =>
 	import("./pages/DebtSplitPage").then((m) => ({ default: m.DebtSplitPage })),
@@ -55,8 +55,8 @@ export default function App() {
 							</>
 						}
 					>
-						<Route index element={<DashboardPage />} />
-						<Route path="dashboard" element={<DashboardPage />} />
+						<Route index element={<OverviewPage />} />
+						<Route path="overview" element={<OverviewPage />} />
 						<Route path="accounts" element={<AccountsPage />} />
 						<Route path="accounts/:id" element={<AccountDetailPage />} />
 						<Route path="recurring" element={<RecurringPage />} />

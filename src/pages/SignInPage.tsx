@@ -3,7 +3,7 @@ import { SignIn } from "@clerk/react";
 export function SignInPage() {
 	return (
 		<div className="min-h-screen flex items-center justify-center bg-base-100">
-			<div className="w-full max-w-[400px]">
+			<div className="flex justify-center w-full max-w-[400px]">
 				<SignIn
 					routing="path"
 					path="/sign-in"

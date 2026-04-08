@@ -12,15 +12,22 @@ export function ThemeToggle() {
 		localStorage.setItem("theme", theme);
 	}, [isDark]);
 
+	const label = isDark ? "Light mode" : "Dark mode";
+
 	return (
 		<button
 			type="button"
 			onClick={() => setIsDark(!isDark)}
-			className="flex items-center gap-2.5 px-3 py-2 rounded-lg border border-base-300 bg-base-100 text-base-content/60 hover:text-base-content transition-colors cursor-pointer text-xs font-medium w-full"
-			aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
+			className="is-drawer-close:tooltip is-drawer-close:tooltip-right flex items-center gap-2.5 w-full rounded-lg text-base-content/60 hover:text-base-content transition-colors cursor-pointer text-sm"
+			aria-label={label}
+			data-tip={label}
 		>
-			{isDark ? <Sun size={14} /> : <Moon size={14} />}
-			{isDark ? "Light mode" : "Dark mode"}
+			{isDark ? (
+				<Sun size={18} className="my-1.5 shrink-0" />
+			) : (
+				<Moon size={18} className="my-1.5 shrink-0" />
+			)}
+			<span className="is-drawer-close:hidden whitespace-nowrap">{label}</span>
 		</button>
 	);
 }
