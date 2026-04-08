@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useTable } from "spacetimedb/react";
 import { DebtCard } from "../components/DebtCard";
 import { DebtModal } from "../components/DebtModal";
+import { NewItemCard } from "../components/NewItemCard";
 import { SplitCard } from "../components/SplitCard";
 import { SplitModal } from "../components/SplitModal";
 import { tables } from "../module_bindings";
@@ -23,16 +24,6 @@ export function DebtSplitPage() {
 		existing.push(d);
 		debtsByPerson.set(d.personName, existing);
 	}
-
-	const addButton = (label: string, onClick: () => void) => (
-		<button
-			type="button"
-			className="border-2 border-dashed border-base-300 rounded-xl p-5 flex flex-col items-center justify-center gap-2.5 cursor-pointer hover:border-primary hover:bg-primary/5 transition-colors bg-transparent w-full min-h-[140px]"
-			onClick={onClick}
-		>
-			<span className="text-base-content/50 text-sm">+ {label}</span>
-		</button>
-	);
 
 	return (
 		<div className="p-4 sm:p-6 space-y-8 animate-card-enter">
@@ -56,7 +47,7 @@ export function DebtSplitPage() {
 							<DebtCard personName={personName} debts={personDebts} />
 						</div>
 					))}
-					{addButton("Add debt", () => setShowDebtModal(true))}
+					<NewItemCard label="New debt" onClick={() => setShowDebtModal(true)} />
 				</div>
 			</section>
 
@@ -83,7 +74,7 @@ export function DebtSplitPage() {
 							</div>
 						);
 					})}
-					{addButton("Add split", () => setShowSplitModal(true))}
+					<NewItemCard label="New split" onClick={() => setShowSplitModal(true)} />
 				</div>
 			</section>
 

@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useNavigate, useParams } from "react-router";
 import { useReducer, useTable } from "spacetimedb/react";
 import { DeleteConfirmModal } from "../components/DeleteConfirmModal";
-import { NewPartitionCard } from "../components/NewPartitionCard";
+import { NewItemCard } from "../components/NewItemCard";
 import { PartitionCard } from "../components/PartitionCard";
 import { PartitionModal } from "../components/PartitionModal";
 import { PayCreditModal } from "../components/PayCreditModal";
@@ -193,7 +193,7 @@ export function AccountDetailPage() {
 					</div>
 				))}
 				{/* Adding first partition triggers standalone→partitioned conversion (D-08) */}
-				<NewPartitionCard onClick={() => setShowPartitionModal(true)} />
+				<NewItemCard label="New partition" onClick={() => setShowPartitionModal(true)} />
 			</div>
 
 			{/* TRANSACTIONS section — 48px gap from partitions section (UI-SPEC: 2xl gap) */}

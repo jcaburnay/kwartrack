@@ -1,10 +1,10 @@
-import { Plus, TrendingUp } from "lucide-react";
+import { TrendingUp } from "lucide-react";
 import { useRef, useState } from "react";
 import { useNavigate } from "react-router";
 import { useTable } from "spacetimedb/react";
 import { AccountCard } from "../components/AccountCard";
 import { AccountModal } from "../components/AccountModal";
-import { NewAccountCard } from "../components/NewAccountCard";
+import { NewItemCard } from "../components/NewItemCard";
 import { tables } from "../module_bindings";
 import { formatPesos } from "../utils/currency";
 
@@ -43,16 +43,7 @@ export function AccountsPage() {
 					partitions. Add your first account to start tracking.
 				</p>
 				<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-					<button
-						type="button"
-						className="border-2 border-dashed border-base-300 rounded-xl p-8 flex flex-col items-center justify-center gap-2.5 cursor-pointer hover:border-primary hover:bg-primary/5 transition-colors bg-transparent w-full"
-						onClick={() => setShowModal(true)}
-					>
-						<div className="w-10 h-10 rounded-xl bg-base-200 flex items-center justify-center text-base-content/40">
-							<Plus size={20} />
-						</div>
-						<span className="text-base-content/50 font-medium">New account</span>
-					</button>
+					<NewItemCard label="New account" onClick={() => setShowModal(true)} />
 				</div>
 				{showModal && (
 					<AccountModal
@@ -104,10 +95,10 @@ export function AccountsPage() {
 					</div>
 				))}
 				<div
-					className="animate-card-enter"
+					className="animate-card-enter h-full"
 					style={{ animationDelay: `${accounts.length * 0.06}s` }}
 				>
-					<NewAccountCard onClick={() => setShowModal(true)} />
+					<NewItemCard label="New account" onClick={() => setShowModal(true)} />
 				</div>
 			</div>
 			{showModal && (

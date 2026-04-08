@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useTable } from "spacetimedb/react";
+import { NewItemCard } from "../components/NewItemCard";
 import { RecurringCard } from "../components/RecurringCard";
 import { RecurringModal } from "../components/RecurringModal";
 import { tables } from "../module_bindings";
@@ -12,16 +13,6 @@ export function RecurringPage() {
 
 	const subscriptions = definitions.filter((d) => d.totalMonths === 0);
 	const installments = definitions.filter((d) => d.totalMonths > 0);
-
-	const addButton = (label: string, mode: "subscription" | "installment") => (
-		<button
-			type="button"
-			className="border-2 border-dashed border-base-300 rounded-xl p-5 flex flex-col items-center justify-center gap-2.5 cursor-pointer hover:border-primary hover:bg-primary/5 transition-colors bg-transparent w-full min-h-[140px]"
-			onClick={() => setModalMode(mode)}
-		>
-			<span className="text-base-content/50 text-sm">+ {label}</span>
-		</button>
-	);
 
 	return (
 		<div className="p-4 sm:p-6 space-y-8 animate-card-enter">
@@ -44,7 +35,7 @@ export function RecurringPage() {
 							<RecurringCard definition={def} />
 						</div>
 					))}
-					{addButton("Add subscription", "subscription")}
+					<NewItemCard label="New subscription" onClick={() => setModalMode("subscription")} />
 				</div>
 			</section>
 
@@ -67,7 +58,7 @@ export function RecurringPage() {
 							<RecurringCard definition={def} />
 						</div>
 					))}
-					{addButton("Add installment", "installment")}
+					<NewItemCard label="New installment" onClick={() => setModalMode("installment")} />
 				</div>
 			</section>
 
