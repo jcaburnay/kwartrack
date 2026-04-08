@@ -45,12 +45,20 @@ export function BudgetModal({ onClose }: BudgetModalProps) {
 	const {
 		register,
 		handleSubmit,
+		watch,
 		formState: { errors, isSubmitting },
 	} = useForm<BudgetFormValues>({
 		defaultValues: {
 			totalAmount: budgetConfig ? (Number(budgetConfig.totalCentavos) / 100).toFixed(2) : "",
 		},
 	});
+
+	const watchedTotal = watch("totalAmount");
+	const totalAmount = parseFloat(watchedTotal) || 0;
+	const allocatedTotal = rows
+		.filter((r) => r.tag && r.amount && parseFloat(r.amount) > 0)
+		.reduce((sum, r) => sum + parseFloat(r.amount), 0);
+	const isOverAllocated = allocatedTotal > totalAmount + 0.001;
 
 	const usedTags = new Set(rows.map((r) => r.tag).filter(Boolean));
 
@@ -192,12 +200,41 @@ export function BudgetModal({ onClose }: BudgetModalProps) {
 						</div>
 					</div>
 
+					{/* Allocation summary */}
+					{allocatedTotal > 0 && (
+						<div
+							className={`flex items-center justify-between text-xs mt-3 px-1 ${
+								isOverAllocated ? "text-error" : "text-base-content/50"
+							}`}
+						>
+							<span>Tag allocations total</span>
+							<span className="font-mono font-semibold">
+								{allocatedTotal.toLocaleString("en-PH", {
+									minimumFractionDigits: 2,
+									maximumFractionDigits: 2,
+								})}{" "}
+								/{" "}
+								{totalAmount.toLocaleString("en-PH", {
+									minimumFractionDigits: 2,
+									maximumFractionDigits: 2,
+								})}
+							</span>
+						</div>
+					)}
+					{isOverAllocated && (
+						<p className="text-error text-xs mt-1 px-1">Tag allocations exceed the total budget.</p>
+					)}
+
 					{/* Actions */}
 					<div className="flex gap-2 mt-4">
 						<button type="button" className="btn btn-ghost flex-1" onClick={onClose}>
 							Discard
 						</button>
-						<button type="submit" disabled={isSubmitting} className="btn btn-primary flex-1">
+						<button
+							type="submit"
+							disabled={isSubmitting || isOverAllocated}
+							className="btn btn-primary flex-1"
+						>
 							{isSubmitting && <span className="loading loading-spinner loading-xs" />}
 							Save budget
 						</button>
