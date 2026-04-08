@@ -1,0 +1,146 @@
+@import url("https://fonts.googleapis.com/css2?family=Outfit:wght@300..700&family=Red+Hat+Mono:wght@400;500;600;700&display=swap");
+
+@import "tailwindcss";
+@plugin "daisyui";
+
+/* ── Light theme ── */
+@plugin "daisyui/theme" {
+	name: "kwartrack-light";
+	default: true;
+	prefersdark: false;
+	color-scheme: light;
+
+	--color-base-100: oklch(98.5% 0.005 80);
+	--color-base-200: oklch(95% 0.01 75);
+	--color-base-300: oklch(90% 0.015 70);
+	--color-base-content: oklch(22% 0.015 55);
+
+	--color-primary: oklch(62% 0.12 180);
+	--color-primary-content: oklch(100% 0 0);
+
+	--color-secondary: oklch(65% 0.14 40);
+	--color-secondary-content: oklch(100% 0 0);
+
+	--color-accent: oklch(55% 0.12 290);
+	--color-accent-content: oklch(100% 0 0);
+
+	--color-neutral: oklch(48% 0.015 55);
+	--color-neutral-content: oklch(95% 0.005 80);
+
+	--color-info: oklch(62% 0.1 240);
+	--color-info-content: oklch(100% 0 0);
+
+	--color-success: oklch(64% 0.17 155);
+	--color-success-content: oklch(100% 0 0);
+
+	--color-warning: oklch(78% 0.14 80);
+	--color-warning-content: oklch(25% 0.03 80);
+
+	--color-error: oklch(58% 0.19 25);
+	--color-error-content: oklch(100% 0 0);
+
+	--radius-selector: 1rem;
+	--radius-field: 0.5rem;
+	--radius-box: 0.75rem;
+	--size-selector: 0.25rem;
+	--size-field: 0.25rem;
+	--border: 1px;
+	--depth: 1;
+	--noise: 0;
+}
+
+/* ── Dark theme ── */
+@plugin "daisyui/theme" {
+	name: "kwartrack-dark";
+	default: false;
+	prefersdark: true;
+	color-scheme: dark;
+
+	--color-base-100: oklch(16% 0.01 70);
+	--color-base-200: oklch(20% 0.01 70);
+	--color-base-300: oklch(25% 0.012 65);
+	--color-base-content: oklch(92% 0.008 75);
+
+	--color-primary: oklch(72% 0.14 178);
+	--color-primary-content: oklch(16% 0.01 180);
+
+	--color-secondary: oklch(72% 0.13 40);
+	--color-secondary-content: oklch(16% 0.01 40);
+
+	--color-accent: oklch(65% 0.12 290);
+	--color-accent-content: oklch(16% 0.01 290);
+
+	--color-neutral: oklch(55% 0.012 55);
+	--color-neutral-content: oklch(92% 0.005 80);
+
+	--color-info: oklch(70% 0.1 240);
+	--color-info-content: oklch(16% 0.01 240);
+
+	--color-success: oklch(72% 0.16 155);
+	--color-success-content: oklch(16% 0.01 155);
+
+	--color-warning: oklch(82% 0.13 80);
+	--color-warning-content: oklch(22% 0.03 80);
+
+	--color-error: oklch(68% 0.17 25);
+	--color-error-content: oklch(16% 0.01 25);
+
+	--radius-selector: 1rem;
+	--radius-field: 0.5rem;
+	--radius-box: 0.75rem;
+	--size-selector: 0.25rem;
+	--size-field: 0.25rem;
+	--border: 1px;
+	--depth: 1;
+	--noise: 0;
+}
+
+/* ── Custom fonts ── */
+@theme {
+	--font-sans: "Outfit", ui-sans-serif, system-ui, sans-serif;
+	--font-mono: "Red Hat Mono", ui-monospace, monospace;
+}
+
+/* ── Card entrance animation ── */
+@keyframes card-enter {
+	from {
+		opacity: 0;
+		transform: translateY(10px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+.animate-card-enter {
+	animation: card-enter 0.35s ease-out both;
+}
+
+/* ── Subtle hover lift for interactive cards ── */
+.card-hover {
+	transition:
+		transform 0.2s ease,
+		box-shadow 0.2s ease;
+}
+.card-hover:hover {
+	transform: translateY(-2px);
+	box-shadow: 0 8px 24px -4px oklch(0% 0 0 / 0.1);
+}
+
+/* ── Bottom sheet drag handle for mobile ── */
+@media (max-width: 639px) {
+	.modal-bottom > .modal-box {
+		padding-top: 0.75rem;
+	}
+	.modal-bottom > .modal-box::before {
+		content: "";
+		display: block;
+		width: 2.5rem;
+		height: 0.25rem;
+		border-radius: 9999px;
+		background: oklch(50% 0 0 / 0.25);
+		margin: 0 auto 0.75rem;
+		flex-shrink: 0;
+	}
+}

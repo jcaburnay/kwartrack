@@ -1,0 +1,57 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules/
+dist/
+dist-ssr
+*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea
+
+# OS files
+.DS_Store
+**/.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# SpacetimeDB generated bindings
+src/module_bindings/
+server/package-lock.json
+server/dist/
+
+# Test coverage
+coverage/
+
+# Vitest
+.vitest-cache/
+
+# TypeScript build cache
+*.tsbuildinfo
+
+# Playwright
+test-results/
+playwright-report/
+.playwright-mcp/
+
+# AI assistant config and planning (local only)
+.claude/
+.planning/
+.superpowers/

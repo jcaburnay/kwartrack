@@ -1,0 +1,46 @@
+{
+	"name": "kwartrack",
+	"private": true,
+	"version": "0.0.0",
+	"type": "module",
+	"scripts": {
+		"dev": "vite",
+		"build": "tsc -b && vite build",
+		"preview": "vite preview",
+		"check": "biome check --write .",
+		"ci": "biome ci .",
+		"server:build": "pnpm --filter kwartrack-server build",
+		"server:publish": "pnpm --filter kwartrack-server publish",
+		"generate": "spacetime generate --lang typescript --out-dir src/module_bindings --module-path server",
+		"test": "vitest run",
+		"test:watch": "vitest"
+	},
+	"dependencies": {
+		"@clerk/react": "^6.1.4",
+		"daisyui": "^5.5.19",
+		"lucide-react": "^1.7.0",
+		"react": "^19.2.4",
+		"react-day-picker": "^9.14.0",
+		"react-dom": "^19.2.4",
+		"react-hook-form": "^7.72.0",
+		"react-router": "^7.14.0",
+		"recharts": "^3.8.1",
+		"spacetimedb": "^2.1.0",
+		"tailwindcss": "^4.2.2"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "2.4.10",
+		"@tailwindcss/vite": "^4.2.2",
+		"@testing-library/jest-dom": "^6.6.3",
+		"@testing-library/react": "^16.3.0",
+		"@testing-library/user-event": "^14.6.1",
+		"@types/node": "^25.5.0",
+		"@types/react": "^19.2.14",
+		"@types/react-dom": "^19.2.3",
+		"@vitejs/plugin-react": "^6.0.1",
+		"jsdom": "^29.0.1",
+		"typescript": "~6.0.2",
+		"vite": "^8.0.1",
+		"vitest": "^4.1.2"
+	}
+}
