@@ -41,22 +41,24 @@ export function DashboardPage() {
 		budgetPct >= 100 ? "#ef4444" : budgetPct >= 80 ? "#d97706" : "oklch(62% 0.12 180)";
 
 	return (
-		<div className="p-4 sm:p-6">
+		<div className="p-4 sm:p-6 animate-card-enter">
 			{/* Section header */}
-			<p className="text-xs font-semibold tracking-widest text-base-content/40 uppercase mb-5">
+			<h1 className="text-xs font-medium tracking-widest text-base-content/35 uppercase mb-5">
 				Dashboard
-			</p>
+			</h1>
 
 			{/* Hero: Total Net Balance */}
-			<div className="flex flex-col items-center mb-8 animate-card-enter">
-				<span className="text-xs text-base-content/50 uppercase tracking-wider">Total Balance</span>
-				<span
-					className={`text-3xl sm:text-4xl font-bold font-mono ${
+			<div className="mb-8 animate-card-enter">
+				<span className="text-xs text-base-content/40 uppercase tracking-widest">
+					Total Balance
+				</span>
+				<div
+					className={`text-3xl sm:text-4xl font-bold font-mono mt-0.5 ${
 						totalBalance >= 0n ? "text-success" : "text-error"
 					}`}
 				>
 					{formatPesos(totalBalance)}
-				</span>
+				</div>
 				<span className="text-xs text-base-content/40">
 					across {accounts.length} account{accounts.length !== 1 ? "s" : ""}
 				</span>
@@ -68,9 +70,9 @@ export function DashboardPage() {
 				<div className="flex flex-col gap-5">
 					{/* Account Summary Cards */}
 					<div className="animate-card-enter" style={{ animationDelay: `0.06s` }}>
-						<p className="text-xs font-bold uppercase tracking-widest text-base-content/30 mb-2">
+						<h2 className="text-xs font-semibold uppercase tracking-widest text-base-content/50 mb-2">
 							Accounts
-						</p>
+						</h2>
 						{accountSummaries.length === 0 ? (
 							<p className="text-sm text-base-content/50">
 								No accounts yet &middot;{" "}
@@ -121,9 +123,9 @@ export function DashboardPage() {
 
 					{/* Budget Summary */}
 					<div className="animate-card-enter" style={{ animationDelay: `0.12s` }}>
-						<p className="text-xs font-bold uppercase tracking-widest text-base-content/30 mb-2">
+						<h2 className="text-xs font-semibold uppercase tracking-widest text-base-content/50 mb-2">
 							Budget This Month
-						</p>
+						</h2>
 						{budgetTotal === 0n ? (
 							<p className="text-sm text-base-content/50">
 								No budget set &middot;{" "}
@@ -197,9 +199,9 @@ function SpendingByCategoryChart({ spending }: SpendingByCategoryChartProps) {
 
 	return (
 		<div>
-			<p className="text-xs font-bold uppercase tracking-widest text-base-content/30 mb-2">
+			<h2 className="text-xs font-semibold uppercase tracking-widest text-base-content/50 mb-2">
 				Spending by Category
-			</p>
+			</h2>
 			<div className="bg-base-100 shadow-sm border border-base-300/50 rounded-xl p-3.5">
 				<p className="text-xs text-base-content/40 mb-3">{getMonthHeading()}</p>
 				{spending.length === 0 ? (
@@ -264,9 +266,9 @@ function MonthlyTrendChart({ trend }: MonthlyTrendChartProps) {
 
 	return (
 		<div>
-			<p className="text-xs font-bold uppercase tracking-widest text-base-content/30 mb-2">
+			<h2 className="text-xs font-semibold uppercase tracking-widest text-base-content/50 mb-2">
 				Monthly Trend
-			</p>
+			</h2>
 			<div className="bg-base-100 shadow-sm border border-base-300/50 rounded-xl p-3.5">
 				{!hasData ? (
 					<p className="text-sm text-base-content/50 py-4 text-center">

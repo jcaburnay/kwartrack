@@ -1,4 +1,4 @@
-import { Plus, TrendingUp, Wallet } from "lucide-react";
+import { Plus, TrendingUp } from "lucide-react";
 import { useRef, useState } from "react";
 import { useNavigate } from "react-router";
 import { useTable } from "spacetimedb/react";
@@ -23,20 +23,24 @@ export function AccountsPage() {
 	});
 	const [partitions] = useTable(tables.my_partitions);
 
+	if (!isReady) return null;
+
 	function getAccountBalance(accountId: bigint): bigint {
 		return partitions
 			.filter((p) => p.accountId === accountId)
 			.reduce((sum, p) => sum + p.balanceCentavos, 0n);
 	}
 
-	if (!isReady) return null;
-
-	// Empty state — only after data is confirmed empty
+	// Empty state
 	if (accounts.length === 0) {
 		return (
-			<div className="p-4 sm:p-6">
-				<p className="text-xs font-semibold tracking-widest text-base-content/40 uppercase mb-5">
+			<div className="p-4 sm:p-6 animate-card-enter">
+				<h1 className="text-xs font-medium tracking-widest text-base-content/35 uppercase mb-5">
 					Accounts
+				</h1>
+				<p className="text-sm text-base-content/50 mb-5">
+					Accounts hold your money — savings, checking, credit cards. Each can be split into
+					partitions. Add your first account to start tracking.
 				</p>
 				<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
 					<button
@@ -66,24 +70,21 @@ export function AccountsPage() {
 	const netWorth = accounts.reduce((sum, a) => sum + getAccountBalance(a.id), 0n);
 
 	return (
-		<div className="p-4 sm:p-6">
-			<p className="text-xs font-semibold tracking-widest text-base-content/40 uppercase mb-5">
+		<div className="p-4 sm:p-6 animate-card-enter">
+			<h1 className="text-xs font-medium tracking-widest text-base-content/35 uppercase mb-5">
 				Accounts
-			</p>
+			</h1>
 
 			{/* Net Worth Summary */}
-			<div className="bg-gradient-to-br from-primary/10 to-base-200 rounded-2xl px-6 py-5 mb-6 flex items-center justify-between animate-card-enter">
-				<div>
-					<div className="text-sm font-medium text-base-content/60 flex items-center gap-1.5 mb-1">
-						<TrendingUp size={14} />
-						Net Worth
-					</div>
-					<div className="text-3xl font-bold font-mono tracking-tight">{formatPesos(netWorth)}</div>
-					<div className="text-xs text-base-content/40 mt-1">
-						Across {accounts.length} {accounts.length === 1 ? "account" : "accounts"}
-					</div>
+			<div className="mb-6 animate-card-enter">
+				<div className="text-xs font-medium text-base-content/40 flex items-center gap-1.5 mb-1 uppercase tracking-widest">
+					<TrendingUp size={12} />
+					Net Worth
 				</div>
-				<Wallet size={44} strokeWidth={1} className="text-primary/20" />
+				<div className="text-3xl font-bold font-mono tracking-tight">{formatPesos(netWorth)}</div>
+				<div className="text-xs text-base-content/40 mt-1">
+					Across {accounts.length} {accounts.length === 1 ? "account" : "accounts"}
+				</div>
 			</div>
 
 			{/* Account Cards Grid */}

@@ -38,12 +38,7 @@ export function Sidebar() {
 		<div className="hidden sm:flex flex-col h-full min-h-screen w-60 bg-base-200 border-r border-base-300">
 			{/* Header: brand + user menu */}
 			<div className="flex items-center justify-between gap-3 px-4 py-4 border-b border-base-300">
-				<div className="flex items-center gap-2.5">
-					<div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-primary-content text-sm font-bold flex-shrink-0">
-						K
-					</div>
-					<span className="text-xl font-semibold tracking-tight">Kwartrack</span>
-				</div>
+				<span className="text-xl font-semibold tracking-tight">Kwartrack</span>
 				<UserButton />
 			</div>
 

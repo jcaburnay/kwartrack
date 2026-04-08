@@ -13,7 +13,8 @@ export function DebtSplitPage() {
 	const [showDebtModal, setShowDebtModal] = useState(false);
 	const [showSplitModal, setShowSplitModal] = useState(false);
 
-	if (!isDebtsReady || !isSplitsReady) return null;
+	const isReady = isDebtsReady && isSplitsReady;
+	if (!isReady) return null;
 
 	// Group debts by personName
 	const debtsByPerson = new Map<string, (typeof debts)[number][]>();
@@ -34,11 +35,17 @@ export function DebtSplitPage() {
 	);
 
 	return (
-		<div className="p-4 sm:p-6 space-y-8">
+		<div className="p-4 sm:p-6 space-y-8 animate-card-enter">
 			<section>
-				<p className="text-xs font-semibold tracking-widest text-base-content/40 uppercase mb-5">
+				<h2 className="text-xs font-semibold uppercase tracking-widest text-base-content/50 mb-5">
 					DEBTS
-				</p>
+				</h2>
+				{debtsByPerson.size === 0 && (
+					<p className="text-sm text-base-content/50 mb-3">
+						Track money owed between you and others — personal loans, borrowed cash, informal
+						credit.
+					</p>
+				)}
 				<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
 					{[...debtsByPerson.entries()].map(([personName, personDebts], i) => (
 						<div
@@ -54,9 +61,15 @@ export function DebtSplitPage() {
 			</section>
 
 			<section>
-				<p className="text-xs font-semibold tracking-widest text-base-content/40 uppercase mb-5">
+				<h2 className="text-xs font-semibold uppercase tracking-widest text-base-content/50 mb-5">
 					SPLITS
-				</p>
+				</h2>
+				{splitEvents.length === 0 && (
+					<p className="text-sm text-base-content/50 mb-3">
+						Group expenses split among people — dinners, trips, shared purchases. Tracks who still
+						owes.
+					</p>
+				)}
 				<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
 					{splitEvents.map((se, i) => {
 						const participants = splitParticipants.filter((p) => p.splitEventId === se.id);

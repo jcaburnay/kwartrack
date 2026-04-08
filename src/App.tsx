@@ -1,15 +1,35 @@
 import { Show } from "@clerk/react";
+import { lazy, Suspense } from "react";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router";
 import { AppShell } from "./components/AppShell";
-import { AccountDetailPage } from "./pages/AccountDetailPage";
-import { AccountsPage } from "./pages/AccountsPage";
-import { BudgetPage } from "./pages/BudgetPage";
-import { DashboardPage } from "./pages/DashboardPage";
-import { DebtSplitPage } from "./pages/DebtSplitPage";
-import { RecurringPage } from "./pages/RecurringPage";
-import { SettingsPage } from "./pages/SettingsPage";
-import { SignInPage } from "./pages/SignInPage";
-import { TransactionsPage } from "./pages/TransactionsPage";
+
+const AccountDetailPage = lazy(() =>
+	import("./pages/AccountDetailPage").then((m) => ({ default: m.AccountDetailPage })),
+);
+const AccountsPage = lazy(() =>
+	import("./pages/AccountsPage").then((m) => ({ default: m.AccountsPage })),
+);
+const BudgetPage = lazy(() =>
+	import("./pages/BudgetPage").then((m) => ({ default: m.BudgetPage })),
+);
+const DashboardPage = lazy(() =>
+	import("./pages/DashboardPage").then((m) => ({ default: m.DashboardPage })),
+);
+const DebtSplitPage = lazy(() =>
+	import("./pages/DebtSplitPage").then((m) => ({ default: m.DebtSplitPage })),
+);
+const RecurringPage = lazy(() =>
+	import("./pages/RecurringPage").then((m) => ({ default: m.RecurringPage })),
+);
+const SettingsPage = lazy(() =>
+	import("./pages/SettingsPage").then((m) => ({ default: m.SettingsPage })),
+);
+const SignInPage = lazy(() =>
+	import("./pages/SignInPage").then((m) => ({ default: m.SignInPage })),
+);
+const TransactionsPage = lazy(() =>
+	import("./pages/TransactionsPage").then((m) => ({ default: m.TransactionsPage })),
+);
 
 // Do NOT build a custom ProtectedRoute — use Clerk's components directly (Anti-Pattern)
 // Clerk <Show> handles async loading states correctly
@@ -17,37 +37,39 @@ import { TransactionsPage } from "./pages/TransactionsPage";
 export default function App() {
 	return (
 		<BrowserRouter>
-			<Routes>
-				{/* Public routes */}
-				<Route path="/sign-in" element={<SignInPage />} />
-				{/* Protected routes: / and all nested paths */}
-				<Route
-					path="/"
-					element={
-						<>
-							<Show when="signed-in">
-								<AppShell />
-							</Show>
-							<Show when="signed-out">
-								<Navigate to="/sign-in" replace />
-							</Show>
-						</>
-					}
-				>
-					<Route index element={<DashboardPage />} />
-					<Route path="dashboard" element={<DashboardPage />} />
-					<Route path="accounts" element={<AccountsPage />} />
-					<Route path="accounts/:id" element={<AccountDetailPage />} />
-					<Route path="recurring" element={<RecurringPage />} />
-					<Route path="transactions" element={<TransactionsPage />} />
-					<Route path="budget" element={<BudgetPage />} />
-					<Route path="debts" element={<DebtSplitPage />} />
-					<Route path="settings" element={<SettingsPage />} />
-				</Route>
+			<Suspense>
+				<Routes>
+					{/* Public routes */}
+					<Route path="/sign-in" element={<SignInPage />} />
+					{/* Protected routes: / and all nested paths */}
+					<Route
+						path="/"
+						element={
+							<>
+								<Show when="signed-in">
+									<AppShell />
+								</Show>
+								<Show when="signed-out">
+									<Navigate to="/sign-in" replace />
+								</Show>
+							</>
+						}
+					>
+						<Route index element={<DashboardPage />} />
+						<Route path="dashboard" element={<DashboardPage />} />
+						<Route path="accounts" element={<AccountsPage />} />
+						<Route path="accounts/:id" element={<AccountDetailPage />} />
+						<Route path="recurring" element={<RecurringPage />} />
+						<Route path="transactions" element={<TransactionsPage />} />
+						<Route path="budget" element={<BudgetPage />} />
+						<Route path="debts" element={<DebtSplitPage />} />
+						<Route path="settings" element={<SettingsPage />} />
+					</Route>
 
-				{/* Catch-all: redirect to home */}
-				<Route path="*" element={<Navigate to="/" replace />} />
-			</Routes>
+					{/* Catch-all: redirect to home */}
+					<Route path="*" element={<Navigate to="/" replace />} />
+				</Routes>
+			</Suspense>
 		</BrowserRouter>
 	);
 }

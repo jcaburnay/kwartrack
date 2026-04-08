@@ -2,7 +2,6 @@ import { MoreVertical } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useReducer } from "spacetimedb/react";
 import { reducers } from "../module_bindings";
-import { getAvatarColor } from "../utils/avatarColor";
 import { formatPesos } from "../utils/currency";
 
 interface PartitionCardProps {
@@ -74,8 +73,6 @@ export function PartitionCard({
 				? "progress-warning"
 				: "progress-success";
 
-	const avatar = getAvatarColor(name);
-
 	return (
 		<div className="rounded-xl bg-base-100 shadow-sm p-5 flex flex-col gap-4 relative card-hover border border-base-300/50">
 			{/* Options dropdown */}
@@ -113,17 +110,12 @@ export function PartitionCard({
 				</ul>
 			</div>
 
-			{/* Avatar + name */}
-			<div className="flex items-center gap-3 pr-6">
-				<div
-					className={`w-10 h-10 rounded-xl ${avatar.bg} ${avatar.text} flex-shrink-0 flex items-center justify-center text-sm font-bold`}
-				>
-					{name.charAt(0).toUpperCase()}
-				</div>
+			{/* Name */}
+			<div className="pr-6">
 				{isRenaming ? (
 					<input
 						ref={inputRef}
-						className="input input-bordered input-sm flex-1"
+						className="input input-bordered input-sm w-full"
 						value={renameValue}
 						onChange={(e) => setRenameValue(e.target.value)}
 						onBlur={handleRenameCommit}

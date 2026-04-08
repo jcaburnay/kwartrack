@@ -2,8 +2,8 @@ import { MoreVertical } from "lucide-react";
 import { useState } from "react";
 import { useReducer, useTable } from "spacetimedb/react";
 import { reducers, tables } from "../module_bindings";
-import { getAvatarColor } from "../utils/avatarColor";
 import { formatPesos } from "../utils/currency";
+import { findCatalogMatch, getLogoUrl } from "../utils/subscriptionCatalog";
 import { DeleteConfirmModal } from "./DeleteConfirmModal";
 import { RecurringModal } from "./RecurringModal";
 
@@ -71,7 +71,7 @@ export function RecurringCard({ definition }: RecurringCardProps) {
 			: "text-success font-semibold text-sm";
 
 	const partitionLabel = formatPartitionLabel(definition.partitionId, accounts, partitions);
-	const avatar = getAvatarColor(definition.name);
+	const catalogMatch = findCatalogMatch(definition.name);
 
 	return (
 		<>
@@ -79,13 +79,18 @@ export function RecurringCard({ definition }: RecurringCardProps) {
 				className={`rounded-xl bg-base-100 shadow-sm border border-base-300/50 card-hover relative${definition.isPaused ? " opacity-60" : ""}`}
 			>
 				<div className="p-5 flex flex-col gap-2 pr-8">
-					{/* Avatar + Name */}
-					<div className="flex items-center gap-3">
-						<div
-							className={`w-10 h-10 rounded-xl ${avatar.bg} ${avatar.text} flex-shrink-0 flex items-center justify-center text-sm font-bold`}
-						>
-							{definition.name.charAt(0).toUpperCase()}
-						</div>
+					{/* Brand icon + Name */}
+					<div className="flex items-center gap-2.5">
+						{catalogMatch && (
+							<img
+								src={getLogoUrl(catalogMatch.domain)}
+								alt={catalogMatch.name}
+								className="w-8 h-8 rounded-lg flex-shrink-0 object-contain"
+								onError={(e) => {
+									e.currentTarget.style.display = "none";
+								}}
+							/>
+						)}
 						<p className="text-sm font-semibold leading-tight">{definition.name}</p>
 					</div>
 

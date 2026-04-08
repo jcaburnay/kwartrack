@@ -1,4 +1,5 @@
 import { ArrowLeftRight, Plus, Search } from "lucide-react";
+import { useMemo } from "react";
 import { formatPesos } from "../utils/currency";
 import { TransactionRowActions } from "./TransactionRowActions";
 
@@ -91,8 +92,12 @@ export function TransactionTable({
 	showAccountColumn,
 }: TransactionTableProps) {
 	const colCount = showAccountColumn ? 10 : 9;
-	const sorted = [...transactions].sort((a, b) =>
-		b.date.microsSinceUnixEpoch > a.date.microsSinceUnixEpoch ? 1 : -1,
+	const sorted = useMemo(
+		() =>
+			[...transactions].sort((a, b) =>
+				b.date.microsSinceUnixEpoch > a.date.microsSinceUnixEpoch ? 1 : -1,
+			),
+		[transactions],
 	);
 
 	return (

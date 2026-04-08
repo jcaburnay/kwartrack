@@ -65,16 +65,18 @@ export function BudgetPage() {
 	const [showModal, setShowModal] = useState(false);
 	const [expandedTag, setExpandedTag] = useState<string | null>(null);
 
-	const budgetConfig = budgetConfigRows[0] ?? null;
-
 	if (!isConfigReady) return null;
+
+	const budgetConfig = budgetConfigRows[0] ?? null;
 
 	// Empty state — no budget configured
 	if (!budgetConfig || budgetConfig.totalCentavos === 0n) {
 		return (
-			<div className="p-4 sm:p-6 flex flex-col items-center gap-4 text-center">
-				<h2 className="text-sm font-semibold">No budget set</h2>
-				<p className="text-sm text-base-content/50">
+			<div className="p-4 sm:p-6 animate-card-enter">
+				<h1 className="text-xs font-medium tracking-widest text-base-content/35 uppercase mb-5">
+					Budget
+				</h1>
+				<p className="text-sm text-base-content/50 mb-4">
 					Set a monthly spending limit to track where your money goes.
 				</p>
 				<button type="button" className="btn btn-primary btn-sm" onClick={() => setShowModal(true)}>
@@ -144,11 +146,11 @@ export function BudgetPage() {
 	}
 
 	return (
-		<div className="p-4 sm:p-6">
+		<div className="p-4 sm:p-6 animate-card-enter">
 			{/* Header */}
-			<p className="text-xs font-semibold tracking-widest text-base-content/40 uppercase mb-5">
+			<h1 className="text-xs font-medium tracking-widest text-base-content/35 uppercase mb-5">
 				Budget
-			</p>
+			</h1>
 
 			{/* Overview + Chart — side by side on desktop, stacked on mobile */}
 			<div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-5 pb-4 border-b border-base-content/10">
@@ -246,9 +248,9 @@ export function BudgetPage() {
 					className="animate-card-enter"
 					style={{ animationDelay: `0.12s` }}
 				>
-					<div className="text-xs font-bold uppercase tracking-widest text-base-content/30 mb-2">
+					<h2 className="text-xs font-semibold uppercase tracking-widest text-base-content/50 mb-2">
 						Budget vs Actual
-					</div>
+					</h2>
 					<ResponsiveContainer width="100%" height={220}>
 						<BarChart data={chartData} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
 							<defs>
@@ -327,9 +329,9 @@ export function BudgetPage() {
 			</div>
 
 			{/* Section label */}
-			<div className="text-xs font-bold uppercase tracking-widest text-base-content/30 mb-2">
+			<h2 className="text-xs font-semibold uppercase tracking-widest text-base-content/50 mb-2">
 				Categories
-			</div>
+			</h2>
 
 			{/* Mini cards */}
 			<div className="flex flex-col gap-1.5">
@@ -377,31 +379,35 @@ export function BudgetPage() {
 									/>
 								</div>
 							</button>
-							{isExpanded && tagTxns.length > 0 && (
+							{isExpanded && (
 								<div className="ml-5 mr-3 mb-1 border-l-2 border-base-300 pl-3 py-1">
-									{tagTxns.map((txn) => {
-										const d = new Date(Number(txn.date.microsSinceUnixEpoch / 1000n));
-										const dateStr = d.toLocaleDateString("en-PH", {
-											month: "short",
-											day: "numeric",
-										});
-										const txnKey = txn.id
-											? String(txn.id)
-											: `${txn.date.microsSinceUnixEpoch.toString()}-${txn.tag}-${txn.description}`;
-										return (
-											<div key={txnKey} className="flex items-center justify-between py-1">
-												<div className="flex flex-col">
-													<span className="text-xs text-base-content/70">
-														{txn.description || txn.tag}
+									{tagTxns.length === 0 ? (
+										<p className="text-xs text-base-content/40 py-1">No transactions this month.</p>
+									) : (
+										tagTxns.map((txn) => {
+											const d = new Date(Number(txn.date.microsSinceUnixEpoch / 1000n));
+											const dateStr = d.toLocaleDateString("en-PH", {
+												month: "short",
+												day: "numeric",
+											});
+											const txnKey = txn.id
+												? String(txn.id)
+												: `${txn.date.microsSinceUnixEpoch.toString()}-${txn.tag}-${txn.description}`;
+											return (
+												<div key={txnKey} className="flex items-center justify-between py-1 gap-2">
+													<div className="flex flex-col min-w-0">
+														<span className="text-xs text-base-content/70 truncate">
+															{txn.description || txn.tag}
+														</span>
+														<span className="text-[10px] text-base-content/40">{dateStr}</span>
+													</div>
+													<span className="text-xs font-mono text-base-content/60 flex-shrink-0">
+														{formatPesos(txn.amountCentavos)}
 													</span>
-													<span className="text-[10px] text-base-content/40">{dateStr}</span>
 												</div>
-												<span className="text-xs font-mono text-base-content/60">
-													{formatPesos(txn.amountCentavos)}
-												</span>
-											</div>
-										);
-									})}
+											);
+										})
+									)}
 								</div>
 							)}
 						</div>
@@ -439,31 +445,40 @@ export function BudgetPage() {
 										/>
 									</div>
 								</button>
-								{isExpanded && otherTxns.length > 0 && (
+								{isExpanded && (
 									<div className="ml-5 mr-3 mb-1 border-l-2 border-base-300 pl-3 py-1">
-										{otherTxns.map((txn) => {
-											const d = new Date(Number(txn.date.microsSinceUnixEpoch / 1000n));
-											const dateStr = d.toLocaleDateString("en-PH", {
-												month: "short",
-												day: "numeric",
-											});
-											const txnKey = txn.id
-												? String(txn.id)
-												: `${txn.date.microsSinceUnixEpoch.toString()}-${txn.tag}-${txn.description}`;
-											return (
-												<div key={txnKey} className="flex items-center justify-between py-1">
-													<div className="flex flex-col">
-														<span className="text-xs text-base-content/70">
-															{txn.description || txn.tag}
+										{otherTxns.length === 0 ? (
+											<p className="text-xs text-base-content/40 py-1">
+												No transactions this month.
+											</p>
+										) : (
+											otherTxns.map((txn) => {
+												const d = new Date(Number(txn.date.microsSinceUnixEpoch / 1000n));
+												const dateStr = d.toLocaleDateString("en-PH", {
+													month: "short",
+													day: "numeric",
+												});
+												const txnKey = txn.id
+													? String(txn.id)
+													: `${txn.date.microsSinceUnixEpoch.toString()}-${txn.tag}-${txn.description}`;
+												return (
+													<div
+														key={txnKey}
+														className="flex items-center justify-between py-1 gap-2"
+													>
+														<div className="flex flex-col min-w-0">
+															<span className="text-xs text-base-content/70 truncate">
+																{txn.description || txn.tag}
+															</span>
+															<span className="text-[10px] text-base-content/40">{dateStr}</span>
+														</div>
+														<span className="text-xs font-mono text-base-content/60 flex-shrink-0">
+															{formatPesos(txn.amountCentavos)}
 														</span>
-														<span className="text-[10px] text-base-content/40">{dateStr}</span>
 													</div>
-													<span className="text-xs font-mono text-base-content/60">
-														{formatPesos(txn.amountCentavos)}
-													</span>
-												</div>
-											);
-										})}
+												);
+											})
+										)}
 									</div>
 								)}
 							</div>

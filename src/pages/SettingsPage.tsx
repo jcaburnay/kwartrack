@@ -7,13 +7,15 @@ import { DEFAULT_TAGS } from "../utils/tagConfig";
 const TYPES = ["expense", "income", "transfer"] as const;
 
 export function SettingsPage() {
-	const [tagConfigs] = useTable(tables.my_tag_configs);
+	const [tagConfigs, isTagConfigsReady] = useTable(tables.my_tag_configs);
 	const addCustomTag = useReducer(reducers.addCustomTag);
 	const deleteCustomTag = useReducer(reducers.deleteCustomTag);
 	const toggleTagVisibility = useReducer(reducers.toggleTagVisibility);
 
 	const [activeTab, setActiveTab] = useState<string>("expense");
 	const [newTagInput, setNewTagInput] = useState("");
+
+	if (!isTagConfigsReady) return null;
 
 	const typeConfigs = tagConfigs.filter((c) => c.transactionType === activeTab);
 	const defaultTags = DEFAULT_TAGS[activeTab] ?? [];
@@ -31,6 +33,8 @@ export function SettingsPage() {
 	const handleAddTag = () => {
 		const tag = newTagInput.trim().toLowerCase().replace(/\s+/g, "-");
 		if (!tag) return;
+		const allTagsForType = [...(DEFAULT_TAGS[activeTab] ?? []), ...customTags.map((c) => c.tag)];
+		if (allTagsForType.includes(tag)) return;
 		addCustomTag({ transactionType: activeTab, tag });
 		setNewTagInput("");
 	};
@@ -40,10 +44,10 @@ export function SettingsPage() {
 	};
 
 	return (
-		<div className="p-4 sm:p-6">
-			<p className="text-xs font-semibold tracking-widest text-base-content/40 uppercase mb-5">
+		<div className="p-4 sm:p-6 animate-card-enter">
+			<h1 className="text-xs font-medium tracking-widest text-base-content/35 uppercase mb-5">
 				Settings
-			</p>
+			</h1>
 
 			{/* Tags section */}
 			<div className="rounded-xl border border-base-300/50 bg-base-100 shadow-sm">
@@ -79,9 +83,9 @@ export function SettingsPage() {
 					{/* Default tags */}
 					{defaultTags.length > 0 && (
 						<div className="mb-4">
-							<p className="text-xs font-bold uppercase tracking-widest text-base-content/30 mb-2">
+							<h2 className="text-xs font-semibold uppercase tracking-widest text-base-content/50 mb-2">
 								Default tags
-							</p>
+							</h2>
 							<div className="flex flex-col gap-1">
 								{defaultTags.map((tag) => (
 									<div
@@ -104,9 +108,9 @@ export function SettingsPage() {
 					{/* Custom tags */}
 					{customTags.length > 0 && (
 						<div className="mb-4">
-							<p className="text-xs font-bold uppercase tracking-widest text-base-content/30 mb-2">
+							<h2 className="text-xs font-semibold uppercase tracking-widest text-base-content/50 mb-2">
 								Custom tags
-							</p>
+							</h2>
 							<div className="flex flex-col gap-1">
 								{customTags.map((config) => (
 									<div
@@ -143,6 +147,7 @@ export function SettingsPage() {
 							className="input input-bordered input-sm flex-1"
 							placeholder="New tag name"
 							value={newTagInput}
+							maxLength={50}
 							onChange={(e) => setNewTagInput(e.target.value)}
 							onKeyDown={(e) => {
 								if (e.key === "Enter") handleAddTag();

@@ -24,11 +24,16 @@ export function RecurringPage() {
 	);
 
 	return (
-		<div className="p-4 sm:p-6 space-y-8">
+		<div className="p-4 sm:p-6 space-y-8 animate-card-enter">
 			<section>
-				<p className="text-xs font-semibold tracking-widest text-base-content/40 uppercase mb-5">
+				<h2 className="text-xs font-semibold uppercase tracking-widest text-base-content/50 mb-5">
 					SUBSCRIPTIONS
-				</p>
+				</h2>
+				{subscriptions.length === 0 && (
+					<p className="text-sm text-base-content/50 mb-3">
+						Recurring charges with no end date — streaming services, memberships, monthly bills.
+					</p>
+				)}
 				<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
 					{subscriptions.map((def, i) => (
 						<div
@@ -44,9 +49,14 @@ export function RecurringPage() {
 			</section>
 
 			<section>
-				<p className="text-xs font-semibold tracking-widest text-base-content/40 uppercase mb-5">
+				<h2 className="text-xs font-semibold uppercase tracking-widest text-base-content/50 mb-5">
 					INSTALLMENTS
-				</p>
+				</h2>
+				{installments.length === 0 && (
+					<p className="text-sm text-base-content/50 mb-3">
+						Fixed payments with an end date — loans, gadgets on installment, insurance plans.
+					</p>
+				)}
 				<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
 					{installments.map((def, i) => (
 						<div

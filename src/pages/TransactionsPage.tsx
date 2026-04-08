@@ -27,24 +27,35 @@ export function TransactionsPage() {
 	const [partitions] = useTable(tables.my_partitions);
 	const [allTransactions, isReady] = useTable(tables.my_transactions);
 
+	if (!isReady) return null;
+
 	// Filter by account/partition
 	const accountFiltered = (() => {
 		const ap = filters.accountPartition;
 		if (!ap) return allTransactions;
 
 		if (ap.startsWith("account:")) {
-			const accountId = BigInt(ap.split(":")[1]);
-			const partIds = partitions.filter((p) => p.accountId === accountId).map((p) => p.id);
-			return allTransactions.filter(
-				(t) => partIds.includes(t.sourcePartitionId) || partIds.includes(t.destinationPartitionId),
-			);
+			try {
+				const accountId = BigInt(ap.split(":")[1]);
+				const partIds = partitions.filter((p) => p.accountId === accountId).map((p) => p.id);
+				return allTransactions.filter(
+					(t) =>
+						partIds.includes(t.sourcePartitionId) || partIds.includes(t.destinationPartitionId),
+				);
+			} catch {
+				return allTransactions;
+			}
 		}
 
 		if (ap.startsWith("partition:")) {
-			const partId = BigInt(ap.split(":")[1]);
-			return allTransactions.filter(
-				(t) => t.sourcePartitionId === partId || t.destinationPartitionId === partId,
-			);
+			try {
+				const partId = BigInt(ap.split(":")[1]);
+				return allTransactions.filter(
+					(t) => t.sourcePartitionId === partId || t.destinationPartitionId === partId,
+				);
+			} catch {
+				return allTransactions;
+			}
 		}
 
 		return allTransactions;
@@ -89,13 +100,11 @@ export function TransactionsPage() {
 		setShowTransactionModal(true);
 	};
 
-	if (!isReady) return null;
-
 	return (
-		<div className="p-4 sm:p-6">
-			<p className="text-xs font-semibold tracking-widest text-base-content/40 uppercase mb-5 animate-card-enter">
+		<div className="p-4 sm:p-6 animate-card-enter">
+			<h1 className="text-xs font-medium tracking-widest text-base-content/35 uppercase mb-5 animate-card-enter">
 				TRANSACTIONS
-			</p>
+			</h1>
 
 			{/* Filter row with account filter */}
 			<div className="mt-3 animate-card-enter" style={{ animationDelay: `0.06s` }}>

@@ -17,7 +17,13 @@ import { formatPesos } from "../utils/currency";
 
 export function AccountDetailPage() {
 	const { id } = useParams<{ id: string }>();
-	const accountId = BigInt(id ?? "0");
+	const accountId = (() => {
+		try {
+			return BigInt(id ?? "0");
+		} catch {
+			return 0n;
+		}
+	})();
 	const navigate = useNavigate();
 	const deletePartition = useReducer(reducers.deletePartition);
 	const deleteTransaction = useReducer(reducers.deleteTransaction);
@@ -55,6 +61,8 @@ export function AccountDetailPage() {
 	const [partitions] = useTable(tables.my_partitions);
 	const [allTransactions] = useTable(tables.my_transactions);
 
+	if (!isReady) return null;
+
 	// Find the current account from subscription data
 	const account = accounts.find((a) => a.id === accountId);
 
@@ -90,8 +98,6 @@ export function AccountDetailPage() {
 		}
 		return true;
 	});
-
-	if (!isReady) return null;
 
 	// Account not found (deleted or invalid id)
 	if (!account) {
@@ -132,7 +138,7 @@ export function AccountDetailPage() {
 	};
 
 	return (
-		<div className="p-4 sm:p-6">
+		<div className="p-4 sm:p-6 animate-card-enter">
 			<button
 				type="button"
 				className="btn btn-ghost btn-xs gap-1 mb-4 -ml-1 text-base-content/50"
@@ -142,9 +148,9 @@ export function AccountDetailPage() {
 				Accounts
 			</button>
 
-			<div className="flex items-baseline gap-4 mb-6">
-				<span className="font-semibold text-base">{account.name}</span>
-				<span className="font-semibold text-base">{formatPesos(totalBalance)}</span>
+			<div className="flex items-baseline gap-4 mb-6 min-w-0">
+				<span className="font-semibold text-base truncate min-w-0">{account.name}</span>
+				<span className="font-semibold text-base flex-shrink-0">{formatPesos(totalBalance)}</span>
 			</div>
 
 			{/* Partition grid — same layout for standalone and partitioned */}
@@ -192,9 +198,9 @@ export function AccountDetailPage() {
 
 			{/* TRANSACTIONS section — 48px gap from partitions section (UI-SPEC: 2xl gap) */}
 			<div className="mt-10">
-				<p className="text-xs font-semibold tracking-widest text-base-content/40 uppercase mb-4">
+				<h2 className="text-xs font-semibold uppercase tracking-widest text-base-content/50 mb-4">
 					TRANSACTIONS
-				</p>
+				</h2>
 
 				{/* Filter row (D-15) */}
 				<div className="mt-3">

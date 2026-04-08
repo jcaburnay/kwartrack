@@ -1,8 +1,9 @@
 import { X } from "lucide-react";
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useReducer, useTable } from "spacetimedb/react";
 import { reducers, tables } from "../module_bindings";
+import { type CatalogEntry, filterCatalog, getLogoUrl } from "../utils/subscriptionCatalog";
 import { getVisibleTags } from "../utils/tagConfig";
 
 interface RecurringDefinition {
@@ -155,6 +156,18 @@ export function RecurringModal({
 
 	const selectedType = watch("type");
 	const selectedTag = watch("tag");
+	const nameValue = watch("name");
+	const [suggestionsOpen, setSuggestionsOpen] = useState(false);
+	const [activeIndex, setActiveIndex] = useState(-1);
+	const suggestions = useMemo(() => {
+		setActiveIndex(-1);
+		return isInstallment ? [] : filterCatalog(nameValue);
+	}, [nameValue, isInstallment]);
+
+	const { onChange: nameOnChange, ...nameFieldProps } = register("name", {
+		required: "Name is required",
+		maxLength: { value: 80, message: "Max 80 characters" },
+	});
 
 	// When type changes, reset tag to empty string (tags differ by type)
 	const handleTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -223,20 +236,73 @@ export function RecurringModal({
 				<form onSubmit={handleSubmit(onSubmit)} className="flex flex-col flex-1 min-h-0">
 					<div className="flex-1 overflow-y-auto">
 						<div className="flex flex-col gap-3">
-							{/* Name */}
+							{/* Name with catalog autocomplete */}
 							<div>
 								<label className="label" htmlFor="rec-name">
 									<span className="label-text text-sm">Name</span>
 								</label>
-								<input
-									id="rec-name"
-									type="text"
-									className={`input input-bordered w-full${errors.name ? " input-error" : ""}`}
-									{...register("name", {
-										required: "Name is required",
-										maxLength: { value: 80, message: "Max 80 characters" },
-									})}
-								/>
+								<div className="relative">
+									<input
+										id="rec-name"
+										type="text"
+										autoComplete="off"
+										className={`input input-bordered w-full${errors.name ? " input-error" : ""}`}
+										{...nameFieldProps}
+										onChange={(e) => {
+											nameOnChange(e);
+											setSuggestionsOpen(true);
+										}}
+										onFocus={() => setSuggestionsOpen(true)}
+										onBlur={() => setTimeout(() => setSuggestionsOpen(false), 150)}
+										onKeyDown={(e) => {
+											if (!suggestionsOpen || suggestions.length === 0) return;
+											if (e.key === "ArrowDown") {
+												e.preventDefault();
+												setActiveIndex((i) => Math.min(i + 1, suggestions.length - 1));
+											} else if (e.key === "ArrowUp") {
+												e.preventDefault();
+												setActiveIndex((i) => Math.max(i - 1, -1));
+											} else if (e.key === "Enter" && activeIndex >= 0) {
+												e.preventDefault();
+												setValue("name", suggestions[activeIndex].name, { shouldValidate: true });
+												setSuggestionsOpen(false);
+												setActiveIndex(-1);
+											} else if (e.key === "Escape") {
+												setSuggestionsOpen(false);
+												setActiveIndex(-1);
+											}
+										}}
+									/>
+									{suggestionsOpen && suggestions.length > 0 && (
+										<ul className="absolute z-50 top-full mt-1 left-0 right-0 bg-base-100 border border-base-300/70 rounded-xl shadow-lg overflow-hidden">
+											{suggestions.map((entry: CatalogEntry, idx: number) => (
+												<li key={entry.domain + entry.name}>
+													<button
+														type="button"
+														className={`flex items-center gap-3 px-3 py-2 w-full transition-colors text-left${idx === activeIndex ? " bg-base-200" : " hover:bg-base-200"}`}
+														onMouseDown={(e) => {
+															e.preventDefault();
+															setValue("name", entry.name, { shouldValidate: true });
+															setSuggestionsOpen(false);
+															setActiveIndex(-1);
+														}}
+														onMouseEnter={() => setActiveIndex(idx)}
+													>
+														<img
+															src={getLogoUrl(entry.domain)}
+															alt=""
+															className="w-5 h-5 rounded-sm flex-shrink-0 object-contain"
+															onError={(e) => {
+																e.currentTarget.style.display = "none";
+															}}
+														/>
+														<span className="text-sm">{entry.name}</span>
+													</button>
+												</li>
+											))}
+										</ul>
+									)}
+								</div>
 								{errors.name && <p className="text-error text-xs mt-1">{errors.name.message}</p>}
 							</div>
 

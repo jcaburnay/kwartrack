@@ -9,7 +9,9 @@ export function AppShell() {
 			<MobileHeader />
 			<Sidebar />
 			<main className="flex-1 bg-base-100 pb-16 sm:pb-0">
-				<Outlet />
+				<div className="mx-auto w-full max-w-[1152px]">
+					<Outlet />
+				</div>
 			</main>
 			<BottomTabBar />
 		</div>
