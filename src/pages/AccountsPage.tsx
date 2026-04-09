@@ -1,5 +1,5 @@
 import { TrendingUp } from "lucide-react";
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router";
 import { useTable } from "spacetimedb/react";
 import { AccountCard } from "../components/AccountCard";
@@ -23,13 +23,27 @@ export function AccountsPage() {
 	});
 	const [partitions] = useTable(tables.my_partitions);
 
-	if (!isReady) return null;
+	// Aggregate partition stats in one pass instead of filtering per account
+	const accountStats = useMemo(() => {
+		const map = new Map<bigint, { balance: bigint; partitionCount: number }>();
+		for (const p of partitions) {
+			const existing = map.get(p.accountId);
+			if (existing) {
+				existing.balance += p.balanceCentavos;
+				existing.partitionCount++;
+			} else {
+				map.set(p.accountId, { balance: p.balanceCentavos, partitionCount: 1 });
+			}
+		}
+		return map;
+	}, [partitions]);
 
-	function getAccountBalance(accountId: bigint): bigint {
-		return partitions
-			.filter((p) => p.accountId === accountId)
-			.reduce((sum, p) => sum + p.balanceCentavos, 0n);
-	}
+	const netWorth = useMemo(
+		() => accounts.reduce((sum, a) => sum + (accountStats.get(a.id)?.balance ?? 0n), 0n),
+		[accounts, accountStats],
+	);
+
+	if (!isReady) return null;
 
 	// Empty state
 	if (accounts.length === 0) {
@@ -56,9 +70,6 @@ export function AccountsPage() {
 			</div>
 		);
 	}
-
-	// Compute net worth
-	const netWorth = accounts.reduce((sum, a) => sum + getAccountBalance(a.id), 0n);
 
 	return (
 		<div className="p-4 sm:p-6 animate-card-enter">
@@ -89,8 +100,8 @@ export function AccountsPage() {
 						<AccountCard
 							id={account.id}
 							name={account.name}
-							totalBalanceCentavos={getAccountBalance(account.id)}
-							partitionCount={partitions.filter((p) => p.accountId === account.id).length}
+							totalBalanceCentavos={accountStats.get(account.id)?.balance ?? 0n}
+							partitionCount={accountStats.get(account.id)?.partitionCount ?? 0}
 						/>
 					</div>
 				))}

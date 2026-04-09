@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { Link } from "react-router";
 import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis } from "recharts";
 import { useTable } from "spacetimedb/react";
@@ -22,20 +23,28 @@ export function OverviewPage() {
 	const [budgetConfigRows, isBudgetReady] = useTable(tables.my_budget_config);
 
 	const isReady = isAccountsReady && isPartitionsReady && isTransactionsReady && isBudgetReady;
+
+	// Memoize expensive computations — these run O(n) or O(n*6) over transactions/partitions
+	const totalBalance = useMemo(() => computeTotalBalance(partitions), [partitions]);
+	const accountSummaries = useMemo(
+		() => computeAccountSummaries(accounts, partitions),
+		[accounts, partitions],
+	);
+	const spentByTag = useMemo(() => getCurrentMonthExpenses(transactions), [transactions]);
+	const totalSpentCentavos = useMemo(
+		() => [...spentByTag.values()].reduce((sum, v) => sum + v, 0n),
+		[spentByTag],
+	);
+	const spendingByTag = useMemo(() => computeSpendingByTag(transactions), [transactions]);
+	const monthlyTrend = useMemo(() => computeMonthlyTrend(transactions, 6), [transactions]);
+
 	if (!isReady) return null;
 
-	// Computed data
-	const totalBalance = computeTotalBalance(partitions);
-	const accountSummaries = computeAccountSummaries(accounts, partitions);
 	const budgetConfig = budgetConfigRows[0] ?? null;
-	const spentByTag = getCurrentMonthExpenses(transactions);
-	const totalSpentCentavos = [...spentByTag.values()].reduce((sum, v) => sum + v, 0n);
 	const budgetTotal = budgetConfig?.totalCentavos ?? 0n;
 	const budgetPct =
 		budgetTotal > 0n ? Math.round(Number((totalSpentCentavos * 100n) / budgetTotal)) : 0;
 	const budgetRemaining = budgetTotal - totalSpentCentavos;
-	const spendingByTag = computeSpendingByTag(transactions);
-	const monthlyTrend = computeMonthlyTrend(transactions, 6);
 
 	const barColor =
 		budgetPct >= 100 ? "#ef4444" : budgetPct >= 80 ? "#d97706" : "oklch(62% 0.12 180)";

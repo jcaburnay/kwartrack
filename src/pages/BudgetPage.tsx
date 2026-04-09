@@ -1,5 +1,5 @@
 import { ChevronDown, Pencil } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
 	Bar,
 	BarChart,
@@ -65,6 +65,37 @@ export function BudgetPage() {
 	const [showModal, setShowModal] = useState(false);
 	const [expandedTag, setExpandedTag] = useState<string | null>(null);
 
+	// Memoize all spending computations — these iterate over all transactions
+	const spentByTag = useMemo(() => getCurrentMonthExpenses(transactions), [transactions]);
+	const tagStatuses = useMemo(
+		() => computeTagStatuses(allocations, spentByTag),
+		[allocations, spentByTag],
+	);
+	const sortedTagStatuses = useMemo(
+		() => [...tagStatuses].sort((a, b) => b.percentUsed - a.percentUsed),
+		[tagStatuses],
+	);
+	const totalSpentCentavos = useMemo(
+		() => [...spentByTag.values()].reduce((sum, v) => sum + v, 0n),
+		[spentByTag],
+	);
+	const allocatedTags = useMemo(() => new Set(allocations.map((a) => a.tag)), [allocations]);
+	const otherSpentCentavos = useMemo(
+		() =>
+			[...spentByTag.entries()]
+				.filter(([tag]) => !allocatedTags.has(tag))
+				.reduce((sum, [, amount]) => sum + amount, 0n),
+		[spentByTag, allocatedTags],
+	);
+	const colorByTag = useMemo(
+		() => new Map(sortedTagStatuses.map((s, i) => [s.tag, getTagColor(i)])),
+		[sortedTagStatuses],
+	);
+	const colorByTagHex = useMemo(
+		() => new Map(sortedTagStatuses.map((s, i) => [s.tag, getTagColorHex(i)])),
+		[sortedTagStatuses],
+	);
+
 	if (!isConfigReady) return null;
 
 	const budgetConfig = budgetConfigRows[0] ?? null;
@@ -87,29 +118,12 @@ export function BudgetPage() {
 		);
 	}
 
-	// Compute spending status
-	const spentByTag = getCurrentMonthExpenses(transactions);
-	const tagStatuses = computeTagStatuses(allocations, spentByTag);
-	const sortedTagStatuses = [...tagStatuses].sort((a, b) => b.percentUsed - a.percentUsed);
+	const othersColor = getTagColor(sortedTagStatuses.length);
 
-	// Total spent across all tags this month
-	const totalSpentCentavos = [...spentByTag.values()].reduce((sum, v) => sum + v, 0n);
 	const totalPct =
 		budgetConfig.totalCentavos > 0n
 			? Math.round(Number((totalSpentCentavos * 100n) / budgetConfig.totalCentavos))
 			: 0;
-
-	// "Others" — spending on tags with no explicit allocation
-	const allocatedTags = new Set(allocations.map((a) => a.tag));
-	const otherSpentCentavos = [...spentByTag.entries()]
-		.filter(([tag]) => !allocatedTags.has(tag))
-		.reduce((sum, [, amount]) => sum + amount, 0n);
-
-	// Build color map: each allocated tag gets an indigo shade by sorted position
-	const colorByTag = new Map(sortedTagStatuses.map((s, i) => [s.tag, getTagColor(i)]));
-	const colorByTagHex = new Map(sortedTagStatuses.map((s, i) => [s.tag, getTagColorHex(i)]));
-	// Others gets the next color slot
-	const othersColor = getTagColor(sortedTagStatuses.length);
 
 	const chartData = [
 		{
