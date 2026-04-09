@@ -150,14 +150,15 @@ export function PartitionCard({
 					/>
 					<div className="flex items-center justify-between">
 						<span className="text-xs text-base-content/50">{availablePct}% available</span>
-						<button
-							type="button"
-							className="btn btn-xs btn-ghost text-primary"
-							onClick={() => onPayCredit?.(id)}
-							disabled={balanceCentavos === 0n}
-						>
-							Pay
-						</button>
+						{balanceCentavos > 0n && (
+							<button
+								type="button"
+								className="btn btn-xs btn-ghost text-primary"
+								onClick={() => onPayCredit?.(id)}
+							>
+								Pay
+							</button>
+						)}
 					</div>
 				</div>
 			) : (
