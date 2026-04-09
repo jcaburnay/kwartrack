@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { useDragToDismiss } from "../hooks/useDragToDismiss";
 
 interface DeleteConfirmModalProps {
 	title: string;
@@ -18,14 +19,17 @@ export function DeleteConfirmModal({
 	onDismiss,
 }: DeleteConfirmModalProps) {
 	const ref = useRef<HTMLDialogElement>(null);
+	const boxRef = useRef<HTMLDivElement>(null);
 
 	useEffect(() => {
 		ref.current?.showModal();
 	}, []);
 
+	useDragToDismiss(boxRef, onDismiss);
+
 	return (
 		<dialog ref={ref} className="modal modal-bottom sm:modal-middle" onClose={onDismiss}>
-			<div className="modal-box flex flex-col">
+			<div className="modal-box flex flex-col" ref={boxRef}>
 				<h3 className="text-lg font-semibold mb-2">{title}</h3>
 				<p className="text-sm text-base-content/60 mb-4">{body}</p>
 				{/* D-09: Dismiss left, Confirm/Delete right */}

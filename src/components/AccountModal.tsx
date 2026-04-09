@@ -2,6 +2,7 @@ import { X } from "lucide-react";
 import { useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { useReducer } from "spacetimedb/react";
+import { useDragToDismiss } from "../hooks/useDragToDismiss";
 import { reducers } from "../module_bindings";
 
 interface AccountFormValues {
@@ -16,6 +17,7 @@ interface AccountModalProps {
 
 export function AccountModal({ onClose, onAccountCreated }: AccountModalProps) {
 	const ref = useRef<HTMLDialogElement>(null);
+	const boxRef = useRef<HTMLDivElement>(null);
 	const createAccount = useReducer(reducers.createAccount);
 	const {
 		register,
@@ -50,9 +52,11 @@ export function AccountModal({ onClose, onAccountCreated }: AccountModalProps) {
 		onClose();
 	};
 
+	useDragToDismiss(boxRef, handleClose);
+
 	return (
 		<dialog ref={ref} className="modal modal-bottom sm:modal-middle" onClose={onClose}>
-			<div className="modal-box flex flex-col">
+			<div className="modal-box flex flex-col" ref={boxRef}>
 				<div className="flex items-center justify-between mb-4">
 					<h3 className="text-lg font-semibold">New account</h3>
 					<button type="button" className="btn btn-ghost btn-sm btn-circle" onClick={handleClose}>

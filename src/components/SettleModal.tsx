@@ -2,6 +2,7 @@ import { X } from "lucide-react";
 import { useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { useReducer, useTable } from "spacetimedb/react";
+import { useDragToDismiss } from "../hooks/useDragToDismiss";
 import { reducers, tables } from "../module_bindings";
 import { formatPesos } from "../utils/currency";
 
@@ -29,6 +30,7 @@ interface SettleModalProps {
 
 export function SettleModal({ debt, onClose }: SettleModalProps) {
 	const ref = useRef<HTMLDialogElement>(null);
+	const boxRef = useRef<HTMLDivElement>(null);
 	useEffect(() => {
 		ref.current?.showModal();
 	}, []);
@@ -61,9 +63,11 @@ export function SettleModal({ debt, onClose }: SettleModalProps) {
 
 	const label = debt.direction === "loaned" ? "Receive to" : "Pay from";
 
+	useDragToDismiss(boxRef, onClose);
+
 	return (
 		<dialog ref={ref} className="modal modal-bottom sm:modal-middle" onClose={onClose}>
-			<div className="modal-box flex flex-col">
+			<div className="modal-box flex flex-col" ref={boxRef}>
 				<div className="flex items-center justify-between mb-4">
 					<h3 className="font-semibold text-sm">Settle — {debt.personName}</h3>
 					<button

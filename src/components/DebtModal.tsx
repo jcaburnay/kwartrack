@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Timestamp } from "spacetimedb";
 import { useReducer, useTable } from "spacetimedb/react";
+import { useDragToDismiss } from "../hooks/useDragToDismiss";
 import { reducers, tables } from "../module_bindings";
 import { getVisibleTags } from "../utils/tagConfig";
 
@@ -21,6 +22,7 @@ interface DebtModalProps {
 
 export function DebtModal({ onClose }: DebtModalProps) {
 	const ref = useRef<HTMLDialogElement>(null);
+	const boxRef = useRef<HTMLDivElement>(null);
 	useEffect(() => {
 		ref.current?.showModal();
 	}, []);
@@ -67,9 +69,11 @@ export function DebtModal({ onClose }: DebtModalProps) {
 		onClose();
 	};
 
+	useDragToDismiss(boxRef, onClose);
+
 	return (
 		<dialog ref={ref} className="modal modal-bottom sm:modal-middle" onClose={onClose}>
-			<div className="modal-box flex flex-col">
+			<div className="modal-box flex flex-col" ref={boxRef}>
 				<div className="flex items-center justify-between mb-4">
 					<h3 className="font-semibold text-sm">New debt</h3>
 					<button

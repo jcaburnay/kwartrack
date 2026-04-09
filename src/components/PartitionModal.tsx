@@ -2,6 +2,7 @@ import { X } from "lucide-react";
 import { useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { useReducer } from "spacetimedb/react";
+import { useDragToDismiss } from "../hooks/useDragToDismiss";
 import { reducers } from "../module_bindings";
 
 interface PartitionFormValues {
@@ -32,6 +33,7 @@ export function PartitionModal({
 	partition,
 }: PartitionModalProps) {
 	const ref = useRef<HTMLDialogElement>(null);
+	const boxRef = useRef<HTMLDivElement>(null);
 	const addPartition = useReducer(reducers.addPartition);
 	const editPartitionReducer = useReducer(reducers.editPartition);
 	const isEditMode = !!partition;
@@ -94,9 +96,11 @@ export function PartitionModal({
 		onClose();
 	};
 
+	useDragToDismiss(boxRef, handleClose);
+
 	return (
 		<dialog ref={ref} className="modal modal-bottom sm:modal-middle" onClose={onClose}>
-			<div className="modal-box flex flex-col">
+			<div className="modal-box flex flex-col" ref={boxRef}>
 				<div className="flex items-center justify-between mb-4">
 					<h3 className="text-lg font-semibold">
 						{isEditMode ? "Edit partition" : "New partition"}

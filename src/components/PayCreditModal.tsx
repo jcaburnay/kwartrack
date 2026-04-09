@@ -3,6 +3,7 @@ import { useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { Timestamp } from "spacetimedb";
 import { useReducer, useTable } from "spacetimedb/react";
+import { useDragToDismiss } from "../hooks/useDragToDismiss";
 import { reducers, tables } from "../module_bindings";
 import { formatPesos } from "../utils/currency";
 import { getVisibleTags } from "../utils/tagConfig";
@@ -21,6 +22,7 @@ interface PayCreditFormValues {
 
 export function PayCreditModal({ partitionId, outstandingCentavos, onClose }: PayCreditModalProps) {
 	const dialogRef = useRef<HTMLDialogElement>(null);
+	const boxRef = useRef<HTMLDivElement>(null);
 	const createTransaction = useReducer(reducers.createTransaction);
 	const [allPartitions] = useTable(tables.my_partitions);
 	const [tagConfigs] = useTable(tables.my_tag_configs);
@@ -76,9 +78,11 @@ export function PayCreditModal({ partitionId, outstandingCentavos, onClose }: Pa
 		onClose();
 	};
 
+	useDragToDismiss(boxRef, handleClose);
+
 	return (
 		<dialog ref={dialogRef} className="modal modal-bottom sm:modal-middle" onClose={handleClose}>
-			<div className="modal-box flex flex-col">
+			<div className="modal-box flex flex-col" ref={boxRef}>
 				{/* Header */}
 				<div className="flex items-center justify-between mb-4">
 					<h3 className="text-base font-semibold">Pay Credit</h3>

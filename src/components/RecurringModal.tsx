@@ -2,6 +2,7 @@ import { X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useReducer, useTable } from "spacetimedb/react";
+import { useDragToDismiss } from "../hooks/useDragToDismiss";
 import { reducers, tables } from "../module_bindings";
 import { type CatalogEntry, filterCatalog, getLogoUrl } from "../utils/subscriptionCatalog";
 import { getVisibleTags } from "../utils/tagConfig";
@@ -104,6 +105,7 @@ export function RecurringModal({
 	mode = "subscription",
 }: RecurringModalProps) {
 	const ref = useRef<HTMLDialogElement>(null);
+	const boxRef = useRef<HTMLDivElement>(null);
 	useEffect(() => {
 		ref.current?.showModal();
 	}, []);
@@ -212,9 +214,11 @@ export function RecurringModal({
 	const availableTags =
 		selectedTag && !visibleTags.includes(selectedTag) ? [selectedTag, ...visibleTags] : visibleTags;
 
+	useDragToDismiss(boxRef, onClose);
+
 	return (
 		<dialog ref={ref} className="modal modal-bottom sm:modal-middle" onClose={onClose}>
-			<div className="modal-box flex flex-col">
+			<div className="modal-box flex flex-col" ref={boxRef}>
 				<div className="flex items-center justify-between mb-4">
 					<h3 className="font-semibold text-sm">
 						{isEdit

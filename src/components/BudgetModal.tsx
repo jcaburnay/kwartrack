@@ -2,6 +2,7 @@ import { X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useReducer, useTable } from "spacetimedb/react";
+import { useDragToDismiss } from "../hooks/useDragToDismiss";
 import { reducers, tables } from "../module_bindings";
 import { getVisibleTags } from "../utils/tagConfig";
 
@@ -21,6 +22,7 @@ interface BudgetModalProps {
 export function BudgetModal({ onClose }: BudgetModalProps) {
 	const setBudget = useReducer(reducers.setBudget);
 	const ref = useRef<HTMLDialogElement>(null);
+	const boxRef = useRef<HTMLDivElement>(null);
 	const setBudgetAllocations = useReducer(reducers.setBudgetAllocations);
 	const [budgetConfigRows] = useTable(tables.my_budget_config);
 	const [allocationRows] = useTable(tables.my_budget_allocations);
@@ -61,6 +63,7 @@ export function BudgetModal({ onClose }: BudgetModalProps) {
 	const isOverAllocated = allocatedTotal > totalAmount + 0.001;
 
 	const usedTags = new Set(rows.map((r) => r.tag).filter(Boolean));
+	useDragToDismiss(boxRef, onClose);
 
 	const handleTagChange = (index: number, newTag: string) => {
 		setRows((prev) => {
@@ -94,7 +97,7 @@ export function BudgetModal({ onClose }: BudgetModalProps) {
 
 	return (
 		<dialog ref={ref} className="modal modal-bottom sm:modal-middle" onClose={onClose}>
-			<div className="modal-box flex flex-col">
+			<div className="modal-box flex flex-col" ref={boxRef}>
 				{/* Header */}
 				<div className="flex items-center justify-between mb-4">
 					<h3 className="font-semibold text-sm">Set monthly budget</h3>

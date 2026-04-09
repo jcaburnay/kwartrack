@@ -3,6 +3,7 @@ import { useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { Timestamp } from "spacetimedb";
 import { useReducer, useTable } from "spacetimedb/react";
+import { useDragToDismiss } from "../hooks/useDragToDismiss";
 import { reducers, tables } from "../module_bindings";
 import { getCurrentMonthExpenses } from "../utils/budgetCompute";
 import { formatPesos } from "../utils/currency";
@@ -110,6 +111,7 @@ function PartitionGroupedSelect({
 
 export function TransactionModal({ onClose, transaction }: TransactionModalProps) {
 	const ref = useRef<HTMLDialogElement>(null);
+	const boxRef = useRef<HTMLDivElement>(null);
 	useEffect(() => {
 		ref.current?.showModal();
 	}, []);
@@ -303,13 +305,15 @@ export function TransactionModal({ onClose, transaction }: TransactionModalProps
 		onClose();
 	};
 
+	useDragToDismiss(boxRef, handleClose);
+
 	const isEditMode = !!transaction;
 	const title = isEditMode ? "Edit transaction" : "New transaction";
 	const submitLabel = isEditMode ? "Update transaction" : "Save transaction";
 
 	return (
 		<dialog ref={ref} className="modal modal-bottom sm:modal-middle" onClose={onClose}>
-			<div className="modal-box flex flex-col">
+			<div className="modal-box flex flex-col" ref={boxRef}>
 				{/* Header */}
 				<div className="flex items-center justify-between mb-4">
 					<h3 className="text-lg font-semibold">{title}</h3>
