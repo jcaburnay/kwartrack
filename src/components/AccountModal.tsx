@@ -1,9 +1,11 @@
 import { X } from "lucide-react";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useReducer } from "spacetimedb/react";
+import { type BankEntry, filterBanks } from "../data/banks";
 import { useDragToDismiss } from "../hooks/useDragToDismiss";
 import { reducers } from "../module_bindings";
+import { BankIcon } from "./BankIcon";
 
 interface AccountFormValues {
 	name: string;
@@ -19,6 +21,10 @@ export function AccountModal({ onClose, onAccountCreated }: AccountModalProps) {
 	const ref = useRef<HTMLDialogElement>(null);
 	const boxRef = useRef<HTMLDivElement>(null);
 	const createAccount = useReducer(reducers.createAccount);
+
+	const [iconBankId, setIconBankId] = useState<string | null>(null);
+	const [showSuggestions, setShowSuggestions] = useState(false);
+
 	const {
 		register,
 		handleSubmit,
@@ -36,12 +42,22 @@ export function AccountModal({ onClose, onAccountCreated }: AccountModalProps) {
 	const nameValue = watch("name");
 	const balanceValue = watch("initialBalance");
 	const showStandaloneHint = parseFloat(balanceValue) > 0;
+	const suggestions = filterBanks(nameValue);
+
+	const handleSelectBank = (bank: BankEntry) => {
+		setIconBankId(bank.id);
+		setShowSuggestions(false);
+	};
 
 	const onSubmit = (data: AccountFormValues) => {
 		const centavos = data.initialBalance
 			? BigInt(Math.round(parseFloat(data.initialBalance) * 100))
 			: 0n;
-		createAccount({ name: data.name.trim(), initialBalanceCentavos: centavos });
+		createAccount({
+			name: data.name.trim(),
+			initialBalanceCentavos: centavos,
+			iconBankId: iconBankId ?? undefined,
+		});
 		onAccountCreated?.();
 		reset();
 		onClose();
@@ -66,18 +82,39 @@ export function AccountModal({ onClose, onAccountCreated }: AccountModalProps) {
 				<form onSubmit={handleSubmit(onSubmit)} noValidate className="flex flex-col flex-1 min-h-0">
 					<div className="flex-1 overflow-y-auto">
 						<div className="flex flex-col gap-4">
-							{/* Account name */}
+							{/* Account name with bank autocomplete */}
 							<div>
 								<label className="label" htmlFor="account-name">
 									<span className="label-text text-sm">Account name</span>
 								</label>
-								<input
-									id="account-name"
-									{...register("name", { required: "Account name is required" })}
-									className={`input input-bordered w-full${errors.name ? " input-error" : ""}`}
-									placeholder="e.g. Maya, GCash, RCBC"
-									autoFocus
-								/>
+								<div className="relative">
+									<input
+										id="account-name"
+										{...register("name", { required: "Account name is required" })}
+										className={`input input-bordered w-full${errors.name ? " input-error" : ""}`}
+										placeholder="e.g. Maya, GCash, RCBC"
+										autoFocus
+										autoComplete="off"
+										onFocus={() => setShowSuggestions(true)}
+										onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
+									/>
+									{showSuggestions && suggestions.length > 0 && (
+										<ul className="absolute z-20 left-0 right-0 top-full mt-1 bg-base-100 border border-base-300/50 rounded-xl shadow-lg overflow-hidden">
+											{suggestions.map((bank) => (
+												<li key={bank.id}>
+													<button
+														type="button"
+														className="flex items-center gap-2.5 w-full px-3 py-2 text-left hover:bg-base-200/60 text-sm"
+														onMouseDown={() => handleSelectBank(bank)}
+													>
+														<BankIcon bankId={bank.id} name={bank.name} size={20} />
+														{bank.name}
+													</button>
+												</li>
+											))}
+										</ul>
+									)}
+								</div>
 								{errors.name && <p className="text-error text-xs mt-1">{errors.name.message}</p>}
 							</div>
 
@@ -104,7 +141,6 @@ export function AccountModal({ onClose, onAccountCreated }: AccountModalProps) {
 						</div>
 					</div>
 
-					{/* Submit — D-09: Cancel left, Save right */}
 					<div className="flex gap-2 mt-4">
 						<button type="button" className="btn btn-ghost flex-1" onClick={handleClose}>
 							Cancel

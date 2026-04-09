@@ -34,6 +34,7 @@ export const account = table(
 		name: t.string(),
 		isStandalone: t.bool(),
 		createdAt: t.timestamp(),
+		iconBankId: t.string().optional().default(undefined),
 	},
 );
 

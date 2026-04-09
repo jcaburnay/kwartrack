@@ -13,9 +13,9 @@ function toMicros(d: Date): bigint {
 
 // Shared test data for balance/account tests
 const accounts = [
-	{ id: 1n, name: "BDO" },
-	{ id: 2n, name: "GCash" },
-	{ id: 3n, name: "BPI Credit" },
+	{ id: 1n, name: "BDO", iconBankId: "bdo" },
+	{ id: 2n, name: "GCash", iconBankId: "gcash" },
+	{ id: 3n, name: "BPI Credit", iconBankId: undefined },
 ];
 
 const partitions = [

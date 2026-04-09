@@ -131,13 +131,13 @@ describe("BudgetModal", () => {
 });
 
 describe("BudgetPage", () => {
-	it('renders empty state with "No budget set" when no budget configured', () => {
+	it("renders empty state when no budget configured", () => {
 		(useTable as ReturnType<typeof vi.fn>)
 			.mockReturnValueOnce([[], true])
 			.mockReturnValueOnce([[], true])
 			.mockReturnValueOnce([[], true]);
 		render(<BudgetPage />);
-		expect(screen.getByText("No budget set")).toBeInTheDocument();
+		expect(screen.getByText(/Set a monthly spending limit/i)).toBeInTheDocument();
 	});
 
 	it("renders hero spent amount when budget is configured", () => {

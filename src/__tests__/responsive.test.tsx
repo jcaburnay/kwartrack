@@ -49,6 +49,8 @@ vi.mock("lucide-react", () => {
 		Wallet: createIcon("Wallet"),
 		MoreVertical: createIcon("MoreVertical"),
 		ChevronLeft: createIcon("ChevronLeft"),
+		PanelLeft: createIcon("PanelLeft"),
+		LogOut: createIcon("LogOut"),
 	};
 });
 
@@ -105,8 +107,8 @@ describe("MobileHeader (D-02)", () => {
 				<MobileHeader />
 			</MemoryRouter>,
 		);
-		// ThemeToggle renders a button with aria-label for theme switching
-		const toggle = screen.getByLabelText(/switch to (light|dark) mode/i);
+		// ThemeToggle renders a button with aria-label "Light mode" or "Dark mode"
+		const toggle = screen.getByLabelText(/^(light|dark) mode$/i);
 		expect(toggle).toBeInTheDocument();
 	});
 

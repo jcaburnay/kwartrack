@@ -102,6 +102,7 @@ export function AccountsPage() {
 							name={account.name}
 							totalBalanceCentavos={accountStats.get(account.id)?.balance ?? 0n}
 							partitionCount={accountStats.get(account.id)?.partitionCount ?? 0}
+							iconBankId={account.iconBankId}
 						/>
 					</div>
 				))}

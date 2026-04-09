@@ -2,6 +2,7 @@ import { ArrowLeft } from "lucide-react";
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router";
 import { useReducer, useTable } from "spacetimedb/react";
+import { BankIcon } from "../components/BankIcon";
 import { DeleteConfirmModal } from "../components/DeleteConfirmModal";
 import { NewItemCard } from "../components/NewItemCard";
 import { PartitionCard } from "../components/PartitionCard";
@@ -148,9 +149,12 @@ export function AccountDetailPage() {
 				Accounts
 			</button>
 
-			<div className="flex items-baseline gap-4 mb-6 min-w-0">
-				<span className="font-semibold text-base truncate min-w-0">{account.name}</span>
-				<span className="font-semibold text-base flex-shrink-0">{formatPesos(totalBalance)}</span>
+			<div className="flex items-center gap-3 mb-6 min-w-0">
+				<BankIcon bankId={account.iconBankId} name={account.name} size={36} />
+				<div className="flex items-baseline gap-4 min-w-0">
+					<span className="font-semibold text-base truncate min-w-0">{account.name}</span>
+					<span className="font-semibold text-base flex-shrink-0">{formatPesos(totalBalance)}</span>
+				</div>
 			</div>
 
 			{/* Partition grid — same layout for standalone and partitioned */}

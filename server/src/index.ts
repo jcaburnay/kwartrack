@@ -411,8 +411,8 @@ export const delete_transaction = spacetimedb.reducer(
 // If initialBalanceCentavos > 0n => isStandalone=true, hidden default partition auto-created (D-04)
 // If initialBalanceCentavos === 0n => isStandalone=false, no partitions created
 export const create_account = spacetimedb.reducer(
-	{ name: t.string(), initialBalanceCentavos: t.i64() },
-	(ctx, { name, initialBalanceCentavos }) => {
+	{ name: t.string(), initialBalanceCentavos: t.i64(), iconBankId: t.string().optional() },
+	(ctx, { name, initialBalanceCentavos, iconBankId }) => {
 		if (!name.trim()) throw new SenderError("Account name is required");
 
 		const ownerIdentity = resolveOwner(ctx);
@@ -422,6 +422,7 @@ export const create_account = spacetimedb.reducer(
 			ownerIdentity,
 			name: name.trim(),
 			isStandalone,
+			iconBankId,
 			createdAt: ctx.timestamp,
 		});
 
@@ -454,6 +455,22 @@ export const rename_account = spacetimedb.reducer(
 			throw new SenderError("Not authorized");
 		}
 		ctx.db.account.id.update({ ...existing, name: newName.trim() });
+	},
+);
+
+// update_account_icon
+// Client: conn.reducers.updateAccountIcon({ accountId: 1n, iconBankId: 'bdo' })
+// Pass iconBankId: undefined to clear the icon.
+export const update_account_icon = spacetimedb.reducer(
+	{ accountId: t.u64(), iconBankId: t.string().optional() },
+	(ctx, { accountId, iconBankId }) => {
+		const ownerIdentity = resolveOwner(ctx);
+		const existing = ctx.db.account.id.find(accountId);
+		if (!existing) throw new SenderError("Account not found");
+		if (existing.ownerIdentity.toHexString() !== ownerIdentity.toHexString()) {
+			throw new SenderError("Not authorized");
+		}
+		ctx.db.account.id.update({ ...existing, iconBankId });
 	},
 );
 

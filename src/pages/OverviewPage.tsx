@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { Link } from "react-router";
 import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis } from "recharts";
 import { useTable } from "spacetimedb/react";
+import { BankIcon } from "../components/BankIcon";
 import { tables } from "../module_bindings";
 import { getCurrentMonthExpenses } from "../utils/budgetCompute";
 import { formatPesos } from "../utils/currency";
@@ -108,8 +109,9 @@ export function OverviewPage() {
 												<td>
 													<Link
 														to={`/accounts/${acct.id}`}
-														className="link link-hover text-sm font-semibold"
+														className="link link-hover text-sm font-semibold flex items-center gap-2"
 													>
+														<BankIcon bankId={acct.iconBankId} name={acct.name} size={16} />
 														{acct.name}
 													</Link>
 												</td>

@@ -127,7 +127,7 @@ describe("PartitionCard credit variant", () => {
 		expect(screen.getByText("CREDIT")).toBeInTheDocument();
 	});
 
-	it("renders Pay Credit button for credit partition", async () => {
+	it("renders Pay button for credit partition with non-zero balance", async () => {
 		const { PartitionCard } = await import("../components/PartitionCard");
 		render(
 			<PartitionCard
@@ -141,7 +141,7 @@ describe("PartitionCard credit variant", () => {
 				onEdit={vi.fn()}
 			/>,
 		);
-		expect(screen.getByRole("button", { name: /Pay Credit/i })).toBeInTheDocument();
+		expect(screen.getByRole("button", { name: /^Pay$/i })).toBeInTheDocument();
 	});
 
 	it("does NOT render CREDIT badge for wallet partition", async () => {

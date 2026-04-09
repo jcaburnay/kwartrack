@@ -25,6 +25,12 @@ vi.mock("@clerk/react", () => ({
 	}),
 	useClerk: () => ({
 		signOut: async () => {},
+		openUserProfile: () => {},
+	}),
+	useUser: () => ({
+		isLoaded: true,
+		isSignedIn: true,
+		user: { fullName: "Test User", primaryEmailAddress: { emailAddress: "test@example.com" } },
 	}),
 }));
 

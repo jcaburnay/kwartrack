@@ -31,6 +31,7 @@ export interface AccountSummary {
 	name: string;
 	type: string;
 	balanceCentavos: bigint;
+	iconBankId: string | undefined;
 }
 
 export interface SpendingByTag {
@@ -83,7 +84,7 @@ export function computeAccountSummaries(
 			const type = acctPartitions.some((p) => p.partitionType === "credit")
 				? "Credit Card"
 				: "Savings";
-			return { id: acct.id, name: acct.name, type, balanceCentavos };
+			return { id: acct.id, name: acct.name, type, balanceCentavos, iconBankId: acct.iconBankId };
 		})
 		.sort((a, b) => a.name.localeCompare(b.name));
 }
