@@ -110,8 +110,8 @@ export function PartitionCard({
 				</ul>
 			</div>
 
-			{/* Name */}
-			<div className="pr-6">
+			{/* Name + type badge */}
+			<div className="pr-6 flex flex-col gap-1">
 				{isRenaming ? (
 					<input
 						ref={inputRef}
@@ -128,31 +128,37 @@ export function PartitionCard({
 				) : (
 					<span className="font-semibold text-base">{name}</span>
 				)}
+				{isCreditPartition && <span className="badge badge-warning badge-xs w-fit">CREDIT</span>}
 			</div>
 
 			{/* Balance */}
 			{isCreditPartition ? (
 				<div className="flex flex-col gap-1.5">
-					<div className="flex items-center gap-2">
+					<div className="flex flex-col gap-0.5">
 						<span className="text-xl font-semibold font-mono">
-							{formatPesos(availableCentavos)} / {formatPesos(creditLimitCentavos)}
+							{formatPesos(availableCentavos)}
 						</span>
-						<span className="badge badge-warning badge-sm">CREDIT</span>
+						<span className="text-xs text-base-content/40 font-mono">
+							of {formatPesos(creditLimitCentavos)} limit
+						</span>
 					</div>
 					<progress
 						className={`progress ${progressColor} w-full h-2`}
 						value={availablePct}
 						max={100}
+						title={`${availablePct}% available`}
 					/>
-					<span className="text-sm text-base-content/60">{availablePct}% available</span>
-					<button
-						type="button"
-						className="btn btn-sm btn-outline btn-primary w-full mt-1"
-						onClick={() => onPayCredit?.(id)}
-						disabled={balanceCentavos === 0n}
-					>
-						Pay Credit
-					</button>
+					<div className="flex items-center justify-between">
+						<span className="text-xs text-base-content/50">{availablePct}% available</span>
+						<button
+							type="button"
+							className="btn btn-xs btn-ghost text-primary"
+							onClick={() => onPayCredit?.(id)}
+							disabled={balanceCentavos === 0n}
+						>
+							Pay
+						</button>
+					</div>
 				</div>
 			) : (
 				<span className="text-xl font-semibold font-mono">{formatPesos(balanceCentavos)}</span>
