@@ -55,3 +55,6 @@ playwright-report/
 .claude/
 .planning/
 .superpowers/
+
+# Git worktrees
+.worktrees/
