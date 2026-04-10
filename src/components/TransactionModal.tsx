@@ -8,6 +8,7 @@ import { reducers, tables } from "../module_bindings";
 import { getCurrentMonthExpenses } from "../utils/budgetCompute";
 import { formatPesos } from "../utils/currency";
 import { getVisibleTags } from "../utils/tagConfig";
+import { Input } from "./Input";
 
 const todayISO = () => {
 	const d = new Date();
@@ -351,26 +352,19 @@ export function TransactionModal({ onClose, transaction }: TransactionModalProps
 
 							{/* Amount + Tag (expense/income) or Amount + Service fee (transfer) */}
 							<div className="grid sm:grid-cols-2 gap-4">
-								<div>
-									<label className="label" htmlFor="txn-amount">
-										<span className="label-text text-sm">Amount (P)</span>
-									</label>
-									<input
-										id="txn-amount"
-										type="number"
-										step="0.01"
-										min="0.01"
-										placeholder="0.00"
-										{...register("amount", {
-											required: "Amount is required",
-											validate: (v) => parseFloat(v) > 0 || "Amount must be greater than 0",
-										})}
-										className={`input input-bordered w-full${errors.amount ? " input-error" : ""}`}
-									/>
-									{errors.amount && (
-										<p className="text-error text-xs mt-1">{errors.amount.message}</p>
-									)}
-								</div>
+								<Input
+									label="Amount (P)"
+									id="txn-amount"
+									type="number"
+									step="0.01"
+									min="0.01"
+									placeholder="0.00"
+									error={errors.amount?.message}
+									{...register("amount", {
+										required: "Amount is required",
+										validate: (v) => parseFloat(v) > 0 || "Amount must be greater than 0",
+									})}
+								/>
 
 								{selectedType === "transfer" || tagOptions.length > 0 ? (
 									<div>
@@ -402,20 +396,15 @@ export function TransactionModal({ onClose, transaction }: TransactionModalProps
 								) : null}
 
 								{selectedType === "transfer" && (
-									<div>
-										<label className="label" htmlFor="txn-service-fee">
-											<span className="label-text text-sm">Service fee (P)</span>
-										</label>
-										<input
-											id="txn-service-fee"
-											type="number"
-											step="0.01"
-											min="0"
-											placeholder="0.00"
-											{...register("serviceFee")}
-											className="input input-bordered w-full"
-										/>
-									</div>
+									<Input
+										label="Service fee (P)"
+										id="txn-service-fee"
+										type="number"
+										step="0.01"
+										min="0"
+										placeholder="0.00"
+										{...register("serviceFee")}
+									/>
 								)}
 							</div>
 
@@ -547,32 +536,22 @@ export function TransactionModal({ onClose, transaction }: TransactionModalProps
 							)}
 
 							{/* Date */}
-							<div>
-								<label className="label" htmlFor="txn-date">
-									<span className="label-text text-sm">Date</span>
-								</label>
-								<input
-									id="txn-date"
-									type="date"
-									{...register("date", { required: "Date is required" })}
-									className={`input input-bordered w-full${errors.date ? " input-error" : ""}`}
-								/>
-								{errors.date && <p className="text-error text-xs mt-1">{errors.date.message}</p>}
-							</div>
+							<Input
+								label="Date"
+								id="txn-date"
+								type="date"
+								error={errors.date?.message}
+								{...register("date", { required: "Date is required" })}
+							/>
 
 							{/* Description */}
-							<div>
-								<label className="label" htmlFor="txn-description">
-									<span className="label-text text-sm">Description</span>
-								</label>
-								<input
-									id="txn-description"
-									type="text"
-									placeholder="Optional note"
-									{...register("description")}
-									className="input input-bordered w-full"
-								/>
-							</div>
+							<Input
+								label="Description"
+								id="txn-description"
+								type="text"
+								placeholder="Optional note"
+								{...register("description")}
+							/>
 						</div>
 					</div>
 

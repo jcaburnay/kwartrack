@@ -7,6 +7,7 @@ import { useDragToDismiss } from "../hooks/useDragToDismiss";
 import { reducers, tables } from "../module_bindings";
 import { formatPesos } from "../utils/currency";
 import { getVisibleTags } from "../utils/tagConfig";
+import { Input } from "./Input";
 
 interface PayCreditModalProps {
 	partitionId: bigint;
@@ -126,45 +127,35 @@ export function PayCreditModal({ partitionId, outstandingCentavos, onClose }: Pa
 					</div>
 
 					{/* Amount */}
-					<div className="form-control">
-						<label className="label" htmlFor="payAmount">
-							<span className="label-text">Amount</span>
-						</label>
-						<input
-							id="payAmount"
-							type="number"
-							step="0.01"
-							min="0.01"
-							className="input input-bordered w-full"
-							{...register("amount", {
-								required: "Amount is required",
-								min: { value: 0.01, message: "Amount must be greater than 0" },
-							})}
-						/>
-						<span className="text-sm text-base-content/50 mt-1">
-							Paying <span className="font-mono">{formatPesos(outstandingCentavos)}</span> clears
-							your balance
-						</span>
-						{errors.amount && (
-							<span className="text-error text-sm mt-1">{errors.amount.message}</span>
-						)}
-					</div>
+					<Input
+						label="Amount"
+						id="payAmount"
+						type="number"
+						step="0.01"
+						min="0.01"
+						error={errors.amount?.message}
+						hint={
+							<span className="text-sm text-base-content/50 mt-1">
+								Paying <span className="font-mono">{formatPesos(outstandingCentavos)}</span> clears
+								your balance
+							</span>
+						}
+						{...register("amount", {
+							required: "Amount is required",
+							min: { value: 0.01, message: "Amount must be greater than 0" },
+						})}
+					/>
 
 					{/* Service fee */}
-					<div className="form-control">
-						<label className="label" htmlFor="serviceFee">
-							<span className="label-text">Service fee (P)</span>
-						</label>
-						<input
-							id="serviceFee"
-							type="number"
-							step="0.01"
-							min="0"
-							className="input input-bordered w-full"
-							placeholder="0.00"
-							{...register("serviceFee")}
-						/>
-					</div>
+					<Input
+						label="Service fee (P)"
+						id="serviceFee"
+						type="number"
+						step="0.01"
+						min="0"
+						placeholder="0.00"
+						{...register("serviceFee")}
+					/>
 
 					{/* Buttons — dismiss left, submit right (Phase 1000 modal convention) */}
 					<div className="flex gap-2 mt-4">

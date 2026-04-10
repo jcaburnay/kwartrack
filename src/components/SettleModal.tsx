@@ -5,6 +5,7 @@ import { useReducer, useTable } from "spacetimedb/react";
 import { useDragToDismiss } from "../hooks/useDragToDismiss";
 import { reducers, tables } from "../module_bindings";
 import { formatPesos } from "../utils/currency";
+import { Input } from "./Input";
 
 interface Debt {
 	id: bigint;
@@ -86,29 +87,24 @@ export function SettleModal({ debt, onClose }: SettleModalProps) {
 
 				<form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-3">
 					<div className="grid sm:grid-cols-2 gap-3">
-						<div>
-							<label className="label" htmlFor="settle-amount">
-								<span className="label-text text-sm">Settlement amount</span>
-							</label>
-							<input
-								id="settle-amount"
-								type="number"
-								step="0.01"
-								min="0.01"
-								max={remaining}
-								className={`input input-bordered w-full${errors.amount ? " input-error" : ""}`}
-								{...register("amount", {
-									required: "Amount is required",
-									validate: (v) => {
-										const n = parseFloat(v);
-										if (n <= 0) return "Must be greater than 0";
-										if (n > remaining) return `Cannot exceed ${remaining.toFixed(2)}`;
-										return true;
-									},
-								})}
-							/>
-							{errors.amount && <p className="text-error text-xs mt-1">{errors.amount.message}</p>}
-						</div>
+						<Input
+							label="Settlement amount"
+							id="settle-amount"
+							type="number"
+							step="0.01"
+							min="0.01"
+							max={remaining}
+							error={errors.amount?.message}
+							{...register("amount", {
+								required: "Amount is required",
+								validate: (v) => {
+									const n = parseFloat(v);
+									if (n <= 0) return "Must be greater than 0";
+									if (n > remaining) return `Cannot exceed ${remaining.toFixed(2)}`;
+									return true;
+								},
+							})}
+						/>
 						<div>
 							<label className="label" htmlFor="settle-partition">
 								<span className="label-text text-sm">{label}</span>

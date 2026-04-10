@@ -42,7 +42,7 @@ export function Sidebar() {
 			{/* Header: brand + toggle */}
 			<div className="flex w-full items-center gap-3 px-3 py-4 border-b border-base-300">
 				<span className="text-xl font-semibold tracking-tight is-drawer-close:hidden flex-1 min-w-0 truncate">
-					Kwartrack
+					kwartrack
 				</span>
 				<label
 					htmlFor="main-drawer"

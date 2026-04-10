@@ -5,6 +5,7 @@ import { useReducer, useTable } from "spacetimedb/react";
 import { useDragToDismiss } from "../hooks/useDragToDismiss";
 import { reducers, tables } from "../module_bindings";
 import { getVisibleTags } from "../utils/tagConfig";
+import { Input } from "./Input";
 
 interface AllocationRow {
 	tag: string;
@@ -115,25 +116,18 @@ export function BudgetModal({ onClose }: BudgetModalProps) {
 					<div className="flex-1 overflow-y-auto">
 						<div className="flex flex-col gap-3">
 							{/* Total monthly budget — required */}
-							<div>
-								<label className="label" htmlFor="budget-total">
-									<span className="label-text text-sm">Total monthly budget (required)</span>
-								</label>
-								<input
-									id="budget-total"
-									type="number"
-									min="0"
-									step="0.01"
-									className={`input input-bordered w-full${errors.totalAmount ? " input-error" : ""}`}
-									{...register("totalAmount", {
-										required: "Total budget is required",
-										validate: (v) => parseFloat(v) > 0 || "Must be greater than 0",
-									})}
-								/>
-								{errors.totalAmount && (
-									<p className="text-error text-xs mt-1">{errors.totalAmount.message}</p>
-								)}
-							</div>
+							<Input
+								label="Total monthly budget (required)"
+								id="budget-total"
+								type="number"
+								min="0"
+								step="0.01"
+								error={errors.totalAmount?.message}
+								{...register("totalAmount", {
+									required: "Total budget is required",
+									validate: (v) => parseFloat(v) > 0 || "Must be greater than 0",
+								})}
+							/>
 
 							{/* Per-tag allocations */}
 							<div>

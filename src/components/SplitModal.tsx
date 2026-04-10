@@ -6,6 +6,7 @@ import { useReducer, useTable } from "spacetimedb/react";
 import { useDragToDismiss } from "../hooks/useDragToDismiss";
 import { reducers, tables } from "../module_bindings";
 import { formatPesos } from "../utils/currency";
+import { Input } from "./Input";
 
 const TAGS = [
 	"foods",
@@ -112,45 +113,31 @@ export function SplitModal({ onClose }: SplitModalProps) {
 					<div className="flex-1 overflow-y-auto">
 						<div className="flex flex-col gap-3">
 							{/* Description */}
-							<div>
-								<label className="label" htmlFor="split-desc">
-									<span className="label-text text-sm">Description</span>
-								</label>
-								<input
-									id="split-desc"
-									type="text"
-									className={`input input-bordered w-full${errors.description ? " input-error" : ""}`}
-									{...register("description", {
-										required: "Description is required",
-										maxLength: { value: 120, message: "Max 120 characters" },
-									})}
-								/>
-								{errors.description && (
-									<p className="text-error text-xs mt-1">{errors.description.message}</p>
-								)}
-							</div>
+							<Input
+								label="Description"
+								id="split-desc"
+								type="text"
+								error={errors.description?.message}
+								{...register("description", {
+									required: "Description is required",
+									maxLength: { value: 120, message: "Max 120 characters" },
+								})}
+							/>
 
 							{/* Total + Tag side by side */}
 							<div className="grid sm:grid-cols-2 gap-3">
-								<div>
-									<label className="label" htmlFor="split-amount">
-										<span className="label-text text-sm">Total amount</span>
-									</label>
-									<input
-										id="split-amount"
-										type="number"
-										step="0.01"
-										min="0.01"
-										className={`input input-bordered w-full${errors.totalAmount ? " input-error" : ""}`}
-										{...register("totalAmount", {
-											required: "Amount is required",
-											validate: (v) => parseFloat(v) > 0 || "Amount must be greater than 0",
-										})}
-									/>
-									{errors.totalAmount && (
-										<p className="text-error text-xs mt-1">{errors.totalAmount.message}</p>
-									)}
-								</div>
+								<Input
+									label="Total amount"
+									id="split-amount"
+									type="number"
+									step="0.01"
+									min="0.01"
+									error={errors.totalAmount?.message}
+									{...register("totalAmount", {
+										required: "Amount is required",
+										validate: (v) => parseFloat(v) > 0 || "Amount must be greater than 0",
+									})}
+								/>
 								<div>
 									<label className="label" htmlFor="split-tag">
 										<span className="label-text text-sm">Tag</span>

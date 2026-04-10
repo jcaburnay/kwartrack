@@ -2,10 +2,10 @@ import { X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useReducer } from "spacetimedb/react";
-import { type BankEntry, filterBanks } from "../data/banks";
 import { useDragToDismiss } from "../hooks/useDragToDismiss";
 import { reducers } from "../module_bindings";
-import { BankIcon } from "./BankIcon";
+import { BankInput } from "./BankInput";
+import { Input } from "./Input";
 
 interface AccountFormValues {
 	name: string;
@@ -23,7 +23,6 @@ export function AccountModal({ onClose, onAccountCreated }: AccountModalProps) {
 	const createAccount = useReducer(reducers.createAccount);
 
 	const [iconBankId, setIconBankId] = useState<string | null>(null);
-	const [showSuggestions, setShowSuggestions] = useState(false);
 
 	const {
 		register,
@@ -42,12 +41,6 @@ export function AccountModal({ onClose, onAccountCreated }: AccountModalProps) {
 	const nameValue = watch("name");
 	const balanceValue = watch("initialBalance");
 	const showStandaloneHint = parseFloat(balanceValue) > 0;
-	const suggestions = filterBanks(nameValue);
-
-	const handleSelectBank = (bank: BankEntry) => {
-		setIconBankId(bank.id);
-		setShowSuggestions(false);
-	};
 
 	const onSubmit = (data: AccountFormValues) => {
 		const centavos = data.initialBalance
@@ -83,61 +76,34 @@ export function AccountModal({ onClose, onAccountCreated }: AccountModalProps) {
 					<div className="flex-1 overflow-y-auto">
 						<div className="flex flex-col gap-4">
 							{/* Account name with bank autocomplete */}
-							<div>
-								<label className="label" htmlFor="account-name">
-									<span className="label-text text-sm">Account name</span>
-								</label>
-								<div className="relative">
-									<input
-										id="account-name"
-										{...register("name", { required: "Account name is required" })}
-										className={`input input-bordered w-full${errors.name ? " input-error" : ""}`}
-										placeholder="e.g. Maya, GCash, RCBC"
-										autoFocus
-										autoComplete="off"
-										onFocus={() => setShowSuggestions(true)}
-										onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
-									/>
-									{showSuggestions && suggestions.length > 0 && (
-										<ul className="absolute z-20 left-0 right-0 top-full mt-1 bg-base-100 border border-base-300/50 rounded-xl shadow-lg overflow-hidden">
-											{suggestions.map((bank) => (
-												<li key={bank.id}>
-													<button
-														type="button"
-														className="flex items-center gap-2.5 w-full px-3 py-2 text-left hover:bg-base-200/60 text-sm"
-														onMouseDown={() => handleSelectBank(bank)}
-													>
-														<BankIcon bankId={bank.id} name={bank.name} size={20} />
-														{bank.name}
-													</button>
-												</li>
-											))}
-										</ul>
-									)}
-								</div>
-								{errors.name && <p className="text-error text-xs mt-1">{errors.name.message}</p>}
-							</div>
+							<BankInput
+								label="Account name"
+								id="account-name"
+								error={errors.name?.message}
+								onSelectBank={(bank) => setIconBankId(bank.id)}
+								placeholder="e.g. Maya, GCash, RCBC"
+								autoFocus
+								autoComplete="off"
+								{...register("name", { required: "Account name is required" })}
+							/>
 
 							{/* Initial balance */}
-							<div>
-								<label className="label" htmlFor="account-balance">
-									<span className="label-text text-sm">Initial balance (P)</span>
-								</label>
-								<input
-									id="account-balance"
-									{...register("initialBalance")}
-									type="number"
-									step="0.01"
-									min="0"
-									className="input input-bordered w-full"
-									placeholder="0.00"
-								/>
-								{showStandaloneHint && (
-									<p className="text-xs text-base-content/60 mt-1">
-										Initial balance set — this will be a standalone account
-									</p>
-								)}
-							</div>
+							<Input
+								label="Initial balance (P)"
+								id="account-balance"
+								type="number"
+								step="0.01"
+								min="0"
+								placeholder="0.00"
+								hint={
+									showStandaloneHint ? (
+										<p className="text-xs text-base-content/60 mt-1">
+											Initial balance set — this will be a standalone account
+										</p>
+									) : undefined
+								}
+								{...register("initialBalance")}
+							/>
 						</div>
 					</div>
 

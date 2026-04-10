@@ -4,6 +4,7 @@ import { useForm } from "react-hook-form";
 import { useReducer } from "spacetimedb/react";
 import { useDragToDismiss } from "../hooks/useDragToDismiss";
 import { reducers } from "../module_bindings";
+import { Input } from "./Input";
 
 interface PartitionFormValues {
 	name: string;
@@ -112,21 +113,14 @@ export function PartitionModal({
 				<form onSubmit={handleSubmit(onSubmit)} noValidate className="flex flex-col flex-1 min-h-0">
 					<div className="flex-1 overflow-y-auto">
 						<div className="flex flex-col gap-4">
-							<div>
-								<label className="label" htmlFor="partition-name">
-									<span className="label-text text-sm">Partition name</span>
-								</label>
-								<input
-									id="partition-name"
-									{...register("name", {
-										required: "Partition name is required",
-									})}
-									className={`input input-bordered w-full${errors.name ? " input-error" : ""}`}
-									placeholder="e.g. Ewallet, Savings, Time deposit"
-									autoFocus
-								/>
-								{errors.name && <p className="text-error text-xs mt-1">{errors.name.message}</p>}
-							</div>
+							<Input
+								label="Partition name"
+								id="partition-name"
+								error={errors.name?.message}
+								placeholder="e.g. Ewallet, Savings, Time deposit"
+								autoFocus
+								{...register("name", { required: "Partition name is required" })}
+							/>
 
 							<div className="form-control">
 								<label className="label" htmlFor="partitionType">
@@ -147,42 +141,32 @@ export function PartitionModal({
 
 							{selectedType === "credit" && (
 								<div className="form-control">
-									<label className="label" htmlFor="creditLimit">
-										<span className="label-text">Credit limit (P)</span>
-									</label>
-									<input
+									<Input
+										label="Credit limit (P)"
 										id="creditLimit"
 										type="number"
 										step="0.01"
 										min="0"
-										className="input input-bordered w-full"
 										placeholder="e.g. 120000.00"
+										error={errors.creditLimit?.message}
 										{...register("creditLimit", {
 											required: selectedType === "credit" ? "Credit limit is required" : false,
 											min: { value: 0, message: "Credit limit must be 0 or more" },
 										})}
 									/>
-									{errors.creditLimit && (
-										<span className="text-error text-sm mt-1">{errors.creditLimit.message}</span>
-									)}
 								</div>
 							)}
 
 							{!isEditMode && (
-								<div>
-									<label className="label" htmlFor="partition-balance">
-										<span className="label-text text-sm">Initial balance (P)</span>
-									</label>
-									<input
-										id="partition-balance"
-										{...register("initialBalance")}
-										type="number"
-										step="0.01"
-										min="0"
-										className="input input-bordered w-full"
-										placeholder="0.00"
-									/>
-								</div>
+								<Input
+									label="Initial balance (P)"
+									id="partition-balance"
+									type="number"
+									step="0.01"
+									min="0"
+									placeholder="0.00"
+									{...register("initialBalance")}
+								/>
 							)}
 						</div>
 					</div>

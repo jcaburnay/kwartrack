@@ -6,6 +6,7 @@ import { useReducer, useTable } from "spacetimedb/react";
 import { useDragToDismiss } from "../hooks/useDragToDismiss";
 import { reducers, tables } from "../module_bindings";
 import { getVisibleTags } from "../utils/tagConfig";
+import { Input } from "./Input";
 
 interface DebtFormValues {
 	personName: string;
@@ -113,45 +114,31 @@ export function DebtModal({ onClose }: DebtModalProps) {
 							</div>
 
 							{/* Person name */}
-							<div>
-								<label className="label" htmlFor="debt-person">
-									<span className="label-text text-sm">Person</span>
-								</label>
-								<input
-									id="debt-person"
-									type="text"
-									className={`input input-bordered w-full${errors.personName ? " input-error" : ""}`}
-									{...register("personName", {
-										required: "Person name is required",
-										maxLength: { value: 80, message: "Max 80 characters" },
-									})}
-								/>
-								{errors.personName && (
-									<p className="text-error text-xs mt-1">{errors.personName.message}</p>
-								)}
-							</div>
+							<Input
+								label="Person"
+								id="debt-person"
+								type="text"
+								error={errors.personName?.message}
+								{...register("personName", {
+									required: "Person name is required",
+									maxLength: { value: 80, message: "Max 80 characters" },
+								})}
+							/>
 
 							{/* Amount + Tag side by side */}
 							<div className="grid sm:grid-cols-2 gap-3">
-								<div>
-									<label className="label" htmlFor="debt-amount">
-										<span className="label-text text-sm">Amount</span>
-									</label>
-									<input
-										id="debt-amount"
-										type="number"
-										step="0.01"
-										min="0.01"
-										className={`input input-bordered w-full${errors.amount ? " input-error" : ""}`}
-										{...register("amount", {
-											required: "Amount is required",
-											validate: (v) => parseFloat(v) > 0 || "Amount must be greater than 0",
-										})}
-									/>
-									{errors.amount && (
-										<p className="text-error text-xs mt-1">{errors.amount.message}</p>
-									)}
-								</div>
+								<Input
+									label="Amount"
+									id="debt-amount"
+									type="number"
+									step="0.01"
+									min="0.01"
+									error={errors.amount?.message}
+									{...register("amount", {
+										required: "Amount is required",
+										validate: (v) => parseFloat(v) > 0 || "Amount must be greater than 0",
+									})}
+								/>
 								<div>
 									<label className="label" htmlFor="debt-tag">
 										<span className="label-text text-sm">Tag</span>
@@ -219,33 +206,25 @@ export function DebtModal({ onClose }: DebtModalProps) {
 										)}
 									</div>
 								)}
-								<div>
-									<label className="label" htmlFor="debt-date">
-										<span className="label-text text-sm">Date</span>
-									</label>
-									<input
-										id="debt-date"
-										type="date"
-										className="input input-bordered w-full"
-										{...register("date", { required: "Date is required" })}
-									/>
-								</div>
+								<Input
+									label="Date"
+									id="debt-date"
+									type="date"
+									{...register("date", { required: "Date is required" })}
+								/>
 							</div>
 
 							{/* Description */}
-							<div>
-								<label className="label" htmlFor="debt-desc">
-									<span className="label-text text-sm">
+							<Input
+								label={
+									<>
 										Description <span className="text-base-content/30">(optional)</span>
-									</span>
-								</label>
-								<input
-									id="debt-desc"
-									type="text"
-									className="input input-bordered w-full"
-									{...register("description")}
-								/>
-							</div>
+									</>
+								}
+								id="debt-desc"
+								type="text"
+								{...register("description")}
+							/>
 						</div>
 					</div>
 
