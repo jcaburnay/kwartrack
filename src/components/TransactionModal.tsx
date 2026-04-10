@@ -23,8 +23,8 @@ interface Transaction {
 	type: string;
 	amountCentavos: bigint;
 	tag: string;
-	sourcePartitionId: bigint;
-	destinationPartitionId: bigint;
+	sourceSubAccountId: bigint;
+	destinationSubAccountId: bigint;
 	serviceFeeCentavos: bigint;
 	description: string;
 	date: { microsSinceUnixEpoch: bigint };
@@ -40,20 +40,20 @@ interface TransactionFormValues {
 	type: "expense" | "income" | "transfer";
 	amount: string;
 	tag: string;
-	sourcePartitionId: string;
-	destinationPartitionId: string;
+	sourceSubAccountId: string;
+	destinationSubAccountId: string;
 	serviceFee: string;
 	description: string;
 	date: string;
 }
 
-interface PartitionGroupedSelectProps {
+interface SubAccountGroupedSelectProps {
 	id: string;
 	value: string;
 	onChange: (value: string) => void;
 	error?: string;
 	accounts: readonly { id: bigint; name: string; isStandalone: boolean }[];
-	partitions: readonly {
+	subAccounts: readonly {
 		id: bigint;
 		accountId: bigint;
 		name: string;
@@ -62,14 +62,14 @@ interface PartitionGroupedSelectProps {
 	}[];
 }
 
-function PartitionGroupedSelect({
+function SubAccountGroupedSelect({
 	id,
 	value,
 	onChange,
 	error,
 	accounts,
-	partitions,
-}: PartitionGroupedSelectProps) {
+	subAccounts,
+}: SubAccountGroupedSelectProps) {
 	return (
 		<select
 			id={id}
@@ -77,30 +77,30 @@ function PartitionGroupedSelect({
 			onChange={(e) => onChange(e.target.value)}
 			className={`select select-bordered w-full${error ? " input-error" : ""}`}
 		>
-			<option value="">Select partition</option>
+			<option value="">Select sub-account</option>
 			{accounts.map((account) => {
 				if (account.isStandalone) {
-					// Find the default partition for this standalone account
-					const defaultPartition = partitions.find(
-						(p) => p.accountId === account.id && p.isDefault,
+					// Find the default sub-account for this standalone account
+					const defaultSubAccount = subAccounts.find(
+						(sa) => sa.accountId === account.id && sa.isDefault,
 					);
-					if (!defaultPartition) return null;
+					if (!defaultSubAccount) return null;
 					return (
 						<optgroup key={account.id.toString()} label={account.name}>
-							<option value={defaultPartition.id.toString()}>{account.name}</option>
+							<option value={defaultSubAccount.id.toString()}>{account.name}</option>
 						</optgroup>
 					);
 				}
-				// Partitioned account: show non-default partitions
-				const accountPartitions = partitions.filter(
-					(p) => p.accountId === account.id && !p.isDefault,
+				// Partitioned account: show non-default sub-accounts
+				const accountSubAccounts = subAccounts.filter(
+					(sa) => sa.accountId === account.id && !sa.isDefault,
 				);
-				if (accountPartitions.length === 0) return null;
+				if (accountSubAccounts.length === 0) return null;
 				return (
 					<optgroup key={account.id.toString()} label={account.name}>
-						{accountPartitions.map((partition) => (
-							<option key={partition.id.toString()} value={partition.id.toString()}>
-								{partition.name}
+						{accountSubAccounts.map((subAccount) => (
+							<option key={subAccount.id.toString()} value={subAccount.id.toString()}>
+								{subAccount.name}
 							</option>
 						))}
 					</optgroup>
@@ -119,7 +119,7 @@ export function TransactionModal({ onClose, transaction }: TransactionModalProps
 	const createTransaction = useReducer(reducers.createTransaction);
 	const editTransaction = useReducer(reducers.editTransaction);
 	const [accounts] = useTable(tables.my_accounts);
-	const [partitions] = useTable(tables.my_partitions);
+	const [subAccounts] = useTable(tables.my_sub_accounts);
 	const [budgetConfigRows] = useTable(tables.my_budget_config);
 	const [budgetAllocations] = useTable(tables.my_budget_allocations);
 	const [allTransactions] = useTable(tables.my_transactions);
@@ -139,11 +139,11 @@ export function TransactionModal({ onClose, transaction }: TransactionModalProps
 				type: transaction.type as "expense" | "income" | "transfer",
 				amount: (Number(transaction.amountCentavos) / 100).toFixed(2),
 				tag: transaction.tag,
-				sourcePartitionId:
-					transaction.sourcePartitionId !== 0n ? transaction.sourcePartitionId.toString() : "",
-				destinationPartitionId:
-					transaction.destinationPartitionId !== 0n
-						? transaction.destinationPartitionId.toString()
+				sourceSubAccountId:
+					transaction.sourceSubAccountId !== 0n ? transaction.sourceSubAccountId.toString() : "",
+				destinationSubAccountId:
+					transaction.destinationSubAccountId !== 0n
+						? transaction.destinationSubAccountId.toString()
 						: "",
 				serviceFee:
 					transaction.serviceFeeCentavos !== 0n
@@ -158,8 +158,8 @@ export function TransactionModal({ onClose, transaction }: TransactionModalProps
 				type: "expense",
 				amount: "",
 				tag: expenseTags[0] ?? "foods",
-				sourcePartitionId: "",
-				destinationPartitionId: "",
+				sourceSubAccountId: "",
+				destinationSubAccountId: "",
 				serviceFee: "",
 				description: "",
 				date: todayISO(),
@@ -177,7 +177,7 @@ export function TransactionModal({ onClose, transaction }: TransactionModalProps
 	const selectedType = watch("type");
 	const selectedTag = watch("tag");
 	const enteredAmount = watch("amount");
-	const selectedSourcePartitionId = watch("sourcePartitionId");
+	const selectedSourceSubAccountId = watch("sourceSubAccountId");
 	const visibleTags = tagsByType[selectedType] ?? [];
 	const tagOptions =
 		selectedTag && selectedTag !== "transfer" && !visibleTags.includes(selectedTag)
@@ -242,11 +242,11 @@ export function TransactionModal({ onClose, transaction }: TransactionModalProps
 	let creditHint: string | null = null;
 	let isCreditOverLimit = false;
 
-	if (selectedType === "expense" && selectedSourcePartitionId) {
-		const sourcePart = partitions.find((p) => p.id.toString() === selectedSourcePartitionId);
+	if (selectedType === "expense" && selectedSourceSubAccountId) {
+		const sourcePart = subAccounts.find((sa) => sa.id.toString() === selectedSourceSubAccountId);
 		if (
 			sourcePart &&
-			sourcePart.partitionType === "credit" &&
+			sourcePart.subAccountType === "credit" &&
 			sourcePart.creditLimitCentavos > 0n
 		) {
 			const outstanding = sourcePart.balanceCentavos;
@@ -270,8 +270,8 @@ export function TransactionModal({ onClose, transaction }: TransactionModalProps
 			: 0n;
 		const dateTimestamp = Timestamp.fromDate(new Date(data.date));
 
-		const sourceId = data.sourcePartitionId ? BigInt(data.sourcePartitionId) : 0n;
-		const destId = data.destinationPartitionId ? BigInt(data.destinationPartitionId) : 0n;
+		const sourceId = data.sourceSubAccountId ? BigInt(data.sourceSubAccountId) : 0n;
+		const destId = data.destinationSubAccountId ? BigInt(data.destinationSubAccountId) : 0n;
 
 		if (transaction) {
 			editTransaction({
@@ -279,8 +279,8 @@ export function TransactionModal({ onClose, transaction }: TransactionModalProps
 				type: data.type,
 				amountCentavos,
 				tag: data.tag,
-				sourcePartitionId: sourceId,
-				destinationPartitionId: destId,
+				sourceSubAccountId: sourceId,
+				destinationSubAccountId: destId,
 				serviceFeeCentavos,
 				description: data.description,
 				date: dateTimestamp,
@@ -290,8 +290,8 @@ export function TransactionModal({ onClose, transaction }: TransactionModalProps
 				type: data.type,
 				amountCentavos,
 				tag: data.tag,
-				sourcePartitionId: sourceId,
-				destinationPartitionId: destId,
+				sourceSubAccountId: sourceId,
+				destinationSubAccountId: destId,
 				serviceFeeCentavos,
 				description: data.description,
 				date: dateTimestamp,
@@ -338,8 +338,8 @@ export function TransactionModal({ onClose, transaction }: TransactionModalProps
 											className={`btn join-item flex-1 ${selectedType === t ? activeClass : "btn-ghost"}`}
 											onClick={() => {
 												setValue("type", t);
-												setValue("sourcePartitionId", "");
-												setValue("destinationPartitionId", "");
+												setValue("sourceSubAccountId", "");
+												setValue("destinationSubAccountId", "");
 												const firstTag = tagsByType[t]?.[0];
 												setValue("tag", firstTag ?? (t === "transfer" ? "transfer" : ""));
 											}}
@@ -415,21 +415,21 @@ export function TransactionModal({ onClose, transaction }: TransactionModalProps
 										<label className="label" htmlFor="txn-source">
 											<span className="label-text text-sm">From</span>
 										</label>
-										<PartitionGroupedSelect
+										<SubAccountGroupedSelect
 											id="txn-source"
-											value={watch("sourcePartitionId")}
-											onChange={(v) => setValue("sourcePartitionId", v)}
-											error={errors.sourcePartitionId?.message}
+											value={watch("sourceSubAccountId")}
+											onChange={(v) => setValue("sourceSubAccountId", v)}
+											error={errors.sourceSubAccountId?.message}
 											accounts={accounts}
-											partitions={partitions}
+											subAccounts={subAccounts}
 										/>
-										{errors.sourcePartitionId && (
-											<p className="text-error text-xs mt-1">{errors.sourcePartitionId.message}</p>
+										{errors.sourceSubAccountId && (
+											<p className="text-error text-xs mt-1">{errors.sourceSubAccountId.message}</p>
 										)}
 										<input
 											type="hidden"
-											{...register("sourcePartitionId", {
-												validate: (v) => v !== "" || "Select a source partition",
+											{...register("sourceSubAccountId", {
+												validate: (v) => v !== "" || "Select a source sub-account",
 											})}
 										/>
 									</div>
@@ -437,23 +437,23 @@ export function TransactionModal({ onClose, transaction }: TransactionModalProps
 										<label className="label" htmlFor="txn-dest">
 											<span className="label-text text-sm">To</span>
 										</label>
-										<PartitionGroupedSelect
+										<SubAccountGroupedSelect
 											id="txn-dest"
-											value={watch("destinationPartitionId")}
-											onChange={(v) => setValue("destinationPartitionId", v)}
-											error={errors.destinationPartitionId?.message}
+											value={watch("destinationSubAccountId")}
+											onChange={(v) => setValue("destinationSubAccountId", v)}
+											error={errors.destinationSubAccountId?.message}
 											accounts={accounts}
-											partitions={partitions}
+											subAccounts={subAccounts}
 										/>
-										{errors.destinationPartitionId && (
+										{errors.destinationSubAccountId && (
 											<p className="text-error text-xs mt-1">
-												{errors.destinationPartitionId.message}
+												{errors.destinationSubAccountId.message}
 											</p>
 										)}
 										<input
 											type="hidden"
-											{...register("destinationPartitionId", {
-												validate: (v) => v !== "" || "Select a destination partition",
+											{...register("destinationSubAccountId", {
+												validate: (v) => v !== "" || "Select a destination sub-account",
 											})}
 										/>
 									</div>
@@ -466,17 +466,17 @@ export function TransactionModal({ onClose, transaction }: TransactionModalProps
 											<label className="label" htmlFor="txn-source">
 												<span className="label-text text-sm">From</span>
 											</label>
-											<PartitionGroupedSelect
+											<SubAccountGroupedSelect
 												id="txn-source"
-												value={watch("sourcePartitionId")}
-												onChange={(v) => setValue("sourcePartitionId", v)}
-												error={errors.sourcePartitionId?.message}
+												value={watch("sourceSubAccountId")}
+												onChange={(v) => setValue("sourceSubAccountId", v)}
+												error={errors.sourceSubAccountId?.message}
 												accounts={accounts}
-												partitions={partitions}
+												subAccounts={subAccounts}
 											/>
-											{errors.sourcePartitionId && (
+											{errors.sourceSubAccountId && (
 												<p className="text-error text-xs mt-1">
-													{errors.sourcePartitionId.message}
+													{errors.sourceSubAccountId.message}
 												</p>
 											)}
 											{creditHint && (
@@ -488,10 +488,10 @@ export function TransactionModal({ onClose, transaction }: TransactionModalProps
 											)}
 											<input
 												type="hidden"
-												{...register("sourcePartitionId", {
+												{...register("sourceSubAccountId", {
 													validate: (v) => {
 														if (selectedType === "expense" || selectedType === "transfer") {
-															return v !== "" || "Select a source partition";
+															return v !== "" || "Select a source sub-account";
 														}
 														return true;
 													},
@@ -506,25 +506,25 @@ export function TransactionModal({ onClose, transaction }: TransactionModalProps
 											<label className="label" htmlFor="txn-dest">
 												<span className="label-text text-sm">To</span>
 											</label>
-											<PartitionGroupedSelect
+											<SubAccountGroupedSelect
 												id="txn-dest"
-												value={watch("destinationPartitionId")}
-												onChange={(v) => setValue("destinationPartitionId", v)}
-												error={errors.destinationPartitionId?.message}
+												value={watch("destinationSubAccountId")}
+												onChange={(v) => setValue("destinationSubAccountId", v)}
+												error={errors.destinationSubAccountId?.message}
 												accounts={accounts}
-												partitions={partitions}
+												subAccounts={subAccounts}
 											/>
-											{errors.destinationPartitionId && (
+											{errors.destinationSubAccountId && (
 												<p className="text-error text-xs mt-1">
-													{errors.destinationPartitionId.message}
+													{errors.destinationSubAccountId.message}
 												</p>
 											)}
 											<input
 												type="hidden"
-												{...register("destinationPartitionId", {
+												{...register("destinationSubAccountId", {
 													validate: (v) => {
 														if (selectedType === "income" || selectedType === "transfer") {
-															return v !== "" || "Select a destination partition";
+															return v !== "" || "Select a destination sub-account";
 														}
 														return true;
 													},

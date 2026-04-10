@@ -19,17 +19,17 @@ function getMonthHeading(): string {
 
 export function OverviewPage() {
 	const [accounts, isAccountsReady] = useTable(tables.my_accounts);
-	const [partitions, isPartitionsReady] = useTable(tables.my_partitions);
+	const [subAccounts, isSubAccountsReady] = useTable(tables.my_sub_accounts);
 	const [transactions, isTransactionsReady] = useTable(tables.my_transactions);
 	const [budgetConfigRows, isBudgetReady] = useTable(tables.my_budget_config);
 
-	const isReady = isAccountsReady && isPartitionsReady && isTransactionsReady && isBudgetReady;
+	const isReady = isAccountsReady && isSubAccountsReady && isTransactionsReady && isBudgetReady;
 
-	// Memoize expensive computations — these run O(n) or O(n*6) over transactions/partitions
-	const totalBalance = useMemo(() => computeTotalBalance(partitions), [partitions]);
+	// Memoize expensive computations — these run O(n) or O(n*6) over transactions/subAccounts
+	const totalBalance = useMemo(() => computeTotalBalance(subAccounts), [subAccounts]);
 	const accountSummaries = useMemo(
-		() => computeAccountSummaries(accounts, partitions),
-		[accounts, partitions],
+		() => computeAccountSummaries(accounts, subAccounts),
+		[accounts, subAccounts],
 	);
 	const spentByTag = useMemo(() => getCurrentMonthExpenses(transactions), [transactions]);
 	const totalSpentCentavos = useMemo(

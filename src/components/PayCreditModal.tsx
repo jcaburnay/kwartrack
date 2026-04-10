@@ -10,36 +10,39 @@ import { getVisibleTags } from "../utils/tagConfig";
 import { Input } from "./Input";
 
 interface PayCreditModalProps {
-	partitionId: bigint;
+	subAccountId: bigint;
 	outstandingCentavos: bigint;
 	onClose: () => void;
 }
 
 interface PayCreditFormValues {
-	payFromPartitionId: string;
+	payFromSubAccountId: string;
 	amount: string;
 	serviceFee: string;
 }
 
-export function PayCreditModal({ partitionId, outstandingCentavos, onClose }: PayCreditModalProps) {
+export function PayCreditModal({
+	subAccountId,
+	outstandingCentavos,
+	onClose,
+}: PayCreditModalProps) {
 	const dialogRef = useRef<HTMLDialogElement>(null);
 	const boxRef = useRef<HTMLDivElement>(null);
 	const createTransaction = useReducer(reducers.createTransaction);
-	const [allPartitions] = useTable(tables.my_partitions);
+	const [allSubAccounts] = useTable(tables.my_sub_accounts);
 	const [tagConfigs] = useTable(tables.my_tag_configs);
 	const transferTags = getVisibleTags("transfer", tagConfigs);
 	// Preserve the old "bills" categorization only if the user explicitly created it
 	// as a transfer tag. Otherwise use the first visible transfer tag or the sentinel.
 	const transferTag = transferTags.includes("bills") ? "bills" : (transferTags[0] ?? "transfer");
 
-	// Only show non-credit, non-default partitions in pay-from selector
-	// partitionType is a typed string on the partition row after pnpm generate (Plan 02)
-	const payFromPartitions = allPartitions.filter(
-		(p) => !p.isDefault && p.partitionType !== "credit",
+	// Only show non-credit, non-default sub-accounts in pay-from selector
+	const payFromSubAccounts = allSubAccounts.filter(
+		(p) => !p.isDefault && p.subAccountType !== "credit",
 	);
 
 	const defaultValues: PayCreditFormValues = {
-		payFromPartitionId: "",
+		payFromSubAccountId: "",
 		amount: (Number(outstandingCentavos) / 100).toFixed(2),
 		serviceFee: "",
 	};
@@ -64,8 +67,8 @@ export function PayCreditModal({ partitionId, outstandingCentavos, onClose }: Pa
 			type: "transfer",
 			amountCentavos,
 			tag: transferTag,
-			sourcePartitionId: BigInt(data.payFromPartitionId),
-			destinationPartitionId: partitionId,
+			sourceSubAccountId: BigInt(data.payFromSubAccountId),
+			destinationSubAccountId: subAccountId,
 			serviceFeeCentavos,
 			description: "Credit payment",
 			date: Timestamp.fromDate(new Date()),
@@ -100,29 +103,29 @@ export function PayCreditModal({ partitionId, outstandingCentavos, onClose }: Pa
 				<form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4 flex-1">
 					{/* Pay from selector */}
 					<div className="form-control">
-						<label className="label" htmlFor="payFromPartitionId">
+						<label className="label" htmlFor="payFromSubAccountId">
 							<span className="label-text">Pay from</span>
 						</label>
-						{payFromPartitions.length === 0 ? (
+						{payFromSubAccounts.length === 0 ? (
 							<p className="text-sm text-base-content/60">
-								No source partitions available. Create a wallet or savings partition first.
+								No source sub-accounts available. Create a wallet or savings sub-account first.
 							</p>
 						) : (
 							<select
-								id="payFromPartitionId"
+								id="payFromSubAccountId"
 								className="select select-bordered w-full"
-								{...register("payFromPartitionId", { required: "Source partition is required" })}
+								{...register("payFromSubAccountId", { required: "Source sub-account is required" })}
 							>
-								<option value="">Select partition</option>
-								{payFromPartitions.map((p) => (
+								<option value="">Select sub-account</option>
+								{payFromSubAccounts.map((p) => (
 									<option key={p.id.toString()} value={p.id.toString()}>
 										{p.name} ({formatPesos(p.balanceCentavos)})
 									</option>
 								))}
 							</select>
 						)}
-						{errors.payFromPartitionId && (
-							<span className="text-error text-sm mt-1">{errors.payFromPartitionId.message}</span>
+						{errors.payFromSubAccountId && (
+							<span className="text-error text-sm mt-1">{errors.payFromSubAccountId.message}</span>
 						)}
 					</div>
 
@@ -165,7 +168,7 @@ export function PayCreditModal({ partitionId, outstandingCentavos, onClose }: Pa
 						<button
 							type="submit"
 							className="btn btn-primary flex-1"
-							disabled={isSubmitting || payFromPartitions.length === 0}
+							disabled={isSubmitting || payFromSubAccounts.length === 0}
 						>
 							Confirm payment
 						</button>

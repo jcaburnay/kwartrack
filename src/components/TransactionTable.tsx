@@ -8,8 +8,8 @@ export interface TransactionRow {
 	type: string;
 	amountCentavos: bigint;
 	tag: string;
-	sourcePartitionId: bigint;
-	destinationPartitionId: bigint;
+	sourceSubAccountId: bigint;
+	destinationSubAccountId: bigint;
 	serviceFeeCentavos: bigint;
 	description: string;
 	date: { microsSinceUnixEpoch: bigint };
@@ -20,7 +20,7 @@ export interface TransactionRow {
 interface TransactionTableProps {
 	transactions: TransactionRow[];
 	accounts: readonly { id: bigint; name: string }[];
-	partitions: readonly { id: bigint; accountId: bigint; name: string; isDefault: boolean }[];
+	subAccounts: readonly { id: bigint; accountId: bigint; name: string; isDefault: boolean }[];
 	hasActiveFilters: boolean;
 	onEdit: (transaction: TransactionRow) => void;
 	onDelete: (transaction: TransactionRow) => void;
@@ -28,27 +28,27 @@ interface TransactionTableProps {
 	showAccountColumn?: boolean;
 }
 
-function formatPartitionLabel(
-	partitionId: bigint,
+function formatSubAccountLabel(
+	subAccountId: bigint,
 	accounts: readonly { id: bigint; name: string }[],
-	partitions: readonly { id: bigint; accountId: bigint; name: string; isDefault: boolean }[],
+	subAccounts: readonly { id: bigint; accountId: bigint; name: string; isDefault: boolean }[],
 ): string {
-	if (partitionId === 0n) return "";
-	const partition = partitions.find((p) => p.id === partitionId);
-	if (!partition) return "";
-	const account = accounts.find((a) => a.id === partition.accountId);
+	if (subAccountId === 0n) return "";
+	const subAccount = subAccounts.find((sa) => sa.id === subAccountId);
+	if (!subAccount) return "";
+	const account = accounts.find((a) => a.id === subAccount.accountId);
 	if (!account) return "";
-	if (partition.isDefault) return account.name;
-	return `${account.name}/${partition.name}`;
+	if (subAccount.isDefault) return account.name;
+	return `${account.name}/${subAccount.name}`;
 }
 
 export function formatAccountLabel(
 	txn: TransactionRow,
 	accounts: readonly { id: bigint; name: string }[],
-	partitions: readonly { id: bigint; accountId: bigint; name: string; isDefault: boolean }[],
+	subAccounts: readonly { id: bigint; accountId: bigint; name: string; isDefault: boolean }[],
 ): string {
-	const srcPart = partitions.find((p) => p.id === txn.sourcePartitionId);
-	const dstPart = partitions.find((p) => p.id === txn.destinationPartitionId);
+	const srcPart = subAccounts.find((sa) => sa.id === txn.sourceSubAccountId);
+	const dstPart = subAccounts.find((sa) => sa.id === txn.destinationSubAccountId);
 	const srcAcct = srcPart ? accounts.find((a) => a.id === srcPart.accountId) : null;
 	const dstAcct = dstPart ? accounts.find((a) => a.id === dstPart.accountId) : null;
 
@@ -84,7 +84,7 @@ function typeBadgeClass(type: string): string {
 export function TransactionTable({
 	transactions,
 	accounts,
-	partitions,
+	subAccounts,
 	hasActiveFilters,
 	onEdit,
 	onDelete,
@@ -156,7 +156,7 @@ export function TransactionTable({
 							)}
 							{showAccountColumn && (
 								<span className="text-xs text-base-content/35">
-									· {formatAccountLabel(txn, accounts, partitions)}
+									· {formatAccountLabel(txn, accounts, subAccounts)}
 								</span>
 							)}
 						</div>
@@ -249,14 +249,14 @@ export function TransactionTable({
 								<td className="text-sm capitalize">{txn.tag?.replace(/-/g, " ")}</td>
 								{showAccountColumn && (
 									<td className="text-sm text-base-content/50">
-										{formatAccountLabel(txn, accounts, partitions)}
+										{formatAccountLabel(txn, accounts, subAccounts)}
 									</td>
 								)}
 								<td className="text-sm">
-									{formatPartitionLabel(txn.sourcePartitionId, accounts, partitions)}
+									{formatSubAccountLabel(txn.sourceSubAccountId, accounts, subAccounts)}
 								</td>
 								<td className="text-sm">
-									{formatPartitionLabel(txn.destinationPartitionId, accounts, partitions)}
+									{formatSubAccountLabel(txn.destinationSubAccountId, accounts, subAccounts)}
 								</td>
 								<td className="text-sm text-base-content/60 font-mono">
 									{txn.serviceFeeCentavos !== 0n ? formatPesos(txn.serviceFeeCentavos) : ""}

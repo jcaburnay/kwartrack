@@ -4,19 +4,20 @@
  * All monetary values are BigInt centavos (i64 from SpacetimeDB).
  */
 
-interface PartitionRow {
+interface SubAccountRow {
 	id: bigint;
 	accountId: bigint;
 	name: string;
 	balanceCentavos: bigint;
 	isDefault: boolean;
-	partitionType: string;
+	subAccountType: string;
 	creditLimitCentavos: bigint;
 }
 
 interface AccountRow {
 	id: bigint;
 	name: string;
+	iconBankId?: string | null;
 }
 
 interface TransactionRow {
@@ -62,29 +63,35 @@ const MONTH_LABELS = [
 ];
 
 /**
- * Sum all balanceCentavos across partitions.
+ * Sum all balanceCentavos across sub-accounts.
  */
-export function computeTotalBalance(partitions: readonly PartitionRow[]): bigint {
-	return partitions.reduce((sum, p) => sum + p.balanceCentavos, 0n);
+export function computeTotalBalance(subAccounts: readonly SubAccountRow[]): bigint {
+	return subAccounts.reduce((sum, sa) => sum + sa.balanceCentavos, 0n);
 }
 
 /**
- * For each account: sum partition balances, derive type
- * ("Credit Card" if any partition has partitionType === "credit", else "Savings").
+ * For each account: sum sub-account balances, derive type
+ * ("Credit Card" if any sub-account has subAccountType === "credit", else "Savings").
  * Returns AccountSummary[] sorted by name.
  */
 export function computeAccountSummaries(
 	accounts: readonly AccountRow[],
-	partitions: readonly PartitionRow[],
+	subAccounts: readonly SubAccountRow[],
 ): AccountSummary[] {
 	return accounts
 		.map((acct) => {
-			const acctPartitions = partitions.filter((p) => p.accountId === acct.id);
-			const balanceCentavos = acctPartitions.reduce((sum, p) => sum + p.balanceCentavos, 0n);
-			const type = acctPartitions.some((p) => p.partitionType === "credit")
+			const acctSubAccounts = subAccounts.filter((sa) => sa.accountId === acct.id);
+			const balanceCentavos = acctSubAccounts.reduce((sum, sa) => sum + sa.balanceCentavos, 0n);
+			const type = acctSubAccounts.some((sa) => sa.subAccountType === "credit")
 				? "Credit Card"
 				: "Savings";
-			return { id: acct.id, name: acct.name, type, balanceCentavos, iconBankId: acct.iconBankId };
+			return {
+				id: acct.id,
+				name: acct.name,
+				type,
+				balanceCentavos,
+				iconBankId: acct.iconBankId ?? undefined,
+			};
 		})
 		.sort((a, b) => a.name.localeCompare(b.name));
 }

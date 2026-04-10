@@ -5,10 +5,10 @@ import spacetimedb, {
 	budget_allocation,
 	budget_config,
 	debt,
-	partition,
 	recurring_transaction_definition,
 	split_event,
 	split_participant,
+	sub_account,
 	transaction,
 	user_tag_config,
 } from "./schema";
@@ -64,32 +64,32 @@ function isAuthorized(ctx: AppCtx, ownerIdentity: ReturnType<typeof resolveOwner
 	return ownerIdentity.toHexString() === resolved.toHexString();
 }
 
-// applyBalance: applies a debit or credit direction to a partition's balanceCentavos.
-// Credit partitions use inverted semantics (D-01): expense INCREASES outstanding (0=clean, positive=owed).
+// applyBalance: applies a debit or credit direction to a sub-account's balanceCentavos.
+// Credit sub-accounts use inverted semantics (D-01): expense INCREASES outstanding (0=clean, positive=owed).
 // direction "debit" = take money out (expense/transfer-from); "credit" = put money in (income/transfer-to).
 // delta is always positive.
 function applyBalance(
-	partition: { balanceCentavos: bigint; partitionType: string },
+	subAccount: { balanceCentavos: bigint; subAccountType: string },
 	direction: "debit" | "credit",
 	delta: bigint,
 ): bigint {
-	const isCreditPartition = partition.partitionType === "credit";
+	const isCreditSubAccount = subAccount.subAccountType === "credit";
 	if (direction === "debit") {
 		// Non-credit: balance goes down. Credit: outstanding goes up.
-		return isCreditPartition
-			? partition.balanceCentavos + delta
-			: partition.balanceCentavos - delta;
+		return isCreditSubAccount
+			? subAccount.balanceCentavos + delta
+			: subAccount.balanceCentavos - delta;
 	} else {
 		// Non-credit: balance goes up. Credit: outstanding goes down (payment).
-		return isCreditPartition
-			? partition.balanceCentavos - delta
-			: partition.balanceCentavos + delta;
+		return isCreditSubAccount
+			? subAccount.balanceCentavos - delta
+			: subAccount.balanceCentavos + delta;
 	}
 }
 
 // =============================================================================
 // VIEWS — data privacy per D-09
-// Client subscribes via: 'SELECT * FROM my_accounts', 'SELECT * FROM my_partitions'
+// Client subscribes via: 'SELECT * FROM my_accounts', 'SELECT * FROM my_sub_accounts'
 // Resolves alias to primary identity so any browser session sees the same data.
 // =============================================================================
 
@@ -103,13 +103,13 @@ export const my_accounts = spacetimedb.view(
 	},
 );
 
-export const my_partitions = spacetimedb.view(
-	{ name: "my_partitions", public: true },
-	t.array(partition.rowType),
+export const my_sub_accounts = spacetimedb.view(
+	{ name: "my_sub_accounts", public: true },
+	t.array(sub_account.rowType),
 	(ctx) => {
 		const alias = ctx.db.identity_alias.stdbIdentity.find(ctx.sender);
 		const ownerIdentity = alias?.primaryIdentity ?? ctx.sender;
-		return [...ctx.db.partition.partition_owner.filter(ownerIdentity)];
+		return [...ctx.db.sub_account.sub_account_owner.filter(ownerIdentity)];
 	},
 );
 
@@ -218,8 +218,8 @@ export const create_transaction = spacetimedb.reducer(
 		type: t.string(),
 		amountCentavos: t.i64(),
 		tag: t.string(),
-		sourcePartitionId: t.u64(),
-		destinationPartitionId: t.u64(),
+		sourceSubAccountId: t.u64(),
+		destinationSubAccountId: t.u64(),
 		serviceFeeCentavos: t.i64(),
 		description: t.string(),
 		date: t.timestamp(),
@@ -230,8 +230,8 @@ export const create_transaction = spacetimedb.reducer(
 			type,
 			amountCentavos,
 			tag,
-			sourcePartitionId,
-			destinationPartitionId,
+			sourceSubAccountId,
+			destinationSubAccountId,
 			serviceFeeCentavos,
 			description,
 			date,
@@ -242,24 +242,24 @@ export const create_transaction = spacetimedb.reducer(
 
 		const ownerIdentity = resolveOwner(ctx);
 
-		// Validate and update source partition (expense, transfer)
+		// Validate and update source sub-account (expense, transfer)
 		if (type === "expense" || type === "transfer") {
-			const source = ctx.db.partition.id.find(sourcePartitionId);
-			if (!source) throw new SenderError("Source partition not found");
+			const source = ctx.db.sub_account.id.find(sourceSubAccountId);
+			if (!source) throw new SenderError("Source sub-account not found");
 			if (!isAuthorized(ctx, source.ownerIdentity)) throw new SenderError("Not authorized");
 			const debit = amountCentavos + serviceFeeCentavos;
-			ctx.db.partition.id.update({
+			ctx.db.sub_account.id.update({
 				...source,
 				balanceCentavos: applyBalance(source, "debit", debit),
 			});
 		}
 
-		// Validate and update destination partition (income, transfer)
+		// Validate and update destination sub-account (income, transfer)
 		if (type === "income" || type === "transfer") {
-			const destination = ctx.db.partition.id.find(destinationPartitionId);
-			if (!destination) throw new SenderError("Destination partition not found");
+			const destination = ctx.db.sub_account.id.find(destinationSubAccountId);
+			if (!destination) throw new SenderError("Destination sub-account not found");
 			if (!isAuthorized(ctx, destination.ownerIdentity)) throw new SenderError("Not authorized");
-			ctx.db.partition.id.update({
+			ctx.db.sub_account.id.update({
 				...destination,
 				balanceCentavos: applyBalance(destination, "credit", amountCentavos),
 			});
@@ -271,8 +271,8 @@ export const create_transaction = spacetimedb.reducer(
 			type,
 			amountCentavos,
 			tag,
-			sourcePartitionId,
-			destinationPartitionId,
+			sourceSubAccountId,
+			destinationSubAccountId,
 			serviceFeeCentavos,
 			description,
 			date,
@@ -289,8 +289,8 @@ export const edit_transaction = spacetimedb.reducer(
 		type: t.string(),
 		amountCentavos: t.i64(),
 		tag: t.string(),
-		sourcePartitionId: t.u64(),
-		destinationPartitionId: t.u64(),
+		sourceSubAccountId: t.u64(),
+		destinationSubAccountId: t.u64(),
 		serviceFeeCentavos: t.i64(),
 		description: t.string(),
 		date: t.timestamp(),
@@ -302,8 +302,8 @@ export const edit_transaction = spacetimedb.reducer(
 			type,
 			amountCentavos,
 			tag,
-			sourcePartitionId,
-			destinationPartitionId,
+			sourceSubAccountId,
+			destinationSubAccountId,
 			serviceFeeCentavos,
 			description,
 			date,
@@ -316,19 +316,19 @@ export const edit_transaction = spacetimedb.reducer(
 
 		// --- Reverse old transaction's balance effect ---
 		if (existing.type === "expense" || existing.type === "transfer") {
-			const oldSource = ctx.db.partition.id.find(existing.sourcePartitionId);
+			const oldSource = ctx.db.sub_account.id.find(existing.sourceSubAccountId);
 			if (oldSource) {
 				const oldDebit = existing.amountCentavos + existing.serviceFeeCentavos;
-				ctx.db.partition.id.update({
+				ctx.db.sub_account.id.update({
 					...oldSource,
 					balanceCentavos: applyBalance(oldSource, "credit", oldDebit), // reversal = opposite direction
 				});
 			}
 		}
 		if (existing.type === "income" || existing.type === "transfer") {
-			const oldDest = ctx.db.partition.id.find(existing.destinationPartitionId);
+			const oldDest = ctx.db.sub_account.id.find(existing.destinationSubAccountId);
 			if (oldDest) {
-				ctx.db.partition.id.update({
+				ctx.db.sub_account.id.update({
 					...oldDest,
 					balanceCentavos: applyBalance(oldDest, "debit", existing.amountCentavos), // reversal = opposite direction
 				});
@@ -337,20 +337,20 @@ export const edit_transaction = spacetimedb.reducer(
 
 		// --- Apply new transaction's balance effect ---
 		if (type === "expense" || type === "transfer") {
-			const source = ctx.db.partition.id.find(sourcePartitionId);
-			if (!source) throw new SenderError("Source partition not found");
+			const source = ctx.db.sub_account.id.find(sourceSubAccountId);
+			if (!source) throw new SenderError("Source sub-account not found");
 			if (!isAuthorized(ctx, source.ownerIdentity)) throw new SenderError("Not authorized");
 			const debit = amountCentavos + serviceFeeCentavos;
-			ctx.db.partition.id.update({
+			ctx.db.sub_account.id.update({
 				...source,
 				balanceCentavos: applyBalance(source, "debit", debit),
 			});
 		}
 		if (type === "income" || type === "transfer") {
-			const dest = ctx.db.partition.id.find(destinationPartitionId);
-			if (!dest) throw new SenderError("Destination partition not found");
+			const dest = ctx.db.sub_account.id.find(destinationSubAccountId);
+			if (!dest) throw new SenderError("Destination sub-account not found");
 			if (!isAuthorized(ctx, dest.ownerIdentity)) throw new SenderError("Not authorized");
-			ctx.db.partition.id.update({
+			ctx.db.sub_account.id.update({
 				...dest,
 				balanceCentavos: applyBalance(dest, "credit", amountCentavos),
 			});
@@ -361,8 +361,8 @@ export const edit_transaction = spacetimedb.reducer(
 			type,
 			amountCentavos,
 			tag,
-			sourcePartitionId,
-			destinationPartitionId,
+			sourceSubAccountId,
+			destinationSubAccountId,
 			serviceFeeCentavos,
 			description,
 			date,
@@ -379,19 +379,19 @@ export const delete_transaction = spacetimedb.reducer(
 
 		// Reverse balance effect (opposite direction to undo the original transaction)
 		if (existing.type === "expense" || existing.type === "transfer") {
-			const source = ctx.db.partition.id.find(existing.sourcePartitionId);
+			const source = ctx.db.sub_account.id.find(existing.sourceSubAccountId);
 			if (source) {
 				const debit = existing.amountCentavos + existing.serviceFeeCentavos;
-				ctx.db.partition.id.update({
+				ctx.db.sub_account.id.update({
 					...source,
 					balanceCentavos: applyBalance(source, "credit", debit), // undo the debit
 				});
 			}
 		}
 		if (existing.type === "income" || existing.type === "transfer") {
-			const dest = ctx.db.partition.id.find(existing.destinationPartitionId);
+			const dest = ctx.db.sub_account.id.find(existing.destinationSubAccountId);
 			if (dest) {
-				ctx.db.partition.id.update({
+				ctx.db.sub_account.id.update({
 					...dest,
 					balanceCentavos: applyBalance(dest, "debit", existing.amountCentavos), // undo the credit
 				});
@@ -408,8 +408,8 @@ export const delete_transaction = spacetimedb.reducer(
 
 // create_account
 // Client: conn.reducers.createAccount({ name: 'Maya', initialBalanceCentavos: 12050000n })
-// If initialBalanceCentavos > 0n => isStandalone=true, hidden default partition auto-created (D-04)
-// If initialBalanceCentavos === 0n => isStandalone=false, no partitions created
+// If initialBalanceCentavos > 0n => isStandalone=true, hidden default sub-account auto-created (D-04)
+// If initialBalanceCentavos === 0n => isStandalone=false, no sub-accounts created
 export const create_account = spacetimedb.reducer(
 	{ name: t.string(), initialBalanceCentavos: t.i64(), iconBankId: t.string().optional() },
 	(ctx, { name, initialBalanceCentavos, iconBankId }) => {
@@ -427,8 +427,8 @@ export const create_account = spacetimedb.reducer(
 		});
 
 		if (isStandalone) {
-			// Hidden default partition stores the initial balance (D-04)
-			ctx.db.partition.insert({
+			// Hidden default sub-account stores the initial balance (D-04)
+			ctx.db.sub_account.insert({
 				id: 0n,
 				accountId: accountRow.id,
 				ownerIdentity,
@@ -436,7 +436,7 @@ export const create_account = spacetimedb.reducer(
 				balanceCentavos: initialBalanceCentavos,
 				isDefault: true,
 				createdAt: ctx.timestamp,
-				partitionType: "wallet",
+				subAccountType: "wallet",
 				creditLimitCentavos: 0n,
 			});
 		}
@@ -476,101 +476,166 @@ export const update_account_icon = spacetimedb.reducer(
 
 // delete_account
 // Client: conn.reducers.deleteAccount({ accountId: 1n })
-// Cascades: deletes all partitions (including hidden default partition) first (D-15)
+// Cascades: deletes all sub-accounts (including hidden default sub-account) first (D-15)
 export const delete_account = spacetimedb.reducer({ accountId: t.u64() }, (ctx, { accountId }) => {
 	const existing = ctx.db.account.id.find(accountId);
 	if (!existing) throw new SenderError("Account not found");
 	if (!isAuthorized(ctx, existing.ownerIdentity)) {
 		throw new SenderError("Not authorized");
 	}
-	for (const p of ctx.db.partition.partition_account.filter(accountId)) {
-		ctx.db.partition.id.delete(p.id);
+	for (const sa of ctx.db.sub_account.sub_account_account.filter(accountId)) {
+		ctx.db.sub_account.id.delete(sa.id);
 	}
 	ctx.db.account.id.delete(accountId);
 });
 
 // =============================================================================
-// PARTITION REDUCERS
+// SUB-ACCOUNT REDUCERS
 // =============================================================================
 
-// add_partition
-// Client: conn.reducers.addPartition({ accountId: 1n, name: 'Ewallet', initialBalanceCentavos: 0n, partitionType: 'wallet', creditLimitCentavos: 0n })
-// Handles standalone->partitioned conversion (D-08)
-export const add_partition = spacetimedb.reducer(
+// add_sub_account
+// Client: conn.reducers.addSubAccount({ accountId: 1n, name: 'Savings', initialBalanceCentavos: 0n, subAccountType: 'savings', creditLimitCentavos: 0n })
+// Only for non-standalone accounts. For standalone accounts, use convert_and_create_sub_account.
+export const add_sub_account = spacetimedb.reducer(
 	{
 		accountId: t.u64(),
 		name: t.string(),
 		initialBalanceCentavos: t.i64(),
-		partitionType: t.string(), // new: 'wallet' | 'savings' | 'time-deposit' | 'credit'
-		creditLimitCentavos: t.i64(), // new: 0n for non-credit
+		subAccountType: t.string(), // 'wallet' | 'savings' | 'time-deposit' | 'credit'
+		creditLimitCentavos: t.i64(),
 	},
-	(ctx, { accountId, name, initialBalanceCentavos, partitionType, creditLimitCentavos }) => {
-		if (!name.trim()) throw new SenderError("Partition name is required");
+	(ctx, { accountId, name, initialBalanceCentavos, subAccountType, creditLimitCentavos }) => {
+		if (!name.trim()) throw new SenderError("Sub-account name is required");
 		const acc = ctx.db.account.id.find(accountId);
 		if (!acc) throw new SenderError("Account not found");
-		if (!isAuthorized(ctx, acc.ownerIdentity)) {
-			throw new SenderError("Not authorized");
-		}
+		if (!isAuthorized(ctx, acc.ownerIdentity)) throw new SenderError("Not authorized");
+		if (acc.isStandalone)
+			throw new SenderError("Account is standalone — use convert_and_create_sub_account");
 
 		const ownerIdentity = resolveOwner(ctx);
 
-		if (acc.isStandalone) {
-			// Standalone->partitioned conversion (D-08): delete hidden default partition
-			for (const p of ctx.db.partition.partition_account.filter(accountId)) {
-				if (p.isDefault) ctx.db.partition.id.delete(p.id);
-			}
-			ctx.db.account.id.update({ ...acc, isStandalone: false });
-		}
-
-		ctx.db.partition.insert({
+		ctx.db.sub_account.insert({
 			id: 0n,
 			accountId,
 			ownerIdentity,
 			name: name.trim(),
-			balanceCentavos: initialBalanceCentavos,
+			balanceCentavos: subAccountType === "credit" ? 0n : initialBalanceCentavos,
 			isDefault: false,
 			createdAt: ctx.timestamp,
-			partitionType: partitionType || "wallet",
+			subAccountType: subAccountType || "wallet",
 			creditLimitCentavos: creditLimitCentavos ?? 0n,
 		});
 	},
 );
 
-// rename_partition
-// Client: conn.reducers.renamePartition({ partitionId: 3n, newName: 'Savings' })
-export const rename_partition = spacetimedb.reducer(
-	{ partitionId: t.u64(), newName: t.string() },
-	(ctx, { partitionId, newName }) => {
-		if (!newName.trim()) throw new SenderError("Partition name is required");
-		const existing = ctx.db.partition.id.find(partitionId);
-		if (!existing) throw new SenderError("Partition not found");
-		if (!isAuthorized(ctx, existing.ownerIdentity)) {
-			throw new SenderError("Not authorized");
+// convert_and_create_sub_account
+// Called when adding the first sub-account to a standalone account.
+// Atomically: converts hidden default sub-account → visible (or deletes if balance=0),
+// marks account as non-standalone, and inserts the new sub-account.
+// Client: conn.reducers.convertAndCreateSubAccount({ accountId: 1n, newName: 'Savings', newSubAccountType: 'savings', newCreditLimitCentavos: 0n, existingName: 'Main', existingSubAccountType: 'wallet' })
+export const convert_and_create_sub_account = spacetimedb.reducer(
+	{
+		accountId: t.u64(),
+		newName: t.string(),
+		newSubAccountType: t.string(),
+		newCreditLimitCentavos: t.i64(),
+		existingName: t.string(),
+		existingSubAccountType: t.string(),
+	},
+	(
+		ctx,
+		{
+			accountId,
+			newName,
+			newSubAccountType,
+			newCreditLimitCentavos,
+			existingName,
+			existingSubAccountType,
+		},
+	) => {
+		if (!newName.trim()) throw new SenderError("Sub-account name is required");
+		if (existingSubAccountType === "credit")
+			throw new SenderError("Cannot convert default sub-account to credit type");
+		const acc = ctx.db.account.id.find(accountId);
+		if (!acc) throw new SenderError("Account not found");
+		if (!isAuthorized(ctx, acc.ownerIdentity)) throw new SenderError("Not authorized");
+		if (!acc.isStandalone) throw new SenderError("Account is not standalone");
+
+		const ownerIdentity = resolveOwner(ctx);
+
+		// Find the hidden default sub-account ID via index, then fetch full row for update
+		let defaultSubAccountId: bigint | undefined;
+		for (const sa of ctx.db.sub_account.sub_account_account.filter(accountId)) {
+			if (sa.isDefault) {
+				defaultSubAccountId = sa.id;
+				break;
+			}
 		}
-		ctx.db.partition.id.update({ ...existing, name: newName.trim() });
+
+		if (defaultSubAccountId !== undefined) {
+			const defaultSubAccount = ctx.db.sub_account.id.find(defaultSubAccountId);
+			if (defaultSubAccount) {
+				if (defaultSubAccount.balanceCentavos > 0n) {
+					// Convert: make the hidden default visible with the user's chosen name
+					ctx.db.sub_account.id.update({
+						...defaultSubAccount,
+						name: existingName.trim() || "Main",
+						isDefault: false,
+						subAccountType: existingSubAccountType || "wallet",
+					});
+				} else {
+					// Zero balance: just remove the hidden default
+					ctx.db.sub_account.id.delete(defaultSubAccountId);
+				}
+			}
+		}
+
+		// Mark account as no longer standalone
+		ctx.db.account.id.update({ ...acc, isStandalone: false });
+
+		// Insert the new sub-account (always starts at 0 balance)
+		ctx.db.sub_account.insert({
+			id: 0n,
+			accountId,
+			ownerIdentity,
+			name: newName.trim(),
+			balanceCentavos: 0n,
+			isDefault: false,
+			createdAt: ctx.timestamp,
+			subAccountType: newSubAccountType || "wallet",
+			creditLimitCentavos: newSubAccountType === "credit" ? newCreditLimitCentavos : 0n,
+		});
 	},
 );
 
-// edit_partition — update name and credit limit for credit partitions
-// Client: conn.reducers.editPartition({ partitionId: 1n, newName: 'RCBC Credit', newCreditLimitCentavos: 15000000n })
-export const edit_partition = spacetimedb.reducer(
+// rename_sub_account
+export const rename_sub_account = spacetimedb.reducer(
+	{ subAccountId: t.u64(), newName: t.string() },
+	(ctx, { subAccountId, newName }) => {
+		if (!newName.trim()) throw new SenderError("Sub-account name is required");
+		const existing = ctx.db.sub_account.id.find(subAccountId);
+		if (!existing) throw new SenderError("Sub-account not found");
+		if (!isAuthorized(ctx, existing.ownerIdentity)) throw new SenderError("Not authorized");
+		ctx.db.sub_account.id.update({ ...existing, name: newName.trim() });
+	},
+);
+
+// edit_sub_account — update name and credit limit for credit sub-accounts
+export const edit_sub_account = spacetimedb.reducer(
 	{
-		partitionId: t.u64(),
+		subAccountId: t.u64(),
 		newName: t.string(),
 		newCreditLimitCentavos: t.i64(),
 	},
-	(ctx, { partitionId, newName, newCreditLimitCentavos }) => {
-		if (!newName.trim()) throw new SenderError("Partition name is required");
+	(ctx, { subAccountId, newName, newCreditLimitCentavos }) => {
+		if (!newName.trim()) throw new SenderError("Sub-account name is required");
 		if (newCreditLimitCentavos <= 0n) throw new SenderError("Credit limit must be greater than 0");
-		const existing = ctx.db.partition.id.find(partitionId);
-		if (!existing) throw new SenderError("Partition not found");
-		if (!isAuthorized(ctx, existing.ownerIdentity)) {
-			throw new SenderError("Not authorized");
-		}
-		if (existing.partitionType !== "credit") {
-			throw new SenderError("Only credit partitions can be edited");
-		}
-		ctx.db.partition.id.update({
+		const existing = ctx.db.sub_account.id.find(subAccountId);
+		if (!existing) throw new SenderError("Sub-account not found");
+		if (!isAuthorized(ctx, existing.ownerIdentity)) throw new SenderError("Not authorized");
+		if (existing.subAccountType !== "credit")
+			throw new SenderError("Only credit sub-accounts can be edited");
+		ctx.db.sub_account.id.update({
 			...existing,
 			name: newName.trim(),
 			creditLimitCentavos: newCreditLimitCentavos,
@@ -578,17 +643,14 @@ export const edit_partition = spacetimedb.reducer(
 	},
 );
 
-// delete_partition
-// Client: conn.reducers.deletePartition({ partitionId: 3n })
-export const delete_partition = spacetimedb.reducer(
-	{ partitionId: t.u64() },
-	(ctx, { partitionId }) => {
-		const existing = ctx.db.partition.id.find(partitionId);
-		if (!existing) throw new SenderError("Partition not found");
-		if (!isAuthorized(ctx, existing.ownerIdentity)) {
-			throw new SenderError("Not authorized");
-		}
-		ctx.db.partition.id.delete(partitionId);
+// delete_sub_account
+export const delete_sub_account = spacetimedb.reducer(
+	{ subAccountId: t.u64() },
+	(ctx, { subAccountId }) => {
+		const existing = ctx.db.sub_account.id.find(subAccountId);
+		if (!existing) throw new SenderError("Sub-account not found");
+		if (!isAuthorized(ctx, existing.ownerIdentity)) throw new SenderError("Not authorized");
+		ctx.db.sub_account.id.delete(subAccountId);
 	},
 );
 
@@ -673,21 +735,21 @@ function computeFirstFireMicros(nowMicros: bigint, dayOfMonth: number): bigint {
 }
 
 // create_recurring_definition
-// Client: conn.reducers.createRecurringDefinition({ name, type, amountCentavos, tag, partitionId, dayOfMonth })
+// Client: conn.reducers.createRecurringDefinition({ name, type, amountCentavos, tag, subAccountId, dayOfMonth })
 export const create_recurring_definition = spacetimedb.reducer(
 	{
 		name: t.string(),
 		type: t.string(),
 		amountCentavos: t.i64(),
 		tag: t.string(),
-		partitionId: t.u64(),
+		subAccountId: t.u64(),
 		dayOfMonth: t.u8(),
 		remainingMonths: t.u16(),
 		totalMonths: t.u16(),
 	},
 	(
 		ctx,
-		{ name, type, amountCentavos, tag, partitionId, dayOfMonth, remainingMonths, totalMonths },
+		{ name, type, amountCentavos, tag, subAccountId, dayOfMonth, remainingMonths, totalMonths },
 	) => {
 		if (!name.trim()) throw new SenderError("Name is required");
 		if (amountCentavos <= 0n) throw new SenderError("Amount must be greater than 0");
@@ -702,7 +764,7 @@ export const create_recurring_definition = spacetimedb.reducer(
 			type,
 			amountCentavos,
 			tag,
-			partitionId,
+			subAccountId,
 			dayOfMonth,
 			isPaused: false,
 			remainingMonths,
@@ -721,7 +783,7 @@ export const create_recurring_definition = spacetimedb.reducer(
 );
 
 // edit_recurring_definition
-// Client: conn.reducers.editRecurringDefinition({ definitionId, name, type, amountCentavos, tag, partitionId, dayOfMonth })
+// Client: conn.reducers.editRecurringDefinition({ definitionId, name, type, amountCentavos, tag, subAccountId, dayOfMonth })
 export const edit_recurring_definition = spacetimedb.reducer(
 	{
 		definitionId: t.u64(),
@@ -729,13 +791,13 @@ export const edit_recurring_definition = spacetimedb.reducer(
 		type: t.string(),
 		amountCentavos: t.i64(),
 		tag: t.string(),
-		partitionId: t.u64(),
+		subAccountId: t.u64(),
 		dayOfMonth: t.u8(),
 		remainingMonths: t.u16(),
 	},
 	(
 		ctx,
-		{ definitionId, name, type, amountCentavos, tag, partitionId, dayOfMonth, remainingMonths },
+		{ definitionId, name, type, amountCentavos, tag, subAccountId, dayOfMonth, remainingMonths },
 	) => {
 		const existing = ctx.db.recurring_transaction_definition.id.find(definitionId);
 		if (!existing) throw new SenderError("Definition not found");
@@ -750,7 +812,7 @@ export const edit_recurring_definition = spacetimedb.reducer(
 			type,
 			amountCentavos,
 			tag,
-			partitionId,
+			subAccountId,
 			dayOfMonth,
 			remainingMonths,
 		});
@@ -885,19 +947,19 @@ export const set_budget_allocations = spacetimedb.reducer(
 // DEBT REDUCERS
 // =============================================================================
 
-// create_debt: records a new debt. Loaned debts debit the source partition immediately.
+// create_debt: records a new debt. Loaned debts debit the source sub-account immediately.
 // Owed debts are tracking-only (no balance impact until settled).
 export const create_debt = spacetimedb.reducer(
 	{
 		personName: t.string(),
 		direction: t.string(),
 		amountCentavos: t.i64(),
-		partitionId: t.u64(),
+		subAccountId: t.u64(),
 		tag: t.string(),
 		description: t.string(),
 		date: t.timestamp(),
 	},
-	(ctx, { personName, direction, amountCentavos, partitionId, tag, description, date }) => {
+	(ctx, { personName, direction, amountCentavos, subAccountId, tag, description, date }) => {
 		if (!personName.trim()) throw new SenderError("Person name is required");
 		if (amountCentavos <= 0n) throw new SenderError("Amount must be greater than 0");
 		if (direction !== "loaned" && direction !== "owed")
@@ -906,11 +968,11 @@ export const create_debt = spacetimedb.reducer(
 		const ownerIdentity = resolveOwner(ctx);
 
 		if (direction === "loaned") {
-			// Debit source partition (money going out to the person)
-			const source = ctx.db.partition.id.find(partitionId);
-			if (!source) throw new SenderError("Source partition not found");
+			// Debit source sub-account (money going out to the person)
+			const source = ctx.db.sub_account.id.find(subAccountId);
+			if (!source) throw new SenderError("Source sub-account not found");
 			if (!isAuthorized(ctx, source.ownerIdentity)) throw new SenderError("Not authorized");
-			ctx.db.partition.id.update({
+			ctx.db.sub_account.id.update({
 				...source,
 				balanceCentavos: applyBalance(source, "debit", amountCentavos),
 			});
@@ -922,8 +984,8 @@ export const create_debt = spacetimedb.reducer(
 				type: "expense",
 				amountCentavos,
 				tag,
-				sourcePartitionId: partitionId,
-				destinationPartitionId: 0n,
+				sourceSubAccountId: subAccountId,
+				destinationSubAccountId: 0n,
 				serviceFeeCentavos: 0n,
 				description: `Loaned to ${personName.trim()}${description ? `: ${description}` : ""}`,
 				date,
@@ -939,7 +1001,7 @@ export const create_debt = spacetimedb.reducer(
 			personName: personName.trim(),
 			direction,
 			amountCentavos,
-			partitionId: direction === "loaned" ? partitionId : 0n,
+			subAccountId: direction === "loaned" ? subAccountId : 0n,
 			settledAmountCentavos: 0n,
 			tag,
 			description: description.trim(),
@@ -956,9 +1018,9 @@ export const settle_debt = spacetimedb.reducer(
 	{
 		debtId: t.u64(),
 		amountCentavos: t.i64(),
-		partitionId: t.u64(),
+		subAccountId: t.u64(),
 	},
-	(ctx, { debtId, amountCentavos, partitionId }) => {
+	(ctx, { debtId, amountCentavos, subAccountId }) => {
 		const existing = ctx.db.debt.id.find(debtId);
 		if (!existing) throw new SenderError("Debt not found");
 		if (!isAuthorized(ctx, existing.ownerIdentity)) throw new SenderError("Not authorized");
@@ -968,15 +1030,15 @@ export const settle_debt = spacetimedb.reducer(
 		if (amountCentavos > remaining) throw new SenderError("Amount exceeds remaining balance");
 
 		const ownerIdentity = resolveOwner(ctx);
-		const partitionRow = ctx.db.partition.id.find(partitionId);
-		if (!partitionRow) throw new SenderError("Partition not found");
-		if (!isAuthorized(ctx, partitionRow.ownerIdentity)) throw new SenderError("Not authorized");
+		const subAccountRow = ctx.db.sub_account.id.find(subAccountId);
+		if (!subAccountRow) throw new SenderError("Sub-account not found");
+		if (!isAuthorized(ctx, subAccountRow.ownerIdentity)) throw new SenderError("Not authorized");
 
 		if (existing.direction === "loaned") {
-			// Money coming back to you → income transaction, credit the partition
-			ctx.db.partition.id.update({
-				...partitionRow,
-				balanceCentavos: applyBalance(partitionRow, "credit", amountCentavos),
+			// Money coming back to you → income transaction, credit the sub-account
+			ctx.db.sub_account.id.update({
+				...subAccountRow,
+				balanceCentavos: applyBalance(subAccountRow, "credit", amountCentavos),
 			});
 			ctx.db.transaction.insert({
 				id: 0n,
@@ -984,8 +1046,8 @@ export const settle_debt = spacetimedb.reducer(
 				type: "income",
 				amountCentavos,
 				tag: existing.tag,
-				sourcePartitionId: 0n,
-				destinationPartitionId: partitionId,
+				sourceSubAccountId: 0n,
+				destinationSubAccountId: subAccountId,
 				serviceFeeCentavos: 0n,
 				description: `Settlement from ${existing.personName}`,
 				date: ctx.timestamp,
@@ -994,10 +1056,10 @@ export const settle_debt = spacetimedb.reducer(
 				recurringDefinitionId: 0n,
 			});
 		} else {
-			// You're paying them → expense transaction, debit the partition
-			ctx.db.partition.id.update({
-				...partitionRow,
-				balanceCentavos: applyBalance(partitionRow, "debit", amountCentavos),
+			// You're paying them → expense transaction, debit the sub-account
+			ctx.db.sub_account.id.update({
+				...subAccountRow,
+				balanceCentavos: applyBalance(subAccountRow, "debit", amountCentavos),
 			});
 			ctx.db.transaction.insert({
 				id: 0n,
@@ -1005,8 +1067,8 @@ export const settle_debt = spacetimedb.reducer(
 				type: "expense",
 				amountCentavos,
 				tag: existing.tag,
-				sourcePartitionId: partitionId,
-				destinationPartitionId: 0n,
+				sourceSubAccountId: subAccountId,
+				destinationSubAccountId: 0n,
 				serviceFeeCentavos: 0n,
 				description: `Settlement to ${existing.personName}`,
 				date: ctx.timestamp,
@@ -1041,12 +1103,12 @@ export const create_split = spacetimedb.reducer(
 	{
 		description: t.string(),
 		totalAmountCentavos: t.i64(),
-		payerPartitionId: t.u64(),
+		payerSubAccountId: t.u64(),
 		tag: t.string(),
 		date: t.timestamp(),
 		participantNames: t.array(t.string()),
 	},
-	(ctx, { description, totalAmountCentavos, payerPartitionId, tag, date, participantNames }) => {
+	(ctx, { description, totalAmountCentavos, payerSubAccountId, tag, date, participantNames }) => {
 		if (!description.trim()) throw new SenderError("Description is required");
 		if (totalAmountCentavos <= 0n) throw new SenderError("Amount must be greater than 0");
 		if (participantNames.length === 0)
@@ -1054,13 +1116,13 @@ export const create_split = spacetimedb.reducer(
 
 		const ownerIdentity = resolveOwner(ctx);
 
-		// Validate and debit payer partition (full amount)
-		const payerPartition = ctx.db.partition.id.find(payerPartitionId);
-		if (!payerPartition) throw new SenderError("Payer partition not found");
-		if (!isAuthorized(ctx, payerPartition.ownerIdentity)) throw new SenderError("Not authorized");
-		ctx.db.partition.id.update({
-			...payerPartition,
-			balanceCentavos: applyBalance(payerPartition, "debit", totalAmountCentavos),
+		// Validate and debit payer sub-account (full amount)
+		const payerSubAccount = ctx.db.sub_account.id.find(payerSubAccountId);
+		if (!payerSubAccount) throw new SenderError("Payer sub-account not found");
+		if (!isAuthorized(ctx, payerSubAccount.ownerIdentity)) throw new SenderError("Not authorized");
+		ctx.db.sub_account.id.update({
+			...payerSubAccount,
+			balanceCentavos: applyBalance(payerSubAccount, "debit", totalAmountCentavos),
 		});
 
 		// Create expense transaction for the full bill
@@ -1070,8 +1132,8 @@ export const create_split = spacetimedb.reducer(
 			type: "expense",
 			amountCentavos: totalAmountCentavos,
 			tag,
-			sourcePartitionId: payerPartitionId,
-			destinationPartitionId: 0n,
+			sourceSubAccountId: payerSubAccountId,
+			destinationSubAccountId: 0n,
 			serviceFeeCentavos: 0n,
 			description: `Split: ${description.trim()}`,
 			date,
@@ -1086,7 +1148,7 @@ export const create_split = spacetimedb.reducer(
 			ownerIdentity,
 			description: description.trim(),
 			totalAmountCentavos,
-			payerPartitionId,
+			payerSubAccountId,
 			tag,
 			date,
 			createdAt: ctx.timestamp,
@@ -1107,7 +1169,7 @@ export const create_split = spacetimedb.reducer(
 				personName: trimmedName,
 				direction: "loaned",
 				amountCentavos: shareAmount,
-				partitionId: payerPartitionId,
+				subAccountId: payerSubAccountId,
 				settledAmountCentavos: 0n,
 				tag,
 				description: description.trim(),

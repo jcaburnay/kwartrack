@@ -14,14 +14,14 @@ interface Debt {
 	amountCentavos: bigint;
 	settledAmountCentavos: bigint;
 	tag: string;
-	partitionId: bigint;
+	subAccountId: bigint;
 	description: string;
 	splitEventId: bigint;
 }
 
 interface SettleFormValues {
 	amount: string;
-	partitionId: string;
+	subAccountId: string;
 }
 
 interface SettleModalProps {
@@ -38,7 +38,7 @@ export function SettleModal({ debt, onClose }: SettleModalProps) {
 
 	const settleDebt = useReducer(reducers.settleDebt);
 	const [accounts] = useTable(tables.my_accounts);
-	const [partitions] = useTable(tables.my_partitions);
+	const [subAccounts] = useTable(tables.my_sub_accounts);
 
 	const remaining = Number(debt.amountCentavos - debt.settledAmountCentavos) / 100;
 
@@ -47,17 +47,17 @@ export function SettleModal({ debt, onClose }: SettleModalProps) {
 		handleSubmit,
 		formState: { errors, isSubmitting },
 	} = useForm<SettleFormValues>({
-		defaultValues: { amount: remaining.toFixed(2), partitionId: "" },
+		defaultValues: { amount: remaining.toFixed(2), subAccountId: "" },
 	});
 
 	const onSubmit = async (values: SettleFormValues) => {
 		const amountCentavos = BigInt(Math.round(parseFloat(values.amount) * 100));
-		const partitionId = BigInt(values.partitionId);
+		const subAccountId = BigInt(values.subAccountId);
 
 		await settleDebt({
 			debtId: debt.id,
 			amountCentavos,
-			partitionId,
+			subAccountId,
 		});
 		onClose();
 	};
@@ -111,16 +111,16 @@ export function SettleModal({ debt, onClose }: SettleModalProps) {
 							</label>
 							<select
 								id="settle-partition"
-								className={`select select-bordered w-full${errors.partitionId ? " select-error" : ""}`}
-								{...register("partitionId", {
-									required: "Partition is required",
-									validate: (v) => v !== "" || "Partition is required",
+								className={`select select-bordered w-full${errors.subAccountId ? " select-error" : ""}`}
+								{...register("subAccountId", {
+									required: "Sub-account is required",
+									validate: (v) => v !== "" || "Sub-account is required",
 								})}
 							>
-								<option value="">Select partition</option>
+								<option value="">Select sub-account</option>
 								{accounts.map((account) => {
 									if (account.isStandalone) {
-										const defaultPartition = partitions.find(
+										const defaultPartition = subAccounts.find(
 											(p) => p.accountId === account.id && p.isDefault,
 										);
 										if (!defaultPartition) return null;
@@ -130,7 +130,7 @@ export function SettleModal({ debt, onClose }: SettleModalProps) {
 											</optgroup>
 										);
 									}
-									const accountPartitions = partitions.filter(
+									const accountPartitions = subAccounts.filter(
 										(p) => p.accountId === account.id && !p.isDefault,
 									);
 									if (accountPartitions.length === 0) return null;
@@ -145,8 +145,8 @@ export function SettleModal({ debt, onClose }: SettleModalProps) {
 									);
 								})}
 							</select>
-							{errors.partitionId && (
-								<p className="text-error text-xs mt-1">{errors.partitionId.message}</p>
+							{errors.subAccountId && (
+								<p className="text-error text-xs mt-1">{errors.subAccountId.message}</p>
 							)}
 						</div>
 					</div>

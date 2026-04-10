@@ -32,7 +32,7 @@ interface SplitFormValues {
 	description: string;
 	totalAmount: string;
 	tag: string;
-	partitionId: string;
+	payerSubAccountId: string;
 	date: string;
 }
 
@@ -49,7 +49,7 @@ export function SplitModal({ onClose }: SplitModalProps) {
 
 	const createSplit = useReducer(reducers.createSplit);
 	const [accounts] = useTable(tables.my_accounts);
-	const [partitions] = useTable(tables.my_partitions);
+	const [subAccounts] = useTable(tables.my_sub_accounts);
 	const [participants, setParticipants] = useState<string[]>([""]);
 
 	const today = new Date().toISOString().slice(0, 10);
@@ -59,7 +59,13 @@ export function SplitModal({ onClose }: SplitModalProps) {
 		watch,
 		formState: { errors, isSubmitting },
 	} = useForm<SplitFormValues>({
-		defaultValues: { description: "", totalAmount: "", tag: "", partitionId: "", date: today },
+		defaultValues: {
+			description: "",
+			totalAmount: "",
+			tag: "",
+			payerSubAccountId: "",
+			date: today,
+		},
 	});
 
 	const totalAmount = parseFloat(watch("totalAmount") || "0");
@@ -75,7 +81,7 @@ export function SplitModal({ onClose }: SplitModalProps) {
 
 	const onSubmit = async (values: SplitFormValues) => {
 		const totalAmountCentavos = BigInt(Math.round(parseFloat(values.totalAmount) * 100));
-		const payerPartitionId = BigInt(values.partitionId);
+		const payerSubAccountId = BigInt(values.payerSubAccountId);
 		const dateTimestamp = Timestamp.fromDate(new Date(values.date));
 		const participantNames = participants.filter((p) => p.trim());
 
@@ -84,7 +90,7 @@ export function SplitModal({ onClose }: SplitModalProps) {
 		await createSplit({
 			description: values.description.trim(),
 			totalAmountCentavos,
-			payerPartitionId,
+			payerSubAccountId,
 			tag: values.tag,
 			date: dateTimestamp,
 			participantNames,
@@ -166,16 +172,16 @@ export function SplitModal({ onClose }: SplitModalProps) {
 									</label>
 									<select
 										id="split-partition"
-										className={`select select-bordered w-full${errors.partitionId ? " select-error" : ""}`}
-										{...register("partitionId", {
-											required: "Partition is required",
-											validate: (v) => v !== "" || "Partition is required",
+										className={`select select-bordered w-full${errors.payerSubAccountId ? " select-error" : ""}`}
+										{...register("payerSubAccountId", {
+											required: "Sub-account is required",
+											validate: (v) => v !== "" || "Sub-account is required",
 										})}
 									>
-										<option value="">Select partition</option>
+										<option value="">Select sub-account</option>
 										{accounts.map((account) => {
 											if (account.isStandalone) {
-												const defaultPartition = partitions.find(
+												const defaultPartition = subAccounts.find(
 													(p) => p.accountId === account.id && p.isDefault,
 												);
 												if (!defaultPartition) return null;
@@ -185,7 +191,7 @@ export function SplitModal({ onClose }: SplitModalProps) {
 													</optgroup>
 												);
 											}
-											const accountPartitions = partitions.filter(
+											const accountPartitions = subAccounts.filter(
 												(p) => p.accountId === account.id && !p.isDefault,
 											);
 											if (accountPartitions.length === 0) return null;
@@ -200,8 +206,8 @@ export function SplitModal({ onClose }: SplitModalProps) {
 											);
 										})}
 									</select>
-									{errors.partitionId && (
-										<p className="text-error text-xs mt-1">{errors.partitionId.message}</p>
+									{errors.payerSubAccountId && (
+										<p className="text-error text-xs mt-1">{errors.payerSubAccountId.message}</p>
 									)}
 								</div>
 								<div>

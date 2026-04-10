@@ -10,7 +10,7 @@ interface SplitEvent {
 	id: bigint;
 	description: string;
 	totalAmountCentavos: bigint;
-	payerPartitionId: bigint;
+	payerSubAccountId: bigint;
 	tag: string;
 	date: { microsSinceUnixEpoch: bigint };
 	createdAt: { microsSinceUnixEpoch: bigint };

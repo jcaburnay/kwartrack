@@ -38,15 +38,15 @@ describe("DebtModal", () => {
 		expect(screen.getByText("I owe money")).toBeInTheDocument();
 	});
 
-	it("shows partition field for loaned direction", () => {
+	it("shows sub-account field for loaned direction", () => {
 		render(<DebtModal onClose={onClose} />);
-		expect(screen.getByLabelText("Source partition")).toBeInTheDocument();
+		expect(screen.getByLabelText("Source sub-account")).toBeInTheDocument();
 	});
 
-	it("hides partition field when owed direction selected", async () => {
+	it("hides sub-account field when owed direction selected", async () => {
 		render(<DebtModal onClose={onClose} />);
 		await userEvent.click(screen.getByText("I owe money"));
-		expect(screen.queryByLabelText("Source partition")).not.toBeInTheDocument();
+		expect(screen.queryByLabelText("Source sub-account")).not.toBeInTheDocument();
 	});
 
 	it("renders Discard button that calls onClose", async () => {
@@ -65,7 +65,7 @@ describe("SettleModal", () => {
 		amountCentavos: 100000n,
 		settledAmountCentavos: 30000n,
 		tag: "foods",
-		partitionId: 1n,
+		subAccountId: 1n,
 		description: "",
 		splitEventId: 0n,
 	};
@@ -130,7 +130,7 @@ describe("DebtCard", () => {
 			personName: "Juan",
 			direction: "loaned",
 			amountCentavos: 100000n,
-			partitionId: 1n,
+			subAccountId: 1n,
 			settledAmountCentavos: 30000n,
 			tag: "foods",
 			description: "",
@@ -161,7 +161,7 @@ describe("SplitCard", () => {
 		id: 1n,
 		description: "Dinner at Jollibee",
 		totalAmountCentavos: 120000n,
-		payerPartitionId: 1n,
+		payerSubAccountId: 1n,
 		tag: "foods",
 		date: { microsSinceUnixEpoch: 1_700_000_000_000_000n },
 		createdAt: { microsSinceUnixEpoch: 1_700_000_000_000_000n },

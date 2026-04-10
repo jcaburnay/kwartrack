@@ -286,7 +286,7 @@ describe("BudgetPage", () => {
 				tag: "grocery",
 				amountCentavos: 150000n,
 				description: "Weekend market",
-				sourcePartitionId: 1n,
+				sourceSubAccountId: 1n,
 				date: { microsSinceUnixEpoch: toMicros(thisMonth) },
 			},
 			{
@@ -294,7 +294,7 @@ describe("BudgetPage", () => {
 				tag: "grocery",
 				amountCentavos: 270000n,
 				description: "SM Supermarket",
-				sourcePartitionId: 1n,
+				sourceSubAccountId: 1n,
 				date: { microsSinceUnixEpoch: toMicros(thisMonth) },
 			},
 			{
@@ -302,7 +302,7 @@ describe("BudgetPage", () => {
 				tag: "foods",
 				amountCentavos: 50000n,
 				description: "Jollibee",
-				sourcePartitionId: 1n,
+				sourceSubAccountId: 1n,
 				date: { microsSinceUnixEpoch: toMicros(thisMonth) },
 			},
 		];
@@ -339,7 +339,7 @@ describe("BudgetPage", () => {
 				tag: "grocery",
 				amountCentavos: 150000n,
 				description: "Weekend market",
-				sourcePartitionId: 1n,
+				sourceSubAccountId: 1n,
 				date: { microsSinceUnixEpoch: toMicros(thisMonth) },
 			},
 		];
@@ -373,7 +373,7 @@ describe("BudgetPage", () => {
 				tag: "grocery",
 				amountCentavos: 420000n,
 				description: "Groceries",
-				sourcePartitionId: 1n,
+				sourceSubAccountId: 1n,
 				date: { microsSinceUnixEpoch: toMicros(thisMonth) },
 			},
 		];
@@ -406,7 +406,7 @@ describe("BudgetPage", () => {
 				tag: "random-stuff",
 				amountCentavos: 37900n,
 				description: "Misc purchase",
-				sourcePartitionId: 1n,
+				sourceSubAccountId: 1n,
 				date: { microsSinceUnixEpoch: toMicros(thisMonth) },
 			},
 		];
@@ -443,7 +443,7 @@ describe("TransactionModal budget hint", () => {
 	};
 
 	// Helper: set up useTable mock for TransactionModal using mockImplementation
-	// Call order on EACH render: (1) my_accounts, (2) my_partitions, (3) my_budget_config, (4) my_budget_allocations, (5) my_transactions, (6) my_tag_configs
+	// Call order on EACH render: (1) my_accounts, (2) my_sub_accounts, (3) my_budget_config, (4) my_budget_allocations, (5) my_transactions, (6) my_tag_configs
 	// Using mockImplementation with a counter so each render cycle gets the right data
 	function setupTransactionModalMocks(
 		budgetConfig = mockBudgetConfig,
@@ -455,7 +455,7 @@ describe("TransactionModal budget hint", () => {
 			const idx = callCount % 6;
 			callCount++;
 			if (idx === 0) return [[], true]; // my_accounts
-			if (idx === 1) return [[], true]; // my_partitions
+			if (idx === 1) return [[], true]; // my_sub_accounts
 			if (idx === 2) return [budgetConfig, true]; // my_budget_config
 			if (idx === 3) return [allocations, true]; // my_budget_allocations
 			if (idx === 4) return [transactions, true]; // my_transactions

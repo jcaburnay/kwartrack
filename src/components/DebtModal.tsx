@@ -12,7 +12,7 @@ interface DebtFormValues {
 	personName: string;
 	amount: string;
 	tag: string;
-	partitionId: string;
+	subAccountId: string;
 	description: string;
 	date: string;
 }
@@ -30,7 +30,7 @@ export function DebtModal({ onClose }: DebtModalProps) {
 
 	const createDebt = useReducer(reducers.createDebt);
 	const [accounts] = useTable(tables.my_accounts);
-	const [partitions] = useTable(tables.my_partitions);
+	const [subAccounts] = useTable(tables.my_sub_accounts);
 	const [tagConfigs] = useTable(tables.my_tag_configs);
 	const [direction, setDirection] = useState<"loaned" | "owed">("loaned");
 	const expenseTags = getVisibleTags("expense", tagConfigs);
@@ -46,7 +46,7 @@ export function DebtModal({ onClose }: DebtModalProps) {
 			personName: "",
 			amount: "",
 			tag: "",
-			partitionId: "",
+			subAccountId: "",
 			description: "",
 			date: today,
 		},
@@ -54,14 +54,14 @@ export function DebtModal({ onClose }: DebtModalProps) {
 
 	const onSubmit = async (values: DebtFormValues) => {
 		const amountCentavos = BigInt(Math.round(parseFloat(values.amount) * 100));
-		const partitionId = direction === "loaned" ? BigInt(values.partitionId) : 0n;
+		const subAccountId = direction === "loaned" ? BigInt(values.subAccountId) : 0n;
 		const dateTimestamp = Timestamp.fromDate(new Date(values.date));
 
 		await createDebt({
 			personName: values.personName.trim(),
 			direction,
 			amountCentavos,
-			partitionId,
+			subAccountId,
 			tag: values.tag,
 			description: values.description,
 			date: dateTimestamp,
@@ -164,19 +164,19 @@ export function DebtModal({ onClose }: DebtModalProps) {
 								{direction === "loaned" && (
 									<div>
 										<label className="label" htmlFor="debt-partition">
-											<span className="label-text text-sm">Source partition</span>
+											<span className="label-text text-sm">Source sub-account</span>
 										</label>
 										<select
 											id="debt-partition"
-											className={`select select-bordered w-full${errors.partitionId ? " select-error" : ""}`}
-											{...register("partitionId", {
-												required: direction === "loaned" ? "Partition is required" : false,
+											className={`select select-bordered w-full${errors.subAccountId ? " select-error" : ""}`}
+											{...register("subAccountId", {
+												required: direction === "loaned" ? "Sub-account is required" : false,
 											})}
 										>
-											<option value="">Select partition</option>
+											<option value="">Select sub-account</option>
 											{accounts.map((account) => {
 												if (account.isStandalone) {
-													const defaultPartition = partitions.find(
+													const defaultPartition = subAccounts.find(
 														(p) => p.accountId === account.id && p.isDefault,
 													);
 													if (!defaultPartition) return null;
@@ -186,7 +186,7 @@ export function DebtModal({ onClose }: DebtModalProps) {
 														</optgroup>
 													);
 												}
-												const accountPartitions = partitions.filter(
+												const accountPartitions = subAccounts.filter(
 													(p) => p.accountId === account.id && !p.isDefault,
 												);
 												if (accountPartitions.length === 0) return null;
@@ -201,8 +201,8 @@ export function DebtModal({ onClose }: DebtModalProps) {
 												);
 											})}
 										</select>
-										{errors.partitionId && (
-											<p className="text-error text-xs mt-1">{errors.partitionId.message}</p>
+										{errors.subAccountId && (
+											<p className="text-error text-xs mt-1">{errors.subAccountId.message}</p>
 										)}
 									</div>
 								)}

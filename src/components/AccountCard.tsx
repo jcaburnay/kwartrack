@@ -12,7 +12,7 @@ interface AccountCardProps {
 	id: bigint;
 	name: string;
 	totalBalanceCentavos: bigint;
-	partitionCount: number;
+	subAccountCount: number;
 	iconBankId?: string | null;
 }
 
@@ -20,7 +20,7 @@ export function AccountCard({
 	id,
 	name,
 	totalBalanceCentavos,
-	partitionCount,
+	subAccountCount,
 	iconBankId,
 }: AccountCardProps) {
 	const deleteAccount = useReducer(reducers.deleteAccount);
@@ -36,8 +36,8 @@ export function AccountCard({
 						<BankIcon bankId={iconBankId} name={name} size={40} />
 						<div>
 							<span className="font-semibold text-base">{name}</span>
-							{partitionCount > 1 && (
-								<p className="text-xs text-base-content/40">{partitionCount} partitions</p>
+							{subAccountCount > 1 && (
+								<p className="text-xs text-base-content/40">{subAccountCount} sub-accounts</p>
 							)}
 						</div>
 					</div>
@@ -90,7 +90,7 @@ export function AccountCard({
 			{showDeleteConfirm && (
 				<DeleteConfirmModal
 					title={`Delete ${name}?`}
-					body="This will permanently delete this account and all its partitions."
+					body="This will permanently delete this account and all its sub-accounts."
 					confirmLabel={`Delete ${name}`}
 					dismissLabel="Cancel"
 					onConfirm={() => {

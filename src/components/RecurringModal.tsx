@@ -14,7 +14,7 @@ interface RecurringDefinition {
 	type: string;
 	amountCentavos: bigint;
 	tag: string;
-	partitionId: bigint;
+	subAccountId: bigint;
 	dayOfMonth: number;
 	isPaused: boolean;
 	remainingMonths: number;
@@ -26,18 +26,18 @@ interface RecurringFormValues {
 	type: "expense" | "income";
 	amount: string;
 	tag: string;
-	partitionId: string;
+	subAccountId: string;
 	dayOfMonth: string;
 	remainingMonths: string;
 }
 
-interface PartitionGroupedSelectProps {
+interface SubAccountGroupedSelectProps {
 	id: string;
 	value: string;
 	onChange: (value: string) => void;
 	error?: string;
 	accounts: readonly { id: bigint; name: string; isStandalone: boolean }[];
-	partitions: readonly {
+	subAccounts: readonly {
 		id: bigint;
 		accountId: bigint;
 		name: string;
@@ -46,14 +46,14 @@ interface PartitionGroupedSelectProps {
 	}[];
 }
 
-function PartitionGroupedSelect({
+function SubAccountGroupedSelect({
 	id,
 	value,
 	onChange,
 	error,
 	accounts,
-	partitions,
-}: PartitionGroupedSelectProps) {
+	subAccounts,
+}: SubAccountGroupedSelectProps) {
 	return (
 		<select
 			id={id}
@@ -61,11 +61,11 @@ function PartitionGroupedSelect({
 			onChange={(e) => onChange(e.target.value)}
 			className={`select select-bordered w-full${error ? " input-error" : ""}`}
 		>
-			<option value="">Select partition</option>
+			<option value="">Select sub-account</option>
 			{accounts.map((account) => {
 				if (account.isStandalone) {
 					// Find the default partition for this standalone account
-					const defaultPartition = partitions.find(
+					const defaultPartition = subAccounts.find(
 						(p) => p.accountId === account.id && p.isDefault,
 					);
 					if (!defaultPartition) return null;
@@ -76,7 +76,7 @@ function PartitionGroupedSelect({
 					);
 				}
 				// Partitioned account: show non-default partitions
-				const accountPartitions = partitions.filter(
+				const accountPartitions = subAccounts.filter(
 					(p) => p.accountId === account.id && !p.isDefault,
 				);
 				if (accountPartitions.length === 0) return null;
@@ -113,7 +113,7 @@ export function RecurringModal({
 	const createRecurring = useReducer(reducers.createRecurringDefinition);
 	const editRecurring = useReducer(reducers.editRecurringDefinition);
 	const [accounts] = useTable(tables.my_accounts);
-	const [partitions] = useTable(tables.my_partitions);
+	const [subAccounts] = useTable(tables.my_sub_accounts);
 	const [tagConfigs] = useTable(tables.my_tag_configs);
 	const isEdit = !!definition;
 	const effectiveMode = isEdit
@@ -134,7 +134,7 @@ export function RecurringModal({
 				type: definition.type as "expense" | "income",
 				amount: (Number(definition.amountCentavos) / 100).toFixed(2),
 				tag: definition.tag,
-				partitionId: definition.partitionId.toString(),
+				subAccountId: definition.subAccountId.toString(),
 				dayOfMonth: definition.dayOfMonth.toString(),
 				remainingMonths: definition.remainingMonths ? definition.remainingMonths.toString() : "",
 			}
@@ -143,7 +143,7 @@ export function RecurringModal({
 				type: "expense",
 				amount: "",
 				tag: "",
-				partitionId: "",
+				subAccountId: "",
 				dayOfMonth: "1",
 				remainingMonths: "",
 			};
@@ -169,7 +169,7 @@ export function RecurringModal({
 
 	const onSubmit = async (values: RecurringFormValues) => {
 		const amountCentavos = BigInt(Math.round(parseFloat(values.amount) * 100));
-		const partitionId = BigInt(values.partitionId);
+		const subAccountId = BigInt(values.subAccountId);
 		const dayOfMonth = parseInt(values.dayOfMonth, 10);
 		const remainingMonths = values.remainingMonths ? parseInt(values.remainingMonths, 10) : 0;
 
@@ -180,7 +180,7 @@ export function RecurringModal({
 				type: values.type,
 				amountCentavos,
 				tag: values.tag,
-				partitionId,
+				subAccountId,
 				dayOfMonth,
 				remainingMonths,
 			});
@@ -190,7 +190,7 @@ export function RecurringModal({
 				type: values.type,
 				amountCentavos,
 				tag: values.tag,
-				partitionId,
+				subAccountId,
 				dayOfMonth,
 				remainingMonths,
 				totalMonths: remainingMonths,
@@ -300,26 +300,28 @@ export function RecurringModal({
 								<div>
 									<label className="label" htmlFor="rec-partition">
 										<span className="label-text text-sm">
-											{selectedType === "expense" ? "Source partition" : "Destination partition"}
+											{selectedType === "expense"
+												? "Source sub-account"
+												: "Destination sub-account"}
 										</span>
 									</label>
-									<PartitionGroupedSelect
+									<SubAccountGroupedSelect
 										id="rec-partition"
-										value={watch("partitionId")}
-										onChange={(v) => setValue("partitionId", v)}
-										error={errors.partitionId?.message}
+										value={watch("subAccountId")}
+										onChange={(v) => setValue("subAccountId", v)}
+										error={errors.subAccountId?.message}
 										accounts={accounts}
-										partitions={partitions}
+										subAccounts={subAccounts}
 									/>
 									<input
 										type="hidden"
-										{...register("partitionId", {
-											required: "Partition is required",
-											validate: (v) => v !== "" || "Partition is required",
+										{...register("subAccountId", {
+											required: "Sub-account is required",
+											validate: (v) => v !== "" || "Sub-account is required",
 										})}
 									/>
-									{errors.partitionId && (
-										<p className="text-error text-xs mt-1">{errors.partitionId.message}</p>
+									{errors.subAccountId && (
+										<p className="text-error text-xs mt-1">{errors.subAccountId.message}</p>
 									)}
 								</div>
 							</div>

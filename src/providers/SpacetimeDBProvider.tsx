@@ -36,7 +36,7 @@ export function SpacetimeDBProvider({ children }: { children: React.ReactNode })
 					.onError((e) => console.error("[SpacetimeDB] Subscription error:", e))
 					.subscribe([
 						"SELECT * FROM my_accounts",
-						"SELECT * FROM my_partitions",
+						"SELECT * FROM my_sub_accounts",
 						"SELECT * FROM user_profile",
 						"SELECT * FROM my_transactions",
 						"SELECT * FROM my_recurring_definitions",

@@ -5,9 +5,9 @@ import { useReducer, useTable } from "spacetimedb/react";
 import { BankIcon } from "../components/BankIcon";
 import { DeleteConfirmModal } from "../components/DeleteConfirmModal";
 import { NewItemCard } from "../components/NewItemCard";
-import { PartitionCard } from "../components/PartitionCard";
-import { PartitionModal } from "../components/PartitionModal";
 import { PayCreditModal } from "../components/PayCreditModal";
+import { SubAccountCard } from "../components/SubAccountCard";
+import { SubAccountModal } from "../components/SubAccountModal";
 import type { TransactionFilters } from "../components/TransactionFilterRow";
 import { TransactionFilterRow } from "../components/TransactionFilterRow";
 import { TransactionModal } from "../components/TransactionModal";
@@ -26,23 +26,23 @@ export function AccountDetailPage() {
 		}
 	})();
 	const navigate = useNavigate();
-	const deletePartition = useReducer(reducers.deletePartition);
+	const deleteSubAccount = useReducer(reducers.deleteSubAccount);
 	const deleteTransaction = useReducer(reducers.deleteTransaction);
 
-	const [showPartitionModal, setShowPartitionModal] = useState(false);
+	const [showSubAccountModal, setShowSubAccountModal] = useState(false);
 	const [deleteTarget, setDeleteTarget] = useState<{
-		type: "partition";
+		type: "sub-account";
 		id: bigint;
 		name: string;
 	} | null>(null);
 
 	const [showPayCredit, setShowPayCredit] = useState(false);
-	const [payCreditPartitionId, setPayCreditPartitionId] = useState<bigint | null>(null);
+	const [payCreditSubAccountId, setPayCreditSubAccountId] = useState<bigint | null>(null);
 
-	const [editPartitionData, setEditPartitionData] = useState<{
+	const [editSubAccountData, setEditSubAccountData] = useState<{
 		id: bigint;
 		name: string;
-		partitionType: string;
+		subAccountType: string;
 		creditLimitCentavos: bigint;
 	} | null>(null);
 
@@ -59,7 +59,7 @@ export function AccountDetailPage() {
 	});
 
 	const [accounts, isReady] = useTable(tables.my_accounts);
-	const [partitions] = useTable(tables.my_partitions);
+	const [subAccounts] = useTable(tables.my_sub_accounts);
 	const [allTransactions] = useTable(tables.my_transactions);
 
 	if (!isReady) return null;
@@ -67,22 +67,26 @@ export function AccountDetailPage() {
 	// Find the current account from subscription data
 	const account = accounts.find((a) => a.id === accountId);
 
-	// Visible partitions (exclude the hidden __default__ partition, isDefault:true)
-	const visiblePartitions = partitions.filter((p) => p.accountId === accountId && !p.isDefault);
+	// Visible sub-accounts (exclude the hidden __default__ sub-account, isDefault:true)
+	const visibleSubAccounts = subAccounts.filter(
+		(sa) => sa.accountId === accountId && !sa.isDefault,
+	);
 
-	// Balance: sum ALL partitions for this account (including isDefault for standalone)
-	const totalBalance = partitions
-		.filter((p) => p.accountId === accountId)
-		.reduce((sum, p) => sum + p.balanceCentavos, 0n);
+	// Balance: sum ALL sub-accounts for this account (including isDefault for standalone)
+	const totalBalance = subAccounts
+		.filter((sa) => sa.accountId === accountId)
+		.reduce((sum, sa) => sum + sa.balanceCentavos, 0n);
 
-	// All partition IDs for this account (including default)
-	const accountPartitionIds = partitions.filter((p) => p.accountId === accountId).map((p) => p.id);
+	// All sub-account IDs for this account (including default)
+	const accountSubAccountIds = subAccounts
+		.filter((sa) => sa.accountId === accountId)
+		.map((sa) => sa.id);
 
 	// Step 1: transactions for this account (D-14 — show all for the account)
 	const accountTransactions = allTransactions.filter(
 		(t) =>
-			accountPartitionIds.includes(t.sourcePartitionId) ||
-			accountPartitionIds.includes(t.destinationPartitionId),
+			accountSubAccountIds.includes(t.sourceSubAccountId) ||
+			accountSubAccountIds.includes(t.destinationSubAccountId),
 	);
 
 	// Step 2: apply user filters (D-15)
@@ -118,7 +122,7 @@ export function AccountDetailPage() {
 
 	const handleDeleteConfirm = () => {
 		if (!deleteTarget) return;
-		deletePartition({ partitionId: deleteTarget.id });
+		deleteSubAccount({ subAccountId: deleteTarget.id });
 		setDeleteTarget(null);
 	};
 
@@ -157,50 +161,50 @@ export function AccountDetailPage() {
 				</div>
 			</div>
 
-			{/* Partition grid — same layout for standalone and partitioned */}
+			{/* Sub-account grid — same layout for standalone and partitioned */}
 			<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-				{visiblePartitions.map((partition, index) => (
+				{visibleSubAccounts.map((subAccount, index) => (
 					<div
-						key={partition.id.toString()}
+						key={subAccount.id.toString()}
 						className="animate-card-enter"
 						style={{ animationDelay: `${index * 0.06}s` }}
 					>
-						<PartitionCard
-							id={partition.id}
-							name={partition.name}
-							balanceCentavos={partition.balanceCentavos}
-							partitionType={partition.partitionType}
-							creditLimitCentavos={partition.creditLimitCentavos}
-							onDeleteRequest={(pid, pname) =>
+						<SubAccountCard
+							id={subAccount.id}
+							name={subAccount.name}
+							balanceCentavos={subAccount.balanceCentavos}
+							subAccountType={subAccount.subAccountType}
+							creditLimitCentavos={subAccount.creditLimitCentavos}
+							onDeleteRequest={(sid, sname) =>
 								setDeleteTarget({
-									type: "partition" as const,
-									id: pid,
-									name: pname,
+									type: "sub-account" as const,
+									id: sid,
+									name: sname,
 								})
 							}
-							onPayCredit={(partitionId) => {
-								setPayCreditPartitionId(partitionId);
+							onPayCredit={(subAccountId) => {
+								setPayCreditSubAccountId(subAccountId);
 								setShowPayCredit(true);
 							}}
-							onEdit={(partitionId) => {
-								const part = visiblePartitions.find((p) => p.id === partitionId);
-								if (part) {
-									setEditPartitionData({
-										id: part.id,
-										name: part.name,
-										partitionType: part.partitionType,
-										creditLimitCentavos: part.creditLimitCentavos,
+							onEdit={(subAccountId) => {
+								const sa = visibleSubAccounts.find((s) => s.id === subAccountId);
+								if (sa) {
+									setEditSubAccountData({
+										id: sa.id,
+										name: sa.name,
+										subAccountType: sa.subAccountType,
+										creditLimitCentavos: sa.creditLimitCentavos,
 									});
 								}
 							}}
 						/>
 					</div>
 				))}
-				{/* Adding first partition triggers standalone→partitioned conversion (D-08) */}
-				<NewItemCard label="New partition" onClick={() => setShowPartitionModal(true)} />
+				{/* Adding first sub-account triggers standalone→partitioned conversion (D-08) */}
+				<NewItemCard label="New sub-account" onClick={() => setShowSubAccountModal(true)} />
 			</div>
 
-			{/* TRANSACTIONS section — 48px gap from partitions section (UI-SPEC: 2xl gap) */}
+			{/* TRANSACTIONS section — 48px gap from sub-accounts section (UI-SPEC: 2xl gap) */}
 			<div className="mt-10">
 				<h2 className="text-xs font-semibold uppercase tracking-widest text-base-content/50 mb-4">
 					TRANSACTIONS
@@ -216,7 +220,7 @@ export function AccountDetailPage() {
 					<TransactionTable
 						transactions={filteredTransactions}
 						accounts={accounts}
-						partitions={partitions}
+						subAccounts={subAccounts}
 						hasActiveFilters={!!(filters.type || filters.tag || filters.dateFrom || filters.dateTo)}
 						onEdit={openEditModal}
 						onDelete={setTransactionDeleteTarget}
@@ -226,27 +230,31 @@ export function AccountDetailPage() {
 			</div>
 
 			{/* Modals */}
-			{showPartitionModal && (
-				<PartitionModal
+			{showSubAccountModal && (
+				<SubAccountModal
 					accountId={accountId}
+					accountName={account.name}
 					isStandalone={account.isStandalone}
-					onClose={() => setShowPartitionModal(false)}
+					existingBalanceCentavos={totalBalance}
+					onClose={() => setShowSubAccountModal(false)}
 				/>
 			)}
 
-			{editPartitionData && (
-				<PartitionModal
+			{editSubAccountData && (
+				<SubAccountModal
 					accountId={accountId}
-					isStandalone={account.isStandalone}
-					onClose={() => setEditPartitionData(null)}
-					partition={editPartitionData}
+					accountName={account.name}
+					isStandalone={false}
+					existingBalanceCentavos={0n}
+					onClose={() => setEditSubAccountData(null)}
+					subAccount={editSubAccountData}
 				/>
 			)}
 
 			{deleteTarget && (
 				<DeleteConfirmModal
 					title={`Delete ${deleteTarget.name}?`}
-					body={`This will permanently delete ${deleteTarget.name}. This cannot be undone.`}
+					body={`This will permanently delete the sub-account ${deleteTarget.name}. This cannot be undone.`}
 					confirmLabel={`Delete ${deleteTarget.name}`}
 					dismissLabel="Cancel"
 					onConfirm={handleDeleteConfirm}
@@ -269,7 +277,7 @@ export function AccountDetailPage() {
 			{transactionDeleteTarget && (
 				<DeleteConfirmModal
 					title="Delete transaction?"
-					body="This will permanently delete this transaction and recalculate the affected partition balances. This cannot be undone."
+					body="This will permanently delete this transaction and recalculate the affected sub-account balances. This cannot be undone."
 					confirmLabel="Delete transaction"
 					dismissLabel="Keep transaction"
 					onConfirm={handleTransactionDeleteConfirm}
@@ -279,16 +287,16 @@ export function AccountDetailPage() {
 
 			{/* PayCreditModal — opens when Pay Credit is clicked */}
 			{showPayCredit &&
-				payCreditPartitionId !== null &&
+				payCreditSubAccountId !== null &&
 				(() => {
-					const creditPart = visiblePartitions.find((p) => p.id === payCreditPartitionId);
-					return creditPart ? (
+					const creditSubAccount = visibleSubAccounts.find((sa) => sa.id === payCreditSubAccountId);
+					return creditSubAccount ? (
 						<PayCreditModal
-							partitionId={payCreditPartitionId}
-							outstandingCentavos={creditPart.balanceCentavos}
+							subAccountId={payCreditSubAccountId}
+							outstandingCentavos={creditSubAccount.balanceCentavos}
 							onClose={() => {
 								setShowPayCredit(false);
-								setPayCreditPartitionId(null);
+								setPayCreditSubAccountId(null);
 							}}
 						/>
 					) : null;

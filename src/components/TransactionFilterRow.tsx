@@ -15,7 +15,7 @@ interface TransactionFilterRowProps {
 	filters: TransactionFilters;
 	onChange: (filters: TransactionFilters) => void;
 	accounts?: readonly { id: bigint; name: string }[];
-	partitions?: readonly { id: bigint; accountId: bigint; name: string; isDefault: boolean }[];
+	subAccounts?: readonly { id: bigint; accountId: bigint; name: string; isDefault: boolean }[];
 }
 
 const TAGS = [
@@ -73,7 +73,7 @@ export function TransactionFilterRow({
 	filters,
 	onChange,
 	accounts,
-	partitions,
+	subAccounts,
 }: TransactionFilterRowProps) {
 	const [open, setOpen] = useState(false);
 	const [expanded, setExpanded] = useState(false);
@@ -132,7 +132,7 @@ export function TransactionFilterRow({
 				className={`${expanded ? "flex" : "hidden"} sm:flex flex-col sm:flex-row sm:items-center gap-2 flex-wrap mt-2 sm:mt-0`}
 			>
 				{/* Account / partition filter */}
-				{accounts && partitions && (
+				{accounts && subAccounts && (
 					<select
 						className="select select-bordered select-sm w-full sm:w-auto"
 						value={filters.accountPartition ?? ""}
@@ -142,10 +142,10 @@ export function TransactionFilterRow({
 					>
 						<option value="">All accounts</option>
 						{accounts.map((acct) => {
-							const acctPartitions = partitions.filter(
+							const acctSubAccounts = subAccounts.filter(
 								(p) => p.accountId === acct.id && !p.isDefault,
 							);
-							if (acctPartitions.length === 0) {
+							if (acctSubAccounts.length === 0) {
 								return (
 									<option key={`a-${acct.id}`} value={`account:${acct.id}`}>
 										{acct.name}
@@ -155,7 +155,7 @@ export function TransactionFilterRow({
 							return (
 								<optgroup key={`g-${acct.id}`} label={acct.name}>
 									<option value={`account:${acct.id}`}>All {acct.name}</option>
-									{acctPartitions.map((p) => (
+									{acctSubAccounts.map((p) => (
 										<option key={`p-${p.id}`} value={`partition:${p.id}`}>
 											{acct.name} / {p.name}
 										</option>

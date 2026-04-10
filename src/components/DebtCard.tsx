@@ -12,7 +12,7 @@ interface Debt {
 	personName: string;
 	direction: string;
 	amountCentavos: bigint;
-	partitionId: bigint;
+	subAccountId: bigint;
 	settledAmountCentavos: bigint;
 	tag: string;
 	description: string;

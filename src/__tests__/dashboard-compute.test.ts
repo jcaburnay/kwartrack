@@ -18,14 +18,14 @@ const accounts = [
 	{ id: 3n, name: "BPI Credit", iconBankId: undefined },
 ];
 
-const partitions = [
+const subAccounts = [
 	{
 		id: 10n,
 		accountId: 1n,
 		name: "__default__",
 		balanceCentavos: 5000000n,
 		isDefault: true,
-		partitionType: "wallet",
+		subAccountType: "wallet",
 		creditLimitCentavos: 0n,
 	},
 	{
@@ -34,7 +34,7 @@ const partitions = [
 		name: "Savings",
 		balanceCentavos: 3520000n,
 		isDefault: false,
-		partitionType: "wallet",
+		subAccountType: "wallet",
 		creditLimitCentavos: 0n,
 	},
 	{
@@ -43,7 +43,7 @@ const partitions = [
 		name: "__default__",
 		balanceCentavos: 1273050n,
 		isDefault: true,
-		partitionType: "wallet",
+		subAccountType: "wallet",
 		creditLimitCentavos: 0n,
 	},
 	{
@@ -52,7 +52,7 @@ const partitions = [
 		name: "__default__",
 		balanceCentavos: -750000n,
 		isDefault: true,
-		partitionType: "credit",
+		subAccountType: "credit",
 		creditLimitCentavos: 5000000n,
 	},
 ];
@@ -65,7 +65,7 @@ const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 15);
 describe("dashboardCompute", () => {
 	describe("computeTotalBalance", () => {
 		it("sums all partition balances including negative for credit", () => {
-			const total = computeTotalBalance(partitions);
+			const total = computeTotalBalance(subAccounts);
 			// 5000000 + 3520000 + 1273050 + (-750000) = 9043050
 			expect(total).toBe(9043050n);
 		});
@@ -77,7 +77,7 @@ describe("dashboardCompute", () => {
 
 	describe("computeAccountSummaries", () => {
 		it("computes balance per account and derives type correctly", () => {
-			const result = computeAccountSummaries(accounts, partitions);
+			const result = computeAccountSummaries(accounts, subAccounts);
 
 			// Sorted by name: BDO, BPI Credit, GCash
 			expect(result).toHaveLength(3);
@@ -96,11 +96,11 @@ describe("dashboardCompute", () => {
 		});
 
 		it("returns empty array for no accounts", () => {
-			expect(computeAccountSummaries([], partitions)).toEqual([]);
+			expect(computeAccountSummaries([], subAccounts)).toEqual([]);
 		});
 
 		it("sorts by name", () => {
-			const result = computeAccountSummaries(accounts, partitions);
+			const result = computeAccountSummaries(accounts, subAccounts);
 			const names = result.map((s) => s.name);
 			expect(names).toEqual(["BDO", "BPI Credit", "GCash"]);
 		});

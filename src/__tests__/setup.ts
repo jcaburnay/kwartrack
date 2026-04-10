@@ -43,11 +43,10 @@ vi.mock("spacetimedb/react", () => ({
 }));
 
 // Mock generated module_bindings — prevents import errors in tests
-// Phase 6: addPartition reducer already mocked — accepts new partitionType and creditLimitCentavos fields without type checking in tests
 vi.mock("../module_bindings", () => ({
 	tables: {
 		my_accounts: { name: "my_accounts" },
-		my_partitions: { name: "my_partitions" },
+		my_sub_accounts: { name: "my_sub_accounts" },
 		my_transactions: { name: "my_transactions" },
 		my_recurring_definitions: { name: "my_recurring_definitions" },
 		my_budget_config: { name: "my_budget_config" },
@@ -59,18 +58,22 @@ vi.mock("../module_bindings", () => ({
 		createAccount: { name: "create_account", accessorName: "createAccount" },
 		renameAccount: { name: "rename_account", accessorName: "renameAccount" },
 		deleteAccount: { name: "delete_account", accessorName: "deleteAccount" },
-		addPartition: { name: "add_partition", accessorName: "addPartition" },
-		renamePartition: {
-			name: "rename_partition",
-			accessorName: "renamePartition",
+		addSubAccount: { name: "add_sub_account", accessorName: "addSubAccount" },
+		convertAndCreateSubAccount: {
+			name: "convert_and_create_sub_account",
+			accessorName: "convertAndCreateSubAccount",
 		},
-		editPartition: {
-			name: "edit_partition",
-			accessorName: "editPartition",
+		renameSubAccount: {
+			name: "rename_sub_account",
+			accessorName: "renameSubAccount",
 		},
-		deletePartition: {
-			name: "delete_partition",
-			accessorName: "deletePartition",
+		editSubAccount: {
+			name: "edit_sub_account",
+			accessorName: "editSubAccount",
+		},
+		deleteSubAccount: {
+			name: "delete_sub_account",
+			accessorName: "deleteSubAccount",
 		},
 		createTransaction: {
 			name: "create_transaction",

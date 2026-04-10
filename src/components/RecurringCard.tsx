@@ -13,7 +13,7 @@ interface RecurringDefinition {
 	type: string;
 	amountCentavos: bigint;
 	tag: string;
-	partitionId: bigint;
+	subAccountId: bigint;
 	dayOfMonth: number;
 	isPaused: boolean;
 	remainingMonths: number;
@@ -24,14 +24,14 @@ interface RecurringCardProps {
 	definition: RecurringDefinition;
 }
 
-// Format partition label as "AccountName/PartitionName" or "AccountName" for standalone
-function formatPartitionLabel(
-	partitionId: bigint,
+// Format sub-account label as "AccountName/SubAccountName" or "AccountName" for standalone
+function formatSubAccountLabel(
+	subAccountId: bigint,
 	accounts: readonly { id: bigint; name: string }[],
-	partitions: readonly { id: bigint; accountId: bigint; name: string; isDefault: boolean }[],
+	subAccounts: readonly { id: bigint; accountId: bigint; name: string; isDefault: boolean }[],
 ): string {
-	if (partitionId === 0n) return "";
-	const partition = partitions.find((p) => p.id === partitionId);
+	if (subAccountId === 0n) return "";
+	const partition = subAccounts.find((p) => p.id === subAccountId);
 	if (!partition) return "";
 	const account = accounts.find((a) => a.id === partition.accountId);
 	if (!account) return "";
@@ -44,7 +44,7 @@ export function RecurringCard({ definition }: RecurringCardProps) {
 	const resumeDefinition = useReducer(reducers.resumeRecurringDefinition);
 	const deleteDefinition = useReducer(reducers.deleteRecurringDefinition);
 	const [accounts] = useTable(tables.my_accounts);
-	const [partitions] = useTable(tables.my_partitions);
+	const [subAccounts] = useTable(tables.my_sub_accounts);
 
 	const [showEdit, setShowEdit] = useState(false);
 	const [showDelete, setShowDelete] = useState(false);
@@ -70,7 +70,7 @@ export function RecurringCard({ definition }: RecurringCardProps) {
 			? "text-error font-semibold text-sm"
 			: "text-success font-semibold text-sm";
 
-	const partitionLabel = formatPartitionLabel(definition.partitionId, accounts, partitions);
+	const partitionLabel = formatSubAccountLabel(definition.subAccountId, accounts, subAccounts);
 	const catalogMatch = findCatalogMatch(definition.name);
 
 	return (

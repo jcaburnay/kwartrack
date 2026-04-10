@@ -21,22 +21,22 @@ export function AccountsPage() {
 			}
 		},
 	});
-	const [partitions] = useTable(tables.my_partitions);
+	const [subAccounts] = useTable(tables.my_sub_accounts);
 
-	// Aggregate partition stats in one pass instead of filtering per account
+	// Aggregate sub-account stats in one pass instead of filtering per account
 	const accountStats = useMemo(() => {
-		const map = new Map<bigint, { balance: bigint; partitionCount: number }>();
-		for (const p of partitions) {
-			const existing = map.get(p.accountId);
+		const map = new Map<bigint, { balance: bigint; subAccountCount: number }>();
+		for (const sa of subAccounts) {
+			const existing = map.get(sa.accountId);
 			if (existing) {
-				existing.balance += p.balanceCentavos;
-				existing.partitionCount++;
+				existing.balance += sa.balanceCentavos;
+				existing.subAccountCount++;
 			} else {
-				map.set(p.accountId, { balance: p.balanceCentavos, partitionCount: 1 });
+				map.set(sa.accountId, { balance: sa.balanceCentavos, subAccountCount: 1 });
 			}
 		}
 		return map;
-	}, [partitions]);
+	}, [subAccounts]);
 
 	const netWorth = useMemo(
 		() => accounts.reduce((sum, a) => sum + (accountStats.get(a.id)?.balance ?? 0n), 0n),
@@ -54,7 +54,7 @@ export function AccountsPage() {
 				</h1>
 				<p className="text-sm text-base-content/50 mb-5">
 					Accounts hold your money — savings, checking, credit cards. Each can be split into
-					partitions. Add your first account to start tracking.
+					sub-accounts. Add your first account to start tracking.
 				</p>
 				<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
 					<NewItemCard label="New account" onClick={() => setShowModal(true)} />
@@ -101,7 +101,7 @@ export function AccountsPage() {
 							id={account.id}
 							name={account.name}
 							totalBalanceCentavos={accountStats.get(account.id)?.balance ?? 0n}
-							partitionCount={accountStats.get(account.id)?.partitionCount ?? 0}
+							subAccountCount={accountStats.get(account.id)?.subAccountCount ?? 0}
 							iconBankId={account.iconBankId}
 						/>
 					</div>

@@ -4,28 +4,28 @@ import { useReducer } from "spacetimedb/react";
 import { reducers } from "../module_bindings";
 import { formatPesos } from "../utils/currency";
 
-interface PartitionCardProps {
+interface SubAccountCardProps {
 	id: bigint;
 	name: string;
 	balanceCentavos: bigint;
-	partitionType?: string;
+	subAccountType?: string;
 	creditLimitCentavos?: bigint;
 	onDeleteRequest: (id: bigint, name: string) => void;
-	onPayCredit?: (partitionId: bigint) => void;
-	onEdit?: (partitionId: bigint) => void;
+	onPayCredit?: (subAccountId: bigint) => void;
+	onEdit?: (subAccountId: bigint) => void;
 }
 
-export function PartitionCard({
+export function SubAccountCard({
 	id,
 	name,
 	balanceCentavos,
-	partitionType = "wallet",
+	subAccountType = "wallet",
 	creditLimitCentavos = 0n,
 	onDeleteRequest,
 	onPayCredit,
 	onEdit,
-}: PartitionCardProps) {
-	const renamePartition = useReducer(reducers.renamePartition);
+}: SubAccountCardProps) {
+	const renameSubAccount = useReducer(reducers.renameSubAccount);
 	const [isRenaming, setIsRenaming] = useState(false);
 	const [renameValue, setRenameValue] = useState(name);
 	const inputRef = useRef<HTMLInputElement>(null);
@@ -45,7 +45,7 @@ export function PartitionCard({
 	const handleRenameCommit = () => {
 		const trimmed = renameValue.trim();
 		if (trimmed && trimmed !== name) {
-			renamePartition({ partitionId: id, newName: trimmed });
+			renameSubAccount({ subAccountId: id, newName: trimmed });
 		}
 		setIsRenaming(false);
 	};
@@ -55,9 +55,13 @@ export function PartitionCard({
 		setRenameValue(name);
 	};
 
-	const isCreditPartition = partitionType === "credit" && creditLimitCentavos > 0n;
-	const availableCentavos = isCreditPartition ? creditLimitCentavos - balanceCentavos : 0n;
-	const availablePct = isCreditPartition
+	const isCreditSubAccount = subAccountType === "credit" && creditLimitCentavos > 0n;
+	const availableCentavos = isCreditSubAccount
+		? balanceCentavos > creditLimitCentavos
+			? 0n
+			: creditLimitCentavos - balanceCentavos
+		: 0n;
+	const availablePct = isCreditSubAccount
 		? Math.max(
 				0,
 				Math.min(
@@ -75,12 +79,11 @@ export function PartitionCard({
 
 	return (
 		<div className="rounded-xl bg-base-100 shadow-sm p-5 flex flex-col gap-4 relative card-hover border border-base-300/50">
-			{/* Options dropdown */}
 			<div className="absolute top-3 right-3 dropdown dropdown-end">
 				<button
 					type="button"
 					className="btn btn-ghost btn-xs btn-circle"
-					aria-label="Partition options"
+					aria-label="Sub-account options"
 					tabIndex={0}
 				>
 					<MoreVertical size={14} />
@@ -89,7 +92,7 @@ export function PartitionCard({
 					tabIndex={0}
 					className="dropdown-content menu bg-base-100 rounded-xl z-10 w-36 p-1 shadow-lg border border-base-300/50"
 				>
-					{isCreditPartition && onEdit ? (
+					{isCreditSubAccount && onEdit ? (
 						<li>
 							<button type="button" onClick={() => onEdit(id)}>
 								Edit
@@ -110,7 +113,6 @@ export function PartitionCard({
 				</ul>
 			</div>
 
-			{/* Name + type badge */}
 			<div className="pr-6 flex flex-col gap-1">
 				{isRenaming ? (
 					<input
@@ -123,16 +125,15 @@ export function PartitionCard({
 							if (e.key === "Enter") handleRenameCommit();
 							if (e.key === "Escape") handleRenameCancel();
 						}}
-						placeholder="Partition name"
+						placeholder="Sub-account name"
 					/>
 				) : (
 					<span className="font-semibold text-base">{name}</span>
 				)}
-				{isCreditPartition && <span className="badge badge-warning badge-xs w-fit">CREDIT</span>}
+				{isCreditSubAccount && <span className="badge badge-warning badge-xs w-fit">CREDIT</span>}
 			</div>
 
-			{/* Balance */}
-			{isCreditPartition ? (
+			{isCreditSubAccount ? (
 				<div className="flex flex-col gap-1.5">
 					<div className="flex flex-col gap-0.5">
 						<span className="text-xl font-semibold font-mono">

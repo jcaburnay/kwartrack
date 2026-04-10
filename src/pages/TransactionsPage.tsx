@@ -24,7 +24,7 @@ export function TransactionsPage() {
 	});
 
 	const [accounts] = useTable(tables.my_accounts);
-	const [partitions] = useTable(tables.my_partitions);
+	const [subAccounts] = useTable(tables.my_sub_accounts);
 	const [allTransactions, isReady] = useTable(tables.my_transactions);
 
 	if (!isReady) return null;
@@ -37,10 +37,10 @@ export function TransactionsPage() {
 		if (ap.startsWith("account:")) {
 			try {
 				const accountId = BigInt(ap.split(":")[1]);
-				const partIds = partitions.filter((p) => p.accountId === accountId).map((p) => p.id);
+				const partIds = subAccounts.filter((p) => p.accountId === accountId).map((p) => p.id);
 				return allTransactions.filter(
 					(t) =>
-						partIds.includes(t.sourcePartitionId) || partIds.includes(t.destinationPartitionId),
+						partIds.includes(t.sourceSubAccountId) || partIds.includes(t.destinationSubAccountId),
 				);
 			} catch {
 				return allTransactions;
@@ -51,7 +51,7 @@ export function TransactionsPage() {
 			try {
 				const partId = BigInt(ap.split(":")[1]);
 				return allTransactions.filter(
-					(t) => t.sourcePartitionId === partId || t.destinationPartitionId === partId,
+					(t) => t.sourceSubAccountId === partId || t.destinationSubAccountId === partId,
 				);
 			} catch {
 				return allTransactions;
@@ -107,12 +107,12 @@ export function TransactionsPage() {
 			</h1>
 
 			{/* Filter row with account filter */}
-			<div className="mt-3 animate-card-enter" style={{ animationDelay: `0.06s` }}>
+			<div className="relative z-10 mt-3 animate-card-enter" style={{ animationDelay: `0.06s` }}>
 				<TransactionFilterRow
 					filters={filters}
 					onChange={setFilters}
 					accounts={accounts}
-					partitions={partitions}
+					subAccounts={subAccounts}
 				/>
 			</div>
 
@@ -121,7 +121,7 @@ export function TransactionsPage() {
 				<TransactionTable
 					transactions={filteredTransactions}
 					accounts={accounts}
-					partitions={partitions}
+					subAccounts={subAccounts}
 					hasActiveFilters={hasActiveFilters}
 					onEdit={openEditModal}
 					onDelete={setTransactionDeleteTarget}
@@ -150,7 +150,7 @@ export function TransactionsPage() {
 			{transactionDeleteTarget && (
 				<DeleteConfirmModal
 					title="Delete transaction?"
-					body="This will permanently delete this transaction and recalculate the affected partition balances. This cannot be undone."
+					body="This will permanently delete this transaction and recalculate the affected sub-account balances. This cannot be undone."
 					confirmLabel="Delete transaction"
 					dismissLabel="Keep transaction"
 					onConfirm={handleTransactionDeleteConfirm}

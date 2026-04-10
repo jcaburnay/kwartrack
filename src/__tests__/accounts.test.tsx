@@ -96,14 +96,53 @@ describe("AccountModal", () => {
 });
 
 // =============================================================================
-// PartitionModal tests — RED until Plan 04 creates PartitionModal
+// SubAccountModal tests
 // =============================================================================
-describe("PartitionModal", () => {
-	it('shows "Partition name is required" when name is empty on submit', async () => {
-		const { PartitionModal } = await import("../components/PartitionModal");
-		render(<PartitionModal accountId={1n} isStandalone={false} onClose={vi.fn()} />);
-		fireEvent.click(screen.getByRole("button", { name: /save partition/i }));
-		await waitFor(() => expect(screen.getByText("Partition name is required")).toBeInTheDocument());
+describe("SubAccountModal", () => {
+	it('shows "Sub-account name is required" when name is empty on submit', async () => {
+		const { SubAccountModal } = await import("../components/SubAccountModal");
+		render(
+			<SubAccountModal
+				accountId={1n}
+				accountName="Maya"
+				isStandalone={false}
+				existingBalanceCentavos={0n}
+				onClose={vi.fn()}
+			/>,
+		);
+		fireEvent.click(screen.getByRole("button", { name: /save sub-account/i }));
+		await waitFor(() =>
+			expect(screen.getByText("Sub-account name is required")).toBeInTheDocument(),
+		);
+	});
+
+	it("shows conversion section when isStandalone=true and balance > 0", async () => {
+		const { SubAccountModal } = await import("../components/SubAccountModal");
+		render(
+			<SubAccountModal
+				accountId={1n}
+				accountName="Maya"
+				isStandalone={true}
+				existingBalanceCentavos={1000000n}
+				onClose={vi.fn()}
+			/>,
+		);
+		expect(screen.getByText(/maya's existing balance/i)).toBeInTheDocument();
+		expect(screen.getByDisplayValue("Main")).toBeInTheDocument();
+	});
+
+	it("hides conversion section when isStandalone=true but balance is 0", async () => {
+		const { SubAccountModal } = await import("../components/SubAccountModal");
+		render(
+			<SubAccountModal
+				accountId={1n}
+				accountName="Maya"
+				isStandalone={true}
+				existingBalanceCentavos={0n}
+				onClose={vi.fn()}
+			/>,
+		);
+		expect(screen.queryByText(/existing balance/i)).not.toBeInTheDocument();
 	});
 });
 
@@ -116,7 +155,7 @@ describe("DeleteConfirmModal", () => {
 		render(
 			<DeleteConfirmModal
 				title="Delete Maya?"
-				body="This will permanently delete Maya and all its partitions. This cannot be undone."
+				body="This will permanently delete Maya and all its sub-accounts."
 				confirmLabel="Delete Maya"
 				dismissLabel="Keep Maya"
 				onConfirm={vi.fn()}

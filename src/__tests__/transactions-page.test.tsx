@@ -11,8 +11,8 @@ describe("TransactionsPage: account partition filter logic", () => {
 		{
 			id: 1n,
 			type: "expense",
-			sourcePartitionId: 10n,
-			destinationPartitionId: 0n,
+			sourceSubAccountId: 10n,
+			destinationSubAccountId: 0n,
 			tag: "foods",
 			amountCentavos: 500n,
 			serviceFeeCentavos: 0n,
@@ -22,8 +22,8 @@ describe("TransactionsPage: account partition filter logic", () => {
 		{
 			id: 2n,
 			type: "income",
-			sourcePartitionId: 0n,
-			destinationPartitionId: 20n,
+			sourceSubAccountId: 0n,
+			destinationSubAccountId: 20n,
 			tag: "monthly-salary",
 			amountCentavos: 100000n,
 			serviceFeeCentavos: 0n,
@@ -33,8 +33,8 @@ describe("TransactionsPage: account partition filter logic", () => {
 		{
 			id: 3n,
 			type: "transfer",
-			sourcePartitionId: 10n,
-			destinationPartitionId: 20n,
+			sourceSubAccountId: 10n,
+			destinationSubAccountId: 20n,
 			tag: "",
 			amountCentavos: 5000n,
 			serviceFeeCentavos: 50n,
@@ -54,14 +54,15 @@ describe("TransactionsPage: account partition filter logic", () => {
 			const accountId = BigInt(accountPartition.split(":")[1]);
 			const partIds = parts.filter((p) => p.accountId === accountId).map((p) => p.id);
 			return txns.filter(
-				(t) => partIds.includes(t.sourcePartitionId) || partIds.includes(t.destinationPartitionId),
+				(t) =>
+					partIds.includes(t.sourceSubAccountId) || partIds.includes(t.destinationSubAccountId),
 			);
 		}
 
 		if (accountPartition.startsWith("partition:")) {
 			const partId = BigInt(accountPartition.split(":")[1]);
 			return txns.filter(
-				(t) => t.sourcePartitionId === partId || t.destinationPartitionId === partId,
+				(t) => t.sourceSubAccountId === partId || t.destinationSubAccountId === partId,
 			);
 		}
 

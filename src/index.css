@@ -128,6 +128,15 @@
 	box-shadow: 0 8px 24px -4px oklch(0% 0 0 / 0.1);
 }
 
+/* ── Input/select focus: contained inset ring, no overflowing outline ── */
+.input:focus,
+.input:focus-within,
+.select:focus,
+.select:focus-within {
+	outline: none;
+	box-shadow: 0 0 0 1.5px var(--input-color) inset;
+}
+
 /* ── Bottom sheet drag handle for mobile ── */
 @media (max-width: 639px) {
 	.modal-bottom > .modal-box {

@@ -8,25 +8,25 @@ import { formatPesos } from "../utils/currency";
 // Fixture data — matches the Phase 6 schema (added in Plan 02)
 // ============================================================================
 
-const creditPartition = {
+const creditSubAccount = {
 	id: 1n,
 	accountId: 1n,
 	name: "RCBC/Credit",
 	balanceCentavos: 620000n, // P6,200 outstanding
 	isDefault: false,
 	createdAt: { microsSinceUnixEpoch: 0n },
-	partitionType: "credit",
+	subAccountType: "credit",
 	creditLimitCentavos: 12000000n, // P120,000 limit
 };
 
-const walletPartition = {
+const walletSubAccount = {
 	id: 2n,
 	accountId: 1n,
 	name: "RCBC/Savings",
 	balanceCentavos: 5000000n,
 	isDefault: false,
 	createdAt: { microsSinceUnixEpoch: 0n },
-	partitionType: "wallet",
+	subAccountType: "wallet",
 	creditLimitCentavos: 0n,
 };
 
@@ -52,19 +52,19 @@ describe("formatPesos credit amounts", () => {
 });
 
 // ============================================================================
-// CRDT-04: PartitionCard credit variant
+// CRDT-04: SubAccountCard credit variant
 // ============================================================================
 
-describe("PartitionCard credit variant", () => {
+describe("SubAccountCard credit variant", () => {
 	it("renders available credit and limit for credit partition", async () => {
-		const { PartitionCard } = await import("../components/PartitionCard");
+		const { SubAccountCard } = await import("../components/SubAccountCard");
 		render(
-			<PartitionCard
-				id={creditPartition.id}
-				name={creditPartition.name}
-				balanceCentavos={creditPartition.balanceCentavos}
-				partitionType={creditPartition.partitionType}
-				creditLimitCentavos={creditPartition.creditLimitCentavos}
+			<SubAccountCard
+				id={creditSubAccount.id}
+				name={creditSubAccount.name}
+				balanceCentavos={creditSubAccount.balanceCentavos}
+				subAccountType={creditSubAccount.subAccountType}
+				creditLimitCentavos={creditSubAccount.creditLimitCentavos}
 				onDeleteRequest={vi.fn()}
 				onPayCredit={vi.fn()}
 				onEdit={vi.fn()}
@@ -76,14 +76,14 @@ describe("PartitionCard credit variant", () => {
 	});
 
 	it("shows available percentage for credit partition", async () => {
-		const { PartitionCard } = await import("../components/PartitionCard");
+		const { SubAccountCard } = await import("../components/SubAccountCard");
 		render(
-			<PartitionCard
-				id={creditPartition.id}
-				name={creditPartition.name}
-				balanceCentavos={creditPartition.balanceCentavos}
-				partitionType={creditPartition.partitionType}
-				creditLimitCentavos={creditPartition.creditLimitCentavos}
+			<SubAccountCard
+				id={creditSubAccount.id}
+				name={creditSubAccount.name}
+				balanceCentavos={creditSubAccount.balanceCentavos}
+				subAccountType={creditSubAccount.subAccountType}
+				creditLimitCentavos={creditSubAccount.creditLimitCentavos}
 				onDeleteRequest={vi.fn()}
 				onPayCredit={vi.fn()}
 				onEdit={vi.fn()}
@@ -94,14 +94,14 @@ describe("PartitionCard credit variant", () => {
 	});
 
 	it("renders Edit option in dropdown for credit partition", async () => {
-		const { PartitionCard } = await import("../components/PartitionCard");
+		const { SubAccountCard } = await import("../components/SubAccountCard");
 		render(
-			<PartitionCard
-				id={creditPartition.id}
-				name={creditPartition.name}
-				balanceCentavos={creditPartition.balanceCentavos}
-				partitionType={creditPartition.partitionType}
-				creditLimitCentavos={creditPartition.creditLimitCentavos}
+			<SubAccountCard
+				id={creditSubAccount.id}
+				name={creditSubAccount.name}
+				balanceCentavos={creditSubAccount.balanceCentavos}
+				subAccountType={creditSubAccount.subAccountType}
+				creditLimitCentavos={creditSubAccount.creditLimitCentavos}
 				onDeleteRequest={vi.fn()}
 				onPayCredit={vi.fn()}
 				onEdit={vi.fn()}
@@ -111,14 +111,14 @@ describe("PartitionCard credit variant", () => {
 	});
 
 	it("renders CREDIT badge for credit partition", async () => {
-		const { PartitionCard } = await import("../components/PartitionCard");
+		const { SubAccountCard } = await import("../components/SubAccountCard");
 		render(
-			<PartitionCard
-				id={creditPartition.id}
-				name={creditPartition.name}
-				balanceCentavos={creditPartition.balanceCentavos}
-				partitionType={creditPartition.partitionType}
-				creditLimitCentavos={creditPartition.creditLimitCentavos}
+			<SubAccountCard
+				id={creditSubAccount.id}
+				name={creditSubAccount.name}
+				balanceCentavos={creditSubAccount.balanceCentavos}
+				subAccountType={creditSubAccount.subAccountType}
+				creditLimitCentavos={creditSubAccount.creditLimitCentavos}
 				onDeleteRequest={vi.fn()}
 				onPayCredit={vi.fn()}
 				onEdit={vi.fn()}
@@ -128,14 +128,14 @@ describe("PartitionCard credit variant", () => {
 	});
 
 	it("renders Pay button for credit partition with non-zero balance", async () => {
-		const { PartitionCard } = await import("../components/PartitionCard");
+		const { SubAccountCard } = await import("../components/SubAccountCard");
 		render(
-			<PartitionCard
-				id={creditPartition.id}
-				name={creditPartition.name}
-				balanceCentavos={creditPartition.balanceCentavos}
-				partitionType={creditPartition.partitionType}
-				creditLimitCentavos={creditPartition.creditLimitCentavos}
+			<SubAccountCard
+				id={creditSubAccount.id}
+				name={creditSubAccount.name}
+				balanceCentavos={creditSubAccount.balanceCentavos}
+				subAccountType={creditSubAccount.subAccountType}
+				creditLimitCentavos={creditSubAccount.creditLimitCentavos}
 				onDeleteRequest={vi.fn()}
 				onPayCredit={vi.fn()}
 				onEdit={vi.fn()}
@@ -145,14 +145,14 @@ describe("PartitionCard credit variant", () => {
 	});
 
 	it("does NOT render CREDIT badge for wallet partition", async () => {
-		const { PartitionCard } = await import("../components/PartitionCard");
+		const { SubAccountCard } = await import("../components/SubAccountCard");
 		render(
-			<PartitionCard
-				id={walletPartition.id}
-				name={walletPartition.name}
-				balanceCentavos={walletPartition.balanceCentavos}
-				partitionType={walletPartition.partitionType}
-				creditLimitCentavos={walletPartition.creditLimitCentavos}
+			<SubAccountCard
+				id={walletSubAccount.id}
+				name={walletSubAccount.name}
+				balanceCentavos={walletSubAccount.balanceCentavos}
+				subAccountType={walletSubAccount.subAccountType}
+				creditLimitCentavos={walletSubAccount.creditLimitCentavos}
 				onDeleteRequest={vi.fn()}
 				onPayCredit={vi.fn()}
 			/>,
@@ -162,28 +162,44 @@ describe("PartitionCard credit variant", () => {
 });
 
 // ============================================================================
-// CRDT-01: PartitionModal credit fields
+// CRDT-01: SubAccountModal credit fields
 // ============================================================================
 
-describe("PartitionModal credit fields", () => {
+describe("SubAccountModal credit fields", () => {
 	beforeEach(() => {
-		vi.mocked(useTable).mockReturnValue([[walletPartition], true]);
+		vi.mocked(useTable).mockReturnValue([[walletSubAccount], true]);
 	});
 
-	it("renders Partition type select with Credit option", async () => {
-		const { PartitionModal } = await import("../components/PartitionModal");
-		render(<PartitionModal accountId={1n} isStandalone={false} onClose={vi.fn()} />);
-		// The modal should render a partition type selector
-		const typeSelect = screen.getByLabelText(/Partition type/i);
+	it("renders Sub-account type select with Credit option", async () => {
+		const { SubAccountModal } = await import("../components/SubAccountModal");
+		render(
+			<SubAccountModal
+				accountId={1n}
+				accountName="Test"
+				isStandalone={false}
+				existingBalanceCentavos={0n}
+				onClose={vi.fn()}
+			/>,
+		);
+		// The modal should render a sub-account type selector
+		const typeSelect = screen.getByLabelText(/Sub-account type/i);
 		expect(typeSelect).toBeInTheDocument();
 		// Credit option must exist in the select
 		expect(screen.getByRole("option", { name: /Credit/i })).toBeInTheDocument();
 	});
 
 	it("shows credit limit field when type=credit selected", async () => {
-		const { PartitionModal } = await import("../components/PartitionModal");
-		render(<PartitionModal accountId={1n} isStandalone={false} onClose={vi.fn()} />);
-		const typeSelect = screen.getByLabelText(/Partition type/i);
+		const { SubAccountModal } = await import("../components/SubAccountModal");
+		render(
+			<SubAccountModal
+				accountId={1n}
+				accountName="Test"
+				isStandalone={false}
+				existingBalanceCentavos={0n}
+				onClose={vi.fn()}
+			/>,
+		);
+		const typeSelect = screen.getByLabelText(/Sub-account type/i);
 		// Select credit type
 		await userEvent.selectOptions(typeSelect, "credit");
 		// Credit limit input should appear
@@ -191,8 +207,16 @@ describe("PartitionModal credit fields", () => {
 	});
 
 	it("hides credit limit field for non-credit types", async () => {
-		const { PartitionModal } = await import("../components/PartitionModal");
-		render(<PartitionModal accountId={1n} isStandalone={false} onClose={vi.fn()} />);
+		const { SubAccountModal } = await import("../components/SubAccountModal");
+		render(
+			<SubAccountModal
+				accountId={1n}
+				accountName="Test"
+				isStandalone={false}
+				existingBalanceCentavos={0n}
+				onClose={vi.fn()}
+			/>,
+		);
 		// Default type should be wallet — no credit limit field
 		expect(screen.queryByLabelText(/Credit limit/i)).toBeNull();
 	});
@@ -204,14 +228,14 @@ describe("PartitionModal credit fields", () => {
 
 describe("TransactionModal credit hint", () => {
 	// useTable call order in TransactionModal:
-	// (1) my_accounts, (2) my_partitions, (3) my_budget_config, (4) my_budget_allocations, (5) my_transactions, (6) my_tag_configs
+	// (1) my_accounts, (2) my_sub_accounts, (3) my_budget_config, (4) my_budget_allocations, (5) my_transactions, (6) my_tag_configs
 	function setupTransactionModalMocks() {
 		let callCount = 0;
 		(useTable as ReturnType<typeof vi.fn>).mockReset().mockImplementation(() => {
 			const idx = callCount % 6;
 			callCount++;
 			if (idx === 0) return [[mockAccount], true]; // my_accounts
-			if (idx === 1) return [[creditPartition, walletPartition], true]; // my_partitions
+			if (idx === 1) return [[creditSubAccount, walletSubAccount], true]; // my_sub_accounts
 			if (idx === 2) return [[], true]; // my_budget_config
 			if (idx === 3) return [[], true]; // my_budget_allocations
 			if (idx === 4) return [[], true]; // my_transactions
@@ -226,7 +250,7 @@ describe("TransactionModal credit hint", () => {
 
 		// Select credit partition from the source dropdown (expense mode is default)
 		const sourceSelect = screen.getByRole("combobox", { name: /from/i });
-		await userEvent.selectOptions(sourceSelect, creditPartition.id.toString());
+		await userEvent.selectOptions(sourceSelect, creditSubAccount.id.toString());
 
 		// Enter an amount well under the limit
 		await userEvent.type(screen.getByRole("spinbutton", { name: /amount/i }), "100");
@@ -242,7 +266,7 @@ describe("TransactionModal credit hint", () => {
 
 		// Select credit partition
 		const sourceSelect = screen.getByRole("combobox", { name: /from/i });
-		await userEvent.selectOptions(sourceSelect, creditPartition.id.toString());
+		await userEvent.selectOptions(sourceSelect, creditSubAccount.id.toString());
 
 		// Available credit = 120000 - 6200 = 113800
 		// Enter P114200 which exceeds available P113,800 by P400
@@ -259,7 +283,7 @@ describe("TransactionModal credit hint", () => {
 
 		// Select wallet partition
 		const sourceSelect = screen.getByRole("combobox", { name: /from/i });
-		await userEvent.selectOptions(sourceSelect, walletPartition.id.toString());
+		await userEvent.selectOptions(sourceSelect, walletSubAccount.id.toString());
 
 		// Credit hint should NOT appear
 		expect(screen.queryByText(/Credit available/i)).toBeNull();
@@ -273,18 +297,18 @@ describe("TransactionModal credit hint", () => {
 describe("PayCreditModal", () => {
 	beforeEach(() => {
 		// Only non-credit partitions shown in pay-from selector
-		vi.mocked(useTable).mockReturnValue([[walletPartition], true]);
+		vi.mocked(useTable).mockReturnValue([[walletSubAccount], true]);
 	});
 
 	it("renders Pay Credit modal title", async () => {
 		const { PayCreditModal } = await import("../components/PayCreditModal");
-		render(<PayCreditModal partitionId={1n} outstandingCentavos={620000n} onClose={vi.fn()} />);
+		render(<PayCreditModal subAccountId={1n} outstandingCentavos={620000n} onClose={vi.fn()} />);
 		expect(screen.getByText("Pay Credit")).toBeInTheDocument();
 	});
 
 	it("renders amount pre-filled with outstanding balance", async () => {
 		const { PayCreditModal } = await import("../components/PayCreditModal");
-		render(<PayCreditModal partitionId={1n} outstandingCentavos={620000n} onClose={vi.fn()} />);
+		render(<PayCreditModal subAccountId={1n} outstandingCentavos={620000n} onClose={vi.fn()} />);
 		// P6,200 = 620000 centavos = "6200.00"
 		const amountInput = screen.getByLabelText(/^Amount$/i);
 		expect((amountInput as HTMLInputElement).value).toBe("6200.00");
@@ -292,34 +316,34 @@ describe("PayCreditModal", () => {
 
 	it("dismiss button is labeled Keep balance", async () => {
 		const { PayCreditModal } = await import("../components/PayCreditModal");
-		render(<PayCreditModal partitionId={1n} outstandingCentavos={620000n} onClose={vi.fn()} />);
+		render(<PayCreditModal subAccountId={1n} outstandingCentavos={620000n} onClose={vi.fn()} />);
 		expect(screen.getByRole("button", { name: /Keep balance/i })).toBeInTheDocument();
 	});
 
 	it("submit button is labeled Confirm payment", async () => {
 		const { PayCreditModal } = await import("../components/PayCreditModal");
-		render(<PayCreditModal partitionId={1n} outstandingCentavos={620000n} onClose={vi.fn()} />);
+		render(<PayCreditModal subAccountId={1n} outstandingCentavos={620000n} onClose={vi.fn()} />);
 		expect(screen.getByRole("button", { name: /Confirm payment/i })).toBeInTheDocument();
 	});
 
 	it("renders Service fee input field", async () => {
 		const { PayCreditModal } = await import("../components/PayCreditModal");
-		render(<PayCreditModal partitionId={1n} outstandingCentavos={620000n} onClose={vi.fn()} />);
+		render(<PayCreditModal subAccountId={1n} outstandingCentavos={620000n} onClose={vi.fn()} />);
 		expect(screen.getByLabelText(/Service fee/i)).toBeInTheDocument();
 	});
 });
 
 // ============================================================================
-// PartitionModal edit mode
+// SubAccountModal edit mode
 // ============================================================================
 
-describe("PartitionModal edit mode", () => {
-	const editPartition = {
+describe("SubAccountModal edit mode", () => {
+	const editSubAccount = {
 		id: 1n,
 		accountId: 1n,
 		name: "RCBC Credit",
 		balanceCentavos: 620000n,
-		partitionType: "credit",
+		subAccountType: "credit",
 		creditLimitCentavos: 12000000n,
 		isDefault: false,
 		createdAt: { microsSinceUnixEpoch: 0n },
@@ -330,54 +354,62 @@ describe("PartitionModal edit mode", () => {
 	});
 
 	it("renders 'Edit partition' title in edit mode", async () => {
-		const { PartitionModal } = await import("../components/PartitionModal");
+		const { SubAccountModal } = await import("../components/SubAccountModal");
 		render(
-			<PartitionModal
+			<SubAccountModal
 				accountId={1n}
+				accountName="Test"
 				isStandalone={false}
+				existingBalanceCentavos={0n}
 				onClose={vi.fn()}
-				partition={editPartition}
+				subAccount={editSubAccount}
 			/>,
 		);
-		expect(screen.getByText("Edit partition")).toBeInTheDocument();
+		expect(screen.getByText("Edit sub-account")).toBeInTheDocument();
 	});
 
 	it("pre-fills name and credit limit from partition prop", async () => {
-		const { PartitionModal } = await import("../components/PartitionModal");
+		const { SubAccountModal } = await import("../components/SubAccountModal");
 		render(
-			<PartitionModal
+			<SubAccountModal
 				accountId={1n}
+				accountName="Test"
 				isStandalone={false}
+				existingBalanceCentavos={0n}
 				onClose={vi.fn()}
-				partition={editPartition}
+				subAccount={editSubAccount}
 			/>,
 		);
 		expect(screen.getByDisplayValue("RCBC Credit")).toBeInTheDocument();
 		expect(screen.getByDisplayValue("120000.00")).toBeInTheDocument();
 	});
 
-	it("partition type select is disabled in edit mode", async () => {
-		const { PartitionModal } = await import("../components/PartitionModal");
+	it("sub-account type select is disabled in edit mode", async () => {
+		const { SubAccountModal } = await import("../components/SubAccountModal");
 		render(
-			<PartitionModal
+			<SubAccountModal
 				accountId={1n}
+				accountName="Test"
 				isStandalone={false}
+				existingBalanceCentavos={0n}
 				onClose={vi.fn()}
-				partition={editPartition}
+				subAccount={editSubAccount}
 			/>,
 		);
-		const typeSelect = screen.getByLabelText(/Partition type/i);
+		const typeSelect = screen.getByLabelText(/Sub-account type/i);
 		expect(typeSelect).toBeDisabled();
 	});
 
 	it("does not show initial balance field in edit mode", async () => {
-		const { PartitionModal } = await import("../components/PartitionModal");
+		const { SubAccountModal } = await import("../components/SubAccountModal");
 		render(
-			<PartitionModal
+			<SubAccountModal
 				accountId={1n}
+				accountName="Test"
 				isStandalone={false}
+				existingBalanceCentavos={0n}
 				onClose={vi.fn()}
-				partition={editPartition}
+				subAccount={editSubAccount}
 			/>,
 		);
 		expect(screen.queryByLabelText(/Initial balance/i)).not.toBeInTheDocument();

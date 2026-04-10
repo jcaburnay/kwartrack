@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { type CatalogEntry, filterCatalog, getLogoUrl } from "../utils/subscriptionCatalog";
 import { FormField, inputCls } from "./FormField";
 
-interface CatalogInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
+interface CatalogInputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, "onSelect"> {
 	label: string;
 	error?: string;
 	filterValue: string;

@@ -280,7 +280,7 @@ describe("TransactionTable mobile cards (D-06)", () => {
 	const defaultProps = {
 		transactions: [],
 		accounts: [],
-		partitions: [],
+		subAccounts: [],
 		hasActiveFilters: false,
 		onEdit: vi.fn(),
 		onDelete: vi.fn(),

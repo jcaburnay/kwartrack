@@ -14,8 +14,8 @@ const userProfile = table(
 
 // account: top-level financial container (Maya, GCash, RCBC, BPI, etc.)
 // No public:true — all data access via my_accounts view (D-09)
-// isStandalone: true = hidden default partition holds the initial balance (D-04, D-06)
-// isStandalone: false = partitioned, balance = sum of visible partition balanceCentavos
+// isStandalone: true = hidden default sub-account holds the initial balance (D-04, D-06)
+// isStandalone: false = has sub-accounts, balance = sum of visible sub-account balanceCentavos
 // accessor: the property name used in code (e.g. ctx.db.account.account_owner.filter(...))
 export const account = table(
 	{
@@ -38,21 +38,21 @@ export const account = table(
 	},
 );
 
-// partition: sub-account within an account
-// isDefault: true = hidden partition created by create_account for standalone accounts (D-04)
-// isDefault: true partitions are NEVER shown in the UI
-// No public:true — all data access via my_partitions view (D-09)
-export const partition = table(
+// sub_account: sub-bucket within an account (renamed from partition)
+// isDefault: true = hidden sub-account created by create_account for standalone accounts (D-04)
+// isDefault: true sub-accounts are NEVER shown in the UI
+// No public:true — all data access via my_sub_accounts view (D-09)
+export const sub_account = table(
 	{
-		name: "partition",
+		name: "sub_account",
 		indexes: [
 			{
-				accessor: "partition_account",
+				accessor: "sub_account_account",
 				algorithm: "btree",
 				columns: ["accountId"],
 			},
 			{
-				accessor: "partition_owner",
+				accessor: "sub_account_owner",
 				algorithm: "btree",
 				columns: ["ownerIdentity"],
 			},
@@ -66,7 +66,7 @@ export const partition = table(
 		balanceCentavos: t.i64(),
 		isDefault: t.bool(),
 		createdAt: t.timestamp(),
-		partitionType: t.string(), // 'wallet' | 'savings' | 'time-deposit' | 'credit'
+		subAccountType: t.string(), // 'wallet' | 'savings' | 'time-deposit' | 'credit'
 		creditLimitCentavos: t.i64(), // 0n for non-credit; monthly limit for credit
 	},
 );
@@ -98,12 +98,12 @@ export const transaction = table(
 			{
 				accessor: "transaction_source",
 				algorithm: "btree",
-				columns: ["sourcePartitionId"],
+				columns: ["sourceSubAccountId"],
 			},
 			{
 				accessor: "transaction_destination",
 				algorithm: "btree",
-				columns: ["destinationPartitionId"],
+				columns: ["destinationSubAccountId"],
 			},
 		],
 	},
@@ -113,8 +113,8 @@ export const transaction = table(
 		type: t.string(), // "expense" | "income" | "transfer"
 		amountCentavos: t.i64(),
 		tag: t.string(),
-		sourcePartitionId: t.u64(), // 0n for income
-		destinationPartitionId: t.u64(), // 0n for expense
+		sourceSubAccountId: t.u64(), // 0n for income
+		destinationSubAccountId: t.u64(), // 0n for expense
 		serviceFeeCentavos: t.i64(), // 0n if not a transfer
 		description: t.string(), // empty string if none
 		date: t.timestamp(), // user-specified date, not server time
@@ -145,7 +145,7 @@ export const recurring_transaction_definition = table(
 		type: t.string(), // "expense" | "income"
 		amountCentavos: t.i64(),
 		tag: t.string(),
-		partitionId: t.u64(), // source for expense, destination for income
+		subAccountId: t.u64(), // source for expense, destination for income
 		dayOfMonth: t.u8(), // 1–28 (D-05)
 		isPaused: t.bool(),
 		remainingMonths: t.u16(), // countdown; 0 = indefinite (per D-10)
@@ -228,7 +228,7 @@ export const budget_allocation = table(
 );
 
 // debt: tracks money lent to or owed by other people
-// direction="loaned": user lent money (partition debited at creation)
+// direction="loaned": user lent money (sub-account debited at creation)
 // direction="owed": user owes money (tracking only, no balance impact until settled)
 // splitEventId=0 means manual debt; >0 links to a split_event
 export const debt = table(
@@ -248,7 +248,7 @@ export const debt = table(
 		personName: t.string(),
 		direction: t.string(), // "loaned" | "owed"
 		amountCentavos: t.i64(),
-		partitionId: t.u64(), // source partition (loaned) or 0n (owed)
+		subAccountId: t.u64(), // source sub-account (loaned) or 0n (owed)
 		settledAmountCentavos: t.i64(), // running total of settlements
 		tag: t.string(),
 		description: t.string(),
@@ -275,7 +275,7 @@ export const split_event = table(
 		ownerIdentity: t.identity(),
 		description: t.string(),
 		totalAmountCentavos: t.i64(),
-		payerPartitionId: t.u64(),
+		payerSubAccountId: t.u64(),
 		tag: t.string(),
 		date: t.timestamp(),
 		createdAt: t.timestamp(),
@@ -335,7 +335,7 @@ const spacetimedb = schema({
 	userProfile,
 	identity_alias,
 	account,
-	partition,
+	sub_account,
 	transaction,
 	recurring_transaction_definition,
 	recurring_transaction_schedule,
@@ -381,8 +381,8 @@ export const fire_recurring_transaction = spacetimedb.reducer(
 			type: def.type,
 			amountCentavos: def.amountCentavos,
 			tag: def.tag,
-			sourcePartitionId: def.type === "expense" ? def.partitionId : 0n,
-			destinationPartitionId: def.type === "income" ? def.partitionId : 0n,
+			sourceSubAccountId: def.type === "expense" ? def.subAccountId : 0n,
+			destinationSubAccountId: def.type === "income" ? def.subAccountId : 0n,
 			serviceFeeCentavos: 0n,
 			description: `Recurring: ${def.name}`,
 			date: ctx.timestamp,
@@ -391,21 +391,21 @@ export const fire_recurring_transaction = spacetimedb.reducer(
 			recurringDefinitionId: def.id,
 		});
 
-		// Update partition balance (credit-aware: expense on credit partition INCREASES balance)
-		const partition = ctx.db.partition.id.find(def.partitionId);
-		if (partition) {
+		// Update sub-account balance (credit-aware: expense on credit sub-account INCREASES balance)
+		const subAccount = ctx.db.sub_account.id.find(def.subAccountId);
+		if (subAccount) {
 			if (def.type === "expense") {
-				const isCreditPartition = partition.partitionType === "credit";
-				ctx.db.partition.id.update({
-					...partition,
-					balanceCentavos: isCreditPartition
-						? partition.balanceCentavos + def.amountCentavos
-						: partition.balanceCentavos - def.amountCentavos,
+				const isCreditSubAccount = subAccount.subAccountType === "credit";
+				ctx.db.sub_account.id.update({
+					...subAccount,
+					balanceCentavos: isCreditSubAccount
+						? subAccount.balanceCentavos + def.amountCentavos
+						: subAccount.balanceCentavos - def.amountCentavos,
 				});
 			} else if (def.type === "income") {
-				ctx.db.partition.id.update({
-					...partition,
-					balanceCentavos: partition.balanceCentavos + def.amountCentavos,
+				ctx.db.sub_account.id.update({
+					...subAccount,
+					balanceCentavos: subAccount.balanceCentavos + def.amountCentavos,
 				});
 			}
 		}
