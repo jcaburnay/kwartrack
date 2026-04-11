@@ -4,20 +4,20 @@
 /* eslint-disable */
 /* tslint:disable */
 import {
-  TypeBuilder as __TypeBuilder,
-  t as __t,
-  type AlgebraicTypeType as __AlgebraicTypeType,
-  type Infer as __Infer,
+	type AlgebraicTypeType as __AlgebraicTypeType,
+	type Infer as __Infer,
+	TypeBuilder as __TypeBuilder,
+	t as __t,
 } from "spacetimedb";
 
 export default __t.row({
-  id: __t.u64(),
-  accountId: __t.u64().name("account_id"),
-  ownerIdentity: __t.identity().name("owner_identity"),
-  name: __t.string(),
-  balanceCentavos: __t.i64().name("balance_centavos"),
-  isDefault: __t.bool().name("is_default"),
-  createdAt: __t.timestamp().name("created_at"),
-  subAccountType: __t.string().name("sub_account_type"),
-  creditLimitCentavos: __t.i64().name("credit_limit_centavos"),
+	id: __t.u64(),
+	accountId: __t.u64().name("account_id"),
+	ownerIdentity: __t.identity().name("owner_identity"),
+	name: __t.string(),
+	balanceCentavos: __t.i64().name("balance_centavos"),
+	isDefault: __t.bool().name("is_default"),
+	createdAt: __t.timestamp().name("created_at"),
+	subAccountType: __t.string().name("sub_account_type"),
+	creditLimitCentavos: __t.i64().name("credit_limit_centavos"),
 });

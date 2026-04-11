@@ -3,37 +3,37 @@
 
 /* eslint-disable */
 /* tslint:disable */
-import { type Infer as __Infer } from "spacetimedb";
+import type { Infer as __Infer } from "spacetimedb";
 
 // Import all reducer arg schemas
-import AddCustomTagReducer from "../add_custom_tag_reducer";
-import AddSubAccountReducer from "../add_sub_account_reducer";
-import ConvertAndCreateSubAccountReducer from "../convert_and_create_sub_account_reducer";
-import CreateAccountReducer from "../create_account_reducer";
-import CreateDebtReducer from "../create_debt_reducer";
-import CreateRecurringDefinitionReducer from "../create_recurring_definition_reducer";
-import CreateSplitReducer from "../create_split_reducer";
-import CreateTransactionReducer from "../create_transaction_reducer";
-import DeleteAccountReducer from "../delete_account_reducer";
-import DeleteCustomTagReducer from "../delete_custom_tag_reducer";
-import DeleteDebtReducer from "../delete_debt_reducer";
-import DeleteRecurringDefinitionReducer from "../delete_recurring_definition_reducer";
-import DeleteSplitReducer from "../delete_split_reducer";
-import DeleteSubAccountReducer from "../delete_sub_account_reducer";
-import DeleteTransactionReducer from "../delete_transaction_reducer";
-import EditRecurringDefinitionReducer from "../edit_recurring_definition_reducer";
-import EditSubAccountReducer from "../edit_sub_account_reducer";
-import EditTransactionReducer from "../edit_transaction_reducer";
-import LinkClerkIdentityReducer from "../link_clerk_identity_reducer";
-import PauseRecurringDefinitionReducer from "../pause_recurring_definition_reducer";
-import RenameAccountReducer from "../rename_account_reducer";
-import RenameSubAccountReducer from "../rename_sub_account_reducer";
-import ResumeRecurringDefinitionReducer from "../resume_recurring_definition_reducer";
-import SetBudgetReducer from "../set_budget_reducer";
-import SetBudgetAllocationsReducer from "../set_budget_allocations_reducer";
-import SettleDebtReducer from "../settle_debt_reducer";
-import ToggleTagVisibilityReducer from "../toggle_tag_visibility_reducer";
-import UpdateAccountIconReducer from "../update_account_icon_reducer";
+import type AddCustomTagReducer from "../add_custom_tag_reducer";
+import type AddSubAccountReducer from "../add_sub_account_reducer";
+import type ConvertAndCreateSubAccountReducer from "../convert_and_create_sub_account_reducer";
+import type CreateAccountReducer from "../create_account_reducer";
+import type CreateDebtReducer from "../create_debt_reducer";
+import type CreateRecurringDefinitionReducer from "../create_recurring_definition_reducer";
+import type CreateSplitReducer from "../create_split_reducer";
+import type CreateTransactionReducer from "../create_transaction_reducer";
+import type DeleteAccountReducer from "../delete_account_reducer";
+import type DeleteCustomTagReducer from "../delete_custom_tag_reducer";
+import type DeleteDebtReducer from "../delete_debt_reducer";
+import type DeleteRecurringDefinitionReducer from "../delete_recurring_definition_reducer";
+import type DeleteSplitReducer from "../delete_split_reducer";
+import type DeleteSubAccountReducer from "../delete_sub_account_reducer";
+import type DeleteTransactionReducer from "../delete_transaction_reducer";
+import type EditRecurringDefinitionReducer from "../edit_recurring_definition_reducer";
+import type EditSubAccountReducer from "../edit_sub_account_reducer";
+import type EditTransactionReducer from "../edit_transaction_reducer";
+import type LinkClerkIdentityReducer from "../link_clerk_identity_reducer";
+import type PauseRecurringDefinitionReducer from "../pause_recurring_definition_reducer";
+import type RenameAccountReducer from "../rename_account_reducer";
+import type RenameSubAccountReducer from "../rename_sub_account_reducer";
+import type ResumeRecurringDefinitionReducer from "../resume_recurring_definition_reducer";
+import type SetBudgetAllocationsReducer from "../set_budget_allocations_reducer";
+import type SetBudgetReducer from "../set_budget_reducer";
+import type SettleDebtReducer from "../settle_debt_reducer";
+import type ToggleTagVisibilityReducer from "../toggle_tag_visibility_reducer";
+import type UpdateAccountIconReducer from "../update_account_icon_reducer";
 
 export type AddCustomTagParams = __Infer<typeof AddCustomTagReducer>;
 export type AddSubAccountParams = __Infer<typeof AddSubAccountReducer>;
@@ -63,4 +63,3 @@ export type SetBudgetAllocationsParams = __Infer<typeof SetBudgetAllocationsRedu
 export type SettleDebtParams = __Infer<typeof SettleDebtReducer>;
 export type ToggleTagVisibilityParams = __Infer<typeof ToggleTagVisibilityReducer>;
 export type UpdateAccountIconParams = __Infer<typeof UpdateAccountIconReducer>;
-

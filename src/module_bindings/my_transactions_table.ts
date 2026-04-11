@@ -4,24 +4,24 @@
 /* eslint-disable */
 /* tslint:disable */
 import {
-  TypeBuilder as __TypeBuilder,
-  t as __t,
-  type AlgebraicTypeType as __AlgebraicTypeType,
-  type Infer as __Infer,
+	type AlgebraicTypeType as __AlgebraicTypeType,
+	type Infer as __Infer,
+	TypeBuilder as __TypeBuilder,
+	t as __t,
 } from "spacetimedb";
 
 export default __t.row({
-  id: __t.u64(),
-  ownerIdentity: __t.identity().name("owner_identity"),
-  type: __t.string(),
-  amountCentavos: __t.i64().name("amount_centavos"),
-  tag: __t.string(),
-  sourceSubAccountId: __t.u64().name("source_sub_account_id"),
-  destinationSubAccountId: __t.u64().name("destination_sub_account_id"),
-  serviceFeeCentavos: __t.i64().name("service_fee_centavos"),
-  description: __t.string(),
-  date: __t.timestamp(),
-  createdAt: __t.timestamp().name("created_at"),
-  isRecurring: __t.bool().name("is_recurring"),
-  recurringDefinitionId: __t.u64().name("recurring_definition_id"),
+	id: __t.u64(),
+	ownerIdentity: __t.identity().name("owner_identity"),
+	type: __t.string(),
+	amountCentavos: __t.i64().name("amount_centavos"),
+	tag: __t.string(),
+	sourceSubAccountId: __t.u64().name("source_sub_account_id"),
+	destinationSubAccountId: __t.u64().name("destination_sub_account_id"),
+	serviceFeeCentavos: __t.i64().name("service_fee_centavos"),
+	description: __t.string(),
+	date: __t.timestamp(),
+	createdAt: __t.timestamp().name("created_at"),
+	isRecurring: __t.bool().name("is_recurring"),
+	recurringDefinitionId: __t.u64().name("recurring_definition_id"),
 });

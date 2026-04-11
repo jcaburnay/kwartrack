@@ -4,19 +4,19 @@
 /* eslint-disable */
 /* tslint:disable */
 import {
-  TypeBuilder as __TypeBuilder,
-  t as __t,
-  type AlgebraicTypeType as __AlgebraicTypeType,
-  type Infer as __Infer,
+	type AlgebraicTypeType as __AlgebraicTypeType,
+	type Infer as __Infer,
+	TypeBuilder as __TypeBuilder,
+	t as __t,
 } from "spacetimedb";
 
 export default {
-  definitionId: __t.u64(),
-  name: __t.string(),
-  type: __t.string(),
-  amountCentavos: __t.i64(),
-  tag: __t.string(),
-  subAccountId: __t.u64(),
-  dayOfMonth: __t.u8(),
-  remainingMonths: __t.u16(),
+	definitionId: __t.u64(),
+	name: __t.string(),
+	type: __t.string(),
+	amountCentavos: __t.i64(),
+	tag: __t.string(),
+	subAccountId: __t.u64(),
+	dayOfMonth: __t.u8(),
+	remainingMonths: __t.u16(),
 };

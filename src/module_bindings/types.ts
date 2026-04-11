@@ -4,65 +4,65 @@
 /* eslint-disable */
 /* tslint:disable */
 import {
-  TypeBuilder as __TypeBuilder,
-  t as __t,
-  type AlgebraicTypeType as __AlgebraicTypeType,
-  type Infer as __Infer,
+	type AlgebraicTypeType as __AlgebraicTypeType,
+	type Infer as __Infer,
+	TypeBuilder as __TypeBuilder,
+	t as __t,
 } from "spacetimedb";
 
 export const Account = __t.object("Account", {
-  id: __t.u64(),
-  ownerIdentity: __t.identity(),
-  name: __t.string(),
-  isStandalone: __t.bool(),
-  createdAt: __t.timestamp(),
-  iconBankId: __t.option(__t.string()),
+	id: __t.u64(),
+	ownerIdentity: __t.identity(),
+	name: __t.string(),
+	isStandalone: __t.bool(),
+	createdAt: __t.timestamp(),
+	iconBankId: __t.option(__t.string()),
 });
 export type Account = __Infer<typeof Account>;
 
 export const BudgetAllocation = __t.object("BudgetAllocation", {
-  id: __t.u64(),
-  ownerIdentity: __t.identity(),
-  tag: __t.string(),
-  allocatedCentavos: __t.i64(),
-  updatedAt: __t.timestamp(),
+	id: __t.u64(),
+	ownerIdentity: __t.identity(),
+	tag: __t.string(),
+	allocatedCentavos: __t.i64(),
+	updatedAt: __t.timestamp(),
 });
 export type BudgetAllocation = __Infer<typeof BudgetAllocation>;
 
 export const BudgetAllocationInput = __t.object("BudgetAllocationInput", {
-  tag: __t.string(),
-  allocatedCentavos: __t.i64(),
+	tag: __t.string(),
+	allocatedCentavos: __t.i64(),
 });
 export type BudgetAllocationInput = __Infer<typeof BudgetAllocationInput>;
 
 export const BudgetConfig = __t.object("BudgetConfig", {
-  id: __t.u64(),
-  ownerIdentity: __t.identity(),
-  totalCentavos: __t.i64(),
-  updatedAt: __t.timestamp(),
+	id: __t.u64(),
+	ownerIdentity: __t.identity(),
+	totalCentavos: __t.i64(),
+	updatedAt: __t.timestamp(),
 });
 export type BudgetConfig = __Infer<typeof BudgetConfig>;
 
 export const Debt = __t.object("Debt", {
-  id: __t.u64(),
-  ownerIdentity: __t.identity(),
-  personName: __t.string(),
-  direction: __t.string(),
-  amountCentavos: __t.i64(),
-  subAccountId: __t.u64(),
-  settledAmountCentavos: __t.i64(),
-  tag: __t.string(),
-  description: __t.string(),
-  date: __t.timestamp(),
-  splitEventId: __t.u64(),
-  createdAt: __t.timestamp(),
+	id: __t.u64(),
+	ownerIdentity: __t.identity(),
+	personName: __t.string(),
+	direction: __t.string(),
+	amountCentavos: __t.i64(),
+	subAccountId: __t.u64(),
+	settledAmountCentavos: __t.i64(),
+	tag: __t.string(),
+	description: __t.string(),
+	date: __t.timestamp(),
+	splitEventId: __t.u64(),
+	createdAt: __t.timestamp(),
 });
 export type Debt = __Infer<typeof Debt>;
 
 export const IdentityAlias = __t.object("IdentityAlias", {
-  stdbIdentity: __t.identity(),
-  primaryIdentity: __t.identity(),
-  clerkUserId: __t.string(),
+	stdbIdentity: __t.identity(),
+	primaryIdentity: __t.identity(),
+	clerkUserId: __t.string(),
 });
 export type IdentityAlias = __Infer<typeof IdentityAlias>;
 
@@ -97,95 +97,94 @@ export const MyTransactions = __t.object("MyTransactions", {});
 export type MyTransactions = __Infer<typeof MyTransactions>;
 
 export const RecurringTransactionDefinition = __t.object("RecurringTransactionDefinition", {
-  id: __t.u64(),
-  ownerIdentity: __t.identity(),
-  name: __t.string(),
-  type: __t.string(),
-  amountCentavos: __t.i64(),
-  tag: __t.string(),
-  subAccountId: __t.u64(),
-  dayOfMonth: __t.u8(),
-  isPaused: __t.bool(),
-  remainingMonths: __t.u16(),
-  totalMonths: __t.u16(),
-  createdAt: __t.timestamp(),
+	id: __t.u64(),
+	ownerIdentity: __t.identity(),
+	name: __t.string(),
+	type: __t.string(),
+	amountCentavos: __t.i64(),
+	tag: __t.string(),
+	subAccountId: __t.u64(),
+	dayOfMonth: __t.u8(),
+	isPaused: __t.bool(),
+	remainingMonths: __t.u16(),
+	totalMonths: __t.u16(),
+	createdAt: __t.timestamp(),
 });
 export type RecurringTransactionDefinition = __Infer<typeof RecurringTransactionDefinition>;
 
 export const RecurringTransactionSchedule = __t.object("RecurringTransactionSchedule", {
-  scheduledId: __t.u64(),
-  scheduledAt: __t.scheduleAt(),
-  definitionId: __t.u64(),
+	scheduledId: __t.u64(),
+	scheduledAt: __t.scheduleAt(),
+	definitionId: __t.u64(),
 });
 export type RecurringTransactionSchedule = __Infer<typeof RecurringTransactionSchedule>;
 
 export const SplitEvent = __t.object("SplitEvent", {
-  id: __t.u64(),
-  ownerIdentity: __t.identity(),
-  description: __t.string(),
-  totalAmountCentavos: __t.i64(),
-  payerSubAccountId: __t.u64(),
-  tag: __t.string(),
-  date: __t.timestamp(),
-  createdAt: __t.timestamp(),
+	id: __t.u64(),
+	ownerIdentity: __t.identity(),
+	description: __t.string(),
+	totalAmountCentavos: __t.i64(),
+	payerSubAccountId: __t.u64(),
+	tag: __t.string(),
+	date: __t.timestamp(),
+	createdAt: __t.timestamp(),
 });
 export type SplitEvent = __Infer<typeof SplitEvent>;
 
 export const SplitParticipant = __t.object("SplitParticipant", {
-  id: __t.u64(),
-  ownerIdentity: __t.identity(),
-  splitEventId: __t.u64(),
-  personName: __t.string(),
-  shareAmountCentavos: __t.i64(),
-  debtId: __t.u64(),
+	id: __t.u64(),
+	ownerIdentity: __t.identity(),
+	splitEventId: __t.u64(),
+	personName: __t.string(),
+	shareAmountCentavos: __t.i64(),
+	debtId: __t.u64(),
 });
 export type SplitParticipant = __Infer<typeof SplitParticipant>;
 
 export const SubAccount = __t.object("SubAccount", {
-  id: __t.u64(),
-  accountId: __t.u64(),
-  ownerIdentity: __t.identity(),
-  name: __t.string(),
-  balanceCentavos: __t.i64(),
-  isDefault: __t.bool(),
-  createdAt: __t.timestamp(),
-  subAccountType: __t.string(),
-  creditLimitCentavos: __t.i64(),
+	id: __t.u64(),
+	accountId: __t.u64(),
+	ownerIdentity: __t.identity(),
+	name: __t.string(),
+	balanceCentavos: __t.i64(),
+	isDefault: __t.bool(),
+	createdAt: __t.timestamp(),
+	subAccountType: __t.string(),
+	creditLimitCentavos: __t.i64(),
 });
 export type SubAccount = __Infer<typeof SubAccount>;
 
 export const Transaction = __t.object("Transaction", {
-  id: __t.u64(),
-  ownerIdentity: __t.identity(),
-  type: __t.string(),
-  amountCentavos: __t.i64(),
-  tag: __t.string(),
-  sourceSubAccountId: __t.u64(),
-  destinationSubAccountId: __t.u64(),
-  serviceFeeCentavos: __t.i64(),
-  description: __t.string(),
-  date: __t.timestamp(),
-  createdAt: __t.timestamp(),
-  isRecurring: __t.bool(),
-  recurringDefinitionId: __t.u64(),
+	id: __t.u64(),
+	ownerIdentity: __t.identity(),
+	type: __t.string(),
+	amountCentavos: __t.i64(),
+	tag: __t.string(),
+	sourceSubAccountId: __t.u64(),
+	destinationSubAccountId: __t.u64(),
+	serviceFeeCentavos: __t.i64(),
+	description: __t.string(),
+	date: __t.timestamp(),
+	createdAt: __t.timestamp(),
+	isRecurring: __t.bool(),
+	recurringDefinitionId: __t.u64(),
 });
 export type Transaction = __Infer<typeof Transaction>;
 
 export const UserProfile = __t.object("UserProfile", {
-  identity: __t.identity(),
-  clerkUserId: __t.string(),
-  displayName: __t.string(),
-  createdAt: __t.timestamp(),
+	identity: __t.identity(),
+	clerkUserId: __t.string(),
+	displayName: __t.string(),
+	createdAt: __t.timestamp(),
 });
 export type UserProfile = __Infer<typeof UserProfile>;
 
 export const UserTagConfig = __t.object("UserTagConfig", {
-  id: __t.u64(),
-  ownerIdentity: __t.identity(),
-  transactionType: __t.string(),
-  tag: __t.string(),
-  isCustom: __t.bool(),
-  isHidden: __t.bool(),
+	id: __t.u64(),
+	ownerIdentity: __t.identity(),
+	transactionType: __t.string(),
+	tag: __t.string(),
+	isCustom: __t.bool(),
+	isHidden: __t.bool(),
 });
 export type UserTagConfig = __Infer<typeof UserTagConfig>;
-
