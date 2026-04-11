@@ -2,6 +2,7 @@ import { Show } from "@clerk/react";
 import { lazy, Suspense } from "react";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router";
 import { AppShell } from "./components/AppShell";
+import { useClerkIdentityLink } from "./hooks/useClerkIdentityLink";
 
 const AccountDetailPage = lazy(() =>
 	import("./pages/AccountDetailPage").then((m) => ({ default: m.AccountDetailPage })),
@@ -35,6 +36,7 @@ const TransactionsPage = lazy(() =>
 // Clerk <Show> handles async loading states correctly
 
 export default function App() {
+	useClerkIdentityLink();
 	return (
 		<BrowserRouter>
 			<Suspense>
