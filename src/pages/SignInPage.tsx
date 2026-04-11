@@ -7,6 +7,7 @@ export function SignInPage() {
 				<SignIn
 					routing="path"
 					path="/sign-in"
+					signUpUrl="/sign-up"
 					appearance={{
 						elements: {
 							// Minimal appearance override — use Clerk defaults, keep consistent with DaisyUI

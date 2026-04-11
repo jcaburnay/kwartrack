@@ -71,6 +71,11 @@
 					"suspicious": { "noConsole": "off" }
 				}
 			}
+		},
+		{
+			"includes": ["src/module_bindings/**"],
+			"linter": { "enabled": false },
+			"formatter": { "enabled": false }
 		}
 	]
 }

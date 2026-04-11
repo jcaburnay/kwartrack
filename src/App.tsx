@@ -28,6 +28,9 @@ const SettingsPage = lazy(() =>
 const SignInPage = lazy(() =>
 	import("./pages/SignInPage").then((m) => ({ default: m.SignInPage })),
 );
+const SignUpPage = lazy(() =>
+	import("./pages/SignUpPage").then((m) => ({ default: m.SignUpPage })),
+);
 const TransactionsPage = lazy(() =>
 	import("./pages/TransactionsPage").then((m) => ({ default: m.TransactionsPage })),
 );
@@ -43,6 +46,8 @@ export default function App() {
 				<Routes>
 					{/* Public routes */}
 					<Route path="/sign-in" element={<SignInPage />} />
+					<Route path="/sign-up" element={<SignUpPage />} />
+					<Route path="/sign-up/*" element={<SignUpPage />} />
 					{/* Protected routes: / and all nested paths */}
 					<Route
 						path="/"
