@@ -4,6 +4,7 @@ import { useForm } from "react-hook-form";
 import { useReducer } from "spacetimedb/react";
 import { useDragToDismiss } from "../hooks/useDragToDismiss";
 import { reducers } from "../module_bindings";
+import { openAsModal } from "../utils/dialog";
 import { formatPesos } from "../utils/currency";
 import { Input } from "./Input";
 
@@ -79,7 +80,7 @@ export function SubAccountModal({
 	});
 
 	useEffect(() => {
-		ref.current?.showModal();
+		openAsModal(ref.current);
 	}, []);
 
 	const nameValue = watch("name");

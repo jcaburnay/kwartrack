@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { useReducer } from "spacetimedb/react";
 import { useDragToDismiss } from "../hooks/useDragToDismiss";
 import { reducers } from "../module_bindings";
+import { openAsModal } from "../utils/dialog";
 import { Input } from "./Input";
 
 interface EditAccountModalProps {
@@ -20,7 +21,7 @@ export function EditAccountModal({ accountId, currentName, onClose }: EditAccoun
 	const [name, setName] = useState(currentName);
 
 	useEffect(() => {
-		ref.current?.showModal();
+		openAsModal(ref.current);
 	}, []);
 
 	useDragToDismiss(boxRef, onClose);

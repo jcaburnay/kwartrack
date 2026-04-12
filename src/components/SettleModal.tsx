@@ -4,6 +4,7 @@ import { useForm } from "react-hook-form";
 import { useReducer, useTable } from "spacetimedb/react";
 import { useDragToDismiss } from "../hooks/useDragToDismiss";
 import { reducers, tables } from "../module_bindings";
+import { openAsModal } from "../utils/dialog";
 import { formatPesos } from "../utils/currency";
 import { Input } from "./Input";
 
@@ -33,7 +34,7 @@ export function SettleModal({ debt, onClose }: SettleModalProps) {
 	const ref = useRef<HTMLDialogElement>(null);
 	const boxRef = useRef<HTMLDivElement>(null);
 	useEffect(() => {
-		ref.current?.showModal();
+		openAsModal(ref.current);
 	}, []);
 
 	const settleDebt = useReducer(reducers.settleDebt);

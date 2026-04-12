@@ -5,6 +5,7 @@ import { Timestamp } from "spacetimedb";
 import { useReducer, useTable } from "spacetimedb/react";
 import { useDragToDismiss } from "../hooks/useDragToDismiss";
 import { reducers, tables } from "../module_bindings";
+import { openAsModal } from "../utils/dialog";
 import { getVisibleTags } from "../utils/tagConfig";
 import { Input } from "./Input";
 
@@ -25,7 +26,7 @@ export function DebtModal({ onClose }: DebtModalProps) {
 	const ref = useRef<HTMLDialogElement>(null);
 	const boxRef = useRef<HTMLDivElement>(null);
 	useEffect(() => {
-		ref.current?.showModal();
+		openAsModal(ref.current);
 	}, []);
 
 	const createDebt = useReducer(reducers.createDebt);
@@ -141,12 +142,17 @@ export function DebtModal({ onClose }: DebtModalProps) {
 								/>
 								<div>
 									<label className="label" htmlFor="debt-tag">
-										<span className="label-text text-sm">Tag</span>
+										<span className="label-text text-sm">
+											Tag{direction === "loaned" && <span className="text-base-content/30 ml-1">(optional)</span>}
+										</span>
 									</label>
 									<select
 										id="debt-tag"
 										className={`select select-bordered w-full${errors.tag ? " select-error" : ""}`}
-										{...register("tag", { required: "Tag is required" })}
+										{...register("tag", {
+											validate: (v) =>
+												direction === "loaned" || !!v || "Tag is required",
+										})}
 									>
 										<option value="">Select tag</option>
 										{expenseTags.map((tag) => (

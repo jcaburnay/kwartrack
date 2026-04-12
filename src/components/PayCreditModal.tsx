@@ -5,6 +5,7 @@ import { Timestamp } from "spacetimedb";
 import { useReducer, useTable } from "spacetimedb/react";
 import { useDragToDismiss } from "../hooks/useDragToDismiss";
 import { reducers, tables } from "../module_bindings";
+import { openAsModal } from "../utils/dialog";
 import { formatPesos } from "../utils/currency";
 import { getVisibleTags } from "../utils/tagConfig";
 import { Input } from "./Input";
@@ -55,7 +56,7 @@ export function PayCreditModal({
 	} = useForm<PayCreditFormValues>({ defaultValues });
 
 	useEffect(() => {
-		dialogRef.current?.showModal();
+		openAsModal(dialogRef.current);
 	}, []);
 
 	const onSubmit = (data: PayCreditFormValues) => {

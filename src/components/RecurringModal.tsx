@@ -4,6 +4,7 @@ import { useForm } from "react-hook-form";
 import { useReducer, useTable } from "spacetimedb/react";
 import { useDragToDismiss } from "../hooks/useDragToDismiss";
 import { reducers, tables } from "../module_bindings";
+import { openAsModal } from "../utils/dialog";
 import { getVisibleTags } from "../utils/tagConfig";
 import { Input } from "./Input";
 
@@ -109,7 +110,7 @@ export function RecurringModal({
 	const ref = useRef<HTMLDialogElement>(null);
 	const boxRef = useRef<HTMLDivElement>(null);
 	useEffect(() => {
-		ref.current?.showModal();
+		openAsModal(ref.current);
 	}, []);
 	const createRecurring = useReducer(reducers.createRecurringDefinition);
 	const editRecurring = useReducer(reducers.editRecurringDefinition);

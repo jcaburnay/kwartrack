@@ -105,6 +105,13 @@ export function SubAccountCard({
 							</button>
 						</li>
 					)}
+					{isCreditSubAccount && onPayCredit && (
+						<li>
+							<button type="button" onClick={() => onPayCredit(id)}>
+								Pay
+							</button>
+						</li>
+					)}
 					<li>
 						<button type="button" className="text-error" onClick={() => onDeleteRequest(id, name)}>
 							Delete
@@ -149,18 +156,7 @@ export function SubAccountCard({
 						max={100}
 						title={`${availablePct}% available`}
 					/>
-					<div className="flex items-center justify-between">
-						<span className="text-xs text-base-content/50">{availablePct}% available</span>
-						{balanceCentavos > 0n && (
-							<button
-								type="button"
-								className="btn btn-xs btn-ghost text-primary"
-								onClick={() => onPayCredit?.(id)}
-							>
-								Pay
-							</button>
-						)}
-					</div>
+					<span className="text-xs text-base-content/50">{availablePct}% available</span>
 				</div>
 			) : (
 				<span className="text-xl font-semibold font-mono">{formatPesos(balanceCentavos)}</span>

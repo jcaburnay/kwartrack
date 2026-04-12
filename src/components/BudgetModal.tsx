@@ -4,6 +4,7 @@ import { useForm } from "react-hook-form";
 import { useReducer, useTable } from "spacetimedb/react";
 import { useDragToDismiss } from "../hooks/useDragToDismiss";
 import { reducers, tables } from "../module_bindings";
+import { openAsModal } from "../utils/dialog";
 import { getVisibleTags } from "../utils/tagConfig";
 import { Input } from "./Input";
 
@@ -34,7 +35,7 @@ export function BudgetModal({ onClose }: BudgetModalProps) {
 	const expenseTags = getVisibleTags("expense", tagConfigs);
 
 	useEffect(() => {
-		ref.current?.showModal();
+		openAsModal(ref.current);
 	}, []);
 
 	const [rows, setRows] = useState<AllocationRow[]>(() => [

@@ -164,48 +164,81 @@ export function AccountDetailPage() {
 				</div>
 			</div>
 
-			{/* Sub-account grid — same layout for standalone and partitioned */}
-			<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-				{visibleSubAccounts.map((subAccount, index) => (
-					<div
-						key={subAccount.id.toString()}
-						className="animate-card-enter"
-						style={{ animationDelay: `${index * 0.06}s` }}
-					>
-						<SubAccountCard
-							id={subAccount.id}
-							name={subAccount.name}
-							balanceCentavos={subAccount.balanceCentavos}
-							subAccountType={subAccount.subAccountType}
-							creditLimitCentavos={subAccount.creditLimitCentavos}
-							onDeleteRequest={(sid, sname) =>
-								setDeleteTarget({
-									type: "sub-account" as const,
-									id: sid,
-									name: sname,
-								})
-							}
-							onPayCredit={(subAccountId) => {
-								setPayCreditSubAccountId(subAccountId);
-								setShowPayCredit(true);
-							}}
-							onEdit={(subAccountId) => {
-								const sa = visibleSubAccounts.find((s) => s.id === subAccountId);
-								if (sa) {
-									setEditSubAccountData({
-										id: sa.id,
-										name: sa.name,
-										subAccountType: sa.subAccountType,
-										creditLimitCentavos: sa.creditLimitCentavos,
-									});
-								}
-							}}
-						/>
+			{/* Sub-accounts grouped by type */}
+			{(() => {
+				const TYPE_ORDER: { key: string; label: string }[] = [
+					{ key: "wallet", label: "Ewallet" },
+					{ key: "savings", label: "Savings" },
+					{ key: "time-deposit", label: "Time Deposit" },
+					{ key: "credit", label: "Credit" },
+				];
+				const grouped = TYPE_ORDER.map(({ key, label }) => ({
+					key,
+					label,
+					items: visibleSubAccounts.filter((sa) => sa.subAccountType === key),
+				})).filter((g) => g.items.length > 0);
+
+				let cardIndex = 0;
+				return (
+					<div className="flex flex-col gap-8">
+						{grouped.map(({ key, label, items }) => (
+							<div key={key}>
+								<h2 className="text-xs font-semibold uppercase tracking-widest text-base-content/50 mb-3">
+									{label}
+								</h2>
+								<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+									{items.map((subAccount) => {
+										const delay = cardIndex++ * 0.06;
+										return (
+											<div
+												key={subAccount.id.toString()}
+												className="animate-card-enter"
+												style={{ animationDelay: `${delay}s` }}
+											>
+												<SubAccountCard
+													id={subAccount.id}
+													name={subAccount.name}
+													balanceCentavos={subAccount.balanceCentavos}
+													subAccountType={subAccount.subAccountType}
+													creditLimitCentavos={subAccount.creditLimitCentavos}
+													onDeleteRequest={(sid, sname) =>
+														setDeleteTarget({
+															type: "sub-account" as const,
+															id: sid,
+															name: sname,
+														})
+													}
+													onPayCredit={(subAccountId) => {
+														setPayCreditSubAccountId(subAccountId);
+														setShowPayCredit(true);
+													}}
+													onEdit={(subAccountId) => {
+														const sa = visibleSubAccounts.find((s) => s.id === subAccountId);
+														if (sa) {
+															setEditSubAccountData({
+																id: sa.id,
+																name: sa.name,
+																subAccountType: sa.subAccountType,
+																creditLimitCentavos: sa.creditLimitCentavos,
+															});
+														}
+													}}
+												/>
+											</div>
+										);
+									})}
+								</div>
+							</div>
+						))}
+						{/* Adding first sub-account triggers standalone→partitioned conversion (D-08) */}
+						<div>
+							<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+								<NewItemCard label="New sub-account" onClick={() => setShowSubAccountModal(true)} />
+							</div>
+						</div>
 					</div>
-				))}
-				{/* Adding first sub-account triggers standalone→partitioned conversion (D-08) */}
-				<NewItemCard label="New sub-account" onClick={() => setShowSubAccountModal(true)} />
-			</div>
+				);
+			})()}
 
 			{/* TRANSACTIONS section — 48px gap from sub-accounts section (UI-SPEC: 2xl gap) */}
 			<div className="mt-10">

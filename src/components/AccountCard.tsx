@@ -39,9 +39,13 @@ export function AccountCard({
 						/>
 						<div>
 							<span className="font-semibold text-base">{name}</span>
-							{subAccountCount > 1 && (
-								<p className="text-xs text-base-content/40">{subAccountCount} sub-accounts</p>
-							)}
+							<p className="text-xs text-base-content/40">
+								{subAccountCount === 0
+									? "Standalone"
+									: subAccountCount === 1
+										? "1 sub-account"
+										: `${subAccountCount} sub-accounts`}
+							</p>
 						</div>
 					</div>
 					<span className="text-xl font-semibold font-mono">

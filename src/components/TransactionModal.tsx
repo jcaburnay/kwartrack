@@ -5,6 +5,7 @@ import { Timestamp } from "spacetimedb";
 import { useReducer, useTable } from "spacetimedb/react";
 import { useDragToDismiss } from "../hooks/useDragToDismiss";
 import { reducers, tables } from "../module_bindings";
+import { openAsModal } from "../utils/dialog";
 import { getCurrentMonthExpenses } from "../utils/budgetCompute";
 import { formatPesos } from "../utils/currency";
 import { getVisibleTags } from "../utils/tagConfig";
@@ -114,7 +115,7 @@ export function TransactionModal({ onClose, transaction }: TransactionModalProps
 	const ref = useRef<HTMLDialogElement>(null);
 	const boxRef = useRef<HTMLDivElement>(null);
 	useEffect(() => {
-		ref.current?.showModal();
+		openAsModal(ref.current);
 	}, []);
 	const createTransaction = useReducer(reducers.createTransaction);
 	const editTransaction = useReducer(reducers.editTransaction);

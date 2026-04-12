@@ -5,6 +5,7 @@ import { Timestamp } from "spacetimedb";
 import { useReducer, useTable } from "spacetimedb/react";
 import { useDragToDismiss } from "../hooks/useDragToDismiss";
 import { reducers, tables } from "../module_bindings";
+import { openAsModal } from "../utils/dialog";
 import { formatPesos } from "../utils/currency";
 import { Input } from "./Input";
 
@@ -44,7 +45,7 @@ export function SplitModal({ onClose }: SplitModalProps) {
 	const ref = useRef<HTMLDialogElement>(null);
 	const boxRef = useRef<HTMLDivElement>(null);
 	useEffect(() => {
-		ref.current?.showModal();
+		openAsModal(ref.current);
 	}, []);
 
 	const createSplit = useReducer(reducers.createSplit);

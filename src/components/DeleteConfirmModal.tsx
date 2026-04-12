@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { useDragToDismiss } from "../hooks/useDragToDismiss";
+import { openAsModal } from "../utils/dialog";
 
 interface DeleteConfirmModalProps {
 	title: string;
@@ -22,7 +23,7 @@ export function DeleteConfirmModal({
 	const boxRef = useRef<HTMLDivElement>(null);
 
 	useEffect(() => {
-		ref.current?.showModal();
+		openAsModal(ref.current);
 	}, []);
 
 	useDragToDismiss(boxRef, onDismiss);
