@@ -124,7 +124,7 @@ export const transaction = table(
 	},
 );
 
-// recurring_transaction_definition: stores monthly recurring transaction templates
+// recurring_transaction_definition: stores recurring transaction templates (interval-aware)
 // No public:true — all data access via my_recurring_definitions view (D-16)
 // Index recurring_owner on ownerIdentity for my_recurring_definitions view (D-13)
 export const recurring_transaction_definition = table(
@@ -146,10 +146,11 @@ export const recurring_transaction_definition = table(
 		amountCentavos: t.i64(),
 		tag: t.string(),
 		subAccountId: t.u64(), // source for expense, destination for income
-		dayOfMonth: t.u8(), // 1–28 (D-05)
+		dayOfMonth: t.u8(), // 1–28 (D-05); ignored for weekly/biweekly (interval anchors only first fire)
+		interval: t.string(), // "weekly"|"biweekly"|"monthly"|"quarterly"|"semiannual"|"yearly"
 		isPaused: t.bool(),
-		remainingMonths: t.u16(), // countdown; 0 = indefinite (per D-10)
-		totalMonths: t.u16(), // original installment length; 0 = indefinite (per D-10)
+		remainingOccurrences: t.u16(), // countdown; 0 = indefinite (per D-10)
+		totalOccurrences: t.u16(), // original installment length; 0 = indefinite (per D-10)
 		createdAt: t.timestamp(),
 	},
 );
@@ -348,16 +349,39 @@ const spacetimedb = schema({
 });
 export default spacetimedb;
 
-// Compute the microsecond timestamp for the same dayOfMonth in the NEXT calendar month.
-// Uses Date arithmetic from a deterministic ctx.timestamp input — acceptable per RESEARCH.md Pattern 2.
-// NEVER call this with dayOfMonth > 28; definition creation enforces the 1–28 cap (D-05).
-export function computeNextMonthMicros(nowMicros: bigint, dayOfMonth: number): bigint {
+// Compute the microsecond timestamp for the next occurrence based on the interval.
+// For weekly/biweekly: adds 7 or 14 days to nowMicros (dayOfMonth anchors only first fire).
+// For month-based intervals: advances by N months and pins to dayOfMonth.
+// NEVER call with dayOfMonth > 28; enforced at creation time (D-05).
+export function computeNextOccurrence(
+	nowMicros: bigint,
+	interval: string,
+	dayOfMonth: number,
+): bigint {
+	if (interval === "weekly") {
+		return nowMicros + 7n * 24n * 60n * 60n * 1_000_000n;
+	}
+	if (interval === "biweekly") {
+		return nowMicros + 14n * 24n * 60n * 60n * 1_000_000n;
+	}
+	const monthsToAdd =
+		interval === "monthly"
+			? 1
+			: interval === "quarterly"
+				? 3
+				: interval === "semiannual"
+					? 6
+					: interval === "yearly"
+						? 12
+						: (() => {
+								throw new Error(`Unknown interval: ${interval}`);
+							})();
 	const nowMs = Number(nowMicros / 1000n);
 	const now = new Date(nowMs);
 	let targetYear = now.getUTCFullYear();
-	let targetMonth = now.getUTCMonth() + 1; // advance one month
-	if (targetMonth > 11) {
-		targetMonth = 0;
+	let targetMonth = now.getUTCMonth() + monthsToAdd;
+	while (targetMonth > 11) {
+		targetMonth -= 12;
 		targetYear += 1;
 	}
 	const fireDate = new Date(Date.UTC(targetYear, targetMonth, dayOfMonth, 0, 0, 0, 0));
@@ -410,14 +434,14 @@ export const fire_recurring_transaction = spacetimedb.reducer(
 			}
 		}
 
-		// Installment countdown: decrement remainingMonths and auto-pause at 0 (D-01)
-		if (def.remainingMonths > 0) {
-			const newRemaining = def.remainingMonths - 1;
+		// Installment countdown: decrement remainingOccurrences and auto-pause at 0 (D-01)
+		if (def.remainingOccurrences > 0) {
+			const newRemaining = def.remainingOccurrences - 1;
 			if (newRemaining === 0) {
-				// Auto-pause: set isPaused=true, update remainingMonths to 0, do NOT schedule next fire
+				// Auto-pause: set isPaused=true, update remainingOccurrences to 0, do NOT schedule next fire
 				ctx.db.recurring_transaction_definition.id.update({
 					...def,
-					remainingMonths: 0,
+					remainingOccurrences: 0,
 					isPaused: true,
 				});
 				return; // Early return — no next schedule (per D-01)
@@ -425,13 +449,14 @@ export const fire_recurring_transaction = spacetimedb.reducer(
 			// Decrement and continue to schedule next fire
 			ctx.db.recurring_transaction_definition.id.update({
 				...def,
-				remainingMonths: newRemaining,
+				remainingOccurrences: newRemaining,
 			});
 		}
 
-		// Schedule next month's fire (D-15)
-		const nextFireMicros = computeNextMonthMicros(
+		// Schedule next fire based on interval (D-15)
+		const nextFireMicros = computeNextOccurrence(
 			ctx.timestamp.microsSinceUnixEpoch,
+			def.interval,
 			def.dayOfMonth,
 		);
 		ctx.db.recurring_transaction_schedule.insert({
