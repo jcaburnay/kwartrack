@@ -4,19 +4,19 @@
 /* eslint-disable */
 /* tslint:disable */
 import {
-	type AlgebraicTypeType as __AlgebraicTypeType,
-	type Infer as __Infer,
-	TypeBuilder as __TypeBuilder,
-	t as __t,
+  type AlgebraicTypeType as __AlgebraicTypeType,
+  type Infer as __Infer,
+  TypeBuilder as __TypeBuilder,
+  t as __t,
 } from "spacetimedb";
 
 export default {
-	type: __t.string(),
-	amountCentavos: __t.i64(),
-	tag: __t.string(),
-	sourceSubAccountId: __t.u64(),
-	destinationSubAccountId: __t.u64(),
-	serviceFeeCentavos: __t.i64(),
-	description: __t.string(),
-	date: __t.timestamp(),
+  type: __t.string(),
+  amountCentavos: __t.i64(),
+  tag: __t.string(),
+  sourceSubAccountId: __t.u64(),
+  destinationSubAccountId: __t.u64(),
+  serviceFeeCentavos: __t.i64(),
+  description: __t.string(),
+  date: __t.timestamp(),
 };

@@ -4,17 +4,17 @@
 /* eslint-disable */
 /* tslint:disable */
 import {
-	type AlgebraicTypeType as __AlgebraicTypeType,
-	type Infer as __Infer,
-	TypeBuilder as __TypeBuilder,
-	t as __t,
+  type AlgebraicTypeType as __AlgebraicTypeType,
+  type Infer as __Infer,
+  TypeBuilder as __TypeBuilder,
+  t as __t,
 } from "spacetimedb";
 
 export default __t.row({
-	id: __t.u64(),
-	ownerIdentity: __t.identity().name("owner_identity"),
-	transactionType: __t.string().name("transaction_type"),
-	tag: __t.string(),
-	isCustom: __t.bool().name("is_custom"),
-	isHidden: __t.bool().name("is_hidden"),
+  id: __t.u64(),
+  ownerIdentity: __t.identity().name("owner_identity"),
+  transactionType: __t.string().name("transaction_type"),
+  tag: __t.string(),
+  isCustom: __t.bool().name("is_custom"),
+  isHidden: __t.bool().name("is_hidden"),
 });

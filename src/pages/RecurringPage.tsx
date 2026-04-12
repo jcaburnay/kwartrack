@@ -11,8 +11,8 @@ export function RecurringPage() {
 
 	if (!isReady) return null;
 
-	const subscriptions = definitions.filter((d) => d.totalMonths === 0);
-	const installments = definitions.filter((d) => d.totalMonths > 0);
+	const subscriptions = definitions.filter((d) => d.totalOccurrences === 0);
+	const installments = definitions.filter((d) => d.totalOccurrences > 0);
 
 	return (
 		<div className="p-4 sm:p-6 space-y-8 animate-card-enter">

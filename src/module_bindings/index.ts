@@ -6,31 +6,31 @@
 /* eslint-disable */
 /* tslint:disable */
 import {
-	type AlgebraicTypeType as __AlgebraicTypeType,
-	convertToAccessorMap as __convertToAccessorMap,
-	DbConnectionBuilder as __DbConnectionBuilder,
-	type DbConnectionConfig as __DbConnectionConfig,
-	DbConnectionImpl as __DbConnectionImpl,
-	type ErrorContextInterface as __ErrorContextInterface,
-	type Event as __Event,
-	type EventContextInterface as __EventContextInterface,
-	type Infer as __Infer,
-	makeQueryBuilder as __makeQueryBuilder,
-	procedureSchema as __procedureSchema,
-	procedures as __procedures,
-	type QueryBuilder as __QueryBuilder,
-	type ReducerEventContextInterface as __ReducerEventContextInterface,
-	type RemoteModule as __RemoteModule,
-	reducerSchema as __reducerSchema,
-	reducers as __reducers,
-	SubscriptionBuilderImpl as __SubscriptionBuilderImpl,
-	type SubscriptionEventContextInterface as __SubscriptionEventContextInterface,
-	type SubscriptionHandleImpl as __SubscriptionHandleImpl,
-	schema as __schema,
-	TypeBuilder as __TypeBuilder,
-	t as __t,
-	table as __table,
-	Uuid as __Uuid,
+  type AlgebraicTypeType as __AlgebraicTypeType,
+  convertToAccessorMap as __convertToAccessorMap,
+  DbConnectionBuilder as __DbConnectionBuilder,
+  type DbConnectionConfig as __DbConnectionConfig,
+  DbConnectionImpl as __DbConnectionImpl,
+  type ErrorContextInterface as __ErrorContextInterface,
+  type Event as __Event,
+  type EventContextInterface as __EventContextInterface,
+  type Infer as __Infer,
+  makeQueryBuilder as __makeQueryBuilder,
+  procedureSchema as __procedureSchema,
+  procedures as __procedures,
+  type QueryBuilder as __QueryBuilder,
+  type ReducerEventContextInterface as __ReducerEventContextInterface,
+  type RemoteModule as __RemoteModule,
+  reducerSchema as __reducerSchema,
+  reducers as __reducers,
+  SubscriptionBuilderImpl as __SubscriptionBuilderImpl,
+  type SubscriptionEventContextInterface as __SubscriptionEventContextInterface,
+  type SubscriptionHandleImpl as __SubscriptionHandleImpl,
+  schema as __schema,
+  TypeBuilder as __TypeBuilder,
+  t as __t,
+  table as __table,
+  Uuid as __Uuid,
 } from "spacetimedb";
 
 // Import all reducer arg schemas
@@ -82,165 +82,145 @@ import UserProfileRow from "./user_profile_table";
 
 /** The schema information for all tables in this module. This is defined the same was as the tables would have been defined in the server. */
 const tablesSchema = __schema({
-	userProfile: __table(
-		{
-			name: "user_profile",
-			indexes: [
-				{
-					accessor: "clerkUserId",
-					name: "user_profile_clerk_user_id_idx_btree",
-					algorithm: "btree",
-					columns: ["clerkUserId"],
-				},
-				{
-					accessor: "identity",
-					name: "user_profile_identity_idx_btree",
-					algorithm: "btree",
-					columns: ["identity"],
-				},
-			],
-			constraints: [
-				{ name: "user_profile_clerk_user_id_key", constraint: "unique", columns: ["clerkUserId"] },
-				{ name: "user_profile_identity_key", constraint: "unique", columns: ["identity"] },
-			],
-		},
-		UserProfileRow,
-	),
-	my_accounts: __table(
-		{
-			name: "my_accounts",
-			indexes: [],
-			constraints: [],
-		},
-		MyAccountsRow,
-	),
-	my_budget_allocations: __table(
-		{
-			name: "my_budget_allocations",
-			indexes: [],
-			constraints: [],
-		},
-		MyBudgetAllocationsRow,
-	),
-	my_budget_config: __table(
-		{
-			name: "my_budget_config",
-			indexes: [],
-			constraints: [],
-		},
-		MyBudgetConfigRow,
-	),
-	my_debts: __table(
-		{
-			name: "my_debts",
-			indexes: [],
-			constraints: [],
-		},
-		MyDebtsRow,
-	),
-	my_recurring_definitions: __table(
-		{
-			name: "my_recurring_definitions",
-			indexes: [],
-			constraints: [],
-		},
-		MyRecurringDefinitionsRow,
-	),
-	my_split_events: __table(
-		{
-			name: "my_split_events",
-			indexes: [],
-			constraints: [],
-		},
-		MySplitEventsRow,
-	),
-	my_split_participants: __table(
-		{
-			name: "my_split_participants",
-			indexes: [],
-			constraints: [],
-		},
-		MySplitParticipantsRow,
-	),
-	my_sub_accounts: __table(
-		{
-			name: "my_sub_accounts",
-			indexes: [],
-			constraints: [],
-		},
-		MySubAccountsRow,
-	),
-	my_tag_configs: __table(
-		{
-			name: "my_tag_configs",
-			indexes: [],
-			constraints: [],
-		},
-		MyTagConfigsRow,
-	),
-	my_transactions: __table(
-		{
-			name: "my_transactions",
-			indexes: [],
-			constraints: [],
-		},
-		MyTransactionsRow,
-	),
+  userProfile: __table({
+    name: 'user_profile',
+    indexes: [
+      { accessor: 'clerkUserId', name: 'user_profile_clerk_user_id_idx_btree', algorithm: 'btree', columns: [
+        'clerkUserId',
+      ] },
+      { accessor: 'identity', name: 'user_profile_identity_idx_btree', algorithm: 'btree', columns: [
+        'identity',
+      ] },
+    ],
+    constraints: [
+      { name: 'user_profile_clerk_user_id_key', constraint: 'unique', columns: ['clerkUserId'] },
+      { name: 'user_profile_identity_key', constraint: 'unique', columns: ['identity'] },
+    ],
+  }, UserProfileRow),
+  my_accounts: __table({
+    name: 'my_accounts',
+    indexes: [
+    ],
+    constraints: [
+    ],
+  }, MyAccountsRow),
+  my_budget_allocations: __table({
+    name: 'my_budget_allocations',
+    indexes: [
+    ],
+    constraints: [
+    ],
+  }, MyBudgetAllocationsRow),
+  my_budget_config: __table({
+    name: 'my_budget_config',
+    indexes: [
+    ],
+    constraints: [
+    ],
+  }, MyBudgetConfigRow),
+  my_debts: __table({
+    name: 'my_debts',
+    indexes: [
+    ],
+    constraints: [
+    ],
+  }, MyDebtsRow),
+  my_recurring_definitions: __table({
+    name: 'my_recurring_definitions',
+    indexes: [
+    ],
+    constraints: [
+    ],
+  }, MyRecurringDefinitionsRow),
+  my_split_events: __table({
+    name: 'my_split_events',
+    indexes: [
+    ],
+    constraints: [
+    ],
+  }, MySplitEventsRow),
+  my_split_participants: __table({
+    name: 'my_split_participants',
+    indexes: [
+    ],
+    constraints: [
+    ],
+  }, MySplitParticipantsRow),
+  my_sub_accounts: __table({
+    name: 'my_sub_accounts',
+    indexes: [
+    ],
+    constraints: [
+    ],
+  }, MySubAccountsRow),
+  my_tag_configs: __table({
+    name: 'my_tag_configs',
+    indexes: [
+    ],
+    constraints: [
+    ],
+  }, MyTagConfigsRow),
+  my_transactions: __table({
+    name: 'my_transactions',
+    indexes: [
+    ],
+    constraints: [
+    ],
+  }, MyTransactionsRow),
 });
 
 /** The schema information for all reducers in this module. This is defined the same way as the reducers would have been defined in the server, except the body of the reducer is omitted in code generation. */
 const reducersSchema = __reducers(
-	__reducerSchema("add_custom_tag", AddCustomTagReducer),
-	__reducerSchema("add_sub_account", AddSubAccountReducer),
-	__reducerSchema("convert_and_create_sub_account", ConvertAndCreateSubAccountReducer),
-	__reducerSchema("create_account", CreateAccountReducer),
-	__reducerSchema("create_debt", CreateDebtReducer),
-	__reducerSchema("create_recurring_definition", CreateRecurringDefinitionReducer),
-	__reducerSchema("create_split", CreateSplitReducer),
-	__reducerSchema("create_transaction", CreateTransactionReducer),
-	__reducerSchema("delete_account", DeleteAccountReducer),
-	__reducerSchema("delete_custom_tag", DeleteCustomTagReducer),
-	__reducerSchema("delete_debt", DeleteDebtReducer),
-	__reducerSchema("delete_recurring_definition", DeleteRecurringDefinitionReducer),
-	__reducerSchema("delete_split", DeleteSplitReducer),
-	__reducerSchema("delete_sub_account", DeleteSubAccountReducer),
-	__reducerSchema("delete_transaction", DeleteTransactionReducer),
-	__reducerSchema("edit_recurring_definition", EditRecurringDefinitionReducer),
-	__reducerSchema("edit_sub_account", EditSubAccountReducer),
-	__reducerSchema("edit_transaction", EditTransactionReducer),
-	__reducerSchema("link_clerk_identity", LinkClerkIdentityReducer),
-	__reducerSchema("pause_recurring_definition", PauseRecurringDefinitionReducer),
-	__reducerSchema("rename_account", RenameAccountReducer),
-	__reducerSchema("rename_sub_account", RenameSubAccountReducer),
-	__reducerSchema("resume_recurring_definition", ResumeRecurringDefinitionReducer),
-	__reducerSchema("set_budget", SetBudgetReducer),
-	__reducerSchema("set_budget_allocations", SetBudgetAllocationsReducer),
-	__reducerSchema("settle_debt", SettleDebtReducer),
-	__reducerSchema("toggle_tag_visibility", ToggleTagVisibilityReducer),
-	__reducerSchema("update_account_icon", UpdateAccountIconReducer),
+  __reducerSchema("add_custom_tag", AddCustomTagReducer),
+  __reducerSchema("add_sub_account", AddSubAccountReducer),
+  __reducerSchema("convert_and_create_sub_account", ConvertAndCreateSubAccountReducer),
+  __reducerSchema("create_account", CreateAccountReducer),
+  __reducerSchema("create_debt", CreateDebtReducer),
+  __reducerSchema("create_recurring_definition", CreateRecurringDefinitionReducer),
+  __reducerSchema("create_split", CreateSplitReducer),
+  __reducerSchema("create_transaction", CreateTransactionReducer),
+  __reducerSchema("delete_account", DeleteAccountReducer),
+  __reducerSchema("delete_custom_tag", DeleteCustomTagReducer),
+  __reducerSchema("delete_debt", DeleteDebtReducer),
+  __reducerSchema("delete_recurring_definition", DeleteRecurringDefinitionReducer),
+  __reducerSchema("delete_split", DeleteSplitReducer),
+  __reducerSchema("delete_sub_account", DeleteSubAccountReducer),
+  __reducerSchema("delete_transaction", DeleteTransactionReducer),
+  __reducerSchema("edit_recurring_definition", EditRecurringDefinitionReducer),
+  __reducerSchema("edit_sub_account", EditSubAccountReducer),
+  __reducerSchema("edit_transaction", EditTransactionReducer),
+  __reducerSchema("link_clerk_identity", LinkClerkIdentityReducer),
+  __reducerSchema("pause_recurring_definition", PauseRecurringDefinitionReducer),
+  __reducerSchema("rename_account", RenameAccountReducer),
+  __reducerSchema("rename_sub_account", RenameSubAccountReducer),
+  __reducerSchema("resume_recurring_definition", ResumeRecurringDefinitionReducer),
+  __reducerSchema("set_budget", SetBudgetReducer),
+  __reducerSchema("set_budget_allocations", SetBudgetAllocationsReducer),
+  __reducerSchema("settle_debt", SettleDebtReducer),
+  __reducerSchema("toggle_tag_visibility", ToggleTagVisibilityReducer),
+  __reducerSchema("update_account_icon", UpdateAccountIconReducer),
 );
 
 /** The schema information for all procedures in this module. This is defined the same way as the procedures would have been defined in the server. */
-const proceduresSchema = __procedures();
+const proceduresSchema = __procedures(
+);
 
 /** The remote SpacetimeDB module schema, both runtime and type information. */
 const REMOTE_MODULE = {
-	versionInfo: {
-		cliVersion: "2.0.5" as const,
-	},
-	tables: tablesSchema.schemaType.tables,
-	reducers: reducersSchema.reducersType.reducers,
-	...proceduresSchema,
+  versionInfo: {
+    cliVersion: "2.0.5" as const,
+  },
+  tables: tablesSchema.schemaType.tables,
+  reducers: reducersSchema.reducersType.reducers,
+  ...proceduresSchema,
 } satisfies __RemoteModule<
-	typeof tablesSchema.schemaType,
-	typeof reducersSchema.reducersType,
-	typeof proceduresSchema
+  typeof tablesSchema.schemaType,
+  typeof reducersSchema.reducersType,
+  typeof proceduresSchema
 >;
 
 /** The tables available in this remote SpacetimeDB module. Each table reference doubles as a query builder. */
-export const tables: __QueryBuilder<typeof tablesSchema.schemaType> = __makeQueryBuilder(
-	tablesSchema.schemaType,
-);
+export const tables: __QueryBuilder<typeof tablesSchema.schemaType> = __makeQueryBuilder(tablesSchema.schemaType);
 
 /** The reducers available in this remote SpacetimeDB module. */
 export const reducers = __convertToAccessorMap(reducersSchema.reducersType.reducers);
@@ -264,16 +244,14 @@ export class DbConnectionBuilder extends __DbConnectionBuilder<DbConnection> {}
 
 /** The typed database connection to manage connections to the remote SpacetimeDB instance. This class has type information specific to the generated module. */
 export class DbConnection extends __DbConnectionImpl<typeof REMOTE_MODULE> {
-	/** Creates a new {@link DbConnectionBuilder} to configure and connect to the remote SpacetimeDB instance. */
-	static builder = (): DbConnectionBuilder => {
-		return new DbConnectionBuilder(
-			REMOTE_MODULE,
-			(config: __DbConnectionConfig<typeof REMOTE_MODULE>) => new DbConnection(config),
-		);
-	};
+  /** Creates a new {@link DbConnectionBuilder} to configure and connect to the remote SpacetimeDB instance. */
+  static builder = (): DbConnectionBuilder => {
+    return new DbConnectionBuilder(REMOTE_MODULE, (config: __DbConnectionConfig<typeof REMOTE_MODULE>) => new DbConnection(config));
+  };
 
-	/** Creates a new {@link SubscriptionBuilder} to configure a subscription to the remote SpacetimeDB instance. */
-	override subscriptionBuilder = (): SubscriptionBuilder => {
-		return new SubscriptionBuilder(this);
-	};
+  /** Creates a new {@link SubscriptionBuilder} to configure a subscription to the remote SpacetimeDB instance. */
+  override subscriptionBuilder = (): SubscriptionBuilder => {
+    return new SubscriptionBuilder(this);
+  };
 }
+

@@ -4,16 +4,18 @@
 /* eslint-disable */
 /* tslint:disable */
 import {
-	type AlgebraicTypeType as __AlgebraicTypeType,
-	type Infer as __Infer,
-	TypeBuilder as __TypeBuilder,
-	t as __t,
+  type AlgebraicTypeType as __AlgebraicTypeType,
+  type Infer as __Infer,
+  TypeBuilder as __TypeBuilder,
+  t as __t,
 } from "spacetimedb";
 
-import { BudgetAllocationInput } from "./types";
+import {
+  BudgetAllocationInput,
+} from "./types";
 
 export default {
-	get allocations() {
-		return __t.array(BudgetAllocationInput);
-	},
+  get allocations() {
+    return __t.array(BudgetAllocationInput);
+  },
 };

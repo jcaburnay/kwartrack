@@ -48,9 +48,10 @@ describe("RecurringModal", () => {
 					tag: "digital-subscriptions",
 					subAccountId: 2n,
 					dayOfMonth: 15,
+					interval: "monthly",
 					isPaused: false,
-					remainingMonths: 0,
-					totalMonths: 0,
+					remainingOccurrences: 0,
+					totalOccurrences: 0,
 				}}
 			/>,
 		);
@@ -74,17 +75,37 @@ describe("RecurringModal", () => {
 		expect(onClose).toHaveBeenCalledOnce();
 	});
 
-	it('renders "Remaining months" input in installment mode', () => {
+	it('renders "Remaining occurrences" input in installment mode', () => {
 		render(<RecurringModal onClose={onClose} mode="installment" />);
-		const input = screen.getByLabelText("Remaining months");
+		const input = screen.getByLabelText("Remaining occurrences");
 		expect(input).toBeInTheDocument();
 		expect(input).toHaveAttribute("type", "number");
 		expect(input).toHaveAttribute("max", "360");
 	});
 
-	it('hides "Remaining months" input in subscription mode', () => {
+	it('hides "Remaining occurrences" input in subscription mode', () => {
 		render(<RecurringModal onClose={onClose} />);
-		expect(screen.queryByLabelText("Remaining months")).not.toBeInTheDocument();
+		expect(screen.queryByLabelText("Remaining occurrences")).not.toBeInTheDocument();
+	});
+
+	it("renders interval dropdown with 6 options", () => {
+		render(<RecurringModal onClose={onClose} />);
+		const select = screen.getByLabelText(/interval/i);
+		const options = select.querySelectorAll("option");
+		expect(options).toHaveLength(6);
+		const values = Array.from(options).map((o) => (o as HTMLOptionElement).value);
+		expect(values).toContain("weekly");
+		expect(values).toContain("biweekly");
+		expect(values).toContain("monthly");
+		expect(values).toContain("quarterly");
+		expect(values).toContain("semiannual");
+		expect(values).toContain("yearly");
+	});
+
+	it('defaults interval to "monthly" in new subscription mode', () => {
+		render(<RecurringModal onClose={onClose} />);
+		const select = screen.getByLabelText(/interval/i) as HTMLSelectElement;
+		expect(select.value).toBe("monthly");
 	});
 });
 
@@ -144,42 +165,55 @@ describe("RecurringCard — installment display", () => {
 		tag: "bills",
 		subAccountId: 1n,
 		dayOfMonth: 5,
+		interval: "monthly",
 		isPaused: false,
-		remainingMonths: 8,
-		totalMonths: 12,
+		remainingOccurrences: 8,
+		totalOccurrences: 12,
 	};
 
 	it("shows installment counter when totalMonths > 0 and active", () => {
 		render(<RecurringCard definition={baseDefinition} />);
-		expect(screen.getByText("8 of 12 months")).toBeInTheDocument();
+		expect(screen.getByText("8 of 12 payments")).toBeInTheDocument();
 	});
 
 	it('shows "X of Y months" counter when totalMonths > 0', () => {
 		render(<RecurringCard definition={baseDefinition} />);
-		expect(screen.getByText("8 of 12 months")).toBeInTheDocument();
+		expect(screen.getByText("8 of 12 payments")).toBeInTheDocument();
 	});
 
-	it('shows "Completed" badge when remainingMonths=0 and isPaused', () => {
+	it('shows "Completed" badge when remainingOccurrences=0 and isPaused', () => {
 		render(
-			<RecurringCard definition={{ ...baseDefinition, remainingMonths: 0, isPaused: true }} />,
+			<RecurringCard definition={{ ...baseDefinition, remainingOccurrences: 0, isPaused: true }} />,
 		);
 		expect(screen.getByText("Completed")).toBeInTheDocument();
 		expect(screen.queryByText("INSTALLMENT")).not.toBeInTheDocument();
 	});
 
-	it('shows "0 of 12 months" for completed installments', () => {
+	it('shows "0 of 12 payments" for completed installments', () => {
 		render(
-			<RecurringCard definition={{ ...baseDefinition, remainingMonths: 0, isPaused: true }} />,
+			<RecurringCard definition={{ ...baseDefinition, remainingOccurrences: 0, isPaused: true }} />,
 		);
-		expect(screen.getByText("0 of 12 months")).toBeInTheDocument();
+		expect(screen.getByText("0 of 12 payments")).toBeInTheDocument();
 	});
 
-	it("shows no installment info when totalMonths=0 (non-installment)", () => {
+	it("shows no installment info when totalOccurrences=0 (non-installment)", () => {
 		render(
-			<RecurringCard definition={{ ...baseDefinition, remainingMonths: 0, totalMonths: 0 }} />,
+			<RecurringCard
+				definition={{ ...baseDefinition, remainingOccurrences: 0, totalOccurrences: 0 }}
+			/>,
 		);
 		expect(screen.queryByText("INSTALLMENT")).not.toBeInTheDocument();
 		expect(screen.queryByText("Completed")).not.toBeInTheDocument();
-		expect(screen.queryByText(/of.*months/)).not.toBeInTheDocument();
+		expect(screen.queryByText(/of.*payments/)).not.toBeInTheDocument();
+	});
+
+	it("shows interval badge on the card", () => {
+		render(<RecurringCard definition={baseDefinition} />);
+		expect(screen.getByText("monthly")).toBeInTheDocument();
+	});
+
+	it("shows correct interval badge for yearly", () => {
+		render(<RecurringCard definition={{ ...baseDefinition, interval: "yearly" }} />);
+		expect(screen.getByText("yearly")).toBeInTheDocument();
 	});
 });

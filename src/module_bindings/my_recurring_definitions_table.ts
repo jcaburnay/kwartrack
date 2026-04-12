@@ -4,23 +4,24 @@
 /* eslint-disable */
 /* tslint:disable */
 import {
-	type AlgebraicTypeType as __AlgebraicTypeType,
-	type Infer as __Infer,
-	TypeBuilder as __TypeBuilder,
-	t as __t,
+  type AlgebraicTypeType as __AlgebraicTypeType,
+  type Infer as __Infer,
+  TypeBuilder as __TypeBuilder,
+  t as __t,
 } from "spacetimedb";
 
 export default __t.row({
-	id: __t.u64(),
-	ownerIdentity: __t.identity().name("owner_identity"),
-	name: __t.string(),
-	type: __t.string(),
-	amountCentavos: __t.i64().name("amount_centavos"),
-	tag: __t.string(),
-	subAccountId: __t.u64().name("sub_account_id"),
-	dayOfMonth: __t.u8().name("day_of_month"),
-	isPaused: __t.bool().name("is_paused"),
-	remainingMonths: __t.u16().name("remaining_months"),
-	totalMonths: __t.u16().name("total_months"),
-	createdAt: __t.timestamp().name("created_at"),
+  id: __t.u64(),
+  ownerIdentity: __t.identity().name("owner_identity"),
+  name: __t.string(),
+  type: __t.string(),
+  amountCentavos: __t.i64().name("amount_centavos"),
+  tag: __t.string(),
+  subAccountId: __t.u64().name("sub_account_id"),
+  dayOfMonth: __t.u8().name("day_of_month"),
+  interval: __t.string(),
+  isPaused: __t.bool().name("is_paused"),
+  remainingOccurrences: __t.u16().name("remaining_occurrences"),
+  totalOccurrences: __t.u16().name("total_occurrences"),
+  createdAt: __t.timestamp().name("created_at"),
 });

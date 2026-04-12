@@ -4,23 +4,23 @@
 /* eslint-disable */
 /* tslint:disable */
 import {
-	type AlgebraicTypeType as __AlgebraicTypeType,
-	type Infer as __Infer,
-	TypeBuilder as __TypeBuilder,
-	t as __t,
+  type AlgebraicTypeType as __AlgebraicTypeType,
+  type Infer as __Infer,
+  TypeBuilder as __TypeBuilder,
+  t as __t,
 } from "spacetimedb";
 
 export default __t.row({
-	id: __t.u64(),
-	ownerIdentity: __t.identity().name("owner_identity"),
-	personName: __t.string().name("person_name"),
-	direction: __t.string(),
-	amountCentavos: __t.i64().name("amount_centavos"),
-	subAccountId: __t.u64().name("sub_account_id"),
-	settledAmountCentavos: __t.i64().name("settled_amount_centavos"),
-	tag: __t.string(),
-	description: __t.string(),
-	date: __t.timestamp(),
-	splitEventId: __t.u64().name("split_event_id"),
-	createdAt: __t.timestamp().name("created_at"),
+  id: __t.u64(),
+  ownerIdentity: __t.identity().name("owner_identity"),
+  personName: __t.string().name("person_name"),
+  direction: __t.string(),
+  amountCentavos: __t.i64().name("amount_centavos"),
+  subAccountId: __t.u64().name("sub_account_id"),
+  settledAmountCentavos: __t.i64().name("settled_amount_centavos"),
+  tag: __t.string(),
+  description: __t.string(),
+  date: __t.timestamp(),
+  splitEventId: __t.u64().name("split_event_id"),
+  createdAt: __t.timestamp().name("created_at"),
 });

@@ -15,9 +15,10 @@ interface RecurringDefinition {
 	tag: string;
 	subAccountId: bigint;
 	dayOfMonth: number;
+	interval: string;
 	isPaused: boolean;
-	remainingMonths: number;
-	totalMonths: number;
+	remainingOccurrences: number;
+	totalOccurrences: number;
 }
 
 interface RecurringFormValues {
@@ -27,7 +28,8 @@ interface RecurringFormValues {
 	tag: string;
 	subAccountId: string;
 	dayOfMonth: string;
-	remainingMonths: string;
+	interval: string;
+	remainingOccurrences: string;
 }
 
 interface SubAccountGroupedSelectProps {
@@ -116,7 +118,7 @@ export function RecurringModal({
 	const [tagConfigs] = useTable(tables.my_tag_configs);
 	const isEdit = !!definition;
 	const effectiveMode = isEdit
-		? definition.totalMonths > 0
+		? definition.totalOccurrences > 0
 			? "installment"
 			: "subscription"
 		: mode;
@@ -135,7 +137,10 @@ export function RecurringModal({
 				tag: definition.tag,
 				subAccountId: definition.subAccountId.toString(),
 				dayOfMonth: definition.dayOfMonth.toString(),
-				remainingMonths: definition.remainingMonths ? definition.remainingMonths.toString() : "",
+				interval: definition.interval,
+				remainingOccurrences: definition.remainingOccurrences
+					? definition.remainingOccurrences.toString()
+					: "",
 			}
 		: {
 				name: "",
@@ -144,7 +149,8 @@ export function RecurringModal({
 				tag: isInstallment ? "" : "digital-subscriptions",
 				subAccountId: "",
 				dayOfMonth: "1",
-				remainingMonths: "",
+				interval: "monthly",
+				remainingOccurrences: "",
 			};
 
 	const {
@@ -168,7 +174,9 @@ export function RecurringModal({
 		const amountCentavos = BigInt(Math.round(parseFloat(values.amount) * 100));
 		const subAccountId = BigInt(values.subAccountId);
 		const dayOfMonth = parseInt(values.dayOfMonth, 10);
-		const remainingMonths = values.remainingMonths ? parseInt(values.remainingMonths, 10) : 0;
+		const remainingOccurrences = values.remainingOccurrences
+			? parseInt(values.remainingOccurrences, 10)
+			: 0;
 
 		if (isEdit && definition) {
 			await editRecurring({
@@ -179,7 +187,8 @@ export function RecurringModal({
 				tag: values.tag,
 				subAccountId,
 				dayOfMonth,
-				remainingMonths,
+				interval: values.interval,
+				remainingOccurrences,
 			});
 		} else {
 			await createRecurring({
@@ -189,8 +198,9 @@ export function RecurringModal({
 				tag: values.tag,
 				subAccountId,
 				dayOfMonth,
-				remainingMonths,
-				totalMonths: remainingMonths,
+				interval: values.interval,
+				remainingOccurrences,
+				totalOccurrences: remainingOccurrences,
 			});
 		}
 		reset();
@@ -319,8 +329,29 @@ export function RecurringModal({
 								</div>
 							</div>
 
-							{/* Day of month + Remaining months side by side */}
-							<div className={`grid ${isInstallment ? "sm:grid-cols-2" : ""} gap-3`}>
+							{/* Interval + Day of month side by side */}
+							<div className="grid sm:grid-cols-2 gap-3">
+								<div>
+									<label className="label" htmlFor="rec-interval">
+										<span className="label-text text-sm">Interval</span>
+									</label>
+									<select
+										id="rec-interval"
+										aria-label="Interval"
+										className="select select-bordered w-full"
+										{...register("interval", { required: "Interval is required" })}
+									>
+										<option value="weekly">Weekly</option>
+										<option value="biweekly">Bi-weekly</option>
+										<option value="monthly">Monthly</option>
+										<option value="quarterly">Quarterly</option>
+										<option value="semiannual">Semi-annual</option>
+										<option value="yearly">Yearly</option>
+									</select>
+									{errors.interval && (
+										<p className="text-error text-xs mt-1">{errors.interval.message}</p>
+									)}
+								</div>
 								<div>
 									<label className="label" htmlFor="rec-day">
 										<span className="label-text text-sm">Day of month</span>
@@ -341,24 +372,25 @@ export function RecurringModal({
 										<p className="text-error text-xs mt-1">{errors.dayOfMonth.message}</p>
 									)}
 								</div>
-								{isInstallment && (
-									<Input
-										label="Remaining months"
-										id="rec-remaining"
-										type="number"
-										min="1"
-										max="360"
-										error={errors.remainingMonths?.message}
-										{...register("remainingMonths", {
-											required: "Required for installments",
-											validate: (v) => {
-												const n = parseInt(v, 10);
-												return (n >= 1 && n <= 360) || "Must be 1-360";
-											},
-										})}
-									/>
-								)}
 							</div>
+							{/* Remaining occurrences — installment mode only */}
+							{isInstallment && (
+								<Input
+									label="Remaining occurrences"
+									id="rec-remaining"
+									type="number"
+									min="1"
+									max="360"
+									error={errors.remainingOccurrences?.message}
+									{...register("remainingOccurrences", {
+										required: "Required for installments",
+										validate: (v) => {
+											const n = parseInt(v, 10);
+											return (n >= 1 && n <= 360) || "Must be 1-360";
+										},
+									})}
+								/>
+							)}
 						</div>
 					</div>
 

@@ -15,9 +15,10 @@ interface RecurringDefinition {
 	tag: string;
 	subAccountId: bigint;
 	dayOfMonth: number;
+	interval: string;
 	isPaused: boolean;
-	remainingMonths: number;
-	totalMonths: number;
+	remainingOccurrences: number;
+	totalOccurrences: number;
 }
 
 interface RecurringCardProps {
@@ -93,22 +94,23 @@ export function RecurringCard({ definition }: RecurringCardProps) {
 						{formatPesos(definition.amountCentavos)}
 					</span>
 
-					{/* Type badge + day */}
-					<div className="flex items-center gap-2">
+					{/* Type badge + interval badge + day */}
+					<div className="flex items-center gap-2 flex-wrap">
 						<span className={typeBadgeClass}>{definition.type}</span>
+						<span className="badge badge-sm badge-neutral">{definition.interval}</span>
 						{/* Completed badge for finished installments */}
-						{definition.totalMonths > 0 &&
-							definition.remainingMonths === 0 &&
+						{definition.totalOccurrences > 0 &&
+							definition.remainingOccurrences === 0 &&
 							definition.isPaused && (
 								<span className="badge badge-sm badge-success">Completed</span>
 							)}
 						<span className="text-xs text-base-content/50">day {definition.dayOfMonth}</span>
 					</div>
 
-					{/* Installment counter (per D-04, D-05) */}
-					{definition.totalMonths > 0 && (
+					{/* Installment counter */}
+					{definition.totalOccurrences > 0 && (
 						<span className="text-xs text-base-content/50">
-							{definition.remainingMonths} of {definition.totalMonths} months
+							{definition.remainingOccurrences} of {definition.totalOccurrences} payments
 						</span>
 					)}
 
