@@ -192,7 +192,7 @@ export function TransactionFilterRow({
 					<option value="">All tags</option>
 					{TAGS.map((tag) => (
 						<option key={tag} value={tag}>
-							{tag}
+							{tag.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())}
 						</option>
 					))}
 				</select>

@@ -93,7 +93,9 @@ export function SplitCard({ splitEvent, participants, debts }: SplitCardProps) {
 								{settledCount} of {participants.length} settled
 							</span>
 						)}
-						<span className="text-xs text-base-content/50">{splitEvent.tag}</span>
+						<span className="text-xs text-base-content/50">
+							{splitEvent.tag.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())}
+						</span>
 					</div>
 
 					{/* Participant dots */}

@@ -5,7 +5,6 @@ import { useReducer, useTable } from "spacetimedb/react";
 import { useDragToDismiss } from "../hooks/useDragToDismiss";
 import { reducers, tables } from "../module_bindings";
 import { getVisibleTags } from "../utils/tagConfig";
-import { CatalogInput } from "./CatalogInput";
 import { Input } from "./Input";
 
 interface RecurringDefinition {
@@ -142,7 +141,7 @@ export function RecurringModal({
 				name: "",
 				type: "expense",
 				amount: "",
-				tag: "",
+				tag: isInstallment ? "" : "digital-subscriptions",
 				subAccountId: "",
 				dayOfMonth: "1",
 				remainingMonths: "",
@@ -159,8 +158,6 @@ export function RecurringModal({
 
 	const selectedType = watch("type");
 	const selectedTag = watch("tag");
-	const nameValue = watch("name");
-
 	// When type changes, reset tag to empty string (tags differ by type)
 	const handleTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
 		setValue("type", e.target.value as "expense" | "income");
@@ -230,14 +227,10 @@ export function RecurringModal({
 				<form onSubmit={handleSubmit(onSubmit)} className="flex flex-col flex-1 min-h-0">
 					<div className="flex-1 overflow-y-auto">
 						<div className="flex flex-col gap-3">
-							{/* Name with catalog autocomplete */}
-							<CatalogInput
+							<Input
 								label="Name"
 								id="rec-name"
 								error={errors.name?.message}
-								filterValue={nameValue}
-								onSelect={(name) => setValue("name", name, { shouldValidate: true })}
-								suggestionsEnabled={!isInstallment}
 								autoComplete="off"
 								{...register("name", {
 									required: "Name is required",
@@ -272,7 +265,7 @@ export function RecurringModal({
 										<option value="">Select tag</option>
 										{availableTags.map((tag) => (
 											<option key={tag} value={tag}>
-												{tag}
+												{tag.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())}
 											</option>
 										))}
 									</select>

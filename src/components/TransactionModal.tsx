@@ -157,7 +157,7 @@ export function TransactionModal({ onClose, transaction }: TransactionModalProps
 		: {
 				type: "expense",
 				amount: "",
-				tag: expenseTags[0] ?? "foods",
+				tag: "",
 				sourceSubAccountId: "",
 				destinationSubAccountId: "",
 				serviceFee: "",
@@ -192,7 +192,7 @@ export function TransactionModal({ onClose, transaction }: TransactionModalProps
 			}
 			return;
 		}
-		if (visibleTags.length > 0 && !visibleTags.includes(selectedTag)) {
+		if (visibleTags.length > 0 && selectedTag !== "" && !visibleTags.includes(selectedTag)) {
 			setValue("tag", visibleTags[0]);
 		}
 	}, [selectedTag, selectedType, setValue, transaction, visibleTags]);
@@ -264,6 +264,7 @@ export function TransactionModal({ onClose, transaction }: TransactionModalProps
 	}
 
 	const onSubmit = (data: TransactionFormValues) => {
+		if (!data.tag) return;
 		const amountCentavos = BigInt(Math.round(parseFloat(data.amount) * 100));
 		const serviceFeeCentavos = data.serviceFee
 			? BigInt(Math.round(parseFloat(data.serviceFee) * 100))
@@ -377,7 +378,11 @@ export function TransactionModal({ onClose, transaction }: TransactionModalProps
 											onChange={(e) => setValue("tag", e.target.value)}
 											className="select select-bordered w-full"
 										>
-											{selectedType === "transfer" && <option value="transfer">No tag</option>}
+											{selectedType === "transfer" ? (
+												<option value="transfer">No tag</option>
+											) : (
+												<option value="">Select tag</option>
+											)}
 											{tagOptions.map((tag) => (
 												<option key={tag} value={tag}>
 													{tag.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())}

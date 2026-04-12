@@ -151,7 +151,7 @@ export function DebtModal({ onClose }: DebtModalProps) {
 										<option value="">Select tag</option>
 										{expenseTags.map((tag) => (
 											<option key={tag} value={tag}>
-												{tag}
+												{tag.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())}
 											</option>
 										))}
 									</select>

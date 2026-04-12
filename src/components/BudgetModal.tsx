@@ -160,7 +160,7 @@ export function BudgetModal({ onClose }: BudgetModalProps) {
 											<option value="">Select tag</option>
 											{available.map((tag) => (
 												<option key={tag} value={tag}>
-													{tag.replace(/-/g, " ")}
+													{tag.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())}
 												</option>
 											))}
 										</select>

@@ -1,10 +1,9 @@
 import { X } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { useReducer } from "spacetimedb/react";
 import { useDragToDismiss } from "../hooks/useDragToDismiss";
 import { reducers } from "../module_bindings";
-import { BankInput } from "./BankInput";
 import { Input } from "./Input";
 
 interface AccountFormValues {
@@ -21,8 +20,6 @@ export function AccountModal({ onClose, onAccountCreated }: AccountModalProps) {
 	const ref = useRef<HTMLDialogElement>(null);
 	const boxRef = useRef<HTMLDivElement>(null);
 	const createAccount = useReducer(reducers.createAccount);
-
-	const [iconBankId, setIconBankId] = useState<string | null>(null);
 
 	const {
 		register,
@@ -49,7 +46,7 @@ export function AccountModal({ onClose, onAccountCreated }: AccountModalProps) {
 		createAccount({
 			name: data.name.trim(),
 			initialBalanceCentavos: centavos,
-			iconBankId: iconBankId ?? undefined,
+			iconBankId: undefined,
 		});
 		onAccountCreated?.();
 		reset();
@@ -75,12 +72,10 @@ export function AccountModal({ onClose, onAccountCreated }: AccountModalProps) {
 				<form onSubmit={handleSubmit(onSubmit)} noValidate className="flex flex-col flex-1 min-h-0">
 					<div className="flex-1 overflow-y-auto">
 						<div className="flex flex-col gap-4">
-							{/* Account name with bank autocomplete */}
-							<BankInput
+							<Input
 								label="Account name"
 								id="account-name"
 								error={errors.name?.message}
-								onSelectBank={(bank) => setIconBankId(bank.id)}
 								placeholder="e.g. Maya, GCash, RCBC"
 								autoFocus
 								autoComplete="off"

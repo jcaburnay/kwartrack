@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useReducer, useTable } from "spacetimedb/react";
 import { reducers, tables } from "../module_bindings";
 import { formatPesos } from "../utils/currency";
-import { findCatalogMatch, getLogoUrl } from "../utils/subscriptionCatalog";
+import { deriveColor } from "./BankIcon";
 import { DeleteConfirmModal } from "./DeleteConfirmModal";
 import { RecurringModal } from "./RecurringModal";
 
@@ -71,7 +71,7 @@ export function RecurringCard({ definition }: RecurringCardProps) {
 			: "text-success font-semibold text-sm";
 
 	const partitionLabel = formatSubAccountLabel(definition.subAccountId, accounts, subAccounts);
-	const catalogMatch = findCatalogMatch(definition.name);
+	const dotColor = deriveColor(definition.name);
 
 	return (
 		<>
@@ -79,18 +79,12 @@ export function RecurringCard({ definition }: RecurringCardProps) {
 				className={`rounded-xl bg-base-100 shadow-sm border border-base-300/50 card-hover relative${definition.isPaused ? " opacity-60" : ""}`}
 			>
 				<div className="p-5 flex flex-col gap-2 pr-8">
-					{/* Brand icon + Name */}
+					{/* Name */}
 					<div className="flex items-center gap-2.5">
-						{catalogMatch && (
-							<img
-								src={getLogoUrl(catalogMatch.domain)}
-								alt={catalogMatch.name}
-								className="w-8 h-8 rounded-lg flex-shrink-0 object-contain"
-								onError={(e) => {
-									e.currentTarget.style.display = "none";
-								}}
-							/>
-						)}
+						<span
+							className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+							style={{ backgroundColor: dotColor }}
+						/>
 						<p className="text-sm font-semibold leading-tight">{definition.name}</p>
 					</div>
 
@@ -120,7 +114,7 @@ export function RecurringCard({ definition }: RecurringCardProps) {
 
 					{/* Tag + partition */}
 					<p className="text-xs text-base-content/50 truncate">
-						{definition.tag}
+						{definition.tag.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())}
 						{partitionLabel ? ` · ${partitionLabel}` : ""}
 					</p>
 				</div>

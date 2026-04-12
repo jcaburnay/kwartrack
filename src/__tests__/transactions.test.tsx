@@ -332,8 +332,8 @@ describe("Transfer tag is cleared when switching to transfer type", () => {
 	it("tag value becomes the transfer sentinel after switching to transfer type", async () => {
 		const user = userEvent.setup();
 		render(<TransactionModal onClose={() => {}} />);
-		// Default type is expense with tag "foods"
-		expect(screen.getByDisplayValue("Foods")).toBeInTheDocument();
+		// Default type is expense with no tag preselected
+		expect(screen.getByDisplayValue("Select tag")).toBeInTheDocument();
 		// Switch to transfer type
 		await user.click(screen.getByRole("button", { name: /Transfer/i }));
 		expect(screen.getByRole("combobox", { name: /tag/i })).toHaveValue("transfer");

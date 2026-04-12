@@ -5,7 +5,7 @@ import { useReducer } from "spacetimedb/react";
 import { reducers } from "../module_bindings";
 import { formatPesos } from "../utils/currency";
 import { EditAccountModal } from "./AccountIconModal";
-import { BankIcon } from "./BankIcon";
+import { deriveColor } from "./BankIcon";
 import { DeleteConfirmModal } from "./DeleteConfirmModal";
 
 interface AccountCardProps {
@@ -28,12 +28,17 @@ export function AccountCard({
 	const [showEditModal, setShowEditModal] = useState(false);
 	const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
+	const dotColor = deriveColor(name);
+
 	return (
 		<>
 			<div className="rounded-xl bg-base-100 shadow-sm card-hover relative border border-base-300/50">
 				<Link to={`/accounts/${id.toString()}`} className="p-5 flex flex-col gap-4 pr-10">
 					<div className="flex items-center gap-3">
-						<BankIcon bankId={iconBankId} name={name} size={40} />
+						<span
+							className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+							style={{ backgroundColor: dotColor }}
+						/>
 						<div>
 							<span className="font-semibold text-base">{name}</span>
 							{subAccountCount > 1 && (
