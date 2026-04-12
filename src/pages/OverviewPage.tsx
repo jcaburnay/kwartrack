@@ -2,8 +2,8 @@ import { useMemo } from "react";
 import { Link } from "react-router";
 import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis } from "recharts";
 import { useTable } from "spacetimedb/react";
-import { deriveColor } from "../components/BankIcon";
 import { tables } from "../module_bindings";
+import { getAccountBackground } from "../utils/brandColors";
 import { getCurrentMonthExpenses } from "../utils/budgetCompute";
 import { formatPesos } from "../utils/currency";
 import {
@@ -112,10 +112,8 @@ export function OverviewPage() {
 														className="link link-hover text-sm font-semibold flex items-center gap-2"
 													>
 														<span
-															className="w-2 h-2 rounded-full flex-shrink-0"
-															style={{
-																backgroundColor: deriveColor(acct.name),
-															}}
+															className="w-2 h-2 rounded-full flex-shrink-0 ring-1 ring-base-content/15"
+															style={{ background: getAccountBackground(acct.name) }}
 														/>
 														{acct.name}
 													</Link>

@@ -2,7 +2,6 @@ import { ArrowLeft } from "lucide-react";
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router";
 import { useReducer, useTable } from "spacetimedb/react";
-import { deriveColor } from "../components/BankIcon";
 import { DeleteConfirmModal } from "../components/DeleteConfirmModal";
 import { NewItemCard } from "../components/NewItemCard";
 import { PayCreditModal } from "../components/PayCreditModal";
@@ -14,6 +13,7 @@ import { TransactionModal } from "../components/TransactionModal";
 import type { TransactionRow } from "../components/TransactionTable";
 import { TransactionTable } from "../components/TransactionTable";
 import { reducers, tables } from "../module_bindings";
+import { getAccountBackground } from "../utils/brandColors";
 import { formatPesos } from "../utils/currency";
 
 export function AccountDetailPage() {
@@ -155,8 +155,8 @@ export function AccountDetailPage() {
 
 			<div className="flex items-center gap-3 mb-6 min-w-0">
 				<span
-					className="w-3 h-3 rounded-full flex-shrink-0"
-					style={{ backgroundColor: deriveColor(account.name) }}
+					className="w-3 h-3 rounded-full flex-shrink-0 ring-1 ring-base-content/15"
+					style={{ background: getAccountBackground(account.name) }}
 				/>
 				<div className="flex items-baseline gap-4 min-w-0">
 					<span className="font-semibold text-base truncate min-w-0">{account.name}</span>

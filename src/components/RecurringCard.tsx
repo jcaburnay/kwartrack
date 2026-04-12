@@ -2,8 +2,8 @@ import { MoreVertical } from "lucide-react";
 import { useState } from "react";
 import { useReducer, useTable } from "spacetimedb/react";
 import { reducers, tables } from "../module_bindings";
+import { getAccountBackground } from "../utils/brandColors";
 import { formatPesos } from "../utils/currency";
-import { deriveColor } from "./BankIcon";
 import { DeleteConfirmModal } from "./DeleteConfirmModal";
 import { RecurringModal } from "./RecurringModal";
 
@@ -72,8 +72,6 @@ export function RecurringCard({ definition }: RecurringCardProps) {
 			: "text-success font-semibold text-sm";
 
 	const partitionLabel = formatSubAccountLabel(definition.subAccountId, accounts, subAccounts);
-	const dotColor = deriveColor(definition.name);
-
 	return (
 		<>
 			<div
@@ -83,8 +81,8 @@ export function RecurringCard({ definition }: RecurringCardProps) {
 					{/* Name */}
 					<div className="flex items-center gap-2.5">
 						<span
-							className="w-2.5 h-2.5 rounded-full flex-shrink-0"
-							style={{ backgroundColor: dotColor }}
+							className="w-2.5 h-2.5 rounded-full flex-shrink-0 ring-1 ring-base-content/15"
+							style={{ background: getAccountBackground(definition.name) }}
 						/>
 						<p className="text-sm font-semibold leading-tight">{definition.name}</p>
 					</div>
