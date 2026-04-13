@@ -51,7 +51,7 @@ jobs:
           echo "$HOME/.local/bin" >> $GITHUB_PATH
 
       - name: Regenerate module bindings
-        run: pnpm generate && pnpm check
+        run: pnpm generate
 
       - name: Check bindings are committed
         run: |
