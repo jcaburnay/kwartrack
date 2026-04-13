@@ -982,7 +982,7 @@ export const edit_recurring_definition = spacetimedb.reducer(
 export const delete_recurring_definition = spacetimedb.reducer(
 	{ definitionId: t.u64() },
 	(ctx, { definitionId }) => {
-		const existing = ctx.db.recurring_transaction_definition.id.find(definitionId);
+		const existing = ctx.db.recurring_transaction_definition_v2.id.find(definitionId);
 		if (!existing) throw new SenderError("Definition not found");
 		if (!isAuthorized(ctx, existing.ownerIdentity)) throw new SenderError("Not authorized");
 
@@ -993,7 +993,7 @@ export const delete_recurring_definition = spacetimedb.reducer(
 			ctx.db.recurring_transaction_schedule.scheduledId.delete(schedRow.scheduledId);
 		}
 
-		ctx.db.recurring_transaction_definition.id.delete(definitionId);
+		ctx.db.recurring_transaction_definition_v2.id.delete(definitionId);
 	},
 );
 
@@ -1003,19 +1003,18 @@ export const delete_recurring_definition = spacetimedb.reducer(
 export const pause_recurring_definition = spacetimedb.reducer(
 	{ definitionId: t.u64() },
 	(ctx, { definitionId }) => {
-		const existing = ctx.db.recurring_transaction_definition.id.find(definitionId);
+		const existing = ctx.db.recurring_transaction_definition_v2.id.find(definitionId);
 		if (!existing) throw new SenderError("Definition not found");
 		if (!isAuthorized(ctx, existing.ownerIdentity)) throw new SenderError("Not authorized");
-		if (existing.isPaused) return; // already paused, no-op
+		if (existing.isPaused) return;
 
-		// Delete schedule row (D-07)
 		for (const schedRow of ctx.db.recurring_transaction_schedule.recurring_schedule_definition_id.filter(
 			definitionId,
 		)) {
 			ctx.db.recurring_transaction_schedule.scheduledId.delete(schedRow.scheduledId);
 		}
 
-		ctx.db.recurring_transaction_definition.id.update({ ...existing, isPaused: true });
+		ctx.db.recurring_transaction_definition_v2.id.update({ ...existing, isPaused: true });
 	},
 );
 
@@ -1025,15 +1024,17 @@ export const pause_recurring_definition = spacetimedb.reducer(
 export const resume_recurring_definition = spacetimedb.reducer(
 	{ definitionId: t.u64() },
 	(ctx, { definitionId }) => {
-		const existing = ctx.db.recurring_transaction_definition.id.find(definitionId);
+		const existing = ctx.db.recurring_transaction_definition_v2.id.find(definitionId);
 		if (!existing) throw new SenderError("Definition not found");
 		if (!isAuthorized(ctx, existing.ownerIdentity)) throw new SenderError("Not authorized");
-		if (!existing.isPaused) return; // already active, no-op
+		if (!existing.isPaused) return;
 
-		// Insert new schedule row for next upcoming fire date
 		const nextFireMicros = computeFirstFireMicros(
 			ctx.timestamp.microsSinceUnixEpoch,
 			existing.dayOfMonth,
+			existing.interval,
+			existing.anchorMonth,
+			existing.anchorDayOfWeek,
 		);
 		ctx.db.recurring_transaction_schedule.insert({
 			scheduledId: 0n,
@@ -1041,7 +1042,7 @@ export const resume_recurring_definition = spacetimedb.reducer(
 			definitionId: existing.id,
 		});
 
-		ctx.db.recurring_transaction_definition.id.update({ ...existing, isPaused: false });
+		ctx.db.recurring_transaction_definition_v2.id.update({ ...existing, isPaused: false });
 	},
 );
 
