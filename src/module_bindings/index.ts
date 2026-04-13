@@ -53,7 +53,6 @@ import EditRecurringDefinitionReducer from "./edit_recurring_definition_reducer"
 import EditSubAccountReducer from "./edit_sub_account_reducer";
 import EditTransactionReducer from "./edit_transaction_reducer";
 import LinkClerkIdentityReducer from "./link_clerk_identity_reducer";
-import MigrateRecurringToV2Reducer from "./migrate_recurring_to_v_2_reducer";
 import PauseRecurringDefinitionReducer from "./pause_recurring_definition_reducer";
 import RenameAccountReducer from "./rename_account_reducer";
 import RenameSubAccountReducer from "./rename_sub_account_reducer";
@@ -191,7 +190,6 @@ const reducersSchema = __reducers(
   __reducerSchema("edit_sub_account", EditSubAccountReducer),
   __reducerSchema("edit_transaction", EditTransactionReducer),
   __reducerSchema("link_clerk_identity", LinkClerkIdentityReducer),
-  __reducerSchema("migrate_recurring_to_v_2", MigrateRecurringToV2Reducer),
   __reducerSchema("pause_recurring_definition", PauseRecurringDefinitionReducer),
   __reducerSchema("rename_account", RenameAccountReducer),
   __reducerSchema("rename_sub_account", RenameSubAccountReducer),

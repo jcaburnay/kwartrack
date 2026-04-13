@@ -25,7 +25,6 @@ import EditRecurringDefinitionReducer from "../edit_recurring_definition_reducer
 import EditSubAccountReducer from "../edit_sub_account_reducer";
 import EditTransactionReducer from "../edit_transaction_reducer";
 import LinkClerkIdentityReducer from "../link_clerk_identity_reducer";
-import MigrateRecurringToV2Reducer from "../migrate_recurring_to_v_2_reducer";
 import PauseRecurringDefinitionReducer from "../pause_recurring_definition_reducer";
 import RenameAccountReducer from "../rename_account_reducer";
 import RenameSubAccountReducer from "../rename_sub_account_reducer";
@@ -55,7 +54,6 @@ export type EditRecurringDefinitionParams = __Infer<typeof EditRecurringDefiniti
 export type EditSubAccountParams = __Infer<typeof EditSubAccountReducer>;
 export type EditTransactionParams = __Infer<typeof EditTransactionReducer>;
 export type LinkClerkIdentityParams = __Infer<typeof LinkClerkIdentityReducer>;
-export type MigrateRecurringToV2Params = __Infer<typeof MigrateRecurringToV2Reducer>;
 export type PauseRecurringDefinitionParams = __Infer<typeof PauseRecurringDefinitionReducer>;
 export type RenameAccountParams = __Infer<typeof RenameAccountReducer>;
 export type RenameSubAccountParams = __Infer<typeof RenameSubAccountReducer>;

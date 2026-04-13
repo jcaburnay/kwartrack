@@ -5,7 +5,6 @@ import spacetimedb, {
 	budget_allocation,
 	budget_config,
 	debt,
-	recurring_transaction_definition,
 	recurring_transaction_definition_v2,
 	split_event,
 	split_participant,
@@ -136,11 +135,15 @@ export const my_recurring_definitions = spacetimedb.view(
 		const alias = ctx.db.identity_alias.stdbIdentity.find(ctx.sender);
 		const ownerIdentity = alias?.primaryIdentity ?? ctx.sender;
 
-		const v2Rows = [...ctx.db.recurring_transaction_definition_v2.recurring_owner_v2.filter(ownerIdentity)];
+		const v2Rows = [
+			...ctx.db.recurring_transaction_definition_v2.recurring_owner_v2.filter(ownerIdentity),
+		];
 		const v2Ids = new Set(v2Rows.map((r) => r.id));
 
 		// Include v1 rows not yet migrated, mapped to v2 shape with default anchor values
-		const unmigratedRows = [...ctx.db.recurring_transaction_definition.recurring_owner.filter(ownerIdentity)]
+		const unmigratedRows = [
+			...ctx.db.recurring_transaction_definition.recurring_owner.filter(ownerIdentity),
+		]
 			.filter((r) => !v2Ids.has(r.id))
 			.map((r) => ({
 				id: r.id,
@@ -163,7 +166,6 @@ export const my_recurring_definitions = spacetimedb.view(
 		return [...v2Rows, ...unmigratedRows];
 	},
 );
-
 
 // my_budget_config: returns the single budget_config row for the current user (D-07)
 // Client subscribes via: 'SELECT * FROM my_budget_config'
@@ -841,7 +843,9 @@ function computeFirstFireMicros(
 				if (d > now) return BigInt(d.getTime()) * 1000n;
 			}
 			// Unreachable with valid dayOfMonth (1–28), but guard for clarity
-			throw new Error(`computeFirstFireMicros: no future yearly date found for anchorMonth=${anchorMonth}`);
+			throw new Error(
+				`computeFirstFireMicros: no future yearly date found for anchorMonth=${anchorMonth}`,
+			);
 		}
 
 		// semiannual fires on anchorMonth and anchorMonth+6 months
@@ -855,7 +859,10 @@ function computeFirstFireMicros(
 			}
 		}
 		const sorted = candidates.sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
-		if (sorted.length === 0) throw new Error(`computeFirstFireMicros: no semiannual candidate found for anchorMonth=${anchorMonth}`);
+		if (sorted.length === 0)
+			throw new Error(
+				`computeFirstFireMicros: no semiannual candidate found for anchorMonth=${anchorMonth}`,
+			);
 		return sorted[0];
 	}
 
