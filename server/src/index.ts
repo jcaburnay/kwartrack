@@ -620,14 +620,15 @@ export const rename_sub_account = spacetimedb.reducer(
 	},
 );
 
-// edit_sub_account — update name and credit limit for credit sub-accounts
+// edit_sub_account — update name, credit limit, and optionally outstanding balance
 export const edit_sub_account = spacetimedb.reducer(
 	{
 		subAccountId: t.u64(),
 		newName: t.string(),
 		newCreditLimitCentavos: t.i64(),
+		newBalanceCentavos: t.i64().optional(),
 	},
-	(ctx, { subAccountId, newName, newCreditLimitCentavos }) => {
+	(ctx, { subAccountId, newName, newCreditLimitCentavos, newBalanceCentavos }) => {
 		if (!newName.trim()) throw new SenderError("Sub-account name is required");
 		if (newCreditLimitCentavos <= 0n) throw new SenderError("Credit limit must be greater than 0");
 		const existing = ctx.db.sub_account.id.find(subAccountId);
@@ -635,10 +636,13 @@ export const edit_sub_account = spacetimedb.reducer(
 		if (!isAuthorized(ctx, existing.ownerIdentity)) throw new SenderError("Not authorized");
 		if (existing.subAccountType !== "credit")
 			throw new SenderError("Only credit sub-accounts can be edited");
+		if (newBalanceCentavos != null && newBalanceCentavos > newCreditLimitCentavos)
+			throw new SenderError("Outstanding balance cannot exceed credit limit");
 		ctx.db.sub_account.id.update({
 			...existing,
 			name: newName.trim(),
 			creditLimitCentavos: newCreditLimitCentavos,
+			...(newBalanceCentavos != null ? { balanceCentavos: newBalanceCentavos } : {}),
 		});
 	},
 );
