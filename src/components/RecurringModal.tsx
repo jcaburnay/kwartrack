@@ -17,6 +17,8 @@ interface RecurringDefinition {
 	subAccountId: bigint;
 	dayOfMonth: number;
 	interval: string;
+	anchorMonth: number;
+	anchorDayOfWeek: number;
 	isPaused: boolean;
 	remainingOccurrences: number;
 	totalOccurrences: number;
@@ -30,6 +32,8 @@ interface RecurringFormValues {
 	subAccountId: string;
 	dayOfMonth: string;
 	interval: string;
+	anchorMonth: string;
+	anchorDayOfWeek: string;
 	remainingOccurrences: string;
 }
 
@@ -139,6 +143,12 @@ export function RecurringModal({
 				subAccountId: definition.subAccountId.toString(),
 				dayOfMonth: definition.dayOfMonth.toString(),
 				interval: definition.interval,
+				anchorMonth:
+					definition.anchorMonth > 0
+						? definition.anchorMonth.toString()
+						: (new Date().getMonth() + 1).toString(),
+				anchorDayOfWeek:
+					definition.anchorDayOfWeek > 0 ? definition.anchorDayOfWeek.toString() : "1",
 				remainingOccurrences: definition.remainingOccurrences
 					? definition.remainingOccurrences.toString()
 					: "",
@@ -151,6 +161,8 @@ export function RecurringModal({
 				subAccountId: "",
 				dayOfMonth: "1",
 				interval: "monthly",
+				anchorMonth: (new Date().getMonth() + 1).toString(),
+				anchorDayOfWeek: "1",
 				remainingOccurrences: "",
 			};
 
@@ -164,6 +176,9 @@ export function RecurringModal({
 	} = useForm<RecurringFormValues>({ defaultValues });
 
 	const selectedType = watch("type");
+	const selectedInterval = watch("interval");
+	const isWeeklyBiweekly = selectedInterval === "weekly" || selectedInterval === "biweekly";
+	const isSemiannualYearly = selectedInterval === "semiannual" || selectedInterval === "yearly";
 	const selectedTag = watch("tag");
 	// When type changes, reset tag to empty string (tags differ by type)
 	const handleTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -175,6 +190,10 @@ export function RecurringModal({
 		const amountCentavos = BigInt(Math.round(parseFloat(values.amount) * 100));
 		const subAccountId = BigInt(values.subAccountId);
 		const dayOfMonth = parseInt(values.dayOfMonth, 10);
+		const anchorMonth = isSemiannualYearly ? parseInt(values.anchorMonth, 10) : 0;
+		const anchorDayOfWeek = isWeeklyBiweekly ? parseInt(values.anchorDayOfWeek, 10) : 0;
+		// For weekly/biweekly, dayOfMonth is unused — store placeholder 1
+		const effectiveDayOfMonth = isWeeklyBiweekly ? 1 : dayOfMonth;
 		const remainingOccurrences = values.remainingOccurrences
 			? parseInt(values.remainingOccurrences, 10)
 			: 0;
@@ -187,8 +206,10 @@ export function RecurringModal({
 				amountCentavos,
 				tag: values.tag,
 				subAccountId,
-				dayOfMonth,
+				dayOfMonth: effectiveDayOfMonth,
 				interval: values.interval,
+				anchorMonth,
+				anchorDayOfWeek,
 				remainingOccurrences,
 			});
 		} else {
@@ -198,10 +219,12 @@ export function RecurringModal({
 				amountCentavos,
 				tag: values.tag,
 				subAccountId,
-				dayOfMonth,
+				dayOfMonth: effectiveDayOfMonth,
 				interval: values.interval,
+				anchorMonth,
+				anchorDayOfWeek,
 				remainingOccurrences,
-				totalOccurrences: remainingOccurrences,
+				totalOccurrences: isInstallment ? remainingOccurrences : 0,
 			});
 		}
 		reset();
@@ -330,7 +353,7 @@ export function RecurringModal({
 								</div>
 							</div>
 
-							{/* Interval + Day of month side by side */}
+							{/* Interval + scheduling anchor */}
 							<div className="grid sm:grid-cols-2 gap-3">
 								<div>
 									<label className="label" htmlFor="rec-interval">
@@ -353,26 +376,87 @@ export function RecurringModal({
 										<p className="text-error text-xs mt-1">{errors.interval.message}</p>
 									)}
 								</div>
-								<div>
-									<label className="label" htmlFor="rec-day">
-										<span className="label-text text-sm">Day of month</span>
-									</label>
-									<select
-										id="rec-day"
-										aria-label="Day of month"
-										className="select select-bordered w-full"
-										{...register("dayOfMonth", { required: "Day is required" })}
-									>
-										{Array.from({ length: 28 }, (_, i) => i + 1).map((d) => (
-											<option key={d} value={d.toString()}>
-												{d}
-											</option>
-										))}
-									</select>
-									{errors.dayOfMonth && (
-										<p className="text-error text-xs mt-1">{errors.dayOfMonth.message}</p>
-									)}
-								</div>
+
+								{/* Day-of-week picker — weekly/biweekly only */}
+								{isWeeklyBiweekly && (
+									<div>
+										<label className="label" htmlFor="rec-dow">
+											<span className="label-text text-sm">Day of week</span>
+										</label>
+										<select
+											id="rec-dow"
+											aria-label="Day of week"
+											className="select select-bordered w-full"
+											{...register("anchorDayOfWeek", { required: "Day is required" })}
+										>
+											<option value="1">Monday</option>
+											<option value="2">Tuesday</option>
+											<option value="3">Wednesday</option>
+											<option value="4">Thursday</option>
+											<option value="5">Friday</option>
+											<option value="6">Saturday</option>
+											<option value="7">Sunday</option>
+										</select>
+										{errors.anchorDayOfWeek && (
+											<p className="text-error text-xs mt-1">{errors.anchorDayOfWeek.message}</p>
+										)}
+									</div>
+								)}
+
+								{/* Month picker — semiannual/yearly only */}
+								{isSemiannualYearly && (
+									<div>
+										<label className="label" htmlFor="rec-anchor-month">
+											<span className="label-text text-sm">Anchor month</span>
+										</label>
+										<select
+											id="rec-anchor-month"
+											aria-label="Anchor month"
+											className="select select-bordered w-full"
+											{...register("anchorMonth", { required: "Month is required" })}
+										>
+											<option value="1">January</option>
+											<option value="2">February</option>
+											<option value="3">March</option>
+											<option value="4">April</option>
+											<option value="5">May</option>
+											<option value="6">June</option>
+											<option value="7">July</option>
+											<option value="8">August</option>
+											<option value="9">September</option>
+											<option value="10">October</option>
+											<option value="11">November</option>
+											<option value="12">December</option>
+										</select>
+										{errors.anchorMonth && (
+											<p className="text-error text-xs mt-1">{errors.anchorMonth.message}</p>
+										)}
+									</div>
+								)}
+
+								{/* Day-of-month picker — all intervals except weekly/biweekly */}
+								{!isWeeklyBiweekly && (
+									<div>
+										<label className="label" htmlFor="rec-day">
+											<span className="label-text text-sm">Day of month</span>
+										</label>
+										<select
+											id="rec-day"
+											aria-label="Day of month"
+											className="select select-bordered w-full"
+											{...register("dayOfMonth", { required: "Day is required" })}
+										>
+											{Array.from({ length: 28 }, (_, i) => i + 1).map((d) => (
+												<option key={d} value={d.toString()}>
+													{d}
+												</option>
+											))}
+										</select>
+										{errors.dayOfMonth && (
+											<p className="text-error text-xs mt-1">{errors.dayOfMonth.message}</p>
+										)}
+									</div>
+								)}
 							</div>
 							{/* Remaining occurrences — installment mode only */}
 							{isInstallment && (

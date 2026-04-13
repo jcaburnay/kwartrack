@@ -16,6 +16,8 @@ interface RecurringDefinition {
 	subAccountId: bigint;
 	dayOfMonth: number;
 	interval: string;
+	anchorMonth: number;
+	anchorDayOfWeek: number;
 	isPaused: boolean;
 	remainingOccurrences: number;
 	totalOccurrences: number;
