@@ -132,6 +132,7 @@ describe("RecurringModal", () => {
 		await userEvent.selectOptions(intervalSelect, "quarterly");
 		expect(screen.getByLabelText(/anchor month/i)).toBeInTheDocument();
 		expect(screen.queryByLabelText(/day of week/i)).not.toBeInTheDocument();
+		expect(screen.getByLabelText(/day of month/i)).toBeInTheDocument();
 	});
 
 	it("shows day-of-week picker and hides day-of-month when interval is weekly", async () => {
