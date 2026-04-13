@@ -44,6 +44,7 @@ export function AccountDetailPage() {
 		name: string;
 		subAccountType: string;
 		creditLimitCentavos: bigint;
+		balanceCentavos: bigint;
 	} | null>(null);
 
 	const [showTransactionModal, setShowTransactionModal] = useState(false);
@@ -220,6 +221,7 @@ export function AccountDetailPage() {
 																name: sa.name,
 																subAccountType: sa.subAccountType,
 																creditLimitCentavos: sa.creditLimitCentavos,
+																balanceCentavos: sa.balanceCentavos,
 															});
 														}
 													}}

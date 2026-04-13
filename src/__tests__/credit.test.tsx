@@ -223,6 +223,123 @@ describe("SubAccountModal credit fields", () => {
 });
 
 // ============================================================================
+// Credit card balance setup — remaining available field
+// ============================================================================
+
+describe("SubAccountModal credit — remaining available field", () => {
+	beforeEach(() => {
+		vi.mocked(useTable).mockReturnValue([[walletSubAccount], true]);
+	});
+
+	it("shows 'Remaining available' field when type=credit in create mode", async () => {
+		const { SubAccountModal } = await import("../components/SubAccountModal");
+		render(
+			<SubAccountModal
+				accountId={1n}
+				accountName="Test"
+				isStandalone={false}
+				existingBalanceCentavos={0n}
+				onClose={vi.fn()}
+			/>,
+		);
+		const typeSelect = screen.getByLabelText(/Sub-account type/i);
+		await userEvent.selectOptions(typeSelect, "credit");
+		expect(screen.getByLabelText(/Remaining available/i)).toBeInTheDocument();
+	});
+
+	it("does NOT show 'Initial balance' field when type=credit in create mode", async () => {
+		const { SubAccountModal } = await import("../components/SubAccountModal");
+		render(
+			<SubAccountModal
+				accountId={1n}
+				accountName="Test"
+				isStandalone={false}
+				existingBalanceCentavos={0n}
+				onClose={vi.fn()}
+			/>,
+		);
+		const typeSelect = screen.getByLabelText(/Sub-account type/i);
+		await userEvent.selectOptions(typeSelect, "credit");
+		expect(screen.queryByLabelText(/Initial balance/i)).not.toBeInTheDocument();
+	});
+
+	it("shows 'Initial balance' field for non-credit type in create mode", async () => {
+		const { SubAccountModal } = await import("../components/SubAccountModal");
+		render(
+			<SubAccountModal
+				accountId={1n}
+				accountName="Test"
+				isStandalone={false}
+				existingBalanceCentavos={0n}
+				onClose={vi.fn()}
+			/>,
+		);
+		// Default type is wallet — initial balance should appear
+		expect(screen.getByLabelText(/Initial balance/i)).toBeInTheDocument();
+	});
+
+	it("does NOT show 'Remaining available' field for non-credit type", async () => {
+		const { SubAccountModal } = await import("../components/SubAccountModal");
+		render(
+			<SubAccountModal
+				accountId={1n}
+				accountName="Test"
+				isStandalone={false}
+				existingBalanceCentavos={0n}
+				onClose={vi.fn()}
+			/>,
+		);
+		// Default type is wallet — no remaining available field
+		expect(screen.queryByLabelText(/Remaining available/i)).not.toBeInTheDocument();
+	});
+});
+
+describe("SubAccountModal credit edit — remaining available field", () => {
+	const editCreditSubAccount = {
+		id: 1n,
+		name: "RCBC Credit",
+		subAccountType: "credit",
+		creditLimitCentavos: 12000000n, // P120,000
+		balanceCentavos: 620000n, // P6,200 outstanding → (12000000 - 620000) / 100 = 113800.00 remaining
+	};
+
+	beforeEach(() => {
+		vi.mocked(useTable).mockReturnValue([[], true]);
+	});
+
+	it("shows 'Remaining available' field in edit mode for credit sub-account", async () => {
+		const { SubAccountModal } = await import("../components/SubAccountModal");
+		render(
+			<SubAccountModal
+				accountId={1n}
+				accountName="Test"
+				isStandalone={false}
+				existingBalanceCentavos={0n}
+				onClose={vi.fn()}
+				subAccount={editCreditSubAccount}
+			/>,
+		);
+		expect(screen.getByLabelText(/Remaining available/i)).toBeInTheDocument();
+	});
+
+	it("pre-fills remaining available as (limit - outstanding) in edit mode", async () => {
+		const { SubAccountModal } = await import("../components/SubAccountModal");
+		render(
+			<SubAccountModal
+				accountId={1n}
+				accountName="Test"
+				isStandalone={false}
+				existingBalanceCentavos={0n}
+				onClose={vi.fn()}
+				subAccount={editCreditSubAccount}
+			/>,
+		);
+		// remaining = (12000000 - 620000) / 100 = 113800.00
+		expect(screen.getByDisplayValue("113800.00")).toBeInTheDocument();
+	});
+});
+
+// ============================================================================
 // CRDT-02: TransactionModal credit hint
 // ============================================================================
 

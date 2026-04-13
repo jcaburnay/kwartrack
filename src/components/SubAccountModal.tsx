@@ -4,13 +4,14 @@ import { useForm } from "react-hook-form";
 import { useReducer } from "spacetimedb/react";
 import { useDragToDismiss } from "../hooks/useDragToDismiss";
 import { reducers } from "../module_bindings";
-import { openAsModal } from "../utils/dialog";
 import { formatPesos } from "../utils/currency";
+import { openAsModal } from "../utils/dialog";
 import { Input } from "./Input";
 
 interface SubAccountFormValues {
 	name: string;
 	initialBalance: string;
+	remainingAvailable: string;
 	subAccountType: string;
 	creditLimit: string;
 }
@@ -25,6 +26,7 @@ interface SubAccountData {
 	name: string;
 	subAccountType: string;
 	creditLimitCentavos: bigint;
+	balanceCentavos: bigint;
 }
 
 interface SubAccountModalProps {
@@ -58,12 +60,20 @@ export function SubAccountModal({
 		handleSubmit,
 		watch,
 		reset,
+		getValues,
+		trigger,
 		formState: { errors, isSubmitting },
 	} = useForm<SubAccountFormValues & ConversionFormValues>({
 		defaultValues: subAccount
 			? {
 					name: subAccount.name,
 					initialBalance: "",
+					remainingAvailable:
+						subAccount.subAccountType === "credit"
+							? (Number(subAccount.creditLimitCentavos - subAccount.balanceCentavos) / 100).toFixed(
+									2,
+								)
+							: "",
 					subAccountType: subAccount.subAccountType,
 					creditLimit: (Number(subAccount.creditLimitCentavos) / 100).toFixed(2),
 					existingName: "Main",
@@ -72,6 +82,7 @@ export function SubAccountModal({
 			: {
 					name: "",
 					initialBalance: "",
+					remainingAvailable: "",
 					subAccountType: "wallet",
 					creditLimit: "",
 					existingName: "Main",
@@ -85,27 +96,36 @@ export function SubAccountModal({
 
 	const nameValue = watch("name");
 	const selectedType = watch("subAccountType");
+	const creditLimitValue = watch("creditLimit");
+	useEffect(() => {
+		if (selectedType === "credit" && creditLimitValue !== undefined) {
+			void trigger("remainingAvailable");
+		}
+	}, [creditLimitValue, selectedType, trigger]);
 
 	const onSubmit = (data: SubAccountFormValues & ConversionFormValues) => {
-		if (isEditMode && subAccount) {
-			const creditLimitCentavos = data.creditLimit
+		const creditLimitCentavos =
+			data.subAccountType === "credit" && data.creditLimit
 				? BigInt(Math.round(parseFloat(data.creditLimit) * 100))
 				: 0n;
+
+		if (isEditMode && subAccount) {
+			const remainingCentavos = data.remainingAvailable
+				? BigInt(Math.round(parseFloat(data.remainingAvailable) * 100))
+				: creditLimitCentavos;
+			const newBalanceCentavos = creditLimitCentavos - remainingCentavos;
 			editSubAccountReducer({
 				subAccountId: subAccount.id,
 				newName: data.name.trim(),
 				newCreditLimitCentavos: creditLimitCentavos,
+				newBalanceCentavos,
 			});
 		} else if (isStandalone) {
-			const newCreditLimitCentavos =
-				data.subAccountType === "credit" && data.creditLimit
-					? BigInt(Math.round(parseFloat(data.creditLimit) * 100))
-					: 0n;
 			convertAndCreateSubAccount({
 				accountId,
 				newName: data.name.trim(),
 				newSubAccountType: data.subAccountType,
-				newCreditLimitCentavos,
+				newCreditLimitCentavos: creditLimitCentavos,
 				existingName: data.existingName.trim() || "Main",
 				existingSubAccountType: data.existingSubAccountType || "wallet",
 			});
@@ -113,14 +133,18 @@ export function SubAccountModal({
 			const initialCentavos = data.initialBalance
 				? BigInt(Math.round(parseFloat(data.initialBalance) * 100))
 				: 0n;
-			const creditLimitCentavos =
-				data.subAccountType === "credit" && data.creditLimit
-					? BigInt(Math.round(parseFloat(data.creditLimit) * 100))
-					: 0n;
+			const remainingCentavos =
+				data.subAccountType === "credit" && data.remainingAvailable
+					? BigInt(Math.round(parseFloat(data.remainingAvailable) * 100))
+					: creditLimitCentavos;
+			const initialBalanceCentavos =
+				data.subAccountType === "credit"
+					? creditLimitCentavos - remainingCentavos
+					: initialCentavos;
 			addSubAccount({
 				accountId,
 				name: data.name.trim(),
-				initialBalanceCentavos: data.subAccountType === "credit" ? 0n : initialCentavos,
+				initialBalanceCentavos,
 				subAccountType: data.subAccountType,
 				creditLimitCentavos,
 			});
@@ -192,7 +216,7 @@ export function SubAccountModal({
 								/>
 							)}
 
-							{!isEditMode && !isStandalone && (
+							{!isEditMode && !isStandalone && selectedType !== "credit" && (
 								<Input
 									label="Initial balance (P)"
 									id="sub-account-balance"
@@ -201,6 +225,28 @@ export function SubAccountModal({
 									min="0"
 									placeholder="0.00"
 									{...register("initialBalance")}
+								/>
+							)}
+
+							{selectedType === "credit" && (
+								<Input
+									label="Remaining available (P)"
+									id="remaining-available"
+									type="number"
+									step="0.01"
+									min="0"
+									placeholder="e.g. 113800.00"
+									error={errors.remainingAvailable?.message}
+									{...register("remainingAvailable", {
+										validate: (val) => {
+											const remaining = parseFloat(val || "");
+											if (!Number.isFinite(remaining)) return "Enter a valid amount";
+											const limit = parseFloat(getValues("creditLimit") || "0");
+											if (remaining < 0) return "Remaining cannot be negative";
+											if (remaining > limit) return "Remaining cannot exceed credit limit";
+											return true;
+										},
+									})}
 								/>
 							)}
 
