@@ -74,6 +74,42 @@ export function RecurringCard({ definition }: RecurringCardProps) {
 			: "text-success font-semibold text-sm";
 
 	const partitionLabel = formatSubAccountLabel(definition.subAccountId, accounts, subAccounts);
+
+	const DOW_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+	const MONTH_NAMES = [
+		"Jan",
+		"Feb",
+		"Mar",
+		"Apr",
+		"May",
+		"Jun",
+		"Jul",
+		"Aug",
+		"Sep",
+		"Oct",
+		"Nov",
+		"Dec",
+	];
+
+	// Build the scheduling anchor label shown on the card
+	const anchorLabel = (() => {
+		if (
+			(definition.interval === "weekly" || definition.interval === "biweekly") &&
+			definition.anchorDayOfWeek > 0
+		) {
+			// anchorDayOfWeek: 1=Mon..7=Sun → JS index: Mon=1..Sat=6, Sun=0
+			const jsDay = definition.anchorDayOfWeek === 7 ? 0 : definition.anchorDayOfWeek;
+			return DOW_NAMES[jsDay];
+		}
+		if (
+			(definition.interval === "semiannual" || definition.interval === "yearly") &&
+			definition.anchorMonth > 0
+		) {
+			return `${MONTH_NAMES[definition.anchorMonth - 1]} ${definition.dayOfMonth}`;
+		}
+		return `day ${definition.dayOfMonth}`;
+	})();
+
 	return (
 		<>
 			<div
@@ -104,7 +140,7 @@ export function RecurringCard({ definition }: RecurringCardProps) {
 							definition.isPaused && (
 								<span className="badge badge-sm badge-success">Completed</span>
 							)}
-						<span className="text-xs text-base-content/50">day {definition.dayOfMonth}</span>
+						<span className="text-xs text-base-content/50">{anchorLabel}</span>
 					</div>
 
 					{/* Installment counter */}
