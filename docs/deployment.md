@@ -112,7 +112,7 @@ The workflow at `.github/workflows/server.yml` triggers automatically when `serv
 
 | Secret | Value | How to get it |
 |---|---|---|
-| `SPACETIMEDB_TOKEN` | Your SpacetimeDB auth token | Run `spacetime identity token` locally |
+| `SPACETIMEDB_TOKEN` | Your SpacetimeDB auth token | Run `grep spacetimedb_token ~/.config/spacetime/cli.toml \| cut -d'"' -f2` |
 
 Add it at: **Repo → Settings → Secrets and variables → Actions → New repository secret**
 
