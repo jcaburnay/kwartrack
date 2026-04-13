@@ -72,4 +72,4 @@ jobs:
         run: spacetime login --token "$SPACETIMEDB_TOKEN"
 
       - name: Publish module to Maincloud
-        run: spacetime publish kwartrack --module-path server
+        run: spacetime publish kwartrack --module-path server -y
