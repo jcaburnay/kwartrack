@@ -756,8 +756,9 @@ export const link_clerk_identity = spacetimedb.reducer(
 // Compute the microsecond timestamp for the first fire of a new/resumed definition.
 // Dispatch order:
 //   1. weekly/biweekly + anchorDayOfWeek > 0 → next occurrence of that weekday
-//   2. semiannual/yearly + anchorMonth > 0 → next future (anchorMonth, dayOfMonth) or +6mo pair
-//   3. default → this month if dayOfMonth >= today, else next month
+//   2. quarterly + anchorMonth > 0 → next future occurrence in the 4-month cycle
+//   3. semiannual/yearly + anchorMonth > 0 → next future (anchorMonth, dayOfMonth) or +6mo pair
+//   4. default → this month if dayOfMonth >= today, else next month
 function computeFirstFireMicros(
 	nowMicros: bigint,
 	dayOfMonth: number,
@@ -782,7 +783,27 @@ function computeFirstFireMicros(
 		return BigInt(fireDate.getTime()) * 1000n;
 	}
 
-	// Case 2: semiannual/yearly with month anchor
+	// Case 2: quarterly with month anchor — fires on anchorMonth, anchorMonth+3, anchorMonth+6, anchorMonth+9
+	if (anchorMonth > 0 && interval === "quarterly") {
+		const currentYear = now.getUTCFullYear();
+		const m0 = anchorMonth - 1; // 0-indexed month
+		const fireMonths = [m0, (m0 + 3) % 12, (m0 + 6) % 12, (m0 + 9) % 12];
+		const candidates: bigint[] = [];
+		for (const y of [currentYear, currentYear + 1]) {
+			for (const m of fireMonths) {
+				const d = new Date(Date.UTC(y, m, dayOfMonth, 0, 0, 0, 0));
+				if (d > now) candidates.push(BigInt(d.getTime()) * 1000n);
+			}
+		}
+		const sorted = candidates.sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
+		if (sorted.length === 0)
+			throw new Error(
+				`computeFirstFireMicros: no quarterly candidate found for anchorMonth=${anchorMonth}`,
+			);
+		return sorted[0];
+	}
+
+	// Case 3: semiannual/yearly with month anchor
 	if (anchorMonth > 0 && (interval === "semiannual" || interval === "yearly")) {
 		const currentYear = now.getUTCFullYear();
 		const m0 = anchorMonth - 1; // 0-indexed month
@@ -811,7 +832,7 @@ function computeFirstFireMicros(
 		return sorted[0];
 	}
 
-	// Case 3: default — fire this month or next month based on dayOfMonth
+	// Case 4: default — fire this month or next month based on dayOfMonth
 	const todayDay = now.getUTCDate();
 	let targetYear = now.getUTCFullYear();
 	let targetMonth = now.getUTCMonth();
