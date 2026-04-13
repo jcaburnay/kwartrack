@@ -178,7 +178,10 @@ export function RecurringModal({
 	const selectedType = watch("type");
 	const selectedInterval = watch("interval");
 	const isWeeklyBiweekly = selectedInterval === "weekly" || selectedInterval === "biweekly";
-	const isSemiannualYearly = selectedInterval === "semiannual" || selectedInterval === "yearly";
+	const hasMonthAnchor =
+		selectedInterval === "quarterly" ||
+		selectedInterval === "semiannual" ||
+		selectedInterval === "yearly";
 	const selectedTag = watch("tag");
 	// When type changes, reset tag to empty string (tags differ by type)
 	const handleTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -190,7 +193,7 @@ export function RecurringModal({
 		const amountCentavos = BigInt(Math.round(parseFloat(values.amount) * 100));
 		const subAccountId = BigInt(values.subAccountId);
 		const dayOfMonth = parseInt(values.dayOfMonth, 10);
-		const anchorMonth = isSemiannualYearly ? parseInt(values.anchorMonth, 10) : 0;
+		const anchorMonth = hasMonthAnchor ? parseInt(values.anchorMonth, 10) : 0;
 		const anchorDayOfWeek = isWeeklyBiweekly ? parseInt(values.anchorDayOfWeek, 10) : 0;
 		// For weekly/biweekly, dayOfMonth is unused — store placeholder 1
 		const effectiveDayOfMonth = isWeeklyBiweekly ? 1 : dayOfMonth;
@@ -404,7 +407,7 @@ export function RecurringModal({
 								)}
 
 								{/* Month picker — semiannual/yearly only */}
-								{isSemiannualYearly && (
+								{hasMonthAnchor && (
 									<div>
 										<label className="label" htmlFor="rec-anchor-month">
 											<span className="label-text text-sm">Anchor month</span>

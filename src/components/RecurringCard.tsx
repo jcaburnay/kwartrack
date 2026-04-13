@@ -102,7 +102,9 @@ export function RecurringCard({ definition }: RecurringCardProps) {
 			return DOW_NAMES[jsDay];
 		}
 		if (
-			(definition.interval === "semiannual" || definition.interval === "yearly") &&
+			(definition.interval === "quarterly" ||
+				definition.interval === "semiannual" ||
+				definition.interval === "yearly") &&
 			definition.anchorMonth > 0
 		) {
 			return `${MONTH_NAMES[definition.anchorMonth - 1]} ${definition.dayOfMonth}`;
