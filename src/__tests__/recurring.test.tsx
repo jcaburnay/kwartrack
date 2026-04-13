@@ -152,6 +152,76 @@ describe("RecurringModal", () => {
 		expect(screen.queryByLabelText(/anchor month/i)).not.toBeInTheDocument();
 		expect(screen.queryByLabelText(/day of week/i)).not.toBeInTheDocument();
 	});
+
+	describe("onSubmit anchor field zeroing", () => {
+		// Helper: set subAccountId via the visible sub-account select.
+		// Injects an <option> into the select so userEvent.selectOptions can find and pick it,
+		// triggering SubAccountGroupedSelect's onChange → setValue("subAccountId", value).
+		async function setSubAccountId(value: string) {
+			const select = document.querySelector<HTMLSelectElement>("#rec-partition");
+			if (!select) throw new Error("rec-partition select not found");
+			const opt = document.createElement("option");
+			opt.value = value;
+			opt.textContent = `Account ${value}`;
+			select.appendChild(opt);
+			await userEvent.selectOptions(select, value);
+		}
+
+		it("weekly submit: sends anchorDayOfWeek from picker, anchorMonth=0, dayOfMonth=1", async () => {
+			render(<RecurringModal onClose={onClose} />);
+			await userEvent.type(screen.getByLabelText(/name/i), "Gym");
+			await userEvent.type(screen.getByLabelText(/amount/i), "50");
+			await userEvent.selectOptions(screen.getByLabelText(/interval/i), "weekly");
+			// Day of week picker should be visible; select Wednesday (value 3)
+			await userEvent.selectOptions(screen.getByLabelText(/day of week/i), "3");
+			await setSubAccountId("1");
+			await userEvent.click(screen.getByRole("button", { name: /add subscription/i }));
+			expect(mockCreateReducer).toHaveBeenCalledWith(
+				expect.objectContaining({
+					anchorDayOfWeek: 3,
+					anchorMonth: 0,
+					dayOfMonth: 1,
+				}),
+			);
+		});
+
+		it("semiannual submit: sends anchorMonth from picker, anchorDayOfWeek=0", async () => {
+			render(<RecurringModal onClose={onClose} />);
+			await userEvent.type(screen.getByLabelText(/name/i), "Insurance");
+			await userEvent.type(screen.getByLabelText(/amount/i), "100");
+			await userEvent.selectOptions(screen.getByLabelText(/interval/i), "semiannual");
+			// Anchor month picker visible; select March (value 3)
+			await userEvent.selectOptions(screen.getByLabelText(/anchor month/i), "3");
+			// Day of month picker also visible; select 10
+			await userEvent.selectOptions(screen.getByLabelText(/day of month/i), "10");
+			await setSubAccountId("1");
+			await userEvent.click(screen.getByRole("button", { name: /add subscription/i }));
+			expect(mockCreateReducer).toHaveBeenCalledWith(
+				expect.objectContaining({
+					anchorMonth: 3,
+					anchorDayOfWeek: 0,
+					dayOfMonth: 10,
+				}),
+			);
+		});
+
+		it("monthly submit: sends anchorMonth=0 and anchorDayOfWeek=0", async () => {
+			render(<RecurringModal onClose={onClose} />);
+			await userEvent.type(screen.getByLabelText(/name/i), "Rent");
+			await userEvent.type(screen.getByLabelText(/amount/i), "200");
+			await userEvent.selectOptions(screen.getByLabelText(/interval/i), "monthly");
+			await userEvent.selectOptions(screen.getByLabelText(/day of month/i), "15");
+			await setSubAccountId("1");
+			await userEvent.click(screen.getByRole("button", { name: /add subscription/i }));
+			expect(mockCreateReducer).toHaveBeenCalledWith(
+				expect.objectContaining({
+					anchorMonth: 0,
+					anchorDayOfWeek: 0,
+					dayOfMonth: 15,
+				}),
+			);
+		});
+	});
 });
 
 describe("TransactionTable — ↻ badge", () => {
@@ -266,9 +336,7 @@ describe("RecurringCard — installment display", () => {
 
 	it("shows day-of-week name for weekly interval with anchorDayOfWeek", () => {
 		render(
-			<RecurringCard
-				definition={{ ...baseDefinition, interval: "weekly", anchorDayOfWeek: 3 }}
-			/>,
+			<RecurringCard definition={{ ...baseDefinition, interval: "weekly", anchorDayOfWeek: 3 }} />,
 		);
 		expect(screen.getByText("Wed")).toBeInTheDocument();
 	});
