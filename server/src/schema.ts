@@ -432,7 +432,7 @@ export const fire_recurring_transaction = spacetimedb.reducer(
 		let def = ctx.db.recurring_transaction_definition_v2.id.find(arg.definitionId);
 		if (!def) {
 			const v1 = ctx.db.recurring_transaction_definition.id.find(arg.definitionId);
-			if (!v1 || v1.isPaused) return;
+			if (!v1) return;
 			def = ctx.db.recurring_transaction_definition_v2.insert({
 				id: v1.id,
 				ownerIdentity: v1.ownerIdentity,
