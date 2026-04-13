@@ -104,11 +104,35 @@ gh repo create kwartrack --private --source=. --remote=origin --push
 
 ---
 
+## GitHub Actions (Automated Server Deployment)
+
+The workflow at `.github/workflows/server.yml` triggers automatically when `server/**` changes are pushed to `main`.
+
+### Required secret
+
+| Secret | Value | How to get it |
+|---|---|---|
+| `SPACETIMEDB_TOKEN` | Your SpacetimeDB auth token | Run `spacetime identity token` locally |
+
+Add it at: **Repo → Settings → Secrets and variables → Actions → New repository secret**
+
+### What the workflow does
+
+1. **`validate-bindings`** — regenerates `src/module_bindings/` and checks for any changes (modified or new files). Fails if out of sync — run `pnpm generate` and commit before pushing.
+2. **`publish-server`** — authenticates with SpacetimeDB Maincloud and runs `spacetime publish kwartrack --module-path server`. Only runs if `validate-bindings` passes.
+
+### What it does NOT do
+
+- `--clear-database` republishes — always manual
+- Dev database (`kwartrack-dev`) — workflow only touches production
+
+---
+
 ## Ongoing Maintenance
 
-| Task | When | Command |
+| Task | When | How |
 |---|---|---|
 | Deploy frontend | Push to `main` — automatic | `git push` |
-| Deploy backend | After server schema/logic changes | `pnpm server:publish` |
-| Regenerate bindings | After server schema changes | `pnpm generate` then commit |
+| Deploy backend | Push to `main` with `server/` changes — automatic | `git push` (CI handles it) |
+| Regenerate bindings | After server schema changes | `pnpm generate` then commit **before pushing** |
 | Renew domain | Annually (Apr 12) | Auto-renews via Cloudflare |
