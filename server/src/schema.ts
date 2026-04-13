@@ -428,7 +428,29 @@ export function computeNextOccurrence(
 export const fire_recurring_transaction = spacetimedb.reducer(
 	{ arg: recurring_transaction_schedule.rowType },
 	(ctx, { arg }) => {
-		const def = ctx.db.recurring_transaction_definition_v2.id.find(arg.definitionId);
+		// Incremental migration: check v2 first; if missing, migrate from v1 on the spot
+		let def = ctx.db.recurring_transaction_definition_v2.id.find(arg.definitionId);
+		if (!def) {
+			const v1 = ctx.db.recurring_transaction_definition.id.find(arg.definitionId);
+			if (!v1 || v1.isPaused) return;
+			def = ctx.db.recurring_transaction_definition_v2.insert({
+				id: v1.id,
+				ownerIdentity: v1.ownerIdentity,
+				name: v1.name,
+				type: v1.type,
+				amountCentavos: v1.amountCentavos,
+				tag: v1.tag,
+				subAccountId: v1.subAccountId,
+				dayOfMonth: v1.dayOfMonth,
+				interval: v1.interval,
+				anchorMonth: 0,
+				anchorDayOfWeek: 0,
+				isPaused: v1.isPaused,
+				remainingOccurrences: v1.remainingOccurrences,
+				totalOccurrences: v1.totalOccurrences,
+				createdAt: v1.createdAt,
+			});
+		}
 		// Definition deleted or paused — do not create transaction
 		if (!def || def.isPaused) return;
 
