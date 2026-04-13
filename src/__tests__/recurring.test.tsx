@@ -49,6 +49,8 @@ describe("RecurringModal", () => {
 					subAccountId: 2n,
 					dayOfMonth: 15,
 					interval: "monthly",
+					anchorMonth: 0,
+					anchorDayOfWeek: 0,
 					isPaused: false,
 					remainingOccurrences: 0,
 					totalOccurrences: 0,
@@ -106,6 +108,46 @@ describe("RecurringModal", () => {
 		render(<RecurringModal onClose={onClose} />);
 		const select = screen.getByLabelText(/interval/i) as HTMLSelectElement;
 		expect(select.value).toBe("monthly");
+	});
+
+	it("shows month picker when interval is semiannual", async () => {
+		render(<RecurringModal onClose={onClose} />);
+		const intervalSelect = screen.getByLabelText(/interval/i) as HTMLSelectElement;
+		await userEvent.selectOptions(intervalSelect, "semiannual");
+		expect(screen.getByLabelText(/anchor month/i)).toBeInTheDocument();
+		expect(screen.queryByLabelText(/day of week/i)).not.toBeInTheDocument();
+	});
+
+	it("shows month picker when interval is yearly", async () => {
+		render(<RecurringModal onClose={onClose} />);
+		const intervalSelect = screen.getByLabelText(/interval/i) as HTMLSelectElement;
+		await userEvent.selectOptions(intervalSelect, "yearly");
+		expect(screen.getByLabelText(/anchor month/i)).toBeInTheDocument();
+		expect(screen.queryByLabelText(/day of week/i)).not.toBeInTheDocument();
+	});
+
+	it("shows day-of-week picker and hides day-of-month when interval is weekly", async () => {
+		render(<RecurringModal onClose={onClose} />);
+		const intervalSelect = screen.getByLabelText(/interval/i) as HTMLSelectElement;
+		await userEvent.selectOptions(intervalSelect, "weekly");
+		expect(screen.getByLabelText(/day of week/i)).toBeInTheDocument();
+		expect(screen.queryByLabelText(/day of month/i)).not.toBeInTheDocument();
+		expect(screen.queryByLabelText(/anchor month/i)).not.toBeInTheDocument();
+	});
+
+	it("shows day-of-week picker and hides day-of-month when interval is biweekly", async () => {
+		render(<RecurringModal onClose={onClose} />);
+		const intervalSelect = screen.getByLabelText(/interval/i) as HTMLSelectElement;
+		await userEvent.selectOptions(intervalSelect, "biweekly");
+		expect(screen.getByLabelText(/day of week/i)).toBeInTheDocument();
+		expect(screen.queryByLabelText(/day of month/i)).not.toBeInTheDocument();
+	});
+
+	it("shows only day-of-month when interval is monthly", async () => {
+		render(<RecurringModal onClose={onClose} />);
+		expect(screen.getByLabelText(/day of month/i)).toBeInTheDocument();
+		expect(screen.queryByLabelText(/anchor month/i)).not.toBeInTheDocument();
+		expect(screen.queryByLabelText(/day of week/i)).not.toBeInTheDocument();
 	});
 });
 
@@ -166,6 +208,8 @@ describe("RecurringCard — installment display", () => {
 		subAccountId: 1n,
 		dayOfMonth: 5,
 		interval: "monthly",
+		anchorMonth: 0,
+		anchorDayOfWeek: 0,
 		isPaused: false,
 		remainingOccurrences: 8,
 		totalOccurrences: 12,
