@@ -27,6 +27,22 @@ interface RecurringCardProps {
 	definition: RecurringDefinition;
 }
 
+const DOW_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const MONTH_NAMES = [
+	"Jan",
+	"Feb",
+	"Mar",
+	"Apr",
+	"May",
+	"Jun",
+	"Jul",
+	"Aug",
+	"Sep",
+	"Oct",
+	"Nov",
+	"Dec",
+];
+
 // Format sub-account label as "AccountName/SubAccountName" or "AccountName" for standalone
 function formatSubAccountLabel(
 	subAccountId: bigint,
@@ -74,22 +90,6 @@ export function RecurringCard({ definition }: RecurringCardProps) {
 			: "text-success font-semibold text-sm";
 
 	const partitionLabel = formatSubAccountLabel(definition.subAccountId, accounts, subAccounts);
-
-	const DOW_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-	const MONTH_NAMES = [
-		"Jan",
-		"Feb",
-		"Mar",
-		"Apr",
-		"May",
-		"Jun",
-		"Jul",
-		"Aug",
-		"Sep",
-		"Oct",
-		"Nov",
-		"Dec",
-	];
 
 	// Build the scheduling anchor label shown on the card
 	const anchorLabel = (() => {

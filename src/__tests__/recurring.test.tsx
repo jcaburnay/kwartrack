@@ -263,4 +263,22 @@ describe("RecurringCard — installment display", () => {
 		render(<RecurringCard definition={{ ...baseDefinition, interval: "yearly" }} />);
 		expect(screen.getByText("yearly")).toBeInTheDocument();
 	});
+
+	it("shows day-of-week name for weekly interval with anchorDayOfWeek", () => {
+		render(
+			<RecurringCard
+				definition={{ ...baseDefinition, interval: "weekly", anchorDayOfWeek: 3 }}
+			/>,
+		);
+		expect(screen.getByText("Wed")).toBeInTheDocument();
+	});
+
+	it("shows month+day for yearly interval with anchorMonth", () => {
+		render(
+			<RecurringCard
+				definition={{ ...baseDefinition, interval: "yearly", anchorMonth: 6, dayOfMonth: 15 }}
+			/>,
+		);
+		expect(screen.getByText("Jun 15")).toBeInTheDocument();
+	});
 });
