@@ -919,8 +919,20 @@ export const create_recurring_definition = spacetimedb.reducer(
 
 		const ownerIdentity = resolveOwner(ctx);
 
+		// Compute a safe ID: max across both v1 and v2 + 1.
+		// autoInc on v2 doesn't track explicit IDs inserted by migrateV1RowToV2,
+		// so starting from 0n risks colliding with an unmigrated v1 row and hiding
+		// it from the view's deduplication filter.
+		let maxId = 0n;
+		for (const row of ctx.db.recurring_transaction_definition.iter()) {
+			if (row.id > maxId) maxId = row.id;
+		}
+		for (const row of ctx.db.recurring_transaction_definition_v2.iter()) {
+			if (row.id > maxId) maxId = row.id;
+		}
+
 		const defRow = ctx.db.recurring_transaction_definition_v2.insert({
-			id: 0n,
+			id: maxId + 1n,
 			ownerIdentity,
 			name: name.trim(),
 			type,
