@@ -126,6 +126,14 @@ describe("RecurringModal", () => {
 		expect(screen.queryByLabelText(/day of week/i)).not.toBeInTheDocument();
 	});
 
+	it("shows month picker when interval is quarterly", async () => {
+		render(<RecurringModal onClose={onClose} />);
+		const intervalSelect = screen.getByLabelText(/interval/i) as HTMLSelectElement;
+		await userEvent.selectOptions(intervalSelect, "quarterly");
+		expect(screen.getByLabelText(/anchor month/i)).toBeInTheDocument();
+		expect(screen.queryByLabelText(/day of week/i)).not.toBeInTheDocument();
+	});
+
 	it("shows day-of-week picker and hides day-of-month when interval is weekly", async () => {
 		render(<RecurringModal onClose={onClose} />);
 		const intervalSelect = screen.getByLabelText(/interval/i) as HTMLSelectElement;
@@ -201,6 +209,24 @@ describe("RecurringModal", () => {
 					anchorMonth: 3,
 					anchorDayOfWeek: 0,
 					dayOfMonth: 10,
+				}),
+			);
+		});
+
+		it("quarterly submit: sends anchorMonth from picker, anchorDayOfWeek=0, dayOfMonth from picker", async () => {
+			render(<RecurringModal onClose={onClose} />);
+			await userEvent.type(screen.getByLabelText(/name/i), "Quarterly Tax");
+			await userEvent.type(screen.getByLabelText(/amount/i), "500");
+			await userEvent.selectOptions(screen.getByLabelText(/interval/i), "quarterly");
+			await userEvent.selectOptions(screen.getByLabelText(/anchor month/i), "3");
+			await userEvent.selectOptions(screen.getByLabelText(/day of month/i), "15");
+			await setSubAccountId("1");
+			await userEvent.click(screen.getByRole("button", { name: /add subscription/i }));
+			expect(mockCreateReducer).toHaveBeenCalledWith(
+				expect.objectContaining({
+					anchorMonth: 3,
+					anchorDayOfWeek: 0,
+					dayOfMonth: 15,
 				}),
 			);
 		});
@@ -348,5 +374,14 @@ describe("RecurringCard — installment display", () => {
 			/>,
 		);
 		expect(screen.getByText("Jun 15")).toBeInTheDocument();
+	});
+
+	it("shows month+day for quarterly interval with anchorMonth", () => {
+		render(
+			<RecurringCard
+				definition={{ ...baseDefinition, interval: "quarterly", anchorMonth: 3, dayOfMonth: 15 }}
+			/>,
+		);
+		expect(screen.getByText("Mar 15")).toBeInTheDocument();
 	});
 });
