@@ -823,7 +823,7 @@ function computeFirstFireMicros(
 }
 
 // create_recurring_definition
-// Client: conn.reducers.createRecurringDefinition({ name, type, amountCentavos, tag, subAccountId, dayOfMonth, interval, remainingOccurrences, totalOccurrences })
+// Client: conn.reducers.createRecurringDefinition({ name, type, amountCentavos, tag, subAccountId, dayOfMonth, interval, anchorMonth, anchorDayOfWeek, remainingOccurrences, totalOccurrences })
 export const create_recurring_definition = spacetimedb.reducer(
 	{
 		name: t.string(),
@@ -833,6 +833,8 @@ export const create_recurring_definition = spacetimedb.reducer(
 		subAccountId: t.u64(),
 		dayOfMonth: t.u8(),
 		interval: t.string(),
+		anchorMonth: t.u8(),
+		anchorDayOfWeek: t.u8(),
 		remainingOccurrences: t.u16(),
 		totalOccurrences: t.u16(),
 	},
@@ -846,6 +848,8 @@ export const create_recurring_definition = spacetimedb.reducer(
 			subAccountId,
 			dayOfMonth,
 			interval,
+			anchorMonth,
+			anchorDayOfWeek,
 			remainingOccurrences,
 			totalOccurrences,
 		},
@@ -856,7 +860,7 @@ export const create_recurring_definition = spacetimedb.reducer(
 
 		const ownerIdentity = resolveOwner(ctx);
 
-		const defRow = ctx.db.recurring_transaction_definition.insert({
+		const defRow = ctx.db.recurring_transaction_definition_v2.insert({
 			id: 0n,
 			ownerIdentity,
 			name: name.trim(),
@@ -866,14 +870,22 @@ export const create_recurring_definition = spacetimedb.reducer(
 			subAccountId,
 			dayOfMonth,
 			interval,
+			anchorMonth,
+			anchorDayOfWeek,
 			isPaused: false,
 			remainingOccurrences,
 			totalOccurrences,
 			createdAt: ctx.timestamp,
 		});
 
-		// Schedule the first fire (D-06)
-		const firstFireMicros = computeFirstFireMicros(ctx.timestamp.microsSinceUnixEpoch, dayOfMonth);
+		// Schedule the first fire
+		const firstFireMicros = computeFirstFireMicros(
+			ctx.timestamp.microsSinceUnixEpoch,
+			dayOfMonth,
+			interval,
+			anchorMonth,
+			anchorDayOfWeek,
+		);
 		ctx.db.recurring_transaction_schedule.insert({
 			scheduledId: 0n,
 			scheduledAt: ScheduleAt.time(firstFireMicros),
@@ -883,7 +895,7 @@ export const create_recurring_definition = spacetimedb.reducer(
 );
 
 // edit_recurring_definition
-// Client: conn.reducers.editRecurringDefinition({ definitionId, name, type, amountCentavos, tag, subAccountId, dayOfMonth, interval, remainingOccurrences })
+// Client: conn.reducers.editRecurringDefinition({ definitionId, name, type, amountCentavos, tag, subAccountId, dayOfMonth, interval, anchorMonth, anchorDayOfWeek, remainingOccurrences })
 export const edit_recurring_definition = spacetimedb.reducer(
 	{
 		definitionId: t.u64(),
@@ -894,6 +906,8 @@ export const edit_recurring_definition = spacetimedb.reducer(
 		subAccountId: t.u64(),
 		dayOfMonth: t.u8(),
 		interval: t.string(),
+		anchorMonth: t.u8(),
+		anchorDayOfWeek: t.u8(),
 		remainingOccurrences: t.u16(),
 	},
 	(
@@ -907,17 +921,19 @@ export const edit_recurring_definition = spacetimedb.reducer(
 			subAccountId,
 			dayOfMonth,
 			interval,
+			anchorMonth,
+			anchorDayOfWeek,
 			remainingOccurrences,
 		},
 	) => {
-		const existing = ctx.db.recurring_transaction_definition.id.find(definitionId);
+		const existing = ctx.db.recurring_transaction_definition_v2.id.find(definitionId);
 		if (!existing) throw new SenderError("Definition not found");
 		if (!isAuthorized(ctx, existing.ownerIdentity)) throw new SenderError("Not authorized");
 		if (!name.trim()) throw new SenderError("Name is required");
 		if (amountCentavos <= 0n) throw new SenderError("Amount must be greater than 0");
 		if (dayOfMonth < 1 || dayOfMonth > 28) throw new SenderError("Day must be 1–28");
 
-		ctx.db.recurring_transaction_definition.id.update({
+		ctx.db.recurring_transaction_definition_v2.id.update({
 			...existing,
 			name: name.trim(),
 			type,
@@ -926,19 +942,32 @@ export const edit_recurring_definition = spacetimedb.reducer(
 			subAccountId,
 			dayOfMonth,
 			interval,
+			anchorMonth,
+			anchorDayOfWeek,
 			remainingOccurrences,
 		});
 
-		// If interval or dayOfMonth changed on an active definition, reschedule next fire
-		const intervalChanged = interval !== existing.interval;
-		const dayChanged = dayOfMonth !== existing.dayOfMonth;
-		if ((intervalChanged || dayChanged) && !existing.isPaused) {
+		// Reschedule if any scheduling field changed on an active definition
+		const needsReschedule =
+			(interval !== existing.interval ||
+				dayOfMonth !== existing.dayOfMonth ||
+				anchorMonth !== existing.anchorMonth ||
+				anchorDayOfWeek !== existing.anchorDayOfWeek) &&
+			!existing.isPaused;
+
+		if (needsReschedule) {
 			for (const schedRow of ctx.db.recurring_transaction_schedule.recurring_schedule_definition_id.filter(
 				existing.id,
 			)) {
 				ctx.db.recurring_transaction_schedule.scheduledId.delete(schedRow.scheduledId);
 			}
-			const nextFireMicros = computeFirstFireMicros(ctx.timestamp.microsSinceUnixEpoch, dayOfMonth);
+			const nextFireMicros = computeFirstFireMicros(
+				ctx.timestamp.microsSinceUnixEpoch,
+				dayOfMonth,
+				interval,
+				anchorMonth,
+				anchorDayOfWeek,
+			);
 			ctx.db.recurring_transaction_schedule.insert({
 				scheduledId: 0n,
 				scheduledAt: ScheduleAt.time(nextFireMicros),
