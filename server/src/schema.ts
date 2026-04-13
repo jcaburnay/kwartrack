@@ -155,6 +155,39 @@ export const recurring_transaction_definition = table(
 	},
 );
 
+// recurring_transaction_definition_v2: v2 with anchorMonth + anchorDayOfWeek for full interval support
+// Migration: call migrate_recurring_to_v2 reducer after publish to copy v1 rows.
+// Index name recurring_owner_v2 avoids collision with recurring_owner on v1.
+export const recurring_transaction_definition_v2 = table(
+	{
+		name: "recurring_transaction_definition_v2",
+		indexes: [
+			{
+				accessor: "recurring_owner_v2",
+				algorithm: "btree",
+				columns: ["ownerIdentity"],
+			},
+		],
+	},
+	{
+		id: t.u64().primaryKey().autoInc(),
+		ownerIdentity: t.identity(),
+		name: t.string(),
+		type: t.string(), // "expense" | "income"
+		amountCentavos: t.i64(),
+		tag: t.string(),
+		subAccountId: t.u64(),
+		dayOfMonth: t.u8(), // 1–28; used for month-based intervals; placeholder 1 for weekly/biweekly
+		interval: t.string(), // "weekly"|"biweekly"|"monthly"|"quarterly"|"semiannual"|"yearly"
+		anchorMonth: t.u8(), // 0 = default; 1–12 = anchor month for semiannual/yearly
+		anchorDayOfWeek: t.u8(), // 0 = default; 1=Mon..7=Sun for weekly/biweekly
+		isPaused: t.bool(),
+		remainingOccurrences: t.u16(), // 0 = indefinite
+		totalOccurrences: t.u16(), // 0 = indefinite
+		createdAt: t.timestamp(),
+	},
+);
+
 // recurring_transaction_schedule: SpacetimeDB scheduled table (D-14)
 // One row per active recurring definition; SpacetimeDB auto-deletes the row after reducer fires.
 // `scheduled: () => fire_recurring_transaction` — thunk forward ref resolved at module-eval time.
@@ -339,6 +372,7 @@ const spacetimedb = schema({
 	sub_account,
 	transaction,
 	recurring_transaction_definition,
+	recurring_transaction_definition_v2,
 	recurring_transaction_schedule,
 	budget_config,
 	budget_allocation,
@@ -394,7 +428,7 @@ export function computeNextOccurrence(
 export const fire_recurring_transaction = spacetimedb.reducer(
 	{ arg: recurring_transaction_schedule.rowType },
 	(ctx, { arg }) => {
-		const def = ctx.db.recurring_transaction_definition.id.find(arg.definitionId);
+		const def = ctx.db.recurring_transaction_definition_v2.id.find(arg.definitionId);
 		// Definition deleted or paused — do not create transaction
 		if (!def || def.isPaused) return;
 
@@ -439,7 +473,7 @@ export const fire_recurring_transaction = spacetimedb.reducer(
 			const newRemaining = def.remainingOccurrences - 1;
 			if (newRemaining === 0) {
 				// Auto-pause: set isPaused=true, update remainingOccurrences to 0, do NOT schedule next fire
-				ctx.db.recurring_transaction_definition.id.update({
+				ctx.db.recurring_transaction_definition_v2.id.update({
 					...def,
 					remainingOccurrences: 0,
 					isPaused: true,
@@ -447,7 +481,7 @@ export const fire_recurring_transaction = spacetimedb.reducer(
 				return; // Early return — no next schedule (per D-01)
 			}
 			// Decrement and continue to schedule next fire
-			ctx.db.recurring_transaction_definition.id.update({
+			ctx.db.recurring_transaction_definition_v2.id.update({
 				...def,
 				remainingOccurrences: newRemaining,
 			});
