@@ -636,6 +636,8 @@ export const edit_sub_account = spacetimedb.reducer(
 		if (!isAuthorized(ctx, existing.ownerIdentity)) throw new SenderError("Not authorized");
 		if (existing.subAccountType !== "credit")
 			throw new SenderError("Only credit sub-accounts can be edited");
+		if (newBalanceCentavos != null && newBalanceCentavos < 0n)
+			throw new SenderError("Outstanding balance cannot be negative");
 		if (newBalanceCentavos != null && newBalanceCentavos > newCreditLimitCentavos)
 			throw new SenderError("Outstanding balance cannot exceed credit limit");
 		ctx.db.sub_account.id.update({
