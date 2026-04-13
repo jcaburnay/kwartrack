@@ -124,7 +124,10 @@ export const my_transactions = spacetimedb.view(
 	},
 );
 
-// my_recurring_definitions: filtered view of recurring_transaction_definition_v2 for the calling user
+// my_recurring_definitions: returns all recurring definitions for the calling user.
+// Includes both v2 rows (migrated) and v1 rows not yet migrated (represented as v2 shape
+// with anchorMonth=0, anchorDayOfWeek=0). This ensures no definitions disappear during
+// the incremental migration period.
 // Client subscribes via: 'SELECT * FROM my_recurring_definitions'
 export const my_recurring_definitions = spacetimedb.view(
 	{ name: "my_recurring_definitions", public: true },
@@ -132,39 +135,35 @@ export const my_recurring_definitions = spacetimedb.view(
 	(ctx) => {
 		const alias = ctx.db.identity_alias.stdbIdentity.find(ctx.sender);
 		const ownerIdentity = alias?.primaryIdentity ?? ctx.sender;
-		return [...ctx.db.recurring_transaction_definition_v2.recurring_owner_v2.filter(ownerIdentity)];
+
+		const v2Rows = [...ctx.db.recurring_transaction_definition_v2.recurring_owner_v2.filter(ownerIdentity)];
+		const v2Ids = new Set(v2Rows.map((r) => r.id));
+
+		// Include v1 rows not yet migrated, mapped to v2 shape with default anchor values
+		const unmigratedRows = [...ctx.db.recurring_transaction_definition.recurring_owner.filter(ownerIdentity)]
+			.filter((r) => !v2Ids.has(r.id))
+			.map((r) => ({
+				id: r.id,
+				ownerIdentity: r.ownerIdentity,
+				name: r.name,
+				type: r.type,
+				amountCentavos: r.amountCentavos,
+				tag: r.tag,
+				subAccountId: r.subAccountId,
+				dayOfMonth: r.dayOfMonth,
+				interval: r.interval,
+				anchorMonth: 0,
+				anchorDayOfWeek: 0,
+				isPaused: r.isPaused,
+				remainingOccurrences: r.remainingOccurrences,
+				totalOccurrences: r.totalOccurrences,
+				createdAt: r.createdAt,
+			}));
+
+		return [...v2Rows, ...unmigratedRows];
 	},
 );
 
-// migrate_recurring_to_v2: one-time migration reducer — copies all v1 rows for the calling user
-// to v2 with anchorMonth=0, anchorDayOfWeek=0. Preserves original IDs so recurring schedules
-// continue to fire correctly. Safe to call multiple times (skips already-migrated rows).
-// Client: conn.reducers.migrateRecurringToV2({})
-export const migrate_recurring_to_v2 = spacetimedb.reducer({}, (ctx) => {
-	const alias = ctx.db.identity_alias.stdbIdentity.find(ctx.sender);
-	const ownerIdentity = alias?.primaryIdentity ?? ctx.sender;
-	for (const row of ctx.db.recurring_transaction_definition.recurring_owner.filter(ownerIdentity)) {
-		// Skip rows already migrated (idempotent)
-		if (ctx.db.recurring_transaction_definition_v2.id.find(row.id)) continue;
-		ctx.db.recurring_transaction_definition_v2.insert({
-			id: row.id, // Preserve original ID — schedule rows reference this
-			ownerIdentity: row.ownerIdentity,
-			name: row.name,
-			type: row.type,
-			amountCentavos: row.amountCentavos,
-			tag: row.tag,
-			subAccountId: row.subAccountId,
-			dayOfMonth: row.dayOfMonth,
-			interval: row.interval,
-			anchorMonth: 0,
-			anchorDayOfWeek: 0,
-			isPaused: row.isPaused,
-			remainingOccurrences: row.remainingOccurrences,
-			totalOccurrences: row.totalOccurrences,
-			createdAt: row.createdAt,
-		});
-	}
-});
 
 // my_budget_config: returns the single budget_config row for the current user (D-07)
 // Client subscribes via: 'SELECT * FROM my_budget_config'
@@ -753,6 +752,35 @@ export const link_clerk_identity = spacetimedb.reducer(
 // Five CRUD reducers for recurring_transaction_definition_v2 (RECR-01, RECR-03)
 // =============================================================================
 
+// migrateV1RowToV2: incremental migration helper.
+// Checks v2 first; if the row is missing, copies it from v1 with anchorMonth=0, anchorDayOfWeek=0.
+// Returns the v2 row, or undefined if not found in either table.
+// Called by every write reducer that accesses a recurring definition.
+// biome-ignore lint/suspicious/noExplicitAny: ctx type inferred at call sites
+function migrateV1RowToV2(ctx: any, definitionId: bigint) {
+	const v2 = ctx.db.recurring_transaction_definition_v2.id.find(definitionId);
+	if (v2) return v2;
+	const v1 = ctx.db.recurring_transaction_definition.id.find(definitionId);
+	if (!v1) return undefined;
+	return ctx.db.recurring_transaction_definition_v2.insert({
+		id: v1.id,
+		ownerIdentity: v1.ownerIdentity,
+		name: v1.name,
+		type: v1.type,
+		amountCentavos: v1.amountCentavos,
+		tag: v1.tag,
+		subAccountId: v1.subAccountId,
+		dayOfMonth: v1.dayOfMonth,
+		interval: v1.interval,
+		anchorMonth: 0,
+		anchorDayOfWeek: 0,
+		isPaused: v1.isPaused,
+		remainingOccurrences: v1.remainingOccurrences,
+		totalOccurrences: v1.totalOccurrences,
+		createdAt: v1.createdAt,
+	});
+}
+
 // Compute the microsecond timestamp for the first fire of a new/resumed definition.
 // Dispatch order:
 //   1. weekly/biweekly + anchorDayOfWeek > 0 → next occurrence of that weekday
@@ -951,7 +979,7 @@ export const edit_recurring_definition = spacetimedb.reducer(
 			remainingOccurrences,
 		},
 	) => {
-		const existing = ctx.db.recurring_transaction_definition_v2.id.find(definitionId);
+		const existing = migrateV1RowToV2(ctx, definitionId);
 		if (!existing) throw new SenderError("Definition not found");
 		if (!isAuthorized(ctx, existing.ownerIdentity)) throw new SenderError("Not authorized");
 		if (!name.trim()) throw new SenderError("Name is required");
@@ -1007,7 +1035,7 @@ export const edit_recurring_definition = spacetimedb.reducer(
 export const delete_recurring_definition = spacetimedb.reducer(
 	{ definitionId: t.u64() },
 	(ctx, { definitionId }) => {
-		const existing = ctx.db.recurring_transaction_definition_v2.id.find(definitionId);
+		const existing = migrateV1RowToV2(ctx, definitionId);
 		if (!existing) throw new SenderError("Definition not found");
 		if (!isAuthorized(ctx, existing.ownerIdentity)) throw new SenderError("Not authorized");
 
@@ -1019,6 +1047,8 @@ export const delete_recurring_definition = spacetimedb.reducer(
 		}
 
 		ctx.db.recurring_transaction_definition_v2.id.delete(definitionId);
+		// Also remove from v1 to prevent the view from re-surfacing the deleted row
+		ctx.db.recurring_transaction_definition.id.delete(definitionId);
 	},
 );
 
@@ -1028,7 +1058,7 @@ export const delete_recurring_definition = spacetimedb.reducer(
 export const pause_recurring_definition = spacetimedb.reducer(
 	{ definitionId: t.u64() },
 	(ctx, { definitionId }) => {
-		const existing = ctx.db.recurring_transaction_definition_v2.id.find(definitionId);
+		const existing = migrateV1RowToV2(ctx, definitionId);
 		if (!existing) throw new SenderError("Definition not found");
 		if (!isAuthorized(ctx, existing.ownerIdentity)) throw new SenderError("Not authorized");
 		if (existing.isPaused) return;
@@ -1049,7 +1079,7 @@ export const pause_recurring_definition = spacetimedb.reducer(
 export const resume_recurring_definition = spacetimedb.reducer(
 	{ definitionId: t.u64() },
 	(ctx, { definitionId }) => {
-		const existing = ctx.db.recurring_transaction_definition_v2.id.find(definitionId);
+		const existing = migrateV1RowToV2(ctx, definitionId);
 		if (!existing) throw new SenderError("Definition not found");
 		if (!isAuthorized(ctx, existing.ownerIdentity)) throw new SenderError("Not authorized");
 		if (!existing.isPaused) return;
