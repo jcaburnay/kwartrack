@@ -141,10 +141,13 @@ describe("RecurringModal", () => {
 		await userEvent.selectOptions(intervalSelect, "biweekly");
 		expect(screen.getByLabelText(/day of week/i)).toBeInTheDocument();
 		expect(screen.queryByLabelText(/day of month/i)).not.toBeInTheDocument();
+		expect(screen.queryByLabelText(/anchor month/i)).not.toBeInTheDocument();
 	});
 
 	it("shows only day-of-month when interval is monthly", async () => {
 		render(<RecurringModal onClose={onClose} />);
+		const intervalSelect = screen.getByLabelText(/interval/i) as HTMLSelectElement;
+		await userEvent.selectOptions(intervalSelect, "monthly");
 		expect(screen.getByLabelText(/day of month/i)).toBeInTheDocument();
 		expect(screen.queryByLabelText(/anchor month/i)).not.toBeInTheDocument();
 		expect(screen.queryByLabelText(/day of week/i)).not.toBeInTheDocument();
