@@ -6,6 +6,7 @@ import spacetimedb, {
 	budget_config,
 	debt,
 	recurring_transaction_definition,
+	recurring_transaction_definition_v2,
 	split_event,
 	split_participant,
 	sub_account,
@@ -722,12 +723,61 @@ export const link_clerk_identity = spacetimedb.reducer(
 // Five CRUD reducers for recurring_transaction_definition (RECR-01, RECR-03)
 // =============================================================================
 
-// Compute the first fire timestamp for a new definition (D-06):
-// If dayOfMonth >= today's day → fire this month (day hasn't passed yet).
-// If dayOfMonth < today's day → fire next month.
-function computeFirstFireMicros(nowMicros: bigint, dayOfMonth: number): bigint {
+// Compute the microsecond timestamp for the first fire of a new/resumed definition.
+// Dispatch order:
+//   1. weekly/biweekly + anchorDayOfWeek > 0 → next occurrence of that weekday
+//   2. semiannual/yearly + anchorMonth > 0 → next future (anchorMonth, dayOfMonth) or +6mo pair
+//   3. default → this month if dayOfMonth >= today, else next month
+function computeFirstFireMicros(
+	nowMicros: bigint,
+	dayOfMonth: number,
+	interval: string = "monthly",
+	anchorMonth: number = 0, // 0 = default; 1–12 = anchor month for semiannual/yearly
+	anchorDayOfWeek: number = 0, // 0 = default; 1=Mon..7=Sun for weekly/biweekly
+): bigint {
 	const nowMs = Number(nowMicros / 1000n);
 	const now = new Date(nowMs);
+
+	// Case 1: weekly/biweekly with day-of-week anchor
+	if (anchorDayOfWeek > 0 && (interval === "weekly" || interval === "biweekly")) {
+		// anchorDayOfWeek 1=Mon..6=Sat, 7=Sun → JS getUTCDay() 1=Mon..6=Sat, 0=Sun
+		const targetJsDay = anchorDayOfWeek === 7 ? 0 : anchorDayOfWeek;
+		const todayJsDay = now.getUTCDay();
+		const daysUntil = (targetJsDay - todayJsDay + 7) % 7;
+		const targetMs = now.getTime() + daysUntil * 24 * 60 * 60 * 1000;
+		const target = new Date(targetMs);
+		const fireDate = new Date(
+			Date.UTC(target.getUTCFullYear(), target.getUTCMonth(), target.getUTCDate(), 0, 0, 0, 0),
+		);
+		return BigInt(fireDate.getTime()) * 1000n;
+	}
+
+	// Case 2: semiannual/yearly with month anchor
+	if (anchorMonth > 0 && (interval === "semiannual" || interval === "yearly")) {
+		const currentYear = now.getUTCFullYear();
+		const m0 = anchorMonth - 1; // 0-indexed month
+
+		if (interval === "yearly") {
+			for (const y of [currentYear, currentYear + 1]) {
+				const d = new Date(Date.UTC(y, m0, dayOfMonth, 0, 0, 0, 0));
+				if (d > now) return BigInt(d.getTime()) * 1000n;
+			}
+		}
+
+		// semiannual fires on anchorMonth and anchorMonth+6 months
+		const m1 = m0;
+		const m2 = (m0 + 6) % 12;
+		const candidates: bigint[] = [];
+		for (const y of [currentYear, currentYear + 1]) {
+			for (const m of [m1, m2]) {
+				const d = new Date(Date.UTC(y, m, dayOfMonth, 0, 0, 0, 0));
+				if (d > now) candidates.push(BigInt(d.getTime()) * 1000n);
+			}
+		}
+		return candidates.sort((a, b) => (a < b ? -1 : a > b ? 1 : 0))[0];
+	}
+
+	// Case 3: default — fire this month or next month based on dayOfMonth
 	const todayDay = now.getUTCDate();
 	let targetYear = now.getUTCFullYear();
 	let targetMonth = now.getUTCMonth();
