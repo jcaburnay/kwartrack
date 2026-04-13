@@ -756,8 +756,7 @@ export const link_clerk_identity = spacetimedb.reducer(
 // Checks v2 first; if the row is missing, copies it from v1 with anchorMonth=0, anchorDayOfWeek=0.
 // Returns the v2 row, or undefined if not found in either table.
 // Called by every write reducer that accesses a recurring definition.
-// biome-ignore lint/suspicious/noExplicitAny: ctx type inferred at call sites
-function migrateV1RowToV2(ctx: any, definitionId: bigint) {
+function migrateV1RowToV2(ctx: AppCtx, definitionId: bigint) {
 	const v2 = ctx.db.recurring_transaction_definition_v2.id.find(definitionId);
 	if (v2) return v2;
 	const v1 = ctx.db.recurring_transaction_definition.id.find(definitionId);
