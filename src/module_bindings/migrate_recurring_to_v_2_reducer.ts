@@ -10,16 +10,4 @@ import {
   type Infer as __Infer,
 } from "spacetimedb";
 
-export default {
-  definitionId: __t.u64(),
-  name: __t.string(),
-  type: __t.string(),
-  amountCentavos: __t.i64(),
-  tag: __t.string(),
-  subAccountId: __t.u64(),
-  dayOfMonth: __t.u8(),
-  interval: __t.string(),
-  anchorMonth: __t.u8(),
-  anchorDayOfWeek: __t.u8(),
-  remainingOccurrences: __t.u16(),
-};
+export default {};

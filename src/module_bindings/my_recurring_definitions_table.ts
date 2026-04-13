@@ -20,6 +20,8 @@ export default __t.row({
   subAccountId: __t.u64().name("sub_account_id"),
   dayOfMonth: __t.u8().name("day_of_month"),
   interval: __t.string(),
+  anchorMonth: __t.u8().name("anchor_month"),
+  anchorDayOfWeek: __t.u8().name("anchor_day_of_week"),
   isPaused: __t.bool().name("is_paused"),
   remainingOccurrences: __t.u16().name("remaining_occurrences"),
   totalOccurrences: __t.u16().name("total_occurrences"),

@@ -113,6 +113,25 @@ export const RecurringTransactionDefinition = __t.object("RecurringTransactionDe
 });
 export type RecurringTransactionDefinition = __Infer<typeof RecurringTransactionDefinition>;
 
+export const RecurringTransactionDefinitionV2 = __t.object("RecurringTransactionDefinitionV2", {
+  id: __t.u64(),
+  ownerIdentity: __t.identity(),
+  name: __t.string(),
+  type: __t.string(),
+  amountCentavos: __t.i64(),
+  tag: __t.string(),
+  subAccountId: __t.u64(),
+  dayOfMonth: __t.u8(),
+  interval: __t.string(),
+  anchorMonth: __t.u8(),
+  anchorDayOfWeek: __t.u8(),
+  isPaused: __t.bool(),
+  remainingOccurrences: __t.u16(),
+  totalOccurrences: __t.u16(),
+  createdAt: __t.timestamp(),
+});
+export type RecurringTransactionDefinitionV2 = __Infer<typeof RecurringTransactionDefinitionV2>;
+
 export const RecurringTransactionSchedule = __t.object("RecurringTransactionSchedule", {
   scheduledId: __t.u64(),
   scheduledAt: __t.scheduleAt(),

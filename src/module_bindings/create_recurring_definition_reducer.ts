@@ -18,6 +18,8 @@ export default {
   subAccountId: __t.u64(),
   dayOfMonth: __t.u8(),
   interval: __t.string(),
+  anchorMonth: __t.u8(),
+  anchorDayOfWeek: __t.u8(),
   remainingOccurrences: __t.u16(),
   totalOccurrences: __t.u16(),
 };
