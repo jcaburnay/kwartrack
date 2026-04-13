@@ -7,8 +7,8 @@ on:
       - 'server/**'
 
 jobs:
-  validate-bindings:
-    name: Validate module bindings are up-to-date
+  validate-and-publish:
+    name: Validate bindings and publish to Maincloud
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -41,30 +41,6 @@ jobs:
             echo "   Run 'pnpm generate' locally and commit the result before pushing."
             exit 1
           fi
-
-  publish-server:
-    name: Publish SpacetimeDB module to Maincloud
-    runs-on: ubuntu-latest
-    needs: validate-bindings
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 10
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '24'
-          cache: 'pnpm'
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Install SpacetimeDB CLI
-        run: |
-          curl --proto '=https' --tlsv1.2 -sSf https://install.spacetimedb.com | sh -s -- --yes
-          echo "$HOME/.local/bin" >> $GITHUB_PATH
 
       - name: Authenticate with SpacetimeDB
         env:
