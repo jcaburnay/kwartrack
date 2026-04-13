@@ -750,7 +750,7 @@ export const link_clerk_identity = spacetimedb.reducer(
 
 // =============================================================================
 // RECURRING TRANSACTION REDUCERS
-// Five CRUD reducers for recurring_transaction_definition (RECR-01, RECR-03)
+// Five CRUD reducers for recurring_transaction_definition_v2 (RECR-01, RECR-03)
 // =============================================================================
 
 // Compute the microsecond timestamp for the first fire of a new/resumed definition.
@@ -761,9 +761,9 @@ export const link_clerk_identity = spacetimedb.reducer(
 function computeFirstFireMicros(
 	nowMicros: bigint,
 	dayOfMonth: number,
-	interval: string = "monthly",
-	anchorMonth: number = 0, // 0 = default; 1–12 = anchor month for semiannual/yearly
-	anchorDayOfWeek: number = 0, // 0 = default; 1=Mon..7=Sun for weekly/biweekly
+	interval: string,
+	anchorMonth: number,
+	anchorDayOfWeek: number,
 ): bigint {
 	const nowMs = Number(nowMicros / 1000n);
 	const now = new Date(nowMs);
@@ -792,6 +792,8 @@ function computeFirstFireMicros(
 				const d = new Date(Date.UTC(y, m0, dayOfMonth, 0, 0, 0, 0));
 				if (d > now) return BigInt(d.getTime()) * 1000n;
 			}
+			// Unreachable with valid dayOfMonth (1–28), but guard for clarity
+			throw new Error(`computeFirstFireMicros: no future yearly date found for anchorMonth=${anchorMonth}`);
 		}
 
 		// semiannual fires on anchorMonth and anchorMonth+6 months
@@ -804,7 +806,9 @@ function computeFirstFireMicros(
 				if (d > now) candidates.push(BigInt(d.getTime()) * 1000n);
 			}
 		}
-		return candidates.sort((a, b) => (a < b ? -1 : a > b ? 1 : 0))[0];
+		const sorted = candidates.sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
+		if (sorted.length === 0) throw new Error(`computeFirstFireMicros: no semiannual candidate found for anchorMonth=${anchorMonth}`);
+		return sorted[0];
 	}
 
 	// Case 3: default — fire this month or next month based on dayOfMonth
