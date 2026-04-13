@@ -35,7 +35,7 @@ jobs:
 
       - name: Check bindings are committed
         run: |
-          if ! git diff --exit-code src/module_bindings/; then
+          if [ -n "$(git status --porcelain src/module_bindings/)" ]; then
             echo ""
             echo "❌ Module bindings are out of sync."
             echo "   Run 'pnpm generate' locally and commit the result before pushing."
