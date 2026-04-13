@@ -124,17 +124,47 @@ export const my_transactions = spacetimedb.view(
 	},
 );
 
-// my_recurring_definitions: filtered view of recurring_transaction_definition for the calling user (D-16, D-17)
+// my_recurring_definitions: filtered view of recurring_transaction_definition_v2 for the calling user
 // Client subscribes via: 'SELECT * FROM my_recurring_definitions'
 export const my_recurring_definitions = spacetimedb.view(
 	{ name: "my_recurring_definitions", public: true },
-	t.array(recurring_transaction_definition.rowType),
+	t.array(recurring_transaction_definition_v2.rowType),
 	(ctx) => {
 		const alias = ctx.db.identity_alias.stdbIdentity.find(ctx.sender);
 		const ownerIdentity = alias?.primaryIdentity ?? ctx.sender;
-		return [...ctx.db.recurring_transaction_definition.recurring_owner.filter(ownerIdentity)];
+		return [...ctx.db.recurring_transaction_definition_v2.recurring_owner_v2.filter(ownerIdentity)];
 	},
 );
+
+// migrate_recurring_to_v2: one-time migration reducer — copies all v1 rows for the calling user
+// to v2 with anchorMonth=0, anchorDayOfWeek=0. Preserves original IDs so recurring schedules
+// continue to fire correctly. Safe to call multiple times (skips already-migrated rows).
+// Client: conn.reducers.migrateRecurringToV2({})
+export const migrate_recurring_to_v2 = spacetimedb.reducer({}, (ctx) => {
+	const alias = ctx.db.identity_alias.stdbIdentity.find(ctx.sender);
+	const ownerIdentity = alias?.primaryIdentity ?? ctx.sender;
+	for (const row of ctx.db.recurring_transaction_definition.recurring_owner.filter(ownerIdentity)) {
+		// Skip rows already migrated (idempotent)
+		if (ctx.db.recurring_transaction_definition_v2.id.find(row.id)) continue;
+		ctx.db.recurring_transaction_definition_v2.insert({
+			id: row.id, // Preserve original ID — schedule rows reference this
+			ownerIdentity: row.ownerIdentity,
+			name: row.name,
+			type: row.type,
+			amountCentavos: row.amountCentavos,
+			tag: row.tag,
+			subAccountId: row.subAccountId,
+			dayOfMonth: row.dayOfMonth,
+			interval: row.interval,
+			anchorMonth: 0,
+			anchorDayOfWeek: 0,
+			isPaused: row.isPaused,
+			remainingOccurrences: row.remainingOccurrences,
+			totalOccurrences: row.totalOccurrences,
+			createdAt: row.createdAt,
+		});
+	}
+});
 
 // my_budget_config: returns the single budget_config row for the current user (D-07)
 // Client subscribes via: 'SELECT * FROM my_budget_config'
