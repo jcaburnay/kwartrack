@@ -519,7 +519,7 @@ export const add_sub_account = spacetimedb.reducer(
 			accountId,
 			ownerIdentity,
 			name: name.trim(),
-			balanceCentavos: subAccountType === "credit" ? 0n : initialBalanceCentavos,
+			balanceCentavos: initialBalanceCentavos,
 			isDefault: false,
 			createdAt: ctx.timestamp,
 			subAccountType: subAccountType || "wallet",
