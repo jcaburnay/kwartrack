@@ -406,7 +406,7 @@ export function RecurringModal({
 									</div>
 								)}
 
-								{/* Month picker — semiannual/yearly only */}
+								{/* Month anchor picker — quarterly/semiannual/yearly */}
 								{hasMonthAnchor && (
 									<div>
 										<label className="label" htmlFor="rec-anchor-month">
