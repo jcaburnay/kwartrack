@@ -539,6 +539,7 @@ export const convert_and_create_sub_account = spacetimedb.reducer(
 		newName: t.string(),
 		newSubAccountType: t.string(),
 		newCreditLimitCentavos: t.i64(),
+		newSubAccountInitialBalanceCentavos: t.i64(),
 		existingName: t.string(),
 		existingSubAccountType: t.string(),
 	},
@@ -549,6 +550,7 @@ export const convert_and_create_sub_account = spacetimedb.reducer(
 			newName,
 			newSubAccountType,
 			newCreditLimitCentavos,
+			newSubAccountInitialBalanceCentavos,
 			existingName,
 			existingSubAccountType,
 		},
@@ -593,13 +595,13 @@ export const convert_and_create_sub_account = spacetimedb.reducer(
 		// Mark account as no longer standalone
 		ctx.db.account.id.update({ ...acc, isStandalone: false });
 
-		// Insert the new sub-account (always starts at 0 balance)
+		// Insert the new sub-account with the user-supplied initial balance
 		ctx.db.sub_account.insert({
 			id: 0n,
 			accountId,
 			ownerIdentity,
 			name: newName.trim(),
-			balanceCentavos: 0n,
+			balanceCentavos: newSubAccountInitialBalanceCentavos,
 			isDefault: false,
 			createdAt: ctx.timestamp,
 			subAccountType: newSubAccountType || "wallet",

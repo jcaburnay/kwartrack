@@ -6,31 +6,31 @@
 /* eslint-disable */
 /* tslint:disable */
 import {
-  type AlgebraicTypeType as __AlgebraicTypeType,
-  convertToAccessorMap as __convertToAccessorMap,
   DbConnectionBuilder as __DbConnectionBuilder,
-  type DbConnectionConfig as __DbConnectionConfig,
   DbConnectionImpl as __DbConnectionImpl,
+  SubscriptionBuilderImpl as __SubscriptionBuilderImpl,
+  TypeBuilder as __TypeBuilder,
+  Uuid as __Uuid,
+  convertToAccessorMap as __convertToAccessorMap,
+  makeQueryBuilder as __makeQueryBuilder,
+  procedureSchema as __procedureSchema,
+  procedures as __procedures,
+  reducerSchema as __reducerSchema,
+  reducers as __reducers,
+  schema as __schema,
+  t as __t,
+  table as __table,
+  type AlgebraicTypeType as __AlgebraicTypeType,
+  type DbConnectionConfig as __DbConnectionConfig,
   type ErrorContextInterface as __ErrorContextInterface,
   type Event as __Event,
   type EventContextInterface as __EventContextInterface,
   type Infer as __Infer,
-  makeQueryBuilder as __makeQueryBuilder,
-  procedureSchema as __procedureSchema,
-  procedures as __procedures,
   type QueryBuilder as __QueryBuilder,
   type ReducerEventContextInterface as __ReducerEventContextInterface,
   type RemoteModule as __RemoteModule,
-  reducerSchema as __reducerSchema,
-  reducers as __reducers,
-  SubscriptionBuilderImpl as __SubscriptionBuilderImpl,
   type SubscriptionEventContextInterface as __SubscriptionEventContextInterface,
   type SubscriptionHandleImpl as __SubscriptionHandleImpl,
-  schema as __schema,
-  TypeBuilder as __TypeBuilder,
-  t as __t,
-  table as __table,
-  Uuid as __Uuid,
 } from "spacetimedb";
 
 // Import all reducer arg schemas
@@ -57,8 +57,8 @@ import PauseRecurringDefinitionReducer from "./pause_recurring_definition_reduce
 import RenameAccountReducer from "./rename_account_reducer";
 import RenameSubAccountReducer from "./rename_sub_account_reducer";
 import ResumeRecurringDefinitionReducer from "./resume_recurring_definition_reducer";
-import SetBudgetAllocationsReducer from "./set_budget_allocations_reducer";
 import SetBudgetReducer from "./set_budget_reducer";
+import SetBudgetAllocationsReducer from "./set_budget_allocations_reducer";
 import SettleDebtReducer from "./settle_debt_reducer";
 import ToggleTagVisibilityReducer from "./toggle_tag_visibility_reducer";
 import UpdateAccountIconReducer from "./update_account_icon_reducer";

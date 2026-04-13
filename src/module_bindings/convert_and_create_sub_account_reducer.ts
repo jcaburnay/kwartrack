@@ -4,10 +4,10 @@
 /* eslint-disable */
 /* tslint:disable */
 import {
-  type AlgebraicTypeType as __AlgebraicTypeType,
-  type Infer as __Infer,
   TypeBuilder as __TypeBuilder,
   t as __t,
+  type AlgebraicTypeType as __AlgebraicTypeType,
+  type Infer as __Infer,
 } from "spacetimedb";
 
 export default {
@@ -15,6 +15,7 @@ export default {
   newName: __t.string(),
   newSubAccountType: __t.string(),
   newCreditLimitCentavos: __t.i64(),
+  newSubAccountInitialBalanceCentavos: __t.i64(),
   existingName: __t.string(),
   existingSubAccountType: __t.string(),
 };

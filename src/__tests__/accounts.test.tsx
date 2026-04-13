@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
-import { useTable } from "spacetimedb/react";
+import { useReducer, useTable } from "spacetimedb/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { formatPesos } from "../utils/currency";
 
@@ -143,6 +144,58 @@ describe("SubAccountModal", () => {
 			/>,
 		);
 		expect(screen.queryByText(/existing balance/i)).not.toBeInTheDocument();
+	});
+});
+
+// =============================================================================
+// SubAccountModal standalone conversion — initial balance for the NEW sub-account
+// =============================================================================
+describe("SubAccountModal standalone conversion — new sub-account initial balance", () => {
+	it("shows Initial balance field for wallet type when isStandalone=true", async () => {
+		const { SubAccountModal } = await import("../components/SubAccountModal");
+		render(
+			<SubAccountModal
+				accountId={1n}
+				accountName="Maya"
+				isStandalone={true}
+				existingBalanceCentavos={1000000n}
+				onClose={vi.fn()}
+			/>,
+		);
+		expect(screen.getByLabelText(/Initial balance/i)).toBeInTheDocument();
+	});
+
+	it("calls convertAndCreateSubAccount with newSubAccountInitialBalanceCentavos from the form", async () => {
+		const mockConvertAndCreate = vi.fn();
+		vi.mocked(useReducer).mockImplementation((reducer) => {
+			if ((reducer as { accessorName?: string }).accessorName === "convertAndCreateSubAccount") {
+				return mockConvertAndCreate;
+			}
+			return vi.fn();
+		});
+
+		const { SubAccountModal } = await import("../components/SubAccountModal");
+		render(
+			<SubAccountModal
+				accountId={1n}
+				accountName="Maya"
+				isStandalone={true}
+				existingBalanceCentavos={1000000n}
+				onClose={vi.fn()}
+			/>,
+		);
+
+		await userEvent.type(screen.getByLabelText(/Sub-account name/i), "New Savings");
+		await userEvent.type(screen.getByLabelText(/Initial balance/i), "500");
+		fireEvent.click(screen.getByRole("button", { name: /Save New Savings/i }));
+
+		await waitFor(() => {
+			expect(mockConvertAndCreate).toHaveBeenCalledWith(
+				expect.objectContaining({
+					newSubAccountInitialBalanceCentavos: 50000n,
+				}),
+			);
+		});
 	});
 });
 

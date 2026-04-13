@@ -29,8 +29,8 @@ import PauseRecurringDefinitionReducer from "../pause_recurring_definition_reduc
 import RenameAccountReducer from "../rename_account_reducer";
 import RenameSubAccountReducer from "../rename_sub_account_reducer";
 import ResumeRecurringDefinitionReducer from "../resume_recurring_definition_reducer";
-import SetBudgetAllocationsReducer from "../set_budget_allocations_reducer";
 import SetBudgetReducer from "../set_budget_reducer";
+import SetBudgetAllocationsReducer from "../set_budget_allocations_reducer";
 import SettleDebtReducer from "../settle_debt_reducer";
 import ToggleTagVisibilityReducer from "../toggle_tag_visibility_reducer";
 import UpdateAccountIconReducer from "../update_account_icon_reducer";

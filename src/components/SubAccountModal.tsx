@@ -121,11 +121,23 @@ export function SubAccountModal({
 				newBalanceCentavos,
 			});
 		} else if (isStandalone) {
+			const initialCentavos = data.initialBalance
+				? BigInt(Math.round(parseFloat(data.initialBalance) * 100))
+				: 0n;
+			const remainingCentavos =
+				data.subAccountType === "credit" && data.remainingAvailable
+					? BigInt(Math.round(parseFloat(data.remainingAvailable) * 100))
+					: creditLimitCentavos;
+			const newSubAccountInitialBalanceCentavos =
+				data.subAccountType === "credit"
+					? creditLimitCentavos - remainingCentavos
+					: initialCentavos;
 			convertAndCreateSubAccount({
 				accountId,
 				newName: data.name.trim(),
 				newSubAccountType: data.subAccountType,
 				newCreditLimitCentavos: creditLimitCentavos,
+				newSubAccountInitialBalanceCentavos,
 				existingName: data.existingName.trim() || "Main",
 				existingSubAccountType: data.existingSubAccountType || "wallet",
 			});
@@ -216,7 +228,7 @@ export function SubAccountModal({
 								/>
 							)}
 
-							{!isEditMode && !isStandalone && selectedType !== "credit" && (
+							{!isEditMode && selectedType !== "credit" && (
 								<Input
 									label="Initial balance (P)"
 									id="sub-account-balance"
