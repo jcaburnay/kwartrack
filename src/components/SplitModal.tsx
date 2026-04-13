@@ -5,8 +5,8 @@ import { Timestamp } from "spacetimedb";
 import { useReducer, useTable } from "spacetimedb/react";
 import { useDragToDismiss } from "../hooks/useDragToDismiss";
 import { reducers, tables } from "../module_bindings";
-import { openAsModal } from "../utils/dialog";
 import { formatPesos } from "../utils/currency";
+import { openAsModal } from "../utils/dialog";
 import { Input } from "./Input";
 
 const TAGS = [

@@ -5,9 +5,9 @@ import { Timestamp } from "spacetimedb";
 import { useReducer, useTable } from "spacetimedb/react";
 import { useDragToDismiss } from "../hooks/useDragToDismiss";
 import { reducers, tables } from "../module_bindings";
-import { openAsModal } from "../utils/dialog";
 import { getCurrentMonthExpenses } from "../utils/budgetCompute";
 import { formatPesos } from "../utils/currency";
+import { openAsModal } from "../utils/dialog";
 import { getVisibleTags } from "../utils/tagConfig";
 import { Input } from "./Input";
 

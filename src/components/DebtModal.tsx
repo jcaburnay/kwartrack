@@ -143,15 +143,17 @@ export function DebtModal({ onClose }: DebtModalProps) {
 								<div>
 									<label className="label" htmlFor="debt-tag">
 										<span className="label-text text-sm">
-											Tag{direction === "loaned" && <span className="text-base-content/30 ml-1">(optional)</span>}
+											Tag
+											{direction === "loaned" && (
+												<span className="text-base-content/30 ml-1">(optional)</span>
+											)}
 										</span>
 									</label>
 									<select
 										id="debt-tag"
 										className={`select select-bordered w-full${errors.tag ? " select-error" : ""}`}
 										{...register("tag", {
-											validate: (v) =>
-												direction === "loaned" || !!v || "Tag is required",
+											validate: (v) => direction === "loaned" || !!v || "Tag is required",
 										})}
 									>
 										<option value="">Select tag</option>
