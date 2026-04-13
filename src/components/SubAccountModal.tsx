@@ -98,7 +98,7 @@ export function SubAccountModal({
 	const selectedType = watch("subAccountType");
 	const creditLimitValue = watch("creditLimit");
 	useEffect(() => {
-		if (selectedType === "credit" && creditLimitValue !== undefined) {
+		if (selectedType === "credit" && creditLimitValue) {
 			void trigger("remainingAvailable");
 		}
 	}, [creditLimitValue, selectedType, trigger]);
@@ -239,7 +239,8 @@ export function SubAccountModal({
 									error={errors.remainingAvailable?.message}
 									{...register("remainingAvailable", {
 										validate: (val) => {
-											const remaining = parseFloat(val || "");
+											if (!val) return true;
+											const remaining = parseFloat(val);
 											if (!Number.isFinite(remaining)) return "Enter a valid amount";
 											const limit = parseFloat(getValues("creditLimit") || "0");
 											if (remaining < 0) return "Remaining cannot be negative";
