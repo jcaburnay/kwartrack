@@ -156,7 +156,8 @@ export const recurring_transaction_definition = table(
 );
 
 // recurring_transaction_definition_v2: v2 with anchorMonth + anchorDayOfWeek for full interval support
-// Migration: call migrate_recurring_to_v2 reducer after publish to copy v1 rows.
+// Migration: incremental (lazy) pattern — v1 rows are migrated to v2 on first access.
+// See migrateV1RowToV2() in index.ts. No manual migration call needed after deploy.
 // Index name recurring_owner_v2 avoids collision with recurring_owner on v1.
 export const recurring_transaction_definition_v2 = table(
 	{
@@ -428,7 +429,9 @@ export function computeNextOccurrence(
 export const fire_recurring_transaction = spacetimedb.reducer(
 	{ arg: recurring_transaction_schedule.rowType },
 	(ctx, { arg }) => {
-		// Incremental migration: check v2 first; if missing, migrate from v1 on the spot
+		// Incremental migration: check v2 first; if missing, migrate from v1 on the spot.
+		// NOTE: this duplicates migrateV1RowToV2() in index.ts (schema.ts can't import from index.ts).
+		// If the migration shape changes (field list, defaults), update BOTH places.
 		let def = ctx.db.recurring_transaction_definition_v2.id.find(arg.definitionId);
 		if (!def) {
 			const v1 = ctx.db.recurring_transaction_definition.id.find(arg.definitionId);
