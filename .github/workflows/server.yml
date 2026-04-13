@@ -1,0 +1,63 @@
+name: Deploy Server
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'server/**'
+
+jobs:
+  validate-bindings:
+    name: Validate module bindings are up-to-date
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install SpacetimeDB CLI
+        run: |
+          curl --proto '=https' --tlsv1.2 -sSf https://install.spacetimedb.com | sh
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+      - name: Regenerate module bindings
+        run: pnpm generate
+
+      - name: Check bindings are committed
+        run: |
+          if ! git diff --exit-code src/module_bindings/; then
+            echo ""
+            echo "❌ Module bindings are out of sync."
+            echo "   Run 'pnpm generate' locally and commit the result before pushing."
+            exit 1
+          fi
+
+  publish-server:
+    name: Publish SpacetimeDB module to Maincloud
+    runs-on: ubuntu-latest
+    needs: validate-bindings
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install SpacetimeDB CLI
+        run: |
+          curl --proto '=https' --tlsv1.2 -sSf https://install.spacetimedb.com | sh
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+      - name: Authenticate with SpacetimeDB
+        env:
+          SPACETIMEDB_TOKEN: ${{ secrets.SPACETIMEDB_TOKEN }}
+        run: spacetime login --token "$SPACETIMEDB_TOKEN"
+
+      - name: Publish module to Maincloud
+        run: spacetime publish kwartrack --module-path server
