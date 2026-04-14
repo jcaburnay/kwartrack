@@ -314,6 +314,7 @@ export const split_event = table(
 		tag: t.string(),
 		date: t.timestamp(),
 		createdAt: t.timestamp(),
+		splitMethod: t.string().optional(),
 	},
 );
 
@@ -341,6 +342,7 @@ export const split_participant = table(
 		personName: t.string(),
 		shareAmountCentavos: t.i64(),
 		debtId: t.u64(),
+		shareCount: t.u32().optional(),
 	},
 );
 

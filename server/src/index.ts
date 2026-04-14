@@ -1512,7 +1512,9 @@ export const delete_debt = spacetimedb.reducer({ debtId: t.u64() }, (ctx, { debt
 // =============================================================================
 
 // create_split: records a shared expense. Creates expense transaction for full amount,
-// then one loaned debt per participant with equal shares.
+// then one loaned debt + participant row per person using client-computed shares.
+// splitMethod: "equal" | "exact" | "percentage" | "shares"
+// participantNames[i] + participantShares[i] + participantShareCounts[i] correspond to the same participant.
 export const create_split = spacetimedb.reducer(
 	{
 		description: t.string(),
@@ -1520,20 +1522,42 @@ export const create_split = spacetimedb.reducer(
 		payerSubAccountId: t.u64(),
 		tag: t.string(),
 		date: t.timestamp(),
+		splitMethod: t.string(),
 		participantNames: t.array(t.string()),
+		participantShares: t.array(t.i64()),
+		participantShareCounts: t.array(t.u32()),
 	},
-	(ctx, { description, totalAmountCentavos, payerSubAccountId, tag, date, participantNames }) => {
+	(
+		ctx,
+		{
+			description,
+			totalAmountCentavos,
+			payerSubAccountId,
+			tag,
+			date,
+			splitMethod,
+			participantNames,
+			participantShares,
+			participantShareCounts,
+		},
+	) => {
 		if (!description.trim()) throw new SenderError("Description is required");
 		if (totalAmountCentavos <= 0n) throw new SenderError("Amount must be greater than 0");
 		if (participantNames.length === 0)
 			throw new SenderError("At least one participant is required");
+		if (
+			participantNames.length !== participantShares.length ||
+			participantNames.length !== participantShareCounts.length
+		)
+			throw new SenderError("Participant arrays must have the same length");
 
 		const ownerIdentity = resolveOwner(ctx);
 
 		// Validate and debit payer sub-account (full amount)
 		const payerSubAccount = ctx.db.sub_account.id.find(payerSubAccountId);
 		if (!payerSubAccount) throw new SenderError("Payer sub-account not found");
-		if (!isAuthorized(ctx, payerSubAccount.ownerIdentity)) throw new SenderError("Not authorized");
+		if (!isAuthorized(ctx, payerSubAccount.ownerIdentity))
+			throw new SenderError("Not authorized");
 		ctx.db.sub_account.id.update({
 			...payerSubAccount,
 			balanceCentavos: applyBalance(payerSubAccount, "debit", totalAmountCentavos),
@@ -1566,16 +1590,15 @@ export const create_split = spacetimedb.reducer(
 			tag,
 			date,
 			createdAt: ctx.timestamp,
+			splitMethod,
 		});
 
-		// Equal split: total ÷ (participants + you)
-		const splitCount = BigInt(participantNames.length + 1);
-		const shareAmount = totalAmountCentavos / splitCount;
-
-		// Create one loaned debt + participant row per person
-		for (const name of participantNames) {
-			const trimmedName = name.trim();
+		// Create one loaned debt + participant row per person using provided shares
+		for (let i = 0; i < participantNames.length; i++) {
+			const trimmedName = participantNames[i].trim();
 			if (!trimmedName) continue;
+			const shareAmount = participantShares[i];
+			const shareCount = participantShareCounts[i];
 
 			const debtRow = ctx.db.debt.insert({
 				id: 0n,
@@ -1599,6 +1622,7 @@ export const create_split = spacetimedb.reducer(
 				personName: trimmedName,
 				shareAmountCentavos: shareAmount,
 				debtId: debtRow.id,
+				shareCount,
 			});
 		}
 	},
@@ -1618,6 +1642,156 @@ export const delete_split = spacetimedb.reducer(
 		}
 
 		ctx.db.split_event.id.delete(splitEventId);
+	},
+);
+
+// edit_split: updates split metadata and reconciles participants.
+// If totalAmountCentavos changed, reverses old balance and applies new balance.
+// participantIds[i] = 0n → new participant; >0n → update existing split_participant.id.
+// Participants absent from participantIds are removed (split_participant + linked debt deleted).
+// settledAmountCentavos is never touched — preserved on existing debts.
+export const edit_split = spacetimedb.reducer(
+	{
+		splitEventId: t.u64(),
+		description: t.string(),
+		totalAmountCentavos: t.i64(),
+		payerSubAccountId: t.u64(),
+		tag: t.string(),
+		date: t.timestamp(),
+		splitMethod: t.string(),
+		participantIds: t.array(t.u64()),
+		participantNames: t.array(t.string()),
+		participantShares: t.array(t.i64()),
+		participantShareCounts: t.array(t.u32()),
+	},
+	(
+		ctx,
+		{
+			splitEventId,
+			description,
+			totalAmountCentavos,
+			payerSubAccountId,
+			tag,
+			date,
+			splitMethod,
+			participantIds,
+			participantNames,
+			participantShares,
+			participantShareCounts,
+		},
+	) => {
+		const existing = ctx.db.split_event.id.find(splitEventId);
+		if (!existing) throw new SenderError("Split not found");
+		if (!isAuthorized(ctx, existing.ownerIdentity)) throw new SenderError("Not authorized");
+		if (!description.trim()) throw new SenderError("Description is required");
+		if (totalAmountCentavos <= 0n) throw new SenderError("Amount must be greater than 0");
+		if (
+			participantIds.length !== participantNames.length ||
+			participantIds.length !== participantShares.length ||
+			participantIds.length !== participantShareCounts.length
+		)
+			throw new SenderError("Participant arrays must have the same length");
+
+		const ownerIdentity = resolveOwner(ctx);
+
+		// --- Balance correction if total changed ---
+		if (totalAmountCentavos !== existing.totalAmountCentavos) {
+			const payerSubAccount = ctx.db.sub_account.id.find(existing.payerSubAccountId);
+			if (!payerSubAccount) throw new SenderError("Payer sub-account not found");
+			if (!isAuthorized(ctx, payerSubAccount.ownerIdentity))
+				throw new SenderError("Not authorized");
+
+			// Reverse old debit
+			const afterReversal = applyBalance(payerSubAccount, "credit", existing.totalAmountCentavos);
+			// Apply new debit
+			const afterNew = (() => {
+				const updated = { ...payerSubAccount, balanceCentavos: afterReversal };
+				return applyBalance(updated, "debit", totalAmountCentavos);
+			})();
+			ctx.db.sub_account.id.update({
+				...payerSubAccount,
+				balanceCentavos: afterNew,
+			});
+		}
+
+		// --- Update split_event ---
+		ctx.db.split_event.id.update({
+			...existing,
+			description: description.trim(),
+			totalAmountCentavos,
+			payerSubAccountId,
+			tag,
+			date,
+			splitMethod,
+		});
+
+		// --- Build lookup set of participant IDs to keep ---
+		const keepIds = new Set(participantIds.filter((id) => id !== 0n));
+
+		// --- Remove participants not in the new list ---
+		for (const p of ctx.db.split_participant.split_participant_event.filter(splitEventId)) {
+			if (!keepIds.has(p.id)) {
+				ctx.db.split_participant.id.delete(p.id);
+				ctx.db.debt.id.delete(p.debtId);
+			}
+		}
+
+		// --- Update existing + insert new participants ---
+		for (let i = 0; i < participantIds.length; i++) {
+			const pid = participantIds[i];
+			const trimmedName = participantNames[i].trim();
+			if (!trimmedName) continue;
+			const shareAmount = participantShares[i];
+			const shareCount = participantShareCounts[i];
+
+			if (pid === 0n) {
+				// New participant
+				const debtRow = ctx.db.debt.insert({
+					id: 0n,
+					ownerIdentity,
+					personName: trimmedName,
+					direction: "loaned",
+					amountCentavos: shareAmount,
+					subAccountId: payerSubAccountId,
+					settledAmountCentavos: 0n,
+					tag,
+					description: description.trim(),
+					date,
+					splitEventId,
+					createdAt: ctx.timestamp,
+				});
+				ctx.db.split_participant.insert({
+					id: 0n,
+					ownerIdentity,
+					splitEventId,
+					personName: trimmedName,
+					shareAmountCentavos: shareAmount,
+					debtId: debtRow.id,
+					shareCount,
+				});
+			} else {
+				// Update existing participant
+				const existingP = ctx.db.split_participant.id.find(pid);
+				if (!existingP) continue;
+				ctx.db.split_participant.id.update({
+					...existingP,
+					personName: trimmedName,
+					shareAmountCentavos: shareAmount,
+					shareCount,
+				});
+				// Update the linked debt amount (preserve settledAmountCentavos)
+				const existingDebt = ctx.db.debt.id.find(existingP.debtId);
+				if (existingDebt) {
+					ctx.db.debt.id.update({
+						...existingDebt,
+						personName: trimmedName,
+						amountCentavos: shareAmount,
+						tag,
+						description: description.trim(),
+					});
+				}
+			}
+		}
 	},
 );
 
