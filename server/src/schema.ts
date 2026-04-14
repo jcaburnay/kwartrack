@@ -366,6 +366,44 @@ export const user_tag_config = table(
 	},
 );
 
+// time_deposit_metadata: stores TD-specific metadata, linked to sub_account and recurring definition
+// Private table — accessed via my_time_deposit_metadata view (index on ownerIdentity)
+export const time_deposit_metadata = table(
+	{
+		name: "time_deposit_metadata",
+		indexes: [
+			{
+				accessor: "td_metadata_owner",
+				algorithm: "btree",
+				columns: ["ownerIdentity"],
+			},
+		],
+	},
+	{
+		subAccountId: t.u64().primaryKey(), // FK to sub_account; 1:1 relationship
+		ownerIdentity: t.identity(),
+		interestRateBps: t.u32(), // basis points: 600 = 6.00% p.a.
+		maturityDate: t.timestamp(), // when interest stops and isMatured is set
+		recurringDefinitionId: t.u64(), // FK to recurring_transaction_definition_v2
+		isMatured: t.bool(),
+		createdAt: t.timestamp(),
+	},
+);
+
+// td_maturity_schedule: daily scheduled table to detect matured time deposits
+// scheduled: () => check_td_maturity — thunk resolved at runtime (same pattern as recurring_transaction_schedule)
+export const td_maturity_schedule = table(
+	{
+		name: "td_maturity_schedule",
+		// biome-ignore lint/suspicious/noExplicitAny: SpacetimeDB scheduled thunk — forward ref to check_td_maturity resolved at runtime
+		scheduled: (() => check_td_maturity) as any,
+	},
+	{
+		scheduledId: t.u64().primaryKey().autoInc(),
+		scheduledAt: t.scheduleAt(),
+	},
+);
+
 const spacetimedb = schema({
 	userProfile,
 	identity_alias,
@@ -381,6 +419,8 @@ const spacetimedb = schema({
 	split_event,
 	split_participant,
 	user_tag_config,
+	time_deposit_metadata,
+	td_maturity_schedule,
 });
 export default spacetimedb;
 
@@ -522,6 +562,44 @@ export const fire_recurring_transaction = spacetimedb.reducer(
 			scheduledId: 0n,
 			scheduledAt: ScheduleAt.time(nextFireMicros),
 			definitionId: def.id,
+		});
+	},
+);
+
+// check_td_maturity: daily scheduled reducer — pauses interest on matured TDs
+// Uses .iter() because scheduled reducers run as module identity (ctx.sender ≠ any user)
+export const check_td_maturity = spacetimedb.reducer(
+	{ arg: td_maturity_schedule.rowType },
+	(ctx, _) => {
+		const nowMicros = ctx.timestamp.microsSinceUnixEpoch;
+
+		for (const meta of ctx.db.time_deposit_metadata.iter()) {
+			if (meta.isMatured) continue;
+			if (meta.maturityDate.microsSinceUnixEpoch > nowMicros) continue;
+
+			const def = ctx.db.recurring_transaction_definition_v2.id.find(meta.recurringDefinitionId);
+			if (def && !def.isPaused) {
+				ctx.db.recurring_transaction_definition_v2.id.update({
+					...def,
+					isPaused: true,
+				});
+				for (const sched of ctx.db.recurring_transaction_schedule.recurring_schedule_definition_id.filter(
+					meta.recurringDefinitionId,
+				)) {
+					ctx.db.recurring_transaction_schedule.scheduledId.delete(sched.scheduledId);
+				}
+			}
+
+			ctx.db.time_deposit_metadata.subAccountId.update({
+				...meta,
+				isMatured: true,
+			});
+		}
+
+		const nextFireMicros = ctx.timestamp.microsSinceUnixEpoch + 86_400n * 1_000_000n;
+		ctx.db.td_maturity_schedule.insert({
+			scheduledId: 0n,
+			scheduledAt: ScheduleAt.time(nextFireMicros),
 		});
 	},
 );
