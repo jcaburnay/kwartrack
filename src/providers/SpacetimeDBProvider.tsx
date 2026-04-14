@@ -46,8 +46,15 @@ export function SpacetimeDBProvider({ children }: { children: React.ReactNode })
 						"SELECT * FROM my_split_events",
 						"SELECT * FROM my_split_participants",
 						"SELECT * FROM my_tag_configs",
-						"SELECT * FROM my_time_deposit_metadata",
 					]);
+
+				// TD metadata in its own subscription so a view error cannot
+				// take down the core subscription and break transactions/accounts.
+				conn
+					.subscriptionBuilder()
+					// biome-ignore lint/suspicious/noConsole: intentional error logging
+					.onError((e) => console.error("[SpacetimeDB] TD metadata subscription error:", e))
+					.subscribe(["SELECT * FROM my_time_deposit_metadata"]);
 			})
 			.onDisconnect(() => {})
 			.withToken(storedToken ?? "");
