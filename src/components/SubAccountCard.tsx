@@ -13,6 +13,9 @@ interface SubAccountCardProps {
 	onDeleteRequest: (id: bigint, name: string) => void;
 	onPayCredit?: (subAccountId: bigint) => void;
 	onEdit?: (subAccountId: bigint) => void;
+	interestRateBps?: number;
+	maturityDate?: Date;
+	isMatured?: boolean;
 }
 
 export function SubAccountCard({
@@ -24,6 +27,9 @@ export function SubAccountCard({
 	onDeleteRequest,
 	onPayCredit,
 	onEdit,
+	interestRateBps,
+	maturityDate,
+	isMatured = false,
 }: SubAccountCardProps) {
 	const renameSubAccount = useReducer(reducers.renameSubAccount);
 	const [isRenaming, setIsRenaming] = useState(false);
@@ -77,6 +83,14 @@ export function SubAccountCard({
 				? "progress-warning"
 				: "progress-success";
 
+	const isTimeDeposit = subAccountType === "time-deposit";
+	const interestRateDisplay =
+		interestRateBps != null ? `${(interestRateBps / 100).toFixed(2)}% p.a.` : null;
+	const maturityDateDisplay = maturityDate
+		? "Matures " +
+			maturityDate.toLocaleDateString("en-PH", { month: "short", day: "numeric", year: "numeric" })
+		: null;
+
 	return (
 		<div className="rounded-xl bg-base-100 shadow-sm p-5 flex flex-col gap-4 relative card-hover border border-base-300/50">
 			<div className="absolute top-3 right-3 dropdown dropdown-end">
@@ -92,7 +106,7 @@ export function SubAccountCard({
 					tabIndex={0}
 					className="dropdown-content menu bg-base-100 rounded-xl z-10 w-36 p-1 shadow-lg border border-base-300/50"
 				>
-					{isCreditSubAccount && onEdit ? (
+					{(isCreditSubAccount || isTimeDeposit) && onEdit ? (
 						<li>
 							<button type="button" onClick={() => onEdit(id)}>
 								Edit
@@ -159,7 +173,27 @@ export function SubAccountCard({
 					<span className="text-xs text-base-content/50">{availablePct}% available</span>
 				</div>
 			) : (
-				<span className="text-xl font-semibold font-mono">{formatPesos(balanceCentavos)}</span>
+				<div className="flex flex-col gap-1">
+					<span className="text-xl font-semibold font-mono">{formatPesos(balanceCentavos)}</span>
+					{isTimeDeposit && (
+						<div className="flex flex-col gap-1">
+							{isMatured ? (
+								<span className="badge badge-warning badge-sm w-fit">Matured</span>
+							) : null}
+							{interestRateDisplay && (
+								<span className="text-xs text-base-content/50 font-mono">
+									{interestRateDisplay}
+								</span>
+							)}
+							{maturityDateDisplay && !isMatured && (
+								<span className="text-xs text-base-content/40">{maturityDateDisplay}</span>
+							)}
+							{isMatured && (
+								<span className="text-xs text-base-content/50">Withdraw or roll over</span>
+							)}
+						</div>
+					)}
+				</div>
 			)}
 		</div>
 	);
