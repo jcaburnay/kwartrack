@@ -14,8 +14,8 @@ import spacetimedb, {
 } from "./schema";
 
 // Re-export the schema as the default export — required by spacetime CLI bundler
-// Also re-export fire_recurring_transaction so SpacetimeDB can resolve the scheduled reducer
-export { default, fire_recurring_transaction } from "./schema";
+// Also re-export fire_recurring_transaction and check_td_maturity so SpacetimeDB can resolve the scheduled reducers
+export { check_td_maturity, default, fire_recurring_transaction } from "./schema";
 
 type AppCtx = ReducerCtx<InferSchema<typeof spacetimedb>>;
 
