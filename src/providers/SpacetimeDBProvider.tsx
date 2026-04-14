@@ -46,6 +46,7 @@ export function SpacetimeDBProvider({ children }: { children: React.ReactNode })
 						"SELECT * FROM my_split_events",
 						"SELECT * FROM my_split_participants",
 						"SELECT * FROM my_tag_configs",
+						"SELECT * FROM my_time_deposit_metadata",
 					]);
 			})
 			.onDisconnect(() => {})

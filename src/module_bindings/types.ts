@@ -93,6 +93,9 @@ export type MySubAccounts = __Infer<typeof MySubAccounts>;
 export const MyTagConfigs = __t.object("MyTagConfigs", {});
 export type MyTagConfigs = __Infer<typeof MyTagConfigs>;
 
+export const MyTimeDepositMetadata = __t.object("MyTimeDepositMetadata", {});
+export type MyTimeDepositMetadata = __Infer<typeof MyTimeDepositMetadata>;
+
 export const MyTransactions = __t.object("MyTransactions", {});
 export type MyTransactions = __Infer<typeof MyTransactions>;
 
@@ -173,6 +176,24 @@ export const SubAccount = __t.object("SubAccount", {
   creditLimitCentavos: __t.i64(),
 });
 export type SubAccount = __Infer<typeof SubAccount>;
+
+export const TdMaturitySchedule = __t.object("TdMaturitySchedule", {
+  scheduledId: __t.u64(),
+  scheduledAt: __t.scheduleAt(),
+});
+export type TdMaturitySchedule = __Infer<typeof TdMaturitySchedule>;
+
+export const TimeDepositMetadata = __t.object("TimeDepositMetadata", {
+  subAccountId: __t.u64(),
+  ownerIdentity: __t.identity(),
+  interestRateBps: __t.u32(),
+  maturityDate: __t.timestamp(),
+  recurringDefinitionId: __t.u64(),
+  isMatured: __t.bool(),
+  principalCentavos: __t.i64(),
+  createdAt: __t.timestamp(),
+});
+export type TimeDepositMetadata = __Infer<typeof TimeDepositMetadata>;
 
 export const Transaction = __t.object("Transaction", {
   id: __t.u64(),

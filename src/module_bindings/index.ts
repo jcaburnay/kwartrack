@@ -41,6 +41,7 @@ import CreateAccountReducer from "./create_account_reducer";
 import CreateDebtReducer from "./create_debt_reducer";
 import CreateRecurringDefinitionReducer from "./create_recurring_definition_reducer";
 import CreateSplitReducer from "./create_split_reducer";
+import CreateTimeDepositReducer from "./create_time_deposit_reducer";
 import CreateTransactionReducer from "./create_transaction_reducer";
 import DeleteAccountReducer from "./delete_account_reducer";
 import DeleteCustomTagReducer from "./delete_custom_tag_reducer";
@@ -51,6 +52,7 @@ import DeleteSubAccountReducer from "./delete_sub_account_reducer";
 import DeleteTransactionReducer from "./delete_transaction_reducer";
 import EditRecurringDefinitionReducer from "./edit_recurring_definition_reducer";
 import EditSubAccountReducer from "./edit_sub_account_reducer";
+import EditTimeDepositMetadataReducer from "./edit_time_deposit_metadata_reducer";
 import EditTransactionReducer from "./edit_transaction_reducer";
 import LinkClerkIdentityReducer from "./link_clerk_identity_reducer";
 import PauseRecurringDefinitionReducer from "./pause_recurring_definition_reducer";
@@ -75,6 +77,7 @@ import MySplitEventsRow from "./my_split_events_table";
 import MySplitParticipantsRow from "./my_split_participants_table";
 import MySubAccountsRow from "./my_sub_accounts_table";
 import MyTagConfigsRow from "./my_tag_configs_table";
+import MyTimeDepositMetadataRow from "./my_time_deposit_metadata_table";
 import MyTransactionsRow from "./my_transactions_table";
 import UserProfileRow from "./user_profile_table";
 
@@ -160,6 +163,13 @@ const tablesSchema = __schema({
     constraints: [
     ],
   }, MyTagConfigsRow),
+  my_time_deposit_metadata: __table({
+    name: 'my_time_deposit_metadata',
+    indexes: [
+    ],
+    constraints: [
+    ],
+  }, MyTimeDepositMetadataRow),
   my_transactions: __table({
     name: 'my_transactions',
     indexes: [
@@ -178,6 +188,7 @@ const reducersSchema = __reducers(
   __reducerSchema("create_debt", CreateDebtReducer),
   __reducerSchema("create_recurring_definition", CreateRecurringDefinitionReducer),
   __reducerSchema("create_split", CreateSplitReducer),
+  __reducerSchema("create_time_deposit", CreateTimeDepositReducer),
   __reducerSchema("create_transaction", CreateTransactionReducer),
   __reducerSchema("delete_account", DeleteAccountReducer),
   __reducerSchema("delete_custom_tag", DeleteCustomTagReducer),
@@ -188,6 +199,7 @@ const reducersSchema = __reducers(
   __reducerSchema("delete_transaction", DeleteTransactionReducer),
   __reducerSchema("edit_recurring_definition", EditRecurringDefinitionReducer),
   __reducerSchema("edit_sub_account", EditSubAccountReducer),
+  __reducerSchema("edit_time_deposit_metadata", EditTimeDepositMetadataReducer),
   __reducerSchema("edit_transaction", EditTransactionReducer),
   __reducerSchema("link_clerk_identity", LinkClerkIdentityReducer),
   __reducerSchema("pause_recurring_definition", PauseRecurringDefinitionReducer),
