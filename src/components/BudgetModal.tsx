@@ -226,7 +226,7 @@ export function BudgetModal({ onClose }: BudgetModalProps) {
 					{/* Actions */}
 					<div className="flex gap-2 mt-4">
 						<button type="button" className="btn btn-ghost flex-1" onClick={onClose}>
-							Discard
+							Cancel
 						</button>
 						<button
 							type="submit"

@@ -70,9 +70,9 @@ describe("RecurringModal", () => {
 		expect(Array.from(options).map((o) => (o as HTMLOptionElement).value)).not.toContain("31");
 	});
 
-	it('renders "Discard" button that calls onClose', async () => {
+	it('renders "Cancel" button that calls onClose', async () => {
 		render(<RecurringModal onClose={onClose} />);
-		const discard = screen.getByRole("button", { name: /discard/i });
+		const discard = screen.getByRole("button", { name: /cancel/i });
 		await userEvent.click(discard);
 		expect(onClose).toHaveBeenCalledOnce();
 	});

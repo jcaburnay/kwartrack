@@ -106,10 +106,10 @@ describe("BudgetModal", () => {
 		expect(screen.getByText("Set monthly budget")).toBeInTheDocument();
 	});
 
-	it('"Discard" button calls onClose', async () => {
+	it('"Cancel" button calls onClose', async () => {
 		const onClose = vi.fn();
 		render(<BudgetModal onClose={onClose} />);
-		await userEvent.click(screen.getByRole("button", { name: /discard/i }));
+		await userEvent.click(screen.getByRole("button", { name: /cancel/i }));
 		expect(onClose).toHaveBeenCalledOnce();
 	});
 

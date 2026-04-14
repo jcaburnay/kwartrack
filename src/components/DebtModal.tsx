@@ -218,6 +218,7 @@ export function DebtModal({ onClose }: DebtModalProps) {
 									label="Date"
 									id="debt-date"
 									type="date"
+									error={errors.date?.message}
 									{...register("date", { required: "Date is required" })}
 								/>
 							</div>
@@ -239,7 +240,7 @@ export function DebtModal({ onClose }: DebtModalProps) {
 					{/* Actions */}
 					<div className="flex gap-2 mt-4">
 						<button type="button" className="btn btn-ghost flex-1" onClick={onClose}>
-							Discard
+							Cancel
 						</button>
 						<button
 							type="submit"

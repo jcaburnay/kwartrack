@@ -52,6 +52,7 @@ export function SplitModal({ onClose }: SplitModalProps) {
 	const [accounts] = useTable(tables.my_accounts);
 	const [subAccounts] = useTable(tables.my_sub_accounts);
 	const [participants, setParticipants] = useState<string[]>([""]);
+	const [participantsError, setParticipantsError] = useState<string | null>(null);
 
 	const today = new Date().toISOString().slice(0, 10);
 	const {
@@ -78,6 +79,7 @@ export function SplitModal({ onClose }: SplitModalProps) {
 		setParticipants((prev) => prev.filter((_, i) => i !== index));
 	const updateParticipant = (index: number, value: string) => {
 		setParticipants((prev) => prev.map((p, i) => (i === index ? value : p)));
+		if (value.trim()) setParticipantsError(null);
 	};
 
 	const onSubmit = async (values: SplitFormValues) => {
@@ -86,7 +88,10 @@ export function SplitModal({ onClose }: SplitModalProps) {
 		const dateTimestamp = Timestamp.fromDate(new Date(values.date));
 		const participantNames = participants.filter((p) => p.trim());
 
-		if (participantNames.length === 0) return;
+		if (participantNames.length === 0) {
+			setParticipantsError("At least one participant name is required");
+			return;
+		}
 
 		await createSplit({
 			description: values.description.trim(),
@@ -218,9 +223,10 @@ export function SplitModal({ onClose }: SplitModalProps) {
 									<input
 										id="split-date"
 										type="date"
-										className="input input-bordered w-full"
+										className={`input input-bordered w-full${errors.date ? " input-error" : ""}`}
 										{...register("date", { required: "Date is required" })}
 									/>
+									{errors.date && <p className="text-error text-xs mt-1">{errors.date.message}</p>}
 								</div>
 							</div>
 
@@ -270,6 +276,9 @@ export function SplitModal({ onClose }: SplitModalProps) {
 										{shareAmount > 0 ? formatPesos(BigInt(Math.round(shareAmount * 100))) : "—"}
 									</span>
 								</div>
+								{participantsError && (
+									<p className="text-error text-xs mt-1">{participantsError}</p>
+								)}
 							</div>
 						</div>
 					</div>
@@ -277,7 +286,7 @@ export function SplitModal({ onClose }: SplitModalProps) {
 					{/* Actions */}
 					<div className="flex gap-2 mt-4">
 						<button type="button" className="btn btn-ghost flex-1" onClick={onClose}>
-							Discard
+							Cancel
 						</button>
 						<button
 							type="submit"

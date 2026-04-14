@@ -49,9 +49,9 @@ describe("DebtModal", () => {
 		expect(screen.queryByLabelText("Source sub-account")).not.toBeInTheDocument();
 	});
 
-	it("renders Discard button that calls onClose", async () => {
+	it("renders Cancel button that calls onClose", async () => {
 		render(<DebtModal onClose={onClose} />);
-		await userEvent.click(screen.getByRole("button", { name: /discard/i }));
+		await userEvent.click(screen.getByRole("button", { name: /cancel/i }));
 		expect(onClose).toHaveBeenCalledOnce();
 	});
 });
@@ -116,10 +116,72 @@ describe("SplitModal", () => {
 		expect(inputs.length).toBeGreaterThanOrEqual(2); // 1 default + 1 added
 	});
 
-	it("renders Discard button that calls onClose", async () => {
+	it("renders Cancel button that calls onClose", async () => {
 		render(<SplitModal onClose={onClose} />);
-		await userEvent.click(screen.getByRole("button", { name: /discard/i }));
+		await userEvent.click(screen.getByRole("button", { name: /cancel/i }));
 		expect(onClose).toHaveBeenCalledOnce();
+	});
+});
+
+// =============================================================================
+// DebtModal: date field validation display
+// =============================================================================
+describe("DebtModal: shows date validation error", () => {
+	it("shows 'Date is required' when date is cleared and form is submitted", async () => {
+		const user = userEvent.setup();
+		render(<DebtModal onClose={vi.fn()} />);
+		await user.clear(screen.getByLabelText(/^Date$/i));
+		await user.click(screen.getByRole("button", { name: /Add debt/i }));
+		expect(screen.getByText(/Date is required/i)).toBeInTheDocument();
+	});
+});
+
+// =============================================================================
+// SplitModal: date field validation display + participants validation
+// =============================================================================
+describe("SplitModal: shows date validation error", () => {
+	it("shows 'Date is required' when date is cleared and form is submitted", async () => {
+		const user = userEvent.setup();
+		render(<SplitModal onClose={vi.fn()} />);
+		await user.clear(screen.getByLabelText(/^Date$/i));
+		await user.click(screen.getByRole("button", { name: /Create split/i }));
+		expect(screen.getByText(/Date is required/i)).toBeInTheDocument();
+	});
+});
+
+describe("SplitModal: participants required validation", () => {
+	it("shows error when all participant name inputs are blank", async () => {
+		const { useTable: mockUseTable } = await import("spacetimedb/react");
+		// Persist across re-renders by using mockImplementation keyed on table name
+		(mockUseTable as ReturnType<typeof vi.fn>).mockImplementation((table: { name: string }) => {
+			if (table?.name === "my_accounts")
+				return [[{ id: 1n, name: "BDO", isStandalone: true }], false];
+			if (table?.name === "my_sub_accounts")
+				return [
+					[{ id: 10n, accountId: 1n, name: "__default__", isDefault: true, balanceCentavos: 0n }],
+					false,
+				];
+			return [[], false];
+		});
+
+		const user = userEvent.setup();
+		render(<SplitModal onClose={vi.fn()} />);
+
+		// Fill all required react-hook-form fields
+		await user.type(screen.getByLabelText(/Description/i), "Team lunch");
+		await user.type(screen.getByLabelText(/Amount/i), "500");
+		await user.selectOptions(screen.getByLabelText(/Tag/i), ["foods"]);
+		await user.selectOptions(screen.getByLabelText(/Paid from/i), ["10"]);
+		// Leave the single participant name input blank (default state)
+		await user.click(screen.getByRole("button", { name: /Create split/i }));
+
+		expect(screen.getByText(/At least one participant/i)).toBeInTheDocument();
+	});
+
+	afterEach(async () => {
+		// Restore default so subsequent tests are not affected
+		const { useTable: mockUseTable } = await import("spacetimedb/react");
+		(mockUseTable as ReturnType<typeof vi.fn>).mockImplementation(() => [[], false]);
 	});
 });
 

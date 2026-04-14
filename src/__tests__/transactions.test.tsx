@@ -377,3 +377,31 @@ describe("TXNC-05: TransactionRowActions delete flow", () => {
 	it.todo("clicking Delete opens DeleteConfirmModal with transaction-specific copy");
 	it.todo("confirming delete calls deleteTransaction reducer");
 });
+
+// =============================================================================
+// Tag validation: expense and income require a tag selection
+// =============================================================================
+describe("Tag validation: expense and income require a tag selection", () => {
+	it("shows 'Tag is required' error when saving expense without selecting a tag", async () => {
+		const user = userEvent.setup();
+		render(<TransactionModal onClose={() => {}} />);
+		// Default type is expense; tag shows "Select tag" placeholder (empty value)
+		expect(screen.getByDisplayValue("Select tag")).toBeInTheDocument();
+		// Enter a valid amount so amount validation passes
+		await user.type(screen.getByLabelText(/Amount \(P\)/i), "100");
+		// Submit without selecting a tag
+		await user.click(screen.getByRole("button", { name: /Save transaction/i }));
+		expect(screen.getByText(/Tag is required/i)).toBeInTheDocument();
+	});
+
+	it("shows 'Tag is required' error when saving income with tag cleared back to placeholder", async () => {
+		const user = userEvent.setup();
+		render(<TransactionModal onClose={() => {}} />);
+		// Switching to Income auto-selects the first income tag; clear it back to the placeholder
+		await user.click(screen.getByRole("button", { name: /Income/i }));
+		await user.selectOptions(screen.getByRole("combobox", { name: /Tag/i }), [""]);
+		await user.type(screen.getByLabelText(/Amount \(P\)/i), "100");
+		await user.click(screen.getByRole("button", { name: /Save transaction/i }));
+		expect(screen.getByText(/Tag is required/i)).toBeInTheDocument();
+	});
+});

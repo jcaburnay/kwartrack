@@ -172,6 +172,8 @@ export function TransactionModal({ onClose, transaction }: TransactionModalProps
 		watch,
 		setValue,
 		reset,
+		getValues,
+		clearErrors,
 		formState: { errors, isSubmitting },
 	} = useForm<TransactionFormValues>({ defaultValues });
 
@@ -376,8 +378,11 @@ export function TransactionModal({ onClose, transaction }: TransactionModalProps
 										<select
 											id="txn-tag"
 											value={watch("tag")}
-											onChange={(e) => setValue("tag", e.target.value)}
-											className="select select-bordered w-full"
+											onChange={(e) => {
+												setValue("tag", e.target.value);
+												if (e.target.value) clearErrors("tag");
+											}}
+											className={`select select-bordered w-full${errors.tag ? " select-error" : ""}`}
 										>
 											{selectedType === "transfer" ? (
 												<option value="transfer">No tag</option>
@@ -390,6 +395,14 @@ export function TransactionModal({ onClose, transaction }: TransactionModalProps
 												</option>
 											))}
 										</select>
+										<input
+											type="hidden"
+											{...register("tag", {
+												validate: (v) =>
+													getValues("type") === "transfer" || v !== "" || "Tag is required",
+											})}
+										/>
+										{errors.tag && <p className="text-error text-xs mt-1">{errors.tag.message}</p>}
 										{selectedType === "expense" && selectedTag && budgetHint && (
 											<p
 												className={`text-xs mt-1 font-mono ${isOverBudget ? "text-warning" : "text-base-content/50"}`}
