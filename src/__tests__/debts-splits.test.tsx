@@ -259,6 +259,63 @@ describe("SplitCard", () => {
 	});
 });
 
+describe("SplitModal: split method tabs", () => {
+	beforeEach(() => {
+		vi.clearAllMocks();
+	});
+
+	it("renders Equal, Exact, %, Shares method tabs", () => {
+		render(<SplitModal onClose={vi.fn()} />);
+		expect(screen.getByRole("button", { name: /^Equal$/i })).toBeInTheDocument();
+		expect(screen.getByRole("button", { name: /^Exact$/i })).toBeInTheDocument();
+		expect(screen.getByRole("button", { name: /^%$/i })).toBeInTheDocument();
+		expect(screen.getByRole("button", { name: /^Shares$/i })).toBeInTheDocument();
+	});
+
+	it("shows amount input per participant in Exact mode", async () => {
+		render(<SplitModal onClose={vi.fn()} />);
+		await userEvent.click(screen.getByRole("button", { name: /^Exact$/i }));
+		expect(screen.getByPlaceholderText(/Amount/i)).toBeInTheDocument();
+	});
+
+	it("shows % input per participant in Percentage mode", async () => {
+		render(<SplitModal onClose={vi.fn()} />);
+		await userEvent.click(screen.getByRole("button", { name: /^%$/i }));
+		expect(screen.getByPlaceholderText(/%/i)).toBeInTheDocument();
+	});
+
+	it("shows share count stepper per participant in Shares mode", async () => {
+		render(<SplitModal onClose={vi.fn()} />);
+		await userEvent.click(screen.getByRole("button", { name: /^Shares$/i }));
+		expect(screen.getByPlaceholderText(/Shares/i)).toBeInTheDocument();
+	});
+});
+
+describe("SplitModal: edit mode", () => {
+	const editTarget = {
+		splitEvent: {
+			id: 1n,
+			description: "Dinner",
+			totalAmountCentavos: 120000n,
+			payerSubAccountId: 10n,
+			tag: "foods",
+			date: { microsSinceUnixEpoch: 1_700_000_000_000_000n },
+			splitMethod: "equal",
+		},
+		participants: [{ participantId: 1n, name: "Juan", shareAmountCentavos: 40000n, shareCount: 0 }],
+	};
+
+	it("shows Edit split heading in edit mode", () => {
+		render(<SplitModal onClose={vi.fn()} editTarget={editTarget} />);
+		expect(screen.getByText("Edit split")).toBeInTheDocument();
+	});
+
+	it("pre-fills description in edit mode", () => {
+		render(<SplitModal onClose={vi.fn()} editTarget={editTarget} />);
+		expect(screen.getByLabelText(/Description/i)).toHaveValue("Dinner");
+	});
+});
+
 describe("DebtSplitPage: balance summary strip", () => {
 	beforeEach(async () => {
 		const { useTable: mockUseTable } = await import("spacetimedb/react");
