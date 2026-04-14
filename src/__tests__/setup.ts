@@ -114,6 +114,11 @@ vi.mock("../module_bindings", () => ({
 		addCustomTag: { name: "add_custom_tag", accessorName: "addCustomTag" },
 		deleteCustomTag: { name: "delete_custom_tag", accessorName: "deleteCustomTag" },
 		toggleTagVisibility: { name: "toggle_tag_visibility", accessorName: "toggleTagVisibility" },
+		createTimeDeposit: { name: "create_time_deposit", accessorName: "createTimeDeposit" },
+		editTimeDepositMetadata: {
+			name: "edit_time_deposit_metadata",
+			accessorName: "editTimeDepositMetadata",
+		},
 	},
 	DbConnection: {
 		builder: vi.fn(() => ({

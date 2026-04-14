@@ -14,6 +14,8 @@ interface SubAccountFormValues {
 	remainingAvailable: string;
 	subAccountType: string;
 	creditLimit: string;
+	interestRate: string;
+	maturityDate: string;
 }
 
 interface ConversionFormValues {
@@ -27,6 +29,8 @@ interface SubAccountData {
 	subAccountType: string;
 	creditLimitCentavos: bigint;
 	balanceCentavos: bigint;
+	interestRateBps?: number;
+	maturityDate?: Date;
 }
 
 interface SubAccountModalProps {
@@ -51,6 +55,8 @@ export function SubAccountModal({
 	const addSubAccount = useReducer(reducers.addSubAccount);
 	const convertAndCreateSubAccount = useReducer(reducers.convertAndCreateSubAccount);
 	const editSubAccountReducer = useReducer(reducers.editSubAccount);
+	const createTimeDeposit = useReducer(reducers.createTimeDeposit);
+	const editTimeDepositMetadata = useReducer(reducers.editTimeDepositMetadata);
 	const isEditMode = !!subAccount;
 
 	const showConversionSection = isStandalone && !isEditMode && existingBalanceCentavos > 0n;
@@ -78,6 +84,11 @@ export function SubAccountModal({
 					creditLimit: (Number(subAccount.creditLimitCentavos) / 100).toFixed(2),
 					existingName: "Main",
 					existingSubAccountType: "wallet",
+					interestRate:
+						subAccount.interestRateBps != null ? (subAccount.interestRateBps / 100).toFixed(2) : "",
+					maturityDate: subAccount.maturityDate
+						? subAccount.maturityDate.toISOString().split("T")[0]
+						: "",
 				}
 			: {
 					name: "",
@@ -87,6 +98,8 @@ export function SubAccountModal({
 					creditLimit: "",
 					existingName: "Main",
 					existingSubAccountType: "wallet",
+					interestRate: "",
+					maturityDate: "",
 				},
 	});
 
@@ -110,15 +123,38 @@ export function SubAccountModal({
 				: 0n;
 
 		if (isEditMode && subAccount) {
-			const remainingCentavos = data.remainingAvailable
-				? BigInt(Math.round(parseFloat(data.remainingAvailable) * 100))
-				: creditLimitCentavos;
-			const newBalanceCentavos = creditLimitCentavos - remainingCentavos;
-			editSubAccountReducer({
-				subAccountId: subAccount.id,
-				newName: data.name.trim(),
-				newCreditLimitCentavos: creditLimitCentavos,
-				newBalanceCentavos,
+			if (subAccount.subAccountType === "time-deposit") {
+				const rateBps = data.interestRate ? Math.round(parseFloat(data.interestRate) * 100) : 0;
+				const maturityMs = data.maturityDate ? new Date(data.maturityDate).getTime() : 0;
+				editTimeDepositMetadata({
+					subAccountId: subAccount.id,
+					interestRateBps: rateBps,
+					maturityDate: { microsSinceUnixEpoch: BigInt(maturityMs) * 1000n },
+				});
+			} else {
+				const remainingCentavos = data.remainingAvailable
+					? BigInt(Math.round(parseFloat(data.remainingAvailable) * 100))
+					: creditLimitCentavos;
+				const newBalanceCentavos = creditLimitCentavos - remainingCentavos;
+				editSubAccountReducer({
+					subAccountId: subAccount.id,
+					newName: data.name.trim(),
+					newCreditLimitCentavos: creditLimitCentavos,
+					newBalanceCentavos,
+				});
+			}
+		} else if (data.subAccountType === "time-deposit" && !isStandalone) {
+			const initialCentavos = data.initialBalance
+				? BigInt(Math.round(parseFloat(data.initialBalance) * 100))
+				: 0n;
+			const rateBps = data.interestRate ? Math.round(parseFloat(data.interestRate) * 100) : 0;
+			const maturityMs = data.maturityDate ? new Date(data.maturityDate).getTime() : 0;
+			createTimeDeposit({
+				accountId,
+				name: data.name.trim(),
+				initialBalanceCentavos: initialCentavos,
+				interestRateBps: rateBps,
+				maturityDate: { microsSinceUnixEpoch: BigInt(maturityMs) * 1000n },
 			});
 		} else if (isStandalone) {
 			const initialCentavos = data.initialBalance
@@ -226,6 +262,37 @@ export function SubAccountModal({
 										min: { value: 0, message: "Credit limit must be 0 or more" },
 									})}
 								/>
+							)}
+
+							{selectedType === "time-deposit" && (
+								<>
+									<Input
+										label="Annual interest rate (%)"
+										id="interest-rate"
+										type="number"
+										step="0.01"
+										min="0"
+										max="100"
+										placeholder="e.g. 6.00"
+										error={errors.interestRate?.message}
+										{...register("interestRate", {
+											required:
+												selectedType === "time-deposit" ? "Interest rate is required" : false,
+											min: { value: 0.01, message: "Rate must be greater than 0" },
+											max: { value: 100, message: "Rate must be 100 or less" },
+										})}
+									/>
+									<Input
+										label="Maturity date"
+										id="maturity-date"
+										type="date"
+										error={errors.maturityDate?.message}
+										{...register("maturityDate", {
+											required:
+												selectedType === "time-deposit" ? "Maturity date is required" : false,
+										})}
+									/>
+								</>
 							)}
 
 							{!isEditMode && selectedType !== "credit" && (
