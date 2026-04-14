@@ -6,6 +6,7 @@ import { NewItemCard } from "../components/NewItemCard";
 import { SplitCard } from "../components/SplitCard";
 import { SplitModal } from "../components/SplitModal";
 import { tables } from "../module_bindings";
+import { formatPesos } from "../utils/currency";
 
 export function DebtSplitPage() {
 	const [debts, isDebtsReady] = useTable(tables.my_debts);
@@ -13,6 +14,14 @@ export function DebtSplitPage() {
 	const [splitParticipants] = useTable(tables.my_split_participants);
 	const [showDebtModal, setShowDebtModal] = useState(false);
 	const [showSplitModal, setShowSplitModal] = useState(false);
+
+	// Balance summary (computed from all unsettled debts)
+	const totalOwedToYou = debts
+		.filter((d) => d.direction === "loaned")
+		.reduce((sum, d) => sum + (d.amountCentavos - d.settledAmountCentavos), 0n);
+	const totalYouOwe = debts
+		.filter((d) => d.direction === "owed")
+		.reduce((sum, d) => sum + (d.amountCentavos - d.settledAmountCentavos), 0n);
 
 	const isReady = isDebtsReady && isSplitsReady;
 	if (!isReady) return null;
@@ -27,6 +36,20 @@ export function DebtSplitPage() {
 
 	return (
 		<div className="p-4 sm:p-6 space-y-8 animate-card-enter">
+			{/* Balance summary strip */}
+			<div data-testid="balance-strip" className="flex gap-4 bg-base-200/60 rounded-xl px-5 py-3">
+				<div className="flex-1">
+					<p className="text-xs text-base-content/50 mb-0.5">You're owed</p>
+					<p className="font-mono text-sm font-semibold text-success">
+						{formatPesos(totalOwedToYou)}
+					</p>
+				</div>
+				<div className="w-px bg-base-300/60" />
+				<div className="flex-1">
+					<p className="text-xs text-base-content/50 mb-0.5">You owe</p>
+					<p className="font-mono text-sm font-semibold text-error">{formatPesos(totalYouOwe)}</p>
+				</div>
+			</div>
 			<section>
 				<h2 className="text-xs font-semibold uppercase tracking-widest text-base-content/50 mb-5">
 					DEBTS

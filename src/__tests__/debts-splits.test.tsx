@@ -1,11 +1,13 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { MemoryRouter } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { DebtCard } from "../components/DebtCard";
 import { DebtModal } from "../components/DebtModal";
 import { SettleModal } from "../components/SettleModal";
 import { SplitCard } from "../components/SplitCard";
 import { SplitModal } from "../components/SplitModal";
+import { DebtSplitPage } from "../pages/DebtSplitPage";
 
 const mockCreateDebt = vi.fn();
 vi.mock("spacetimedb/react", async (importOriginal) => {
@@ -254,5 +256,75 @@ describe("SplitCard", () => {
 	it("shows total amount", () => {
 		render(<SplitCard splitEvent={baseSplit} participants={baseParticipants} debts={[]} />);
 		expect(screen.getByText("P1,200.00")).toBeInTheDocument();
+	});
+});
+
+describe("DebtSplitPage: balance summary strip", () => {
+	beforeEach(async () => {
+		const { useTable: mockUseTable } = await import("spacetimedb/react");
+		(mockUseTable as ReturnType<typeof vi.fn>).mockImplementation((table: { name: string }) => {
+			if (table?.name === "my_debts")
+				return [
+					[
+						{
+							id: 1n,
+							personName: "Juan",
+							direction: "loaned",
+							amountCentavos: 100000n,
+							settledAmountCentavos: 20000n,
+							tag: "foods",
+							subAccountId: 1n,
+							description: "",
+							splitEventId: 0n,
+							date: { microsSinceUnixEpoch: 1_700_000_000_000_000n },
+							createdAt: { microsSinceUnixEpoch: 1_700_000_000_000_000n },
+						},
+						{
+							id: 2n,
+							personName: "Maria",
+							direction: "owed",
+							amountCentavos: 50000n,
+							settledAmountCentavos: 0n,
+							tag: "foods",
+							subAccountId: 0n,
+							description: "",
+							splitEventId: 0n,
+							date: { microsSinceUnixEpoch: 1_700_000_000_000_000n },
+							createdAt: { microsSinceUnixEpoch: 1_700_000_000_000_000n },
+						},
+					],
+					true,
+				];
+			return [[], true];
+		});
+	});
+
+	afterEach(async () => {
+		const { useTable: mockUseTable } = await import("spacetimedb/react");
+		(mockUseTable as ReturnType<typeof vi.fn>).mockImplementation(() => [[], false]);
+	});
+
+	it("shows You're owed total from loaned debts", () => {
+		render(
+			<MemoryRouter>
+				<DebtSplitPage />
+			</MemoryRouter>,
+		);
+		// loaned: 100000 - 20000 = 80000 centavos = ₱800.00
+		const strip = screen.getByTestId("balance-strip");
+		expect(within(strip).getByText(/You're owed/i)).toBeInTheDocument();
+		expect(within(strip).getByText(/P800\.00/)).toBeInTheDocument();
+	});
+
+	it("shows You owe total from owed debts", () => {
+		render(
+			<MemoryRouter>
+				<DebtSplitPage />
+			</MemoryRouter>,
+		);
+		// owed: 50000 centavos = ₱500.00
+		const strip = screen.getByTestId("balance-strip");
+		expect(within(strip).getByText(/You owe/i)).toBeInTheDocument();
+		expect(within(strip).getByText(/P500\.00/)).toBeInTheDocument();
 	});
 });
