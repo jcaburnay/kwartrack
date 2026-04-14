@@ -1,6 +1,7 @@
 import { X } from "lucide-react";
 import { useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
+import { Timestamp } from "spacetimedb";
 import { useReducer } from "spacetimedb/react";
 import { useDragToDismiss } from "../hooks/useDragToDismiss";
 import { reducers } from "../module_bindings";
@@ -125,11 +126,10 @@ export function SubAccountModal({
 		if (isEditMode && subAccount) {
 			if (subAccount.subAccountType === "time-deposit") {
 				const rateBps = data.interestRate ? Math.round(parseFloat(data.interestRate) * 100) : 0;
-				const maturityMs = data.maturityDate ? new Date(data.maturityDate).getTime() : 0;
 				editTimeDepositMetadata({
 					subAccountId: subAccount.id,
 					interestRateBps: rateBps,
-					maturityDate: { microsSinceUnixEpoch: BigInt(maturityMs) * 1000n },
+					maturityDate: Timestamp.fromDate(new Date(data.maturityDate)),
 				});
 			} else {
 				const remainingCentavos = data.remainingAvailable
@@ -148,13 +148,12 @@ export function SubAccountModal({
 				? BigInt(Math.round(parseFloat(data.initialBalance) * 100))
 				: 0n;
 			const rateBps = data.interestRate ? Math.round(parseFloat(data.interestRate) * 100) : 0;
-			const maturityMs = data.maturityDate ? new Date(data.maturityDate).getTime() : 0;
 			createTimeDeposit({
 				accountId,
 				name: data.name.trim(),
 				initialBalanceCentavos: initialCentavos,
 				interestRateBps: rateBps,
-				maturityDate: { microsSinceUnixEpoch: BigInt(maturityMs) * 1000n },
+				maturityDate: Timestamp.fromDate(new Date(data.maturityDate)),
 			});
 		} else if (isStandalone) {
 			const initialCentavos = data.initialBalance
@@ -227,7 +226,8 @@ export function SubAccountModal({
 								id="sub-account-name"
 								error={errors.name?.message}
 								placeholder="e.g. Ewallet, Savings, Time deposit"
-								autoFocus
+								autoFocus={!(isEditMode && subAccount?.subAccountType === "time-deposit")}
+								disabled={isEditMode && subAccount?.subAccountType === "time-deposit"}
 								{...register("name", { required: "Sub-account name is required" })}
 							/>
 
