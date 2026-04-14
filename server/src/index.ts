@@ -1646,10 +1646,13 @@ export const delete_split = spacetimedb.reducer(
 );
 
 // edit_split: updates split metadata and reconciles participants.
-// If totalAmountCentavos changed, reverses old balance and applies new balance.
+// Always reverses old payer debit and applies new payer debit, regardless of whether total or payer changed.
+// When both are unchanged, this is a net-zero no-op on the same account.
 // participantIds[i] = 0n → new participant; >0n → update existing split_participant.id.
 // Participants absent from participantIds are removed (split_participant + linked debt deleted).
 // settledAmountCentavos is never touched — preserved on existing debts.
+// Note: the original expense transaction (description "Split: ...") is not updated here —
+// it reflects the original bill amount and is frozen at creation time.
 export const edit_split = spacetimedb.reducer(
 	{
 		splitEventId: t.u64(),
@@ -1691,28 +1694,29 @@ export const edit_split = spacetimedb.reducer(
 			participantIds.length !== participantShareCounts.length
 		)
 			throw new SenderError("Participant arrays must have the same length");
+		if (participantNames.length === 0)
+			throw new SenderError("At least one participant is required");
 
 		const ownerIdentity = resolveOwner(ctx);
 
-		// --- Balance correction if total changed ---
-		if (totalAmountCentavos !== existing.totalAmountCentavos) {
-			const payerSubAccount = ctx.db.sub_account.id.find(existing.payerSubAccountId);
-			if (!payerSubAccount) throw new SenderError("Payer sub-account not found");
-			if (!isAuthorized(ctx, payerSubAccount.ownerIdentity))
-				throw new SenderError("Not authorized");
+		// --- Always reverse old payer debit and apply new payer debit ---
+		const oldPayerSubAccount = ctx.db.sub_account.id.find(existing.payerSubAccountId);
+		if (!oldPayerSubAccount) throw new SenderError("Old payer sub-account not found");
+		if (!isAuthorized(ctx, oldPayerSubAccount.ownerIdentity))
+			throw new SenderError("Not authorized");
+		ctx.db.sub_account.id.update({
+			...oldPayerSubAccount,
+			balanceCentavos: applyBalance(oldPayerSubAccount, "credit", existing.totalAmountCentavos),
+		});
 
-			// Reverse old debit
-			const afterReversal = applyBalance(payerSubAccount, "credit", existing.totalAmountCentavos);
-			// Apply new debit
-			const afterNew = (() => {
-				const updated = { ...payerSubAccount, balanceCentavos: afterReversal };
-				return applyBalance(updated, "debit", totalAmountCentavos);
-			})();
-			ctx.db.sub_account.id.update({
-				...payerSubAccount,
-				balanceCentavos: afterNew,
-			});
-		}
+		const newPayerSubAccount = ctx.db.sub_account.id.find(payerSubAccountId);
+		if (!newPayerSubAccount) throw new SenderError("Payer sub-account not found");
+		if (!isAuthorized(ctx, newPayerSubAccount.ownerIdentity))
+			throw new SenderError("Not authorized");
+		ctx.db.sub_account.id.update({
+			...newPayerSubAccount,
+			balanceCentavos: applyBalance(newPayerSubAccount, "debit", totalAmountCentavos),
+		});
 
 		// --- Update split_event ---
 		ctx.db.split_event.id.update({
@@ -1788,6 +1792,7 @@ export const edit_split = spacetimedb.reducer(
 						amountCentavos: shareAmount,
 						tag,
 						description: description.trim(),
+						date,
 					});
 				}
 			}
