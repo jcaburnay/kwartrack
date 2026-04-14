@@ -45,6 +45,8 @@ export function AccountDetailPage() {
 		subAccountType: string;
 		creditLimitCentavos: bigint;
 		balanceCentavos: bigint;
+		interestRateBps?: number;
+		maturityDate?: Date;
 	} | null>(null);
 
 	const [showTransactionModal, setShowTransactionModal] = useState(false);
@@ -62,8 +64,12 @@ export function AccountDetailPage() {
 	const [accounts, isReady] = useTable(tables.my_accounts);
 	const [subAccounts] = useTable(tables.my_sub_accounts);
 	const [allTransactions] = useTable(tables.my_transactions);
+	const [tdMetadataRows] = useTable(tables.my_time_deposit_metadata);
 
 	if (!isReady) return null;
+
+	// Build time-deposit metadata lookup map
+	const tdMetadataMap = new Map(tdMetadataRows.map((m) => [m.subAccountId.toString(), m]));
 
 	// Find the current account from subscription data
 	const account = accounts.find((a) => a.id === accountId);
@@ -190,6 +196,7 @@ export function AccountDetailPage() {
 								<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
 									{items.map((subAccount) => {
 										const delay = cardIndex++ * 0.06;
+										const meta = tdMetadataMap.get(subAccount.id.toString());
 										return (
 											<div
 												key={subAccount.id.toString()}
@@ -216,15 +223,29 @@ export function AccountDetailPage() {
 													onEdit={(subAccountId) => {
 														const sa = visibleSubAccounts.find((s) => s.id === subAccountId);
 														if (sa) {
+															const tdMeta = tdMetadataMap.get(sa.id.toString());
 															setEditSubAccountData({
 																id: sa.id,
 																name: sa.name,
 																subAccountType: sa.subAccountType,
 																creditLimitCentavos: sa.creditLimitCentavos,
 																balanceCentavos: sa.balanceCentavos,
+																interestRateBps: tdMeta?.interestRateBps,
+																maturityDate: tdMeta
+																	? new Date(
+																			Number(tdMeta.maturityDate.microsSinceUnixEpoch / 1000n),
+																		)
+																	: undefined,
 															});
 														}
 													}}
+													interestRateBps={meta?.interestRateBps}
+													maturityDate={
+														meta
+															? new Date(Number(meta.maturityDate.microsSinceUnixEpoch / 1000n))
+															: undefined
+													}
+													isMatured={meta?.isMatured}
 												/>
 											</div>
 										);
