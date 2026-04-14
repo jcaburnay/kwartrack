@@ -815,6 +815,7 @@ export const create_time_deposit = spacetimedb.reducer(
 			maturityDate,
 			recurringDefinitionId: defRow.id,
 			isMatured: false,
+			principalCentavos: initialBalanceCentavos,
 			createdAt: ctx.timestamp,
 		});
 	},
@@ -834,45 +835,41 @@ export const edit_time_deposit_metadata = spacetimedb.reducer(
 		const meta = ctx.db.time_deposit_metadata.subAccountId.find(subAccountId);
 		if (!meta) throw new SenderError("Time deposit metadata not found");
 		if (!isAuthorized(ctx, meta.ownerIdentity)) throw new SenderError("Not authorized");
-
-		const subAccount = ctx.db.sub_account.id.find(subAccountId);
-		if (!subAccount) throw new SenderError("Sub-account not found");
+		if (interestRateBps === 0) throw new SenderError("Interest rate is required");
 
 		let updatedMeta = { ...meta, maturityDate, interestRateBps };
 
-		// If rate changed, recompute monthly net interest
+		// Read def once; accumulate all mutations before writing
+		const def = ctx.db.recurring_transaction_definition_v2.id.find(meta.recurringDefinitionId);
+		let defUpdate = def ? { ...def } : null;
+
+		// If rate changed, recompute monthly net interest using original principal
 		if (interestRateBps !== meta.interestRateBps) {
 			const newMonthlyNetCentavos =
-				(subAccount.balanceCentavos * BigInt(interestRateBps) * 80n) / 12_000_000n;
+				(meta.principalCentavos * BigInt(interestRateBps) * 80n) / 12_000_000n;
 			if (newMonthlyNetCentavos <= 0n)
 				throw new SenderError("Computed monthly interest is zero — check rate and balance");
-
-			const def = ctx.db.recurring_transaction_definition_v2.id.find(meta.recurringDefinitionId);
-			if (def) {
-				ctx.db.recurring_transaction_definition_v2.id.update({
-					...def,
-					amountCentavos: newMonthlyNetCentavos,
-				});
-			}
+			if (defUpdate) defUpdate = { ...defUpdate, amountCentavos: newMonthlyNetCentavos };
 		}
 
-		// If maturity extended and TD was matured, resume posting
+		// If maturity extended past now and TD was already matured, resume posting
 		const nowMicros = ctx.timestamp.microsSinceUnixEpoch;
 		if (meta.isMatured && maturityDate.microsSinceUnixEpoch > nowMicros) {
-			const def = ctx.db.recurring_transaction_definition_v2.id.find(meta.recurringDefinitionId);
-			if (def && def.isPaused) {
-				ctx.db.recurring_transaction_definition_v2.id.update({
-					...def,
-					isPaused: false,
-				});
+			if (defUpdate?.isPaused) {
+				defUpdate = { ...defUpdate, isPaused: false };
 				const nextFireMicros = computeFirstFireMicros(nowMicros, 1, "monthly", 0, 0);
 				ctx.db.recurring_transaction_schedule.insert({
 					scheduledId: 0n,
 					scheduledAt: ScheduleAt.time(nextFireMicros),
-					definitionId: def.id,
+					definitionId: meta.recurringDefinitionId,
 				});
 			}
 			updatedMeta = { ...updatedMeta, isMatured: false };
+		}
+
+		// Single write for recurring definition if it changed
+		if (defUpdate && def) {
+			ctx.db.recurring_transaction_definition_v2.id.update(defUpdate);
 		}
 
 		ctx.db.time_deposit_metadata.subAccountId.update(updatedMeta);

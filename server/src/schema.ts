@@ -386,6 +386,7 @@ export const time_deposit_metadata = table(
 		maturityDate: t.timestamp(), // when interest stops and isMatured is set
 		recurringDefinitionId: t.u64(), // FK to recurring_transaction_definition_v2
 		isMatured: t.bool(),
+		principalCentavos: t.i64(), // ADD — original deposit amount; never changes
 		createdAt: t.timestamp(),
 	},
 );
