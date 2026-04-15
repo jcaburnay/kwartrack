@@ -13,6 +13,7 @@ export interface TransactionRow {
 	serviceFeeCentavos: bigint;
 	description: string;
 	date: { microsSinceUnixEpoch: bigint };
+	createdAt: { microsSinceUnixEpoch: bigint };
 	isRecurring?: boolean;
 	recurringDefinitionId?: bigint;
 }
@@ -94,9 +95,14 @@ export function TransactionTable({
 	const colCount = showAccountColumn ? 10 : 9;
 	const sorted = useMemo(
 		() =>
-			[...transactions].sort((a, b) =>
-				b.date.microsSinceUnixEpoch > a.date.microsSinceUnixEpoch ? 1 : -1,
-			),
+			[...transactions].sort((a, b) => {
+				const microsPerDay = 86_400_000_000n;
+				const aDay = a.date.microsSinceUnixEpoch / microsPerDay;
+				const bDay = b.date.microsSinceUnixEpoch / microsPerDay;
+				const dayDiff = bDay - aDay;
+				if (dayDiff !== 0n) return dayDiff > 0n ? 1 : -1;
+				return b.createdAt.microsSinceUnixEpoch > a.createdAt.microsSinceUnixEpoch ? 1 : -1;
+			}),
 		[transactions],
 	);
 
