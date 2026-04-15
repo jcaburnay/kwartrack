@@ -2,6 +2,8 @@
 
 > This project uses SpacetimeDB **2.x** (`spacetimedb@^2.1.0`). Do not apply 1.x patterns.
 
+> **Before changing `schema.ts`, read [`docs/migration.md`](../docs/migration.md).** Modifying an existing column's type (incl. flipping `optional()`) triggers a SpacetimeDB 2.1.0 bug that corrupts the DB catalog and forces `--clear-database`. Use the incremental v2 table pattern instead — see `recurring_transaction_definition_v2` + `migrateV1RowToV2()` in `src/index.ts` for the canonical example.
+
 ---
 
 ## Core Concepts
