@@ -51,6 +51,7 @@ import DeleteSplitReducer from "./delete_split_reducer";
 import DeleteSubAccountReducer from "./delete_sub_account_reducer";
 import DeleteTransactionReducer from "./delete_transaction_reducer";
 import EditRecurringDefinitionReducer from "./edit_recurring_definition_reducer";
+import EditSplitReducer from "./edit_split_reducer";
 import EditSubAccountReducer from "./edit_sub_account_reducer";
 import EditTimeDepositMetadataReducer from "./edit_time_deposit_metadata_reducer";
 import EditTransactionReducer from "./edit_transaction_reducer";
@@ -198,6 +199,7 @@ const reducersSchema = __reducers(
   __reducerSchema("delete_sub_account", DeleteSubAccountReducer),
   __reducerSchema("delete_transaction", DeleteTransactionReducer),
   __reducerSchema("edit_recurring_definition", EditRecurringDefinitionReducer),
+  __reducerSchema("edit_split", EditSplitReducer),
   __reducerSchema("edit_sub_account", EditSubAccountReducer),
   __reducerSchema("edit_time_deposit_metadata", EditTimeDepositMetadataReducer),
   __reducerSchema("edit_transaction", EditTransactionReducer),

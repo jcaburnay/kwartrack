@@ -16,5 +16,8 @@ export default {
   payerSubAccountId: __t.u64(),
   tag: __t.string(),
   date: __t.timestamp(),
+  splitMethod: __t.string(),
   participantNames: __t.array(__t.string()),
+  participantShares: __t.array(__t.i64()),
+  participantShareCounts: __t.array(__t.u32()),
 };

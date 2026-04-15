@@ -1556,8 +1556,7 @@ export const create_split = spacetimedb.reducer(
 		// Validate and debit payer sub-account (full amount)
 		const payerSubAccount = ctx.db.sub_account.id.find(payerSubAccountId);
 		if (!payerSubAccount) throw new SenderError("Payer sub-account not found");
-		if (!isAuthorized(ctx, payerSubAccount.ownerIdentity))
-			throw new SenderError("Not authorized");
+		if (!isAuthorized(ctx, payerSubAccount.ownerIdentity)) throw new SenderError("Not authorized");
 		ctx.db.sub_account.id.update({
 			...payerSubAccount,
 			balanceCentavos: applyBalance(payerSubAccount, "debit", totalAmountCentavos),

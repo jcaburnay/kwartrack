@@ -10,14 +10,16 @@ import {
   type Infer as __Infer,
 } from "spacetimedb";
 
-export default __t.row({
-  id: __t.u64(),
-  ownerIdentity: __t.identity().name("owner_identity"),
+export default {
+  splitEventId: __t.u64(),
   description: __t.string(),
-  totalAmountCentavos: __t.i64().name("total_amount_centavos"),
-  payerSubAccountId: __t.u64().name("payer_sub_account_id"),
+  totalAmountCentavos: __t.i64(),
+  payerSubAccountId: __t.u64(),
   tag: __t.string(),
   date: __t.timestamp(),
-  createdAt: __t.timestamp().name("created_at"),
-  splitMethod: __t.option(__t.string()).name("split_method"),
-});
+  splitMethod: __t.string(),
+  participantIds: __t.array(__t.u64()),
+  participantNames: __t.array(__t.string()),
+  participantShares: __t.array(__t.i64()),
+  participantShareCounts: __t.array(__t.u32()),
+};
