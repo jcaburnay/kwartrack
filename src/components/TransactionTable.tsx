@@ -13,7 +13,7 @@ export interface TransactionRow {
 	serviceFeeCentavos: bigint;
 	description: string;
 	date: { microsSinceUnixEpoch: bigint };
-	createdAt: { microsSinceUnixEpoch: bigint };
+	createdAt?: { microsSinceUnixEpoch: bigint };
 	isRecurring?: boolean;
 	recurringDefinitionId?: bigint;
 }
@@ -101,7 +101,9 @@ export function TransactionTable({
 				const bDay = b.date.microsSinceUnixEpoch / microsPerDay;
 				const dayDiff = bDay - aDay;
 				if (dayDiff !== 0n) return dayDiff > 0n ? 1 : -1;
-				return b.createdAt.microsSinceUnixEpoch > a.createdAt.microsSinceUnixEpoch ? 1 : -1;
+				const bCreated = b.createdAt?.microsSinceUnixEpoch ?? 0n;
+				const aCreated = a.createdAt?.microsSinceUnixEpoch ?? 0n;
+				return bCreated > aCreated ? 1 : -1;
 			}),
 		[transactions],
 	);
