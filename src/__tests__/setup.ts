@@ -53,6 +53,9 @@ vi.mock("../module_bindings", () => ({
 		my_budget_allocations: { name: "my_budget_allocations" },
 		my_debts: { name: "my_debts" },
 		my_tag_configs: { name: "my_tag_configs" },
+		my_split_events: { name: "my_split_events" },
+		my_split_participants: { name: "my_split_participants" },
+		my_time_deposit_metadata: { name: "my_time_deposit_metadata" },
 	},
 	reducers: {
 		createAccount: { name: "create_account", accessorName: "createAccount" },
@@ -119,6 +122,10 @@ vi.mock("../module_bindings", () => ({
 			name: "edit_time_deposit_metadata",
 			accessorName: "editTimeDepositMetadata",
 		},
+		createSplit: { name: "create_split", accessorName: "createSplit" },
+		editSplit: { name: "edit_split", accessorName: "editSplit" },
+		deleteSplit: { name: "delete_split", accessorName: "deleteSplit" },
+		settleDebt: { name: "settle_debt", accessorName: "settleDebt" },
 	},
 	DbConnection: {
 		builder: vi.fn(() => ({

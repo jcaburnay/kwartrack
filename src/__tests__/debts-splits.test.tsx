@@ -1,6 +1,6 @@
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter } from "react-router";
+import { MemoryRouter, Route, Routes } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { DebtCard } from "../components/DebtCard";
 import { DebtModal } from "../components/DebtModal";
@@ -8,6 +8,7 @@ import { SettleModal } from "../components/SettleModal";
 import { SplitCard } from "../components/SplitCard";
 import { SplitModal } from "../components/SplitModal";
 import { DebtSplitPage } from "../pages/DebtSplitPage";
+import { SplitDetailPage } from "../pages/SplitDetailPage";
 
 const mockCreateDebt = vi.fn();
 vi.mock("spacetimedb/react", async (importOriginal) => {
@@ -313,6 +314,119 @@ describe("SplitModal: edit mode", () => {
 	it("pre-fills description in edit mode", () => {
 		render(<SplitModal onClose={vi.fn()} editTarget={editTarget} />);
 		expect(screen.getByLabelText(/Description/i)).toHaveValue("Dinner");
+	});
+});
+
+describe("SplitDetailPage", () => {
+	const splitEvent = {
+		id: 1n,
+		description: "Dinner at Manam",
+		totalAmountCentavos: 240000n,
+		payerSubAccountId: 10n,
+		tag: "foods",
+		date: { microsSinceUnixEpoch: 1_700_000_000_000_000n },
+		createdAt: { microsSinceUnixEpoch: 1_700_000_000_000_000n },
+		splitMethod: "equal",
+	};
+	const participants = [
+		{
+			id: 1n,
+			splitEventId: 1n,
+			personName: "Juan",
+			shareAmountCentavos: 60000n,
+			debtId: 10n,
+			shareCount: 0,
+		},
+		{
+			id: 2n,
+			splitEventId: 1n,
+			personName: "Maria",
+			shareAmountCentavos: 60000n,
+			debtId: 11n,
+			shareCount: 0,
+		},
+	];
+	const debts = [
+		{
+			id: 10n,
+			personName: "Juan",
+			direction: "loaned",
+			amountCentavos: 60000n,
+			settledAmountCentavos: 0n,
+			tag: "foods",
+			subAccountId: 10n,
+			description: "",
+			splitEventId: 1n,
+			date: { microsSinceUnixEpoch: 1_700_000_000_000_000n },
+			createdAt: { microsSinceUnixEpoch: 1_700_000_000_000_000n },
+		},
+		{
+			id: 11n,
+			personName: "Maria",
+			direction: "loaned",
+			amountCentavos: 60000n,
+			settledAmountCentavos: 60000n,
+			tag: "foods",
+			subAccountId: 10n,
+			description: "",
+			splitEventId: 1n,
+			date: { microsSinceUnixEpoch: 1_700_000_000_000_000n },
+			createdAt: { microsSinceUnixEpoch: 1_700_000_000_000_000n },
+		},
+	];
+
+	beforeEach(async () => {
+		const { useTable: mockUseTable } = await import("spacetimedb/react");
+		(mockUseTable as ReturnType<typeof vi.fn>).mockImplementation((table: { name: string }) => {
+			if (table?.name === "my_split_events") return [[splitEvent], true];
+			if (table?.name === "my_split_participants") return [[...participants], true];
+			if (table?.name === "my_debts") return [[...debts], true];
+			if (table?.name === "my_sub_accounts")
+				return [
+					[{ id: 10n, accountId: 1n, name: "BPI Savings", isDefault: false, balanceCentavos: 0n }],
+					true,
+				];
+			return [[], true];
+		});
+	});
+
+	afterEach(async () => {
+		const { useTable: mockUseTable } = await import("spacetimedb/react");
+		(mockUseTable as ReturnType<typeof vi.fn>).mockImplementation(() => [[], false]);
+	});
+
+	function renderPage(id = "1") {
+		return render(
+			<MemoryRouter initialEntries={[`/splits/${id}`]}>
+				<Routes>
+					<Route path="/splits/:id" element={<SplitDetailPage />} />
+				</Routes>
+			</MemoryRouter>,
+		);
+	}
+
+	it("renders split description", () => {
+		renderPage();
+		expect(screen.getByText("Dinner at Manam")).toBeInTheDocument();
+	});
+
+	it("renders participant names", () => {
+		renderPage();
+		expect(screen.getByText("Juan")).toBeInTheDocument();
+		expect(screen.getByText("Maria")).toBeInTheDocument();
+	});
+
+	it("shows Settle button for unsettled participant", () => {
+		renderPage();
+		// Juan is unsettled — should have a Settle button
+		const settleButtons = screen.getAllByRole("button", { name: /Settle/i });
+		expect(settleButtons.length).toBeGreaterThanOrEqual(1);
+	});
+
+	it("shows settled badge for fully settled participant", () => {
+		renderPage();
+		// Maria is fully settled
+		expect(screen.getByText("Settled")).toBeInTheDocument();
 	});
 });
 

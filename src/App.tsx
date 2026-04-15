@@ -19,6 +19,9 @@ const OverviewPage = lazy(() =>
 const DebtSplitPage = lazy(() =>
 	import("./pages/DebtSplitPage").then((m) => ({ default: m.DebtSplitPage })),
 );
+const SplitDetailPage = lazy(() =>
+	import("./pages/SplitDetailPage").then((m) => ({ default: m.SplitDetailPage })),
+);
 const RecurringPage = lazy(() =>
 	import("./pages/RecurringPage").then((m) => ({ default: m.RecurringPage })),
 );
@@ -70,6 +73,7 @@ export default function App() {
 						<Route path="transactions" element={<TransactionsPage />} />
 						<Route path="budget" element={<BudgetPage />} />
 						<Route path="debts" element={<DebtSplitPage />} />
+						<Route path="splits/:id" element={<SplitDetailPage />} />
 						<Route path="settings" element={<SettingsPage />} />
 					</Route>
 
