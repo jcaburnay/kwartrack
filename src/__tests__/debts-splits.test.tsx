@@ -250,13 +250,35 @@ describe("SplitCard", () => {
 	];
 
 	it("renders split description", () => {
-		render(<SplitCard splitEvent={baseSplit} participants={baseParticipants} debts={[]} />);
+		render(
+			<MemoryRouter>
+				<SplitCard splitEvent={baseSplit} participants={baseParticipants} debts={[]} />
+			</MemoryRouter>,
+		);
 		expect(screen.getByText("Dinner at Jollibee")).toBeInTheDocument();
 	});
 
 	it("shows total amount", () => {
-		render(<SplitCard splitEvent={baseSplit} participants={baseParticipants} debts={[]} />);
+		render(
+			<MemoryRouter>
+				<SplitCard splitEvent={baseSplit} participants={baseParticipants} debts={[]} />
+			</MemoryRouter>,
+		);
 		expect(screen.getByText("P1,200.00")).toBeInTheDocument();
+	});
+
+	it("renders link to /splits/:id", () => {
+		render(
+			<MemoryRouter>
+				<SplitCard
+					splitEvent={{ ...baseSplit, id: 5n }}
+					participants={baseParticipants}
+					debts={[]}
+				/>
+			</MemoryRouter>,
+		);
+		const link = screen.getByRole("link");
+		expect(link).toHaveAttribute("href", "/splits/5");
 	});
 });
 
