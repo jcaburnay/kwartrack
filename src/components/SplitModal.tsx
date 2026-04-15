@@ -28,7 +28,7 @@ interface EditTarget {
 		payerSubAccountId: bigint;
 		tag: string;
 		date: { microsSinceUnixEpoch: bigint };
-		splitMethod?: string | null;
+		splitMethod?: string;
 	};
 	participants: {
 		participantId: bigint;

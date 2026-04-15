@@ -19,5 +19,5 @@ export default __t.row({
   tag: __t.string(),
   date: __t.timestamp(),
   createdAt: __t.timestamp().name("created_at"),
-  splitMethod: __t.option(__t.string()).name("split_method"),
+  splitMethod: __t.string().name("split_method"),
 });

@@ -46,7 +46,7 @@ export function SplitDetailPage() {
 
 	const payerSubAccount = subAccounts.find((s) => s.id === splitEvent.payerSubAccountId);
 	const splitCount = participants.length + 1;
-	const splitMethod = splitEvent.splitMethod ?? "equal";
+	const splitMethod = splitEvent.splitMethod;
 
 	const splitMethodLabel: Record<string, string> = {
 		equal: "Equal",
@@ -206,7 +206,7 @@ export function SplitDetailPage() {
 							participantId: p.id,
 							name: p.personName,
 							shareAmountCentavos: p.shareAmountCentavos,
-							shareCount: p.shareCount ?? 0,
+							shareCount: p.shareCount,
 						})),
 					}}
 				/>

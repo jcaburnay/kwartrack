@@ -151,7 +151,7 @@ export const SplitEvent = __t.object("SplitEvent", {
   tag: __t.string(),
   date: __t.timestamp(),
   createdAt: __t.timestamp(),
-  splitMethod: __t.option(__t.string()),
+  splitMethod: __t.string(),
 });
 export type SplitEvent = __Infer<typeof SplitEvent>;
 
@@ -162,7 +162,7 @@ export const SplitParticipant = __t.object("SplitParticipant", {
   personName: __t.string(),
   shareAmountCentavos: __t.i64(),
   debtId: __t.u64(),
-  shareCount: __t.option(__t.u32()),
+  shareCount: __t.u32(),
 });
 export type SplitParticipant = __Infer<typeof SplitParticipant>;
 

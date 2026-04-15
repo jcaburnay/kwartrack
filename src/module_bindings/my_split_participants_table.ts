@@ -17,5 +17,5 @@ export default __t.row({
   personName: __t.string().name("person_name"),
   shareAmountCentavos: __t.i64().name("share_amount_centavos"),
   debtId: __t.u64().name("debt_id"),
-  shareCount: __t.option(__t.u32()).name("share_count"),
+  shareCount: __t.u32().name("share_count"),
 });
