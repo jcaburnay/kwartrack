@@ -1,5 +1,5 @@
 import { X } from "lucide-react";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Timestamp } from "spacetimedb";
 import { useSubAccounts, useTags, useTransactionActions } from "../hooks";
@@ -8,6 +8,7 @@ import { formatPesos } from "../utils/currency";
 import { openAsModal } from "../utils/dialog";
 import { getVisibleTags } from "../utils/tagConfig";
 import { Input } from "./Input";
+import { SubmitButton } from "./SubmitButton";
 
 interface PayCreditModalProps {
 	subAccountId: bigint;
@@ -58,29 +59,36 @@ export function PayCreditModal({
 		openAsModal(dialogRef.current);
 	}, []);
 
-	const onSubmit = (data: PayCreditFormValues) => {
+	const onSubmit = async (data: PayCreditFormValues) => {
+		setFormError(null);
 		const amountCentavos = BigInt(Math.round(parseFloat(data.amount) * 100));
 		const serviceFeeCentavos = data.serviceFee
 			? BigInt(Math.round(parseFloat(data.serviceFee) * 100))
 			: 0n;
-		createTransaction({
-			type: "transfer",
-			amountCentavos,
-			tag: transferTag,
-			sourceSubAccountId: BigInt(data.payFromSubAccountId),
-			destinationSubAccountId: subAccountId,
-			serviceFeeCentavos,
-			description: "Credit payment",
-			date: Timestamp.fromDate(new Date()),
-		});
-		reset();
-		onClose();
+		try {
+			await createTransaction({
+				type: "transfer",
+				amountCentavos,
+				tag: transferTag,
+				sourceSubAccountId: BigInt(data.payFromSubAccountId),
+				destinationSubAccountId: subAccountId,
+				serviceFeeCentavos,
+				description: "Credit payment",
+				date: Timestamp.fromDate(new Date()),
+			});
+			reset();
+			onClose();
+		} catch (err) {
+			setFormError(err instanceof Error ? err.message : "Something went wrong. Please try again.");
+		}
 	};
 
 	const handleClose = () => {
 		reset();
 		onClose();
 	};
+
+	const [formError, setFormError] = useState<string | null>(null);
 
 	useDragToDismiss(boxRef, handleClose);
 
@@ -160,18 +168,22 @@ export function PayCreditModal({
 						{...register("serviceFee")}
 					/>
 
+					{formError && (
+						<div role="alert" className="alert alert-error text-sm py-2 mt-2">
+							<span>{formError}</span>
+						</div>
+					)}
+
 					{/* Buttons — dismiss left, submit right (Phase 1000 modal convention) */}
 					<div className="flex gap-2 mt-4">
 						<button type="button" className="btn btn-ghost flex-1" onClick={handleClose}>
 							Keep balance
 						</button>
-						<button
-							type="submit"
-							className="btn btn-primary flex-1"
-							disabled={isSubmitting || payFromSubAccounts.length === 0}
-						>
-							Confirm payment
-						</button>
+						<SubmitButton
+							isSubmitting={isSubmitting}
+							label="Confirm payment"
+							disabled={payFromSubAccounts.length === 0}
+						/>
 					</div>
 				</form>
 			</div>

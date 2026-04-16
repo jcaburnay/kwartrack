@@ -1,11 +1,12 @@
 import { X } from "lucide-react";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useAccounts, useRecurringActions, useSubAccounts, useTags } from "../hooks";
 import { useDragToDismiss } from "../hooks/useDragToDismiss";
 import { openAsModal } from "../utils/dialog";
 import { getVisibleTags } from "../utils/tagConfig";
 import { Input } from "./Input";
+import { SubmitButton } from "./SubmitButton";
 
 interface RecurringDefinition {
 	id: bigint;
@@ -188,6 +189,7 @@ export function RecurringModal({
 	};
 
 	const onSubmit = async (values: RecurringFormValues) => {
+		setFormError(null);
 		const amountCentavos = BigInt(Math.round(parseFloat(values.amount) * 100));
 		const subAccountId = BigInt(values.subAccountId);
 		const dayOfMonth = parseInt(values.dayOfMonth, 10);
@@ -199,42 +201,48 @@ export function RecurringModal({
 			? parseInt(values.remainingOccurrences, 10)
 			: 0;
 
-		if (isEdit && definition) {
-			await editRecurring({
-				definitionId: definition.id,
-				name: values.name.trim(),
-				type: values.type,
-				amountCentavos,
-				tag: values.tag,
-				subAccountId,
-				dayOfMonth: effectiveDayOfMonth,
-				interval: values.interval,
-				anchorMonth,
-				anchorDayOfWeek,
-				remainingOccurrences,
-			});
-		} else {
-			await createRecurring({
-				name: values.name.trim(),
-				type: values.type,
-				amountCentavos,
-				tag: values.tag,
-				subAccountId,
-				dayOfMonth: effectiveDayOfMonth,
-				interval: values.interval,
-				anchorMonth,
-				anchorDayOfWeek,
-				remainingOccurrences,
-				totalOccurrences: isInstallment ? remainingOccurrences : 0,
-			});
+		try {
+			if (isEdit && definition) {
+				await editRecurring({
+					definitionId: definition.id,
+					name: values.name.trim(),
+					type: values.type,
+					amountCentavos,
+					tag: values.tag,
+					subAccountId,
+					dayOfMonth: effectiveDayOfMonth,
+					interval: values.interval,
+					anchorMonth,
+					anchorDayOfWeek,
+					remainingOccurrences,
+				});
+			} else {
+				await createRecurring({
+					name: values.name.trim(),
+					type: values.type,
+					amountCentavos,
+					tag: values.tag,
+					subAccountId,
+					dayOfMonth: effectiveDayOfMonth,
+					interval: values.interval,
+					anchorMonth,
+					anchorDayOfWeek,
+					remainingOccurrences,
+					totalOccurrences: isInstallment ? remainingOccurrences : 0,
+				});
+			}
+			reset();
+			onClose();
+		} catch (err) {
+			setFormError(err instanceof Error ? err.message : "Something went wrong. Please try again.");
 		}
-		reset();
-		onClose();
 	};
 
 	const visibleTags = tagsByType[selectedType] ?? [];
 	const availableTags =
 		selectedTag && !visibleTags.includes(selectedTag) ? [selectedTag, ...visibleTags] : visibleTags;
+
+	const [formError, setFormError] = useState<string | null>(null);
 
 	useDragToDismiss(boxRef, onClose);
 
@@ -480,19 +488,23 @@ export function RecurringModal({
 						</div>
 					</div>
 
+					{formError && (
+						<div role="alert" className="alert alert-error text-sm py-2 mt-2">
+							<span>{formError}</span>
+						</div>
+					)}
+
 					{/* Actions */}
 					<div className="flex gap-2 mt-4">
 						<button type="button" className="btn btn-ghost flex-1" onClick={onClose}>
 							Cancel
 						</button>
-						<button
-							type="submit"
-							disabled={isSubmitting}
-							className="btn btn-primary flex-1 whitespace-nowrap"
-						>
-							{isSubmitting && <span className="loading loading-spinner loading-xs" />}
-							{isEdit ? "Save changes" : isInstallment ? "Add installment" : "Add subscription"}
-						</button>
+						<SubmitButton
+							isSubmitting={isSubmitting}
+							label={
+								isEdit ? "Save changes" : isInstallment ? "Add installment" : "Add subscription"
+							}
+						/>
 					</div>
 				</form>
 			</div>

@@ -1,7 +1,33 @@
-import { useMemo } from "react";
+import {
+	createContext,
+	useCallback,
+	useContext,
+	useEffect,
+	useMemo,
+	useRef,
+	useState,
+} from "react";
 import { SpacetimeDBProvider as StdbProvider } from "spacetimedb/react";
 import { DbConnection } from "../module_bindings";
 import { useClerkIdentity } from "./ClerkTokenProvider";
+
+type ReconnectStatus = "connected" | "reconnecting" | "disconnected";
+
+interface ReconnectContextValue {
+	status: ReconnectStatus;
+	retryNow: () => void;
+}
+
+const ReconnectContext = createContext<ReconnectContextValue | null>(null);
+
+export function useReconnect(): ReconnectContextValue {
+	const ctx = useContext(ReconnectContext);
+	if (!ctx) throw new Error("useReconnect must be used within SpacetimeDBProvider");
+	return ctx;
+}
+
+const MAX_RETRIES = 10;
+const MAX_BACKOFF_MS = 30_000;
 
 const SPACETIMEDB_URI = import.meta.env.VITE_SPACETIMEDB_URI ?? "wss://maincloud.spacetimedb.com";
 const MODULE_NAME = import.meta.env.VITE_SPACETIMEDB_MODULE ?? "kwartrack";
@@ -9,16 +35,39 @@ const TOKEN_KEY = "spacetimedb_token";
 
 export function SpacetimeDBProvider({ children }: { children: React.ReactNode }) {
 	const { clerkUserId, displayName } = useClerkIdentity();
+	const [reconnectKey, setReconnectKey] = useState(0);
+	const [reconnectStatus, setReconnectStatus] = useState<ReconnectStatus>("connected");
+	const attemptRef = useRef(0);
+	const timerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
-	// Use persisted SpacetimeDB token so identity stays stable across refreshes.
-	// Clerk JWT is NOT a valid SpacetimeDB token — using it causes a new anonymous
-	// identity on every connection (tested 2026-04-16 on kwartrack-dev).
-	// biome-ignore lint/correctness/useExhaustiveDependencies: clerkUserId/displayName are stable once SpacetimeDBGate allows rendering — reconnecting on identity change would break the session
+	const scheduleReconnect = useCallback(() => {
+		if (attemptRef.current >= MAX_RETRIES) {
+			setReconnectStatus("disconnected");
+			return;
+		}
+		setReconnectStatus("reconnecting");
+		const delay = Math.min(1000 * 2 ** attemptRef.current, MAX_BACKOFF_MS);
+		attemptRef.current += 1;
+		timerRef.current = setTimeout(() => setReconnectKey((k) => k + 1), delay);
+	}, []);
+
+	const retryNow = useCallback(() => {
+		if (timerRef.current) clearTimeout(timerRef.current);
+		attemptRef.current = 0;
+		setReconnectStatus("reconnecting");
+		setReconnectKey((k) => k + 1);
+	}, []);
+
+	// biome-ignore lint/correctness/useExhaustiveDependencies: clerkUserId/displayName are stable once SpacetimeDBGate allows rendering; reconnectKey triggers reconnection
 	const connectionBuilder = useMemo(() => {
 		const storedToken = localStorage.getItem(TOKEN_KEY) ?? undefined;
+		// Append reconnect key to URI to force a new ConnectionManager entry on each retry.
+		// The query param is dropped when constructing WebSocket URLs (used as base URL),
+		// so the actual connection is unaffected.
+		const uri = reconnectKey > 0 ? `${SPACETIMEDB_URI}?_r=${reconnectKey}` : SPACETIMEDB_URI;
 
 		return DbConnection.builder()
-			.withUri(SPACETIMEDB_URI)
+			.withUri(uri)
 			.withDatabaseName(MODULE_NAME)
 			.onConnect((conn) => {
 				// Persist the SpacetimeDB-issued token so the same identity is reused next session
@@ -26,8 +75,7 @@ export function SpacetimeDBProvider({ children }: { children: React.ReactNode })
 					localStorage.setItem(TOKEN_KEY, conn.token);
 				}
 
-				// Link Clerk user ID to this SpacetimeDB identity (D-09 data privacy)
-				// clerkUserId is guaranteed to be available — SpacetimeDBGate blocks rendering until Clerk is ready
+				// Link Clerk user ID to this SpacetimeDB identity
 				if (clerkUserId) {
 					conn.reducers.linkClerkIdentity({
 						clerkUserId,
@@ -60,10 +108,41 @@ export function SpacetimeDBProvider({ children }: { children: React.ReactNode })
 					// biome-ignore lint/suspicious/noConsole: intentional error logging
 					.onError((e) => console.error("[SpacetimeDB] TD metadata subscription error:", e))
 					.subscribe(["SELECT * FROM my_time_deposit_metadata"]);
-			})
-			.onDisconnect(() => {})
-			.withToken(storedToken ?? "");
-	}, []); // Only build once — clerkUserId is stable once gate allows rendering
 
-	return <StdbProvider connectionBuilder={connectionBuilder}>{children}</StdbProvider>;
+				// Reset reconnection state on successful connect
+				attemptRef.current = 0;
+				setReconnectStatus("connected");
+			})
+			.onDisconnect(() => {
+				// biome-ignore lint/suspicious/noConsole: intentional debug logging
+				console.warn("[SpacetimeDB] Disconnected — scheduling reconnect");
+				scheduleReconnect();
+			})
+			.onConnectError(() => {
+				// onDisconnect does NOT fire when a reconnect attempt fails to connect.
+				// Only onConnectError fires in that case. Both must trigger the backoff chain.
+				// biome-ignore lint/suspicious/noConsole: intentional debug logging
+				console.warn("[SpacetimeDB] Connect error — scheduling reconnect");
+				scheduleReconnect();
+			})
+			.withToken(storedToken ?? "");
+	}, [reconnectKey]);
+
+	// Cleanup backoff timer on unmount
+	useEffect(() => {
+		return () => {
+			if (timerRef.current) clearTimeout(timerRef.current);
+		};
+	}, []);
+
+	const reconnectValue = useMemo(
+		() => ({ status: reconnectStatus, retryNow }),
+		[reconnectStatus, retryNow],
+	);
+
+	return (
+		<ReconnectContext.Provider value={reconnectValue}>
+			<StdbProvider connectionBuilder={connectionBuilder}>{children}</StdbProvider>
+		</ReconnectContext.Provider>
+	);
 }

@@ -1,10 +1,11 @@
 import { X } from "lucide-react";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useAccountActions } from "../hooks";
 import { useDragToDismiss } from "../hooks/useDragToDismiss";
 import { openAsModal } from "../utils/dialog";
 import { Input } from "./Input";
+import { SubmitButton } from "./SubmitButton";
 
 interface AccountFormValues {
 	name: string;
@@ -39,24 +40,31 @@ export function AccountModal({ onClose, onAccountCreated }: AccountModalProps) {
 	const balanceValue = watch("initialBalance");
 	const showStandaloneHint = parseFloat(balanceValue) > 0;
 
-	const onSubmit = (data: AccountFormValues) => {
+	const onSubmit = async (data: AccountFormValues) => {
+		setFormError(null);
 		const centavos = data.initialBalance
 			? BigInt(Math.round(parseFloat(data.initialBalance) * 100))
 			: 0n;
-		createAccount({
-			name: data.name.trim(),
-			initialBalanceCentavos: centavos,
-			iconBankId: undefined,
-		});
-		onAccountCreated?.();
-		reset();
-		onClose();
+		try {
+			await createAccount({
+				name: data.name.trim(),
+				initialBalanceCentavos: centavos,
+				iconBankId: undefined,
+			});
+			onAccountCreated?.();
+			reset();
+			onClose();
+		} catch (err) {
+			setFormError(err instanceof Error ? err.message : "Something went wrong. Please try again.");
+		}
 	};
 
 	const handleClose = () => {
 		reset();
 		onClose();
 	};
+
+	const [formError, setFormError] = useState<string | null>(null);
 
 	useDragToDismiss(boxRef, handleClose);
 
@@ -102,13 +110,20 @@ export function AccountModal({ onClose, onAccountCreated }: AccountModalProps) {
 						</div>
 					</div>
 
+					{formError && (
+						<div role="alert" className="alert alert-error text-sm py-2 mt-2">
+							<span>{formError}</span>
+						</div>
+					)}
+
 					<div className="flex gap-2 mt-4">
 						<button type="button" className="btn btn-ghost flex-1" onClick={handleClose}>
 							Cancel
 						</button>
-						<button type="submit" className="btn btn-primary flex-1" disabled={isSubmitting}>
-							Save {nameValue.trim() || "account"}
-						</button>
+						<SubmitButton
+							isSubmitting={isSubmitting}
+							label={`Save ${nameValue.trim() || "account"}`}
+						/>
 					</div>
 				</form>
 			</div>

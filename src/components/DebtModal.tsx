@@ -7,6 +7,7 @@ import { useDragToDismiss } from "../hooks/useDragToDismiss";
 import { openAsModal } from "../utils/dialog";
 import { getVisibleTags } from "../utils/tagConfig";
 import { Input } from "./Input";
+import { SubmitButton } from "./SubmitButton";
 
 interface DebtFormValues {
 	personName: string;
@@ -53,22 +54,29 @@ export function DebtModal({ onClose }: DebtModalProps) {
 	});
 
 	const onSubmit = async (values: DebtFormValues) => {
+		setFormError(null);
 		const amountCentavos = BigInt(Math.round(parseFloat(values.amount) * 100));
 		const subAccountId = direction === "loaned" ? BigInt(values.subAccountId) : 0n;
 		const dateTimestamp = Timestamp.fromDate(new Date(values.date));
 
-		await createDebt({
-			personName: values.personName.trim(),
-			direction,
-			amountCentavos,
-			subAccountId,
-			tag: values.tag,
-			description: values.description,
-			date: dateTimestamp,
-		});
-		reset();
-		onClose();
+		try {
+			await createDebt({
+				personName: values.personName.trim(),
+				direction,
+				amountCentavos,
+				subAccountId,
+				tag: values.tag,
+				description: values.description,
+				date: dateTimestamp,
+			});
+			reset();
+			onClose();
+		} catch (err) {
+			setFormError(err instanceof Error ? err.message : "Something went wrong. Please try again.");
+		}
 	};
+
+	const [formError, setFormError] = useState<string | null>(null);
 
 	useDragToDismiss(boxRef, onClose);
 
@@ -236,19 +244,18 @@ export function DebtModal({ onClose }: DebtModalProps) {
 						</div>
 					</div>
 
+					{formError && (
+						<div role="alert" className="alert alert-error text-sm py-2 mt-2">
+							<span>{formError}</span>
+						</div>
+					)}
+
 					{/* Actions */}
 					<div className="flex gap-2 mt-4">
 						<button type="button" className="btn btn-ghost flex-1" onClick={onClose}>
 							Cancel
 						</button>
-						<button
-							type="submit"
-							disabled={isSubmitting}
-							className="btn btn-primary flex-1 whitespace-nowrap"
-						>
-							{isSubmitting && <span className="loading loading-spinner loading-xs" />}
-							Add debt
-						</button>
+						<SubmitButton isSubmitting={isSubmitting} label="Add debt" />
 					</div>
 				</form>
 			</div>

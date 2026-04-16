@@ -8,6 +8,7 @@ import { formatPesos } from "../utils/currency";
 import { openAsModal } from "../utils/dialog";
 import { getVisibleTags } from "../utils/tagConfig";
 import { Input } from "./Input";
+import { SubmitButton } from "./SubmitButton";
 
 type SplitMethod = "equal" | "exact" | "percentage" | "shares";
 
@@ -181,6 +182,7 @@ export function SplitModal({ onClose, editTarget }: SplitModalProps) {
 			return;
 		}
 
+		setFormError(null);
 		const totalAmountCentavos = BigInt(Math.round(parseFloat(values.totalAmount) * 100));
 		const payerSubAccountId = BigInt(values.payerSubAccountId);
 		const dateTimestamp = Timestamp.fromDate(new Date(values.date));
@@ -192,35 +194,41 @@ export function SplitModal({ onClose, editTarget }: SplitModalProps) {
 			splitMethod === "shares" ? p.shareCount : 0,
 		);
 
-		if (isEditMode && editTarget) {
-			await editSplit({
-				splitEventId: editTarget.splitEvent.id,
-				description: values.description.trim(),
-				totalAmountCentavos,
-				payerSubAccountId,
-				tag: values.tag,
-				date: dateTimestamp,
-				splitMethod,
-				participantIds: validParticipants.map((p) => p.participantId),
-				participantNames,
-				participantShares,
-				participantShareCounts,
-			});
-		} else {
-			await createSplit({
-				description: values.description.trim(),
-				totalAmountCentavos,
-				payerSubAccountId,
-				tag: values.tag,
-				date: dateTimestamp,
-				splitMethod,
-				participantNames,
-				participantShares,
-				participantShareCounts,
-			});
+		try {
+			if (isEditMode && editTarget) {
+				await editSplit({
+					splitEventId: editTarget.splitEvent.id,
+					description: values.description.trim(),
+					totalAmountCentavos,
+					payerSubAccountId,
+					tag: values.tag,
+					date: dateTimestamp,
+					splitMethod,
+					participantIds: validParticipants.map((p) => p.participantId),
+					participantNames,
+					participantShares,
+					participantShareCounts,
+				});
+			} else {
+				await createSplit({
+					description: values.description.trim(),
+					totalAmountCentavos,
+					payerSubAccountId,
+					tag: values.tag,
+					date: dateTimestamp,
+					splitMethod,
+					participantNames,
+					participantShares,
+					participantShareCounts,
+				});
+			}
+			onClose();
+		} catch (err) {
+			setFormError(err instanceof Error ? err.message : "Something went wrong. Please try again.");
 		}
-		onClose();
 	};
+
+	const [formError, setFormError] = useState<string | null>(null);
 
 	useDragToDismiss(boxRef, onClose);
 
@@ -503,19 +511,21 @@ export function SplitModal({ onClose, editTarget }: SplitModalProps) {
 						</div>
 					</div>
 
+					{formError && (
+						<div role="alert" className="alert alert-error text-sm py-2 mt-2">
+							<span>{formError}</span>
+						</div>
+					)}
+
 					{/* Actions */}
 					<div className="flex gap-2 mt-4">
 						<button type="button" className="btn btn-ghost flex-1" onClick={onClose}>
 							Cancel
 						</button>
-						<button
-							type="submit"
-							disabled={isSubmitting}
-							className="btn btn-primary flex-1 whitespace-nowrap"
-						>
-							{isSubmitting && <span className="loading loading-spinner loading-xs" />}
-							{isEditMode ? "Save changes" : "Create split"}
-						</button>
+						<SubmitButton
+							isSubmitting={isSubmitting}
+							label={isEditMode ? "Save changes" : "Create split"}
+						/>
 					</div>
 				</form>
 			</div>

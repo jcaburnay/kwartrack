@@ -2,8 +2,11 @@ import { ClerkProvider, useAuth } from "@clerk/react";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import App from "./App";
+import { ConnectionStatus } from "./components/ConnectionStatus";
+import { RootErrorBoundary } from "./components/RootErrorBoundary";
 import { ClerkTokenProvider, useClerkIdentity } from "./providers/ClerkTokenProvider";
 import { SpacetimeDBProvider } from "./providers/SpacetimeDBProvider";
+import { ToastProvider } from "./providers/ToastProvider";
 import "./index.css";
 
 // Gate: only render SpacetimeDBProvider (and App) once Clerk identity is available.
@@ -42,10 +45,11 @@ function SpacetimeDBGate({ children }: { children: React.ReactNode }) {
 }
 
 // Provider nesting order is MANDATORY (D-10):
-// ClerkProvider (outer) → ClerkTokenProvider → SpacetimeDBGate → SpacetimeDBProvider (inner)
+// ClerkProvider (outer) → ClerkTokenProvider → SpacetimeDBGate → SpacetimeDBProvider → ToastProvider (inner)
 // ClerkProvider must be outermost so useAuth() works inside ClerkTokenProvider
 // ClerkTokenProvider must wrap SpacetimeDBGate so identity is available for the gate check
 // SpacetimeDBGate blocks SpacetimeDBProvider until Clerk has resolved the user
+// ToastProvider wraps ConnectionStatus + App so both can call useToast
 createRoot(document.getElementById("root")!).render(
 	<StrictMode>
 		<ClerkProvider
@@ -55,7 +59,12 @@ createRoot(document.getElementById("root")!).render(
 			<ClerkTokenProvider>
 				<SpacetimeDBGate>
 					<SpacetimeDBProvider>
-						<App />
+						<ToastProvider>
+							<ConnectionStatus />
+							<RootErrorBoundary>
+								<App />
+							</RootErrorBoundary>
+						</ToastProvider>
 					</SpacetimeDBProvider>
 				</SpacetimeDBGate>
 			</ClerkTokenProvider>

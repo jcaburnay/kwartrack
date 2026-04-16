@@ -1,5 +1,5 @@
 import { X } from "lucide-react";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Timestamp } from "spacetimedb";
 import {
@@ -16,6 +16,7 @@ import { formatPesos } from "../utils/currency";
 import { openAsModal } from "../utils/dialog";
 import { getVisibleTags } from "../utils/tagConfig";
 import { Input } from "./Input";
+import { SubmitButton } from "./SubmitButton";
 
 const todayISO = () => {
 	const d = new Date();
@@ -270,8 +271,9 @@ export function TransactionModal({ onClose, transaction }: TransactionModalProps
 		}
 	}
 
-	const onSubmit = (data: TransactionFormValues) => {
+	const onSubmit = async (data: TransactionFormValues) => {
 		if (!data.tag) return;
+		setFormError(null);
 		const amountCentavos = BigInt(Math.round(parseFloat(data.amount) * 100));
 		const serviceFeeCentavos = data.serviceFee
 			? BigInt(Math.round(parseFloat(data.serviceFee) * 100))
@@ -281,32 +283,36 @@ export function TransactionModal({ onClose, transaction }: TransactionModalProps
 		const sourceId = data.sourceSubAccountId ? BigInt(data.sourceSubAccountId) : 0n;
 		const destId = data.destinationSubAccountId ? BigInt(data.destinationSubAccountId) : 0n;
 
-		if (transaction) {
-			editTransaction({
-				transactionId: transaction.id,
-				type: data.type,
-				amountCentavos,
-				tag: data.tag,
-				sourceSubAccountId: sourceId,
-				destinationSubAccountId: destId,
-				serviceFeeCentavos,
-				description: data.description,
-				date: dateTimestamp,
-			});
-		} else {
-			createTransaction({
-				type: data.type,
-				amountCentavos,
-				tag: data.tag,
-				sourceSubAccountId: sourceId,
-				destinationSubAccountId: destId,
-				serviceFeeCentavos,
-				description: data.description,
-				date: dateTimestamp,
-			});
+		try {
+			if (transaction) {
+				await editTransaction({
+					transactionId: transaction.id,
+					type: data.type,
+					amountCentavos,
+					tag: data.tag,
+					sourceSubAccountId: sourceId,
+					destinationSubAccountId: destId,
+					serviceFeeCentavos,
+					description: data.description,
+					date: dateTimestamp,
+				});
+			} else {
+				await createTransaction({
+					type: data.type,
+					amountCentavos,
+					tag: data.tag,
+					sourceSubAccountId: sourceId,
+					destinationSubAccountId: destId,
+					serviceFeeCentavos,
+					description: data.description,
+					date: dateTimestamp,
+				});
+			}
+			reset();
+			onClose();
+		} catch (err) {
+			setFormError(err instanceof Error ? err.message : "Something went wrong. Please try again.");
 		}
-		reset();
-		onClose();
 	};
 
 	const handleClose = () => {
@@ -315,6 +321,8 @@ export function TransactionModal({ onClose, transaction }: TransactionModalProps
 	};
 
 	useDragToDismiss(boxRef, handleClose);
+
+	const [formError, setFormError] = useState<string | null>(null);
 
 	const isEditMode = !!transaction;
 	const title = isEditMode ? "Edit transaction" : "New transaction";
@@ -578,18 +586,18 @@ export function TransactionModal({ onClose, transaction }: TransactionModalProps
 						</div>
 					</div>
 
+					{formError && (
+						<div role="alert" className="alert alert-error text-sm py-2 mt-2">
+							<span>{formError}</span>
+						</div>
+					)}
+
 					{/* Submit — D-09: Cancel left, Save right */}
 					<div className="flex gap-2 mt-4">
 						<button type="button" className="btn btn-ghost flex-1" onClick={handleClose}>
 							Cancel
 						</button>
-						<button
-							type="submit"
-							className="btn btn-primary flex-1 whitespace-nowrap"
-							disabled={isSubmitting}
-						>
-							{submitLabel}
-						</button>
+						<SubmitButton isSubmitting={isSubmitting} label={submitLabel} />
 					</div>
 				</form>
 			</div>

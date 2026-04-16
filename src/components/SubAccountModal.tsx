@@ -1,5 +1,5 @@
 import { X } from "lucide-react";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Timestamp } from "spacetimedb";
 import { useSubAccountActions } from "../hooks";
@@ -7,6 +7,7 @@ import { useDragToDismiss } from "../hooks/useDragToDismiss";
 import { formatPesos } from "../utils/currency";
 import { openAsModal } from "../utils/dialog";
 import { Input } from "./Input";
+import { SubmitButton } from "./SubmitButton";
 
 interface SubAccountFormValues {
 	name: string;
@@ -118,93 +119,100 @@ export function SubAccountModal({
 		}
 	}, [creditLimitValue, selectedType, trigger]);
 
-	const onSubmit = (data: SubAccountFormValues & ConversionFormValues) => {
+	const onSubmit = async (data: SubAccountFormValues & ConversionFormValues) => {
+		setFormError(null);
 		const creditLimitCentavos =
 			data.subAccountType === "credit" && data.creditLimit
 				? BigInt(Math.round(parseFloat(data.creditLimit) * 100))
 				: 0n;
 
-		if (isEditMode && subAccount) {
-			if (subAccount.subAccountType === "time-deposit") {
+		try {
+			if (isEditMode && subAccount) {
+				if (subAccount.subAccountType === "time-deposit") {
+					const rateBps = data.interestRate ? Math.round(parseFloat(data.interestRate) * 100) : 0;
+					await editTimeDepositMetadata({
+						subAccountId: subAccount.id,
+						interestRateBps: rateBps,
+						maturityDate: Timestamp.fromDate(new Date(data.maturityDate)),
+					});
+				} else {
+					const remainingCentavos = data.remainingAvailable
+						? BigInt(Math.round(parseFloat(data.remainingAvailable) * 100))
+						: creditLimitCentavos;
+					const newBalanceCentavos = creditLimitCentavos - remainingCentavos;
+					await editSubAccountReducer({
+						subAccountId: subAccount.id,
+						newName: data.name.trim(),
+						newCreditLimitCentavos: creditLimitCentavos,
+						newBalanceCentavos,
+					});
+				}
+			} else if (data.subAccountType === "time-deposit" && !isStandalone) {
+				const initialCentavos = data.initialBalance
+					? BigInt(Math.round(parseFloat(data.initialBalance) * 100))
+					: 0n;
 				const rateBps = data.interestRate ? Math.round(parseFloat(data.interestRate) * 100) : 0;
-				editTimeDepositMetadata({
-					subAccountId: subAccount.id,
+				await createTimeDeposit({
+					accountId,
+					name: data.name.trim(),
+					initialBalanceCentavos: initialCentavos,
 					interestRateBps: rateBps,
 					maturityDate: Timestamp.fromDate(new Date(data.maturityDate)),
 				});
-			} else {
-				const remainingCentavos = data.remainingAvailable
-					? BigInt(Math.round(parseFloat(data.remainingAvailable) * 100))
-					: creditLimitCentavos;
-				const newBalanceCentavos = creditLimitCentavos - remainingCentavos;
-				editSubAccountReducer({
-					subAccountId: subAccount.id,
+			} else if (isStandalone) {
+				const initialCentavos = data.initialBalance
+					? BigInt(Math.round(parseFloat(data.initialBalance) * 100))
+					: 0n;
+				const remainingCentavos =
+					data.subAccountType === "credit" && data.remainingAvailable
+						? BigInt(Math.round(parseFloat(data.remainingAvailable) * 100))
+						: creditLimitCentavos;
+				const newSubAccountInitialBalanceCentavos =
+					data.subAccountType === "credit"
+						? creditLimitCentavos - remainingCentavos
+						: initialCentavos;
+				await convertAndCreateSubAccount({
+					accountId,
 					newName: data.name.trim(),
+					newSubAccountType: data.subAccountType,
 					newCreditLimitCentavos: creditLimitCentavos,
-					newBalanceCentavos,
+					newSubAccountInitialBalanceCentavos,
+					existingName: data.existingName.trim() || "Main",
+					existingSubAccountType: data.existingSubAccountType || "wallet",
+				});
+			} else {
+				const initialCentavos = data.initialBalance
+					? BigInt(Math.round(parseFloat(data.initialBalance) * 100))
+					: 0n;
+				const remainingCentavos =
+					data.subAccountType === "credit" && data.remainingAvailable
+						? BigInt(Math.round(parseFloat(data.remainingAvailable) * 100))
+						: creditLimitCentavos;
+				const initialBalanceCentavos =
+					data.subAccountType === "credit"
+						? creditLimitCentavos - remainingCentavos
+						: initialCentavos;
+				await addSubAccount({
+					accountId,
+					name: data.name.trim(),
+					initialBalanceCentavos,
+					subAccountType: data.subAccountType,
+					creditLimitCentavos,
 				});
 			}
-		} else if (data.subAccountType === "time-deposit" && !isStandalone) {
-			const initialCentavos = data.initialBalance
-				? BigInt(Math.round(parseFloat(data.initialBalance) * 100))
-				: 0n;
-			const rateBps = data.interestRate ? Math.round(parseFloat(data.interestRate) * 100) : 0;
-			createTimeDeposit({
-				accountId,
-				name: data.name.trim(),
-				initialBalanceCentavos: initialCentavos,
-				interestRateBps: rateBps,
-				maturityDate: Timestamp.fromDate(new Date(data.maturityDate)),
-			});
-		} else if (isStandalone) {
-			const initialCentavos = data.initialBalance
-				? BigInt(Math.round(parseFloat(data.initialBalance) * 100))
-				: 0n;
-			const remainingCentavos =
-				data.subAccountType === "credit" && data.remainingAvailable
-					? BigInt(Math.round(parseFloat(data.remainingAvailable) * 100))
-					: creditLimitCentavos;
-			const newSubAccountInitialBalanceCentavos =
-				data.subAccountType === "credit"
-					? creditLimitCentavos - remainingCentavos
-					: initialCentavos;
-			convertAndCreateSubAccount({
-				accountId,
-				newName: data.name.trim(),
-				newSubAccountType: data.subAccountType,
-				newCreditLimitCentavos: creditLimitCentavos,
-				newSubAccountInitialBalanceCentavos,
-				existingName: data.existingName.trim() || "Main",
-				existingSubAccountType: data.existingSubAccountType || "wallet",
-			});
-		} else {
-			const initialCentavos = data.initialBalance
-				? BigInt(Math.round(parseFloat(data.initialBalance) * 100))
-				: 0n;
-			const remainingCentavos =
-				data.subAccountType === "credit" && data.remainingAvailable
-					? BigInt(Math.round(parseFloat(data.remainingAvailable) * 100))
-					: creditLimitCentavos;
-			const initialBalanceCentavos =
-				data.subAccountType === "credit"
-					? creditLimitCentavos - remainingCentavos
-					: initialCentavos;
-			addSubAccount({
-				accountId,
-				name: data.name.trim(),
-				initialBalanceCentavos,
-				subAccountType: data.subAccountType,
-				creditLimitCentavos,
-			});
+			reset();
+			onClose();
+		} catch (err) {
+			setFormError(err instanceof Error ? err.message : "Something went wrong. Please try again.");
 		}
-		reset();
-		onClose();
 	};
 
 	const handleClose = () => {
 		reset();
 		onClose();
 	};
+
+	const [formError, setFormError] = useState<string | null>(null);
 
 	useDragToDismiss(boxRef, handleClose);
 
@@ -372,15 +380,24 @@ export function SubAccountModal({
 						</div>
 					</div>
 
+					{formError && (
+						<div role="alert" className="alert alert-error text-sm py-2 mt-2">
+							<span>{formError}</span>
+						</div>
+					)}
+
 					<div className="flex gap-2 mt-4">
 						<button type="button" className="btn btn-ghost flex-1" onClick={handleClose}>
 							Cancel
 						</button>
-						<button type="submit" className="btn btn-primary flex-1" disabled={isSubmitting}>
-							{isEditMode
-								? `Update ${nameValue.trim() || "sub-account"}`
-								: `Save ${nameValue.trim() || "sub-account"}`}
-						</button>
+						<SubmitButton
+							isSubmitting={isSubmitting}
+							label={
+								isEditMode
+									? `Update ${nameValue.trim() || "sub-account"}`
+									: `Save ${nameValue.trim() || "sub-account"}`
+							}
+						/>
 					</div>
 				</form>
 			</div>

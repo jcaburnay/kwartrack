@@ -6,6 +6,7 @@ import { useDragToDismiss } from "../hooks/useDragToDismiss";
 import { openAsModal } from "../utils/dialog";
 import { getVisibleTags } from "../utils/tagConfig";
 import { Input } from "./Input";
+import { SubmitButton } from "./SubmitButton";
 
 interface AllocationRow {
 	tag: string;
@@ -62,6 +63,7 @@ export function BudgetModal({ onClose }: BudgetModalProps) {
 	const isOverAllocated = allocatedTotal > totalAmount + 0.001;
 
 	const usedTags = new Set(rows.map((r) => r.tag).filter(Boolean));
+	const [formError, setFormError] = useState<string | null>(null);
 	useDragToDismiss(boxRef, onClose);
 
 	const handleTagChange = (index: number, newTag: string) => {
@@ -80,18 +82,23 @@ export function BudgetModal({ onClose }: BudgetModalProps) {
 	const handleRemoveRow = (index: number) => setRows((prev) => prev.filter((_, i) => i !== index));
 
 	const onSubmit = async (values: BudgetFormValues) => {
-		const totalCentavos = BigInt(Math.round(parseFloat(values.totalAmount) * 100));
-		await setBudget({ totalCentavos });
+		setFormError(null);
+		try {
+			const totalCentavos = BigInt(Math.round(parseFloat(values.totalAmount) * 100));
+			await setBudget({ totalCentavos });
 
-		const allocationList = rows
-			.filter((r) => r.tag && r.amount && parseFloat(r.amount) > 0)
-			.map((r) => ({
-				tag: r.tag,
-				allocatedCentavos: BigInt(Math.round(parseFloat(r.amount) * 100)),
-			}));
-		await setBudgetAllocations({ allocations: allocationList });
+			const allocationList = rows
+				.filter((r) => r.tag && r.amount && parseFloat(r.amount) > 0)
+				.map((r) => ({
+					tag: r.tag,
+					allocatedCentavos: BigInt(Math.round(parseFloat(r.amount) * 100)),
+				}));
+			await setBudgetAllocations({ allocations: allocationList });
 
-		onClose();
+			onClose();
+		} catch (err) {
+			setFormError(err instanceof Error ? err.message : "Something went wrong. Please try again.");
+		}
 	};
 
 	return (
@@ -220,19 +227,22 @@ export function BudgetModal({ onClose }: BudgetModalProps) {
 						<p className="text-error text-xs mt-1 px-1">Tag allocations exceed the total budget.</p>
 					)}
 
+					{formError && (
+						<div role="alert" className="alert alert-error text-sm py-2 mt-2">
+							<span>{formError}</span>
+						</div>
+					)}
+
 					{/* Actions */}
 					<div className="flex gap-2 mt-4">
 						<button type="button" className="btn btn-ghost flex-1" onClick={onClose}>
 							Cancel
 						</button>
-						<button
-							type="submit"
-							disabled={isSubmitting || isOverAllocated}
-							className="btn btn-primary flex-1"
-						>
-							{isSubmitting && <span className="loading loading-spinner loading-xs" />}
-							Save budget
-						</button>
+						<SubmitButton
+							isSubmitting={isSubmitting}
+							label="Save budget"
+							disabled={isOverAllocated}
+						/>
 					</div>
 				</form>
 			</div>

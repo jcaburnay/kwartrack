@@ -1,6 +1,7 @@
 import { Outlet } from "react-router";
 import { BottomTabBar } from "./BottomTabBar";
 import { MobileHeader } from "./MobileHeader";
+import { RouteErrorBoundary } from "./RouteErrorBoundary";
 import { Sidebar } from "./Sidebar";
 
 const isDesktop = () => window.innerWidth >= 768;
@@ -22,7 +23,9 @@ export function AppShell() {
 				<MobileHeader />
 				<main className="flex-1 bg-base-100 pb-16 md:pb-0">
 					<div className="mx-auto w-full max-w-[1152px]">
-						<Outlet />
+						<RouteErrorBoundary>
+							<Outlet />
+						</RouteErrorBoundary>
 					</div>
 				</main>
 				<BottomTabBar />

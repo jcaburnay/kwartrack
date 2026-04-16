@@ -1,11 +1,12 @@
 import { X } from "lucide-react";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useAccounts, useDebtActions, useSubAccounts } from "../hooks";
 import { useDragToDismiss } from "../hooks/useDragToDismiss";
 import { formatPesos } from "../utils/currency";
 import { openAsModal } from "../utils/dialog";
 import { Input } from "./Input";
+import { SubmitButton } from "./SubmitButton";
 
 interface Debt {
 	id: bigint;
@@ -51,18 +52,25 @@ export function SettleModal({ debt, onClose }: SettleModalProps) {
 	});
 
 	const onSubmit = async (values: SettleFormValues) => {
+		setFormError(null);
 		const amountCentavos = BigInt(Math.round(parseFloat(values.amount) * 100));
 		const subAccountId = BigInt(values.subAccountId);
 
-		await settleDebt({
-			debtId: debt.id,
-			amountCentavos,
-			subAccountId,
-		});
-		onClose();
+		try {
+			await settleDebt({
+				debtId: debt.id,
+				amountCentavos,
+				subAccountId,
+			});
+			onClose();
+		} catch (err) {
+			setFormError(err instanceof Error ? err.message : "Something went wrong. Please try again.");
+		}
 	};
 
 	const label = debt.direction === "loaned" ? "Receive to" : "Pay from";
+
+	const [formError, setFormError] = useState<string | null>(null);
 
 	useDragToDismiss(boxRef, onClose);
 
@@ -154,18 +162,17 @@ export function SettleModal({ debt, onClose }: SettleModalProps) {
 						</div>
 					</div>
 
+					{formError && (
+						<div role="alert" className="alert alert-error text-sm py-2 mt-2">
+							<span>{formError}</span>
+						</div>
+					)}
+
 					<div className="flex gap-2 mt-4">
 						<button type="button" className="btn btn-ghost flex-1" onClick={onClose}>
 							Cancel
 						</button>
-						<button
-							type="submit"
-							disabled={isSubmitting}
-							className="btn btn-success flex-1 whitespace-nowrap"
-						>
-							{isSubmitting && <span className="loading loading-spinner loading-xs" />}
-							Settle
-						</button>
+						<SubmitButton isSubmitting={isSubmitting} label="Settle" className="btn-success" />
 					</div>
 				</form>
 			</div>
