@@ -86,7 +86,7 @@ export function PayCreditModal({
 	useDragToDismiss(boxRef, handleClose);
 
 	return (
-		<dialog ref={dialogRef} className="modal modal-bottom sm:modal-middle" onClose={handleClose}>
+		<dialog ref={dialogRef} className="modal modal-bottom md:modal-middle" onClose={handleClose}>
 			<div className="modal-box flex flex-col" ref={boxRef}>
 				{/* Header */}
 				<div className="flex items-center justify-between mb-4">
@@ -139,7 +139,7 @@ export function PayCreditModal({
 						min="0.01"
 						error={errors.amount?.message}
 						hint={
-							<span className="text-sm text-base-content/50 mt-1">
+							<span className="text-sm text-base-content/60 mt-1">
 								Paying <span className="font-mono">{formatPesos(outstandingCentavos)}</span> clears
 								your balance
 							</span>
@@ -176,6 +176,9 @@ export function PayCreditModal({
 					</div>
 				</form>
 			</div>
+			<form method="dialog" className="modal-backdrop">
+				<button type="button" aria-label="Close modal" onClick={handleClose} />
+			</form>
 		</dialog>
 	);
 }

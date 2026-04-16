@@ -67,7 +67,7 @@ export function DebtCard({ personName, debts }: DebtCardProps) {
 						</div>
 						<div>
 							<p className="text-sm font-semibold leading-tight">{personName}</p>
-							<p className="text-xs text-base-content/50">
+							<p className="text-xs text-base-content/60">
 								{debts.length} debt{debts.length !== 1 ? "s" : ""}
 							</p>
 						</div>
@@ -94,8 +94,8 @@ export function DebtCard({ personName, debts }: DebtCardProps) {
 							</span>
 						)}
 						{!isFullySettled && totalSettled > 0n && (
-							<span className="text-xs text-base-content/50">
-								{formatPesos(totalSettled)} settled
+							<span className="text-xs text-base-content/60">
+								<span className="font-mono">{formatPesos(totalSettled)}</span> settled
 							</span>
 						)}
 					</div>
@@ -109,20 +109,15 @@ export function DebtCard({ personName, debts }: DebtCardProps) {
 					</div>
 				</div>
 
-				{/* menu */}
 				<div className="absolute top-3 right-3 z-10 dropdown dropdown-end">
 					<button
 						type="button"
-						tabIndex={0}
 						className="btn btn-ghost btn-xs btn-circle"
 						aria-label="More actions"
 					>
 						<MoreVertical size={14} />
 					</button>
-					<ul
-						tabIndex={0}
-						className="dropdown-content menu bg-base-100 rounded-xl z-10 w-36 p-1 shadow-lg border border-base-300/50"
-					>
+					<ul className="dropdown-content menu bg-base-100 rounded-xl z-10 w-36 p-1 shadow-lg border border-base-300/50">
 						{unsettledDebt && (
 							<li>
 								<button type="button" onClick={() => setSettleTarget(unsettledDebt)}>

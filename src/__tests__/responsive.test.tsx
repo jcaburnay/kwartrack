@@ -287,18 +287,18 @@ describe("TransactionTable mobile cards (D-06)", () => {
 		onAddNew: vi.fn(),
 	};
 
-	it("renders a div with sm:hidden class (mobile card list)", async () => {
+	it("renders a div with md:hidden class (mobile card list)", async () => {
 		const { TransactionTable } = await import("../components/TransactionTable");
 		const { container } = render(<TransactionTable {...defaultProps} />);
-		const mobileList = container.querySelector(".sm\\:hidden");
+		const mobileList = container.querySelector(".md\\:hidden");
 		expect(mobileList).toBeInTheDocument();
 	});
 
-	it("renders a div with hidden sm:block class (desktop table)", async () => {
+	it("renders a div with hidden md:block class (desktop table wrapper)", async () => {
 		const { TransactionTable } = await import("../components/TransactionTable");
 		const { container } = render(<TransactionTable {...defaultProps} />);
-		const desktopTable = container.querySelector(".hidden.sm\\:block");
-		expect(desktopTable).toBeInTheDocument();
+		const desktopWrapper = container.querySelector(".hidden.md\\:block");
+		expect(desktopWrapper).toBeInTheDocument();
 	});
 });
 
@@ -308,22 +308,22 @@ describe("TransactionTable mobile cards (D-06)", () => {
 describe("TransactionFilterRow (D-07)", () => {
 	const defaultFilters = { type: "" as const, tag: "", dateFrom: "", dateTo: "" };
 
-	it('renders a button with text "Filter" that has sm:hidden class', async () => {
+	it('renders a button with text "Filter" that has md:hidden class', async () => {
 		const { TransactionFilterRow } = await import("../components/TransactionFilterRow");
 		render(<TransactionFilterRow filters={defaultFilters} onChange={vi.fn()} />);
 		const filterBtn = screen.getByText("Filter");
 		expect(filterBtn).toBeInTheDocument();
-		// The button itself should have sm:hidden class
+		// The button itself should have md:hidden class
 		const btn = filterBtn.closest("button");
-		expect(btn?.className).toContain("sm:hidden");
+		expect(btn?.className).toContain("md:hidden");
 	});
 
-	it("filter inputs container has sm:flex class", async () => {
+	it("filter inputs container has md:flex class", async () => {
 		const { TransactionFilterRow } = await import("../components/TransactionFilterRow");
 		const { container } = render(
 			<TransactionFilterRow filters={defaultFilters} onChange={vi.fn()} />,
 		);
-		const filtersContainer = container.querySelector(".sm\\:flex");
+		const filtersContainer = container.querySelector(".md\\:flex");
 		expect(filtersContainer).toBeInTheDocument();
 	});
 });
@@ -332,15 +332,15 @@ describe("TransactionFilterRow (D-07)", () => {
 // D-08: Modal full-screen
 // =============================================================================
 describe("Modal bottom-sheet (D-08)", () => {
-	it("AccountModal uses modal-bottom sm:modal-middle pattern", async () => {
+	it("AccountModal uses modal-bottom md:modal-middle pattern", async () => {
 		const { AccountModal } = await import("../components/AccountModal");
 		const { container } = render(<AccountModal onClose={vi.fn()} />);
 		const dialog = container.querySelector(".modal-bottom");
 		expect(dialog).toBeInTheDocument();
-		expect(dialog?.className).toContain("sm:modal-middle");
+		expect(dialog?.className).toContain("md:modal-middle");
 	});
 
-	it("DeleteConfirmModal uses modal-bottom sm:modal-middle pattern", async () => {
+	it("DeleteConfirmModal uses modal-bottom md:modal-middle pattern", async () => {
 		const { DeleteConfirmModal } = await import("../components/DeleteConfirmModal");
 		const { container } = render(
 			<DeleteConfirmModal
@@ -354,7 +354,7 @@ describe("Modal bottom-sheet (D-08)", () => {
 		);
 		const dialog = container.querySelector(".modal-bottom");
 		expect(dialog).toBeInTheDocument();
-		expect(dialog?.className).toContain("sm:modal-middle");
+		expect(dialog?.className).toContain("md:modal-middle");
 	});
 });
 

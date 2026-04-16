@@ -39,7 +39,7 @@ export function AccountCard({
 						/>
 						<div>
 							<span className="font-semibold text-base">{name}</span>
-							<p className="text-xs text-base-content/40">
+							<p className="text-xs text-base-content/60">
 								{subAccountCount === 0
 									? "Standalone"
 									: subAccountCount === 1
@@ -59,14 +59,10 @@ export function AccountCard({
 						type="button"
 						className="btn btn-ghost btn-xs btn-circle"
 						aria-label="Account options"
-						tabIndex={0}
 					>
 						<MoreVertical size={14} />
 					</button>
-					<ul
-						tabIndex={0}
-						className="dropdown-content menu bg-base-100 rounded-xl z-10 w-32 p-1 shadow-lg border border-base-300/50"
-					>
+					<ul className="dropdown-content menu bg-base-100 rounded-xl z-10 w-32 p-1 shadow-lg border border-base-300/50">
 						<li>
 							<button type="button" onClick={() => setShowEditModal(true)}>
 								Edit

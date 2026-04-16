@@ -74,7 +74,7 @@ export function DebtModal({ onClose }: DebtModalProps) {
 	useDragToDismiss(boxRef, onClose);
 
 	return (
-		<dialog ref={ref} className="modal modal-bottom sm:modal-middle" onClose={onClose}>
+		<dialog ref={ref} className="modal modal-bottom md:modal-middle" onClose={onClose}>
 			<div className="modal-box flex flex-col" ref={boxRef}>
 				<div className="flex items-center justify-between mb-4">
 					<h3 className="font-semibold text-sm">New debt</h3>
@@ -145,7 +145,7 @@ export function DebtModal({ onClose }: DebtModalProps) {
 										<span className="label-text text-sm">
 											Tag
 											{direction === "loaned" && (
-												<span className="text-base-content/30 ml-1">(optional)</span>
+												<span className="text-base-content/60 ml-1">(optional)</span>
 											)}
 										</span>
 									</label>
@@ -227,7 +227,7 @@ export function DebtModal({ onClose }: DebtModalProps) {
 							<Input
 								label={
 									<>
-										Description <span className="text-base-content/30">(optional)</span>
+										Description <span className="text-base-content/60">(optional)</span>
 									</>
 								}
 								id="debt-desc"

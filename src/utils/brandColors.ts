@@ -136,7 +136,7 @@ export function deriveColor(name: string): string {
 	for (let i = 0; i < s.length; i++) {
 		hash = (((hash << 5) + hash) ^ s.charCodeAt(i)) >>> 0;
 	}
-	return `oklch(58% 0.15 ${hash % 360})`;
+	return `oklch(var(--fallback-l, 58%) var(--fallback-c, 0.15) ${hash % 360})`;
 }
 
 /**

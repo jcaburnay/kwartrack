@@ -48,11 +48,11 @@ export function AccountsPage() {
 	// Empty state
 	if (accounts.length === 0) {
 		return (
-			<div className="p-4 sm:p-6 animate-card-enter">
-				<h1 className="text-xs font-medium tracking-widest text-base-content/35 uppercase mb-5">
+			<div className="p-4 sm:p-6 ">
+				<h1 className="text-xs font-medium tracking-widest text-base-content/60 uppercase mb-5">
 					Accounts
 				</h1>
-				<p className="text-sm text-base-content/50 mb-5">
+				<p className="text-sm text-base-content/60 mb-5">
 					Accounts hold your money — savings, checking, credit cards. Each can be split into
 					sub-accounts. Add your first account to start tracking.
 				</p>
@@ -72,19 +72,19 @@ export function AccountsPage() {
 	}
 
 	return (
-		<div className="p-4 sm:p-6 animate-card-enter">
-			<h1 className="text-xs font-medium tracking-widest text-base-content/35 uppercase mb-5">
+		<div className="p-4 sm:p-6 ">
+			<h1 className="text-xs font-medium tracking-widest text-base-content/60 uppercase mb-5">
 				Accounts
 			</h1>
 
 			{/* Net Worth Summary */}
-			<div className="mb-6 animate-card-enter">
-				<div className="text-xs font-medium text-base-content/40 flex items-center gap-1.5 mb-1 uppercase tracking-widest">
+			<div className="mb-6 ">
+				<div className="text-xs font-medium text-base-content/60 flex items-center gap-1.5 mb-1 uppercase tracking-widest">
 					<TrendingUp size={12} />
 					Net Worth
 				</div>
 				<div className="text-3xl font-bold font-mono tracking-tight">{formatPesos(netWorth)}</div>
-				<div className="text-xs text-base-content/40 mt-1">
+				<div className="text-xs text-base-content/60 mt-1">
 					Across {accounts.length} {accounts.length === 1 ? "account" : "accounts"}
 				</div>
 			</div>
@@ -92,11 +92,7 @@ export function AccountsPage() {
 			{/* Account Cards Grid */}
 			<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
 				{accounts.map((account, i) => (
-					<div
-						key={account.id.toString()}
-						className="animate-card-enter"
-						style={{ animationDelay: `${i * 0.06}s` }}
-					>
+					<div key={account.id.toString()} className="" style={{ animationDelay: `${i * 0.06}s` }}>
 						<AccountCard
 							id={account.id}
 							name={account.name}
@@ -106,10 +102,7 @@ export function AccountsPage() {
 						/>
 					</div>
 				))}
-				<div
-					className="animate-card-enter h-full"
-					style={{ animationDelay: `${accounts.length * 0.06}s` }}
-				>
+				<div className=" h-full" style={{ animationDelay: `${accounts.length * 0.06}s` }}>
 					<NewItemCard label="New account" onClick={() => setShowModal(true)} />
 				</div>
 			</div>

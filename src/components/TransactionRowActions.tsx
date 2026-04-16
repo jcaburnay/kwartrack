@@ -10,16 +10,12 @@ export function TransactionRowActions({ onEdit, onDelete }: TransactionRowAction
 		<div className="dropdown dropdown-end">
 			<button
 				type="button"
-				tabIndex={0}
 				className="btn btn-ghost btn-xs btn-circle"
 				aria-label="Transaction options"
 			>
 				<MoreVertical size={14} />
 			</button>
-			<ul
-				tabIndex={0}
-				className="dropdown-content menu bg-base-100 rounded-xl border border-base-300/50 z-10 w-36 p-1 shadow-md"
-			>
+			<ul className="dropdown-content menu bg-base-100 rounded-xl border border-base-300/50 z-10 w-36 p-1 shadow-md">
 				<li>
 					<button type="button" onClick={onEdit}>
 						Edit

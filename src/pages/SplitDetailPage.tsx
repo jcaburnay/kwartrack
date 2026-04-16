@@ -36,7 +36,7 @@ export function SplitDetailPage() {
 	if (!splitEvent) {
 		return (
 			<div className="p-6">
-				<p className="text-sm text-base-content/50">Split not found.</p>
+				<p className="text-sm text-base-content/60">Split not found.</p>
 			</div>
 		);
 	}
@@ -72,7 +72,7 @@ export function SplitDetailPage() {
 	const avatar = getAvatarColor(splitEvent.description);
 
 	return (
-		<div className="p-4 sm:p-6 space-y-6 animate-card-enter max-w-2xl">
+		<div className="p-4 sm:p-6 space-y-6  max-w-2xl">
 			{/* Header */}
 			<div className="flex items-center justify-between">
 				<button
@@ -108,7 +108,7 @@ export function SplitDetailPage() {
 					</div>
 					<div>
 						<p className="font-semibold text-sm">{splitEvent.description}</p>
-						<p className="text-xs text-base-content/50">{dateStr}</p>
+						<p className="text-xs text-base-content/60">{dateStr}</p>
 					</div>
 				</div>
 				<p className="font-mono text-lg font-semibold">
@@ -119,14 +119,14 @@ export function SplitDetailPage() {
 						{splitEvent.tag.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())}
 					</span>
 					{payerSubAccount && (
-						<span className="text-xs text-base-content/50">Paid from: {payerSubAccount.name}</span>
+						<span className="text-xs text-base-content/60">Paid from: {payerSubAccount.name}</span>
 					)}
 				</div>
 			</div>
 
 			{/* Participants */}
 			<section>
-				<h2 className="text-xs font-semibold uppercase tracking-widest text-base-content/50 mb-3">
+				<h2 className="text-xs font-semibold uppercase tracking-widest text-base-content/60 mb-3">
 					Participants
 				</h2>
 				<div className="flex flex-col gap-2">
@@ -147,7 +147,7 @@ export function SplitDetailPage() {
 								</div>
 								<div className="flex-1 min-w-0">
 									<p className="text-sm font-medium">{p.personName}</p>
-									<p className="text-xs text-base-content/50 font-mono">
+									<p className="text-xs text-base-content/60 font-mono">
 										{formatPesos(p.shareAmountCentavos)}
 									</p>
 								</div>
@@ -177,7 +177,7 @@ export function SplitDetailPage() {
 			</section>
 
 			{/* Footer stats */}
-			<div className="text-xs text-base-content/50 flex gap-3 flex-wrap">
+			<div className="text-xs text-base-content/60 flex gap-3 flex-wrap">
 				<span>{splitCount}-way split</span>
 				<span>·</span>
 				<span>{splitMethodLabel[splitMethod] ?? splitMethod}</span>

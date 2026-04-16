@@ -7,6 +7,7 @@ interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
 }
 
 export function Input({ label, id, error, hint, ...inputProps }: InputProps) {
+	const errorId = error ? `${id}-error` : undefined;
 	return (
 		<div>
 			<label className="label" htmlFor={id}>
@@ -15,10 +16,16 @@ export function Input({ label, id, error, hint, ...inputProps }: InputProps) {
 			<input
 				id={id}
 				className={`input input-bordered w-full${error ? " input-error" : ""}`}
+				aria-invalid={!!error}
+				aria-describedby={errorId}
 				{...inputProps}
 			/>
 			{hint}
-			{error && <p className="text-error text-xs mt-1">{error}</p>}
+			{error && (
+				<p id={errorId} className="text-error text-xs mt-1">
+					{error}
+				</p>
+			)}
 		</div>
 	);
 }

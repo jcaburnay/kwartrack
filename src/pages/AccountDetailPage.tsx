@@ -150,10 +150,10 @@ export function AccountDetailPage() {
 	};
 
 	return (
-		<div className="p-4 sm:p-6 animate-card-enter">
+		<div className="p-4 sm:p-6 ">
 			<button
 				type="button"
-				className="btn btn-ghost btn-xs gap-1 mb-4 -ml-1 text-base-content/50"
+				className="btn btn-ghost btn-xs gap-1 mb-4 -ml-1 text-base-content/60"
 				onClick={() => navigate("/accounts")}
 			>
 				<ArrowLeft size={13} />
@@ -190,7 +190,7 @@ export function AccountDetailPage() {
 					<div className="flex flex-col gap-8">
 						{grouped.map(({ key, label, items }) => (
 							<div key={key}>
-								<h2 className="text-xs font-semibold uppercase tracking-widest text-base-content/50 mb-3">
+								<h2 className="text-xs font-semibold uppercase tracking-widest text-base-content/60 mb-3">
 									{label}
 								</h2>
 								<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -200,7 +200,7 @@ export function AccountDetailPage() {
 										return (
 											<div
 												key={subAccount.id.toString()}
-												className="animate-card-enter"
+												className=""
 												style={{ animationDelay: `${delay}s` }}
 											>
 												<SubAccountCard
@@ -265,7 +265,7 @@ export function AccountDetailPage() {
 
 			{/* TRANSACTIONS section — 48px gap from sub-accounts section (UI-SPEC: 2xl gap) */}
 			<div className="mt-10">
-				<h2 className="text-xs font-semibold uppercase tracking-widest text-base-content/50 mb-4">
+				<h2 className="text-xs font-semibold uppercase tracking-widest text-base-content/60 mb-4">
 					TRANSACTIONS
 				</h2>
 

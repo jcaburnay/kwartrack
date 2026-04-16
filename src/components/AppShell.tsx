@@ -27,7 +27,12 @@ export function AppShell() {
 				</main>
 				<BottomTabBar />
 			</div>
-			<div className="drawer-side is-drawer-close:overflow-visible z-40">
+			<div
+				className="drawer-side is-drawer-close:overflow-visible z-40"
+				role="dialog"
+				aria-modal="true"
+				aria-label="Sidebar"
+			>
 				<label
 					htmlFor="main-drawer"
 					aria-label="close sidebar"

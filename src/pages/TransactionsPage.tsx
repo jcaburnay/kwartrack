@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useReducer, useTable } from "spacetimedb/react";
 import { DeleteConfirmModal } from "../components/DeleteConfirmModal";
 import type { TransactionFilters } from "../components/TransactionFilterRow";
@@ -27,10 +27,8 @@ export function TransactionsPage() {
 	const [subAccounts] = useTable(tables.my_sub_accounts);
 	const [allTransactions, isReady] = useTable(tables.my_transactions);
 
-	if (!isReady) return null;
-
 	// Filter by account/partition
-	const accountFiltered = (() => {
+	const accountFiltered = useMemo(() => {
 		const ap = filters.accountPartition;
 		if (!ap) return allTransactions;
 
@@ -59,22 +57,26 @@ export function TransactionsPage() {
 		}
 
 		return allTransactions;
-	})();
+	}, [filters.accountPartition, allTransactions, subAccounts]);
 
 	// Apply type/tag/date filters (same logic as AccountDetailPage)
-	const filteredTransactions = accountFiltered.filter((t) => {
-		if (filters.type && t.type !== filters.type) return false;
-		if (filters.tag && t.tag !== filters.tag) return false;
-		if (filters.dateFrom) {
-			const txnDate = new Date(Number(t.date.microsSinceUnixEpoch / 1000n));
-			if (txnDate < new Date(filters.dateFrom)) return false;
-		}
-		if (filters.dateTo) {
-			const txnDate = new Date(Number(t.date.microsSinceUnixEpoch / 1000n));
-			if (txnDate > new Date(`${filters.dateTo}T23:59:59`)) return false;
-		}
-		return true;
-	});
+	const filteredTransactions = useMemo(() => {
+		return accountFiltered.filter((t) => {
+			if (filters.type && t.type !== filters.type) return false;
+			if (filters.tag && t.tag !== filters.tag) return false;
+			if (filters.dateFrom) {
+				const txnDate = new Date(Number(t.date.microsSinceUnixEpoch / 1000n));
+				if (txnDate < new Date(filters.dateFrom)) return false;
+			}
+			if (filters.dateTo) {
+				const txnDate = new Date(Number(t.date.microsSinceUnixEpoch / 1000n));
+				if (txnDate > new Date(`${filters.dateTo}T23:59:59`)) return false;
+			}
+			return true;
+		});
+	}, [accountFiltered, filters.type, filters.tag, filters.dateFrom, filters.dateTo]);
+
+	if (!isReady) return null;
 
 	const hasActiveFilters = !!(
 		filters.type ||
@@ -101,13 +103,13 @@ export function TransactionsPage() {
 	};
 
 	return (
-		<div className="p-4 sm:p-6 animate-card-enter">
-			<h1 className="text-xs font-medium tracking-widest text-base-content/35 uppercase mb-5 animate-card-enter">
+		<div className="p-4 sm:p-6 ">
+			<h1 className="text-xs font-medium tracking-widest text-base-content/60 uppercase mb-5 ">
 				TRANSACTIONS
 			</h1>
 
 			{/* Filter row with account filter */}
-			<div className="relative z-10 mt-3 animate-card-enter" style={{ animationDelay: `0.06s` }}>
+			<div className="relative z-10 mt-3 ">
 				<TransactionFilterRow
 					filters={filters}
 					onChange={setFilters}
@@ -117,7 +119,7 @@ export function TransactionsPage() {
 			</div>
 
 			{/* Transaction table with account column */}
-			<div className="mt-3 animate-card-enter" style={{ animationDelay: `0.12s` }}>
+			<div className="mt-3 ">
 				<TransactionTable
 					transactions={filteredTransactions}
 					accounts={accounts}
@@ -126,12 +128,11 @@ export function TransactionsPage() {
 					onEdit={openEditModal}
 					onDelete={setTransactionDeleteTarget}
 					onAddNew={openCreateModal}
-					showAccountColumn
 				/>
 			</div>
 
 			{/* Transaction count */}
-			<div className="mt-2 text-xs text-base-content/35 text-right">
+			<div className="mt-2 text-xs text-base-content/60 text-right">
 				{filteredTransactions.length} transaction{filteredTransactions.length !== 1 ? "s" : ""}
 			</div>
 

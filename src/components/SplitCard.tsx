@@ -63,7 +63,7 @@ export function SplitCard({ splitEvent, participants, debts }: SplitCardProps) {
 					</div>
 					<div>
 						<p className="text-sm font-semibold leading-tight">{splitEvent.description}</p>
-						<p className="text-xs text-base-content/50">{dateStr}</p>
+						<p className="text-xs text-base-content/60">{dateStr}</p>
 					</div>
 				</div>
 
@@ -73,8 +73,9 @@ export function SplitCard({ splitEvent, participants, debts }: SplitCardProps) {
 				</span>
 
 				{/* Share info */}
-				<p className="text-xs text-base-content/50">
-					{splitCount}-way split · {formatPesos(shareAmount)} each
+				<p className="text-xs text-base-content/60">
+					{splitCount}-way split · <span className="font-mono">{formatPesos(shareAmount)}</span>{" "}
+					each
 				</p>
 
 				{/* Settlement badge + tag */}
@@ -86,7 +87,7 @@ export function SplitCard({ splitEvent, participants, debts }: SplitCardProps) {
 							{settledCount} of {participants.length} settled
 						</span>
 					)}
-					<span className="text-xs text-base-content/50">
+					<span className="text-xs text-base-content/60">
 						{splitEvent.tag.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())}
 					</span>
 				</div>

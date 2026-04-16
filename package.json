@@ -9,8 +9,8 @@
 		"preview": "vite preview",
 		"check": "biome check --write .",
 		"ci": "biome ci .",
-		"server:build": "pnpm --filter kwartrack-server build",
-		"server:publish": "pnpm --filter kwartrack-server publish",
+		"server:build": "pnpm --filter kwartrack-server run build",
+		"server:publish": "pnpm --filter kwartrack-server run publish",
 		"generate": "spacetime generate --lang typescript --out-dir src/module_bindings --module-path server",
 		"test": "vitest run",
 		"test:watch": "vitest"

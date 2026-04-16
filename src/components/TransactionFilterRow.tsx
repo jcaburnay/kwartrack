@@ -120,7 +120,7 @@ export function TransactionFilterRow({
 			{/* Mobile toggle button - visible below sm only */}
 			<button
 				type="button"
-				className="btn btn-sm btn-ghost gap-1 sm:hidden"
+				className="btn btn-sm btn-ghost gap-1 md:hidden"
 				onClick={() => setExpanded((v) => !v)}
 			>
 				Filter
@@ -129,12 +129,12 @@ export function TransactionFilterRow({
 
 			{/* Filter inputs - conditionally visible on mobile, always visible on sm+ */}
 			<div
-				className={`${expanded ? "flex" : "hidden"} sm:flex flex-col sm:flex-row sm:items-center gap-2 flex-wrap mt-2 sm:mt-0`}
+				className={`${expanded ? "flex" : "hidden"} md:flex flex-col md:flex-row md:items-center gap-2 flex-wrap mt-2 md:mt-0`}
 			>
 				{/* Account / partition filter */}
 				{accounts && subAccounts && (
 					<select
-						className="select select-bordered select-sm w-full sm:w-auto"
+						className="select select-bordered select-sm w-full md:w-auto"
 						value={filters.accountPartition ?? ""}
 						onChange={(e) =>
 							onChange({ ...filters, accountPartition: e.target.value || undefined })
@@ -168,7 +168,7 @@ export function TransactionFilterRow({
 
 				{/* Type filter */}
 				<select
-					className="select select-bordered select-sm w-full sm:w-auto"
+					className="select select-bordered select-sm w-full md:w-auto"
 					value={filters.type}
 					onChange={(e) =>
 						onChange({
@@ -185,7 +185,7 @@ export function TransactionFilterRow({
 
 				{/* Tag filter */}
 				<select
-					className="select select-bordered select-sm w-full sm:w-auto"
+					className="select select-bordered select-sm w-full md:w-auto"
 					value={filters.tag}
 					onChange={(e) => onChange({ ...filters, tag: e.target.value })}
 				>
@@ -202,7 +202,7 @@ export function TransactionFilterRow({
 					<div className="flex items-center gap-1">
 						<button
 							type="button"
-							className="select select-bordered select-sm w-full sm:w-auto flex items-center gap-1"
+							className="select select-bordered select-sm w-full md:w-auto flex items-center gap-1"
 							onClick={() => setOpen((v) => !v)}
 						>
 							{formatRangeLabel(filters.dateFrom, filters.dateTo)}

@@ -35,7 +35,7 @@ export function EditAccountModal({ accountId, currentName, onClose }: EditAccoun
 	};
 
 	return (
-		<dialog ref={ref} className="modal modal-bottom sm:modal-middle" onClose={onClose}>
+		<dialog ref={ref} className="modal modal-bottom md:modal-middle" onClose={onClose}>
 			<div className="modal-box flex flex-col" ref={boxRef}>
 				<div className="flex items-center justify-between mb-4">
 					<h3 className="text-lg font-semibold">Edit account</h3>

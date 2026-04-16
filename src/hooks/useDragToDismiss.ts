@@ -10,7 +10,7 @@ import { type RefObject, useEffect, useRef } from "react";
  * Otherwise the box snaps back.
  *
  * Only activates on screens narrower than 640 px (DaisyUI's `sm:` breakpoint),
- * matching the `modal-bottom sm:modal-middle` pattern used throughout the app.
+ * matching the `modal-bottom md:modal-middle` pattern used throughout the app.
  */
 export function useDragToDismiss(
 	boxRef: RefObject<HTMLDivElement | null>,

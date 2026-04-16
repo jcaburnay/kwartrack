@@ -18,28 +18,15 @@ import { computeTagStatuses, getCurrentMonthExpenses } from "../utils/budgetComp
 import { formatPesos } from "../utils/currency";
 
 const TAG_PALETTE = [
-	"oklch(62% 0.12 180)", // teal (primary)
-	"oklch(65% 0.14 40)", // terracotta (secondary)
-	"oklch(55% 0.12 290)", // lavender (accent)
-	"oklch(64% 0.17 155)", // sage (success)
-	"oklch(62% 0.1 240)", // blue (info)
-];
-
-// Hex equivalents for SVG (Recharts doesn't support oklch)
-const TAG_PALETTE_HEX = [
-	"#2a9d8f", // teal
-	"#c47a3a", // terracotta
-	"#7b5ea7", // lavender
-	"#4caf50", // sage
-	"#5b8fb9", // blue
+	"var(--color-primary)",
+	"var(--color-secondary)",
+	"var(--color-accent)",
+	"var(--color-success)",
+	"var(--color-info)",
 ];
 
 function getTagColor(index: number): string {
 	return TAG_PALETTE[index % TAG_PALETTE.length];
-}
-
-function getTagColorHex(index: number): string {
-	return TAG_PALETTE_HEX[index % TAG_PALETTE_HEX.length];
 }
 
 function getCardClass(pct: number): string {
@@ -49,8 +36,8 @@ function getCardClass(pct: number): string {
 }
 
 function getBarColor(pct: number, tagColor: string): string {
-	if (pct >= 100) return "#ef4444";
-	if (pct >= 80) return "#d97706";
+	if (pct >= 100) return "var(--color-error)";
+	if (pct >= 80) return "var(--color-warning)";
 	return tagColor;
 }
 
@@ -91,10 +78,6 @@ export function BudgetPage() {
 		() => new Map(sortedTagStatuses.map((s, i) => [s.tag, getTagColor(i)])),
 		[sortedTagStatuses],
 	);
-	const colorByTagHex = useMemo(
-		() => new Map(sortedTagStatuses.map((s, i) => [s.tag, getTagColorHex(i)])),
-		[sortedTagStatuses],
-	);
 
 	if (!isConfigReady) return null;
 
@@ -103,11 +86,11 @@ export function BudgetPage() {
 	// Empty state — no budget configured
 	if (!budgetConfig || budgetConfig.totalCentavos === 0n) {
 		return (
-			<div className="p-4 sm:p-6 animate-card-enter">
-				<h1 className="text-xs font-medium tracking-widest text-base-content/35 uppercase mb-5">
+			<div className="p-4 sm:p-6 ">
+				<h1 className="text-xs font-medium tracking-widest text-base-content/60 uppercase mb-5">
 					Budget
 				</h1>
-				<p className="text-sm text-base-content/50 mb-4">
+				<p className="text-sm text-base-content/60 mb-4">
 					Set a monthly spending limit to track where your money goes.
 				</p>
 				<button type="button" className="btn btn-primary btn-sm" onClick={() => setShowModal(true)}>
@@ -130,14 +113,14 @@ export function BudgetPage() {
 			name: "Overall",
 			declared: Number(budgetConfig.totalCentavos) / 100,
 			actual: Number(totalSpentCentavos) / 100,
-			fill: "#6b9fcc",
+			fill: "color-mix(in oklab, var(--color-primary) 60%, transparent)",
 			pct: totalPct,
 		},
-		...sortedTagStatuses.map((s) => ({
+		...sortedTagStatuses.map((s, i) => ({
 			name: s.tag.charAt(0).toUpperCase() + s.tag.slice(1).replace(/-/g, " "),
 			declared: Number(s.allocatedCentavos) / 100,
 			actual: Number(s.spentCentavos) / 100,
-			fill: colorByTagHex.get(s.tag) ?? getTagColorHex(0),
+			fill: getTagColor(i),
 			pct: s.percentUsed,
 		})),
 	];
@@ -160,16 +143,16 @@ export function BudgetPage() {
 	}
 
 	return (
-		<div className="p-4 sm:p-6 animate-card-enter">
+		<div className="p-4 sm:p-6 ">
 			{/* Header */}
-			<h1 className="text-xs font-medium tracking-widest text-base-content/35 uppercase mb-5">
+			<h1 className="text-xs font-medium tracking-widest text-base-content/60 uppercase mb-5">
 				Budget
 			</h1>
 
 			{/* Overview + Chart — side by side on desktop, stacked on mobile */}
 			<div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-5 pb-4 border-b border-base-content/10">
 				{/* Left: Hero + Stacked bar + Legend */}
-				<div className="animate-card-enter" style={{ animationDelay: `0.06s` }}>
+				<div>
 					{/* Hero */}
 					<div className="flex items-start justify-between mb-3">
 						<div>
@@ -181,7 +164,7 @@ export function BudgetPage() {
 							</div>
 							<button
 								type="button"
-								className="text-xs text-base-content/50 mt-1 hover:text-base-content/70 transition-colors flex items-center gap-1 cursor-pointer"
+								className="text-xs text-base-content/60 mt-1 hover:text-base-content/70 transition-colors flex items-center gap-1 cursor-pointer"
 								onClick={() => setShowModal(true)}
 							>
 								of {formatPesos(budgetConfig.totalCentavos)} · {getMonthHeading()}
@@ -257,12 +240,8 @@ export function BudgetPage() {
 				</div>
 
 				{/* Right: Bar chart — Actual vs Declared */}
-				<div
-					data-testid="budget-bar-chart"
-					className="animate-card-enter"
-					style={{ animationDelay: `0.12s` }}
-				>
-					<h2 className="text-xs font-semibold uppercase tracking-widest text-base-content/50 mb-2">
+				<div data-testid="budget-bar-chart" className="">
+					<h2 className="text-xs font-semibold uppercase tracking-widest text-base-content/60 mb-2">
 						Budget vs Actual
 					</h2>
 					<ResponsiveContainer width="100%" height={220}>
@@ -275,28 +254,42 @@ export function BudgetPage() {
 									height="6"
 									patternTransform="rotate(45)"
 								>
-									<rect width="6" height="6" fill="#fecaca" />
+									<rect
+										width="6"
+										height="6"
+										fill="color-mix(in oklab, var(--color-error) 10%, transparent)"
+									/>
 									<line
 										x1="0"
 										y1="0"
 										x2="0"
 										y2="6"
-										stroke="#ef4444"
+										stroke="var(--color-error)"
 										strokeWidth="2"
 										strokeOpacity="0.4"
 									/>
 								</pattern>
 							</defs>
-							<CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#d1d5db50" />
+							<CartesianGrid
+								strokeDasharray="3 3"
+								vertical={false}
+								stroke="color-mix(in oklab, var(--color-base-content) 10%, transparent)"
+							/>
 							<XAxis
 								dataKey="name"
-								tick={{ fontSize: 10, fill: "#737373" }}
+								tick={{
+									fontSize: 10,
+									fill: "color-mix(in oklab, var(--color-base-content) 40%, transparent)",
+								}}
 								axisLine={false}
 								tickLine={false}
 							/>
 							<YAxis
 								tickFormatter={(v: number) => `P${v.toLocaleString()}`}
-								tick={{ fontSize: 10, fill: "#737373" }}
+								tick={{
+									fontSize: 10,
+									fill: "color-mix(in oklab, var(--color-base-content) 40%, transparent)",
+								}}
 								axisLine={false}
 								tickLine={false}
 								width={70}
@@ -309,7 +302,13 @@ export function BudgetPage() {
 										String(name ?? ""),
 									];
 								}}
-								contentStyle={{ fontSize: 12, borderRadius: 8, border: "1px solid #d1d5db" }}
+								contentStyle={{
+									background: "var(--color-base-300)",
+									border: "none",
+									borderRadius: "var(--radius-box)",
+									fontSize: "12px",
+								}}
+								itemStyle={{ color: "var(--color-base-content)" }}
 							/>
 							<Bar dataKey="declared" name="Budget" radius={[4, 4, 0, 0]} barSize={14}>
 								{chartData.map((entry) => (
@@ -343,7 +342,7 @@ export function BudgetPage() {
 			</div>
 
 			{/* Section label */}
-			<h2 className="text-xs font-semibold uppercase tracking-widest text-base-content/50 mb-2">
+			<h2 className="text-xs font-semibold uppercase tracking-widest text-base-content/60 mb-2">
 				Categories
 			</h2>
 
@@ -354,11 +353,7 @@ export function BudgetPage() {
 					const isExpanded = expandedTag === s.tag;
 					const tagTxns = isExpanded ? getTagTransactions(s.tag) : [];
 					return (
-						<div
-							key={s.tag}
-							className="animate-card-enter"
-							style={{ animationDelay: `${0.18 + i * 0.04}s` }}
-						>
+						<div key={s.tag} className="" style={{ animationDelay: `${0.18 + i * 0.04}s` }}>
 							<button
 								type="button"
 								data-testid={`tag-card-${s.tag}`}
@@ -389,14 +384,14 @@ export function BudgetPage() {
 									</div>
 									<ChevronDown
 										size={14}
-										className={`text-base-content/30 transition-transform ${isExpanded ? "rotate-180" : ""}`}
+										className={`text-base-content/60 transition-transform ${isExpanded ? "rotate-180" : ""}`}
 									/>
 								</div>
 							</button>
 							{isExpanded && (
 								<div className="ml-5 mr-3 mb-1 border-l-2 border-base-300 pl-3 py-1">
 									{tagTxns.length === 0 ? (
-										<p className="text-xs text-base-content/40 py-1">No transactions this month.</p>
+										<p className="text-xs text-base-content/60 py-1">No transactions this month.</p>
 									) : (
 										tagTxns.map((txn) => {
 											const d = new Date(Number(txn.date.microsSinceUnixEpoch / 1000n));
@@ -413,7 +408,7 @@ export function BudgetPage() {
 														<span className="text-xs text-base-content/70 truncate">
 															{txn.description || txn.tag}
 														</span>
-														<span className="text-[10px] text-base-content/40">{dateStr}</span>
+														<span className="text-[10px] text-base-content/60">{dateStr}</span>
 													</div>
 													<span className="text-xs font-mono text-base-content/60 flex-shrink-0">
 														{formatPesos(txn.amountCentavos)}
@@ -451,18 +446,18 @@ export function BudgetPage() {
 											<span className="text-xs font-bold font-mono text-base-content/70">
 												{formatPesos(otherSpentCentavos)}
 											</span>
-											<span className="text-xs text-base-content/30 italic">no limit</span>
+											<span className="text-xs text-base-content/60 italic">no limit</span>
 										</div>
 										<ChevronDown
 											size={14}
-											className={`text-base-content/30 transition-transform ${isExpanded ? "rotate-180" : ""}`}
+											className={`text-base-content/60 transition-transform ${isExpanded ? "rotate-180" : ""}`}
 										/>
 									</div>
 								</button>
 								{isExpanded && (
 									<div className="ml-5 mr-3 mb-1 border-l-2 border-base-300 pl-3 py-1">
 										{otherTxns.length === 0 ? (
-											<p className="text-xs text-base-content/40 py-1">
+											<p className="text-xs text-base-content/60 py-1">
 												No transactions this month.
 											</p>
 										) : (
@@ -484,7 +479,7 @@ export function BudgetPage() {
 															<span className="text-xs text-base-content/70 truncate">
 																{txn.description || txn.tag}
 															</span>
-															<span className="text-[10px] text-base-content/40">{dateStr}</span>
+															<span className="text-[10px] text-base-content/60">{dateStr}</span>
 														</div>
 														<span className="text-xs font-mono text-base-content/60 flex-shrink-0">
 															{formatPesos(txn.amountCentavos)}

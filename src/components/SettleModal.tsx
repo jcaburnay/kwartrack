@@ -68,7 +68,7 @@ export function SettleModal({ debt, onClose }: SettleModalProps) {
 	useDragToDismiss(boxRef, onClose);
 
 	return (
-		<dialog ref={ref} className="modal modal-bottom sm:modal-middle" onClose={onClose}>
+		<dialog ref={ref} className="modal modal-bottom md:modal-middle" onClose={onClose}>
 			<div className="modal-box flex flex-col" ref={boxRef}>
 				<div className="flex items-center justify-between mb-4">
 					<h3 className="font-semibold text-sm">Settle — {debt.personName}</h3>
@@ -82,8 +82,11 @@ export function SettleModal({ debt, onClose }: SettleModalProps) {
 					</button>
 				</div>
 
-				<p className="text-xs text-base-content/50 mb-3">
-					Remaining: {formatPesos(debt.amountCentavos - debt.settledAmountCentavos)}
+				<p className="text-xs text-base-content/60 mb-3">
+					Remaining:{" "}
+					<span className="font-mono">
+						{formatPesos(debt.amountCentavos - debt.settledAmountCentavos)}
+					</span>
 				</p>
 
 				<form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-3">

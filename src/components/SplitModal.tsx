@@ -284,7 +284,7 @@ export function SplitModal({ onClose, editTarget }: SplitModalProps) {
 	}
 
 	return (
-		<dialog ref={ref} className="modal modal-bottom sm:modal-middle" onClose={onClose}>
+		<dialog ref={ref} className="modal modal-bottom md:modal-middle" onClose={onClose}>
 			<div className="modal-box flex flex-col" ref={boxRef}>
 				<div className="flex items-center justify-between mb-4">
 					<h3 className="font-semibold text-sm">{isEditMode ? "Edit split" : "New split"}</h3>
@@ -462,7 +462,7 @@ export function SplitModal({ onClose, editTarget }: SplitModalProps) {
 
 											{/* Computed share display for non-exact methods */}
 											{splitMethod !== "exact" && (
-												<span className="text-xs text-base-content/40 min-w-[70px] text-right">
+												<span className="text-xs text-base-content/60 min-w-[70px] text-right">
 													{totalCentavos > 0n && p.name.trim()
 														? formatPesos(getParticipantShareCentavos(p))
 														: "—"}
@@ -489,8 +489,13 @@ export function SplitModal({ onClose, editTarget }: SplitModalProps) {
 									>
 										+ Add person
 									</button>
-									<span className="text-xs text-base-content/40">
-										Your share: {totalCentavos > 0n ? formatPesos(yourShareCentavos()) : "—"}
+									<span className="text-xs text-base-content/60">
+										Your share:{" "}
+										{totalCentavos > 0n ? (
+											<span className="font-mono">{formatPesos(yourShareCentavos())}</span>
+										) : (
+											"—"
+										)}
 									</span>
 								</div>
 								{participantsError && (

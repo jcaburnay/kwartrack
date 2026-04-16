@@ -317,7 +317,7 @@ export function TransactionModal({ onClose, transaction }: TransactionModalProps
 	const submitLabel = isEditMode ? "Update transaction" : "Save transaction";
 
 	return (
-		<dialog ref={ref} className="modal modal-bottom sm:modal-middle" onClose={onClose}>
+		<dialog ref={ref} className="modal modal-bottom md:modal-middle" onClose={onClose}>
 			<div className="modal-box flex flex-col" ref={boxRef}>
 				{/* Header */}
 				<div className="flex items-center justify-between mb-4">
@@ -405,7 +405,7 @@ export function TransactionModal({ onClose, transaction }: TransactionModalProps
 										{errors.tag && <p className="text-error text-xs mt-1">{errors.tag.message}</p>}
 										{selectedType === "expense" && selectedTag && budgetHint && (
 											<p
-												className={`text-xs mt-1 font-mono ${isOverBudget ? "text-warning" : "text-base-content/50"}`}
+												className={`text-xs mt-1 font-mono ${isOverBudget ? "text-warning" : "text-base-content/60"}`}
 												role="status"
 											>
 												{budgetHint}
@@ -500,7 +500,7 @@ export function TransactionModal({ onClose, transaction }: TransactionModalProps
 											)}
 											{creditHint && (
 												<p
-													className={`text-sm mt-1 font-mono ${isCreditOverLimit ? "text-warning" : "text-base-content/50"}`}
+													className={`text-sm mt-1 font-mono ${isCreditOverLimit ? "text-warning" : "text-base-content/60"}`}
 												>
 													{creditHint}
 												</p>

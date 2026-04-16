@@ -208,7 +208,7 @@ export function SubAccountModal({
 	useDragToDismiss(boxRef, handleClose);
 
 	return (
-		<dialog ref={ref} className="modal modal-bottom sm:modal-middle" onClose={onClose}>
+		<dialog ref={ref} className="modal modal-bottom md:modal-middle" onClose={onClose}>
 			<div className="modal-box flex flex-col" ref={boxRef}>
 				<div className="flex items-center justify-between mb-4">
 					<h3 className="text-lg font-semibold">
@@ -338,8 +338,8 @@ export function SubAccountModal({
 											<span className="font-medium text-base-content">
 												{accountName}'s existing balance
 											</span>{" "}
-											({formatPesos(existingBalanceCentavos)}) will be moved to a sub-account. What
-											should it be called?
+											(<span className="font-mono">{formatPesos(existingBalanceCentavos)}</span>)
+											will be moved to a sub-account. What should it be called?
 										</p>
 										<div className="flex gap-2">
 											<div className="flex-1">

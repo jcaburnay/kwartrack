@@ -98,14 +98,10 @@ export function SubAccountCard({
 					type="button"
 					className="btn btn-ghost btn-xs btn-circle"
 					aria-label="Sub-account options"
-					tabIndex={0}
 				>
 					<MoreVertical size={14} />
 				</button>
-				<ul
-					tabIndex={0}
-					className="dropdown-content menu bg-base-100 rounded-xl z-10 w-36 p-1 shadow-lg border border-base-300/50"
-				>
+				<ul className="dropdown-content menu bg-base-100 rounded-xl z-10 w-36 p-1 shadow-lg border border-base-300/50">
 					{(isCreditSubAccount || isTimeDeposit) && onEdit ? (
 						<li>
 							<button type="button" onClick={() => onEdit(id)}>
@@ -160,7 +156,7 @@ export function SubAccountCard({
 						<span className="text-xl font-semibold font-mono">
 							{formatPesos(availableCentavos)}
 						</span>
-						<span className="text-xs text-base-content/40 font-mono">
+						<span className="text-xs text-base-content/60 font-mono">
 							of {formatPesos(creditLimitCentavos)} limit
 						</span>
 					</div>
@@ -170,7 +166,7 @@ export function SubAccountCard({
 						max={100}
 						title={`${availablePct}% available`}
 					/>
-					<span className="text-xs text-base-content/50">{availablePct}% available</span>
+					<span className="text-xs text-base-content/60">{availablePct}% available</span>
 				</div>
 			) : (
 				<div className="flex flex-col gap-1">
@@ -181,15 +177,15 @@ export function SubAccountCard({
 								<span className="badge badge-warning badge-sm w-fit">Matured</span>
 							) : null}
 							{interestRateDisplay && (
-								<span className="text-xs text-base-content/50 font-mono">
+								<span className="text-xs text-base-content/60 font-mono">
 									{interestRateDisplay}
 								</span>
 							)}
 							{maturityDateDisplay && !isMatured && (
-								<span className="text-xs text-base-content/40">{maturityDateDisplay}</span>
+								<span className="text-xs text-base-content/60">{maturityDateDisplay}</span>
 							)}
 							{isMatured && (
-								<span className="text-xs text-base-content/50">Withdraw or roll over</span>
+								<span className="text-xs text-base-content/60">Withdraw or roll over</span>
 							)}
 						</div>
 					)}

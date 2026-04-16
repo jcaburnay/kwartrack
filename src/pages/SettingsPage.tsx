@@ -44,8 +44,8 @@ export function SettingsPage() {
 	};
 
 	return (
-		<div className="p-4 sm:p-6 animate-card-enter">
-			<h1 className="text-xs font-medium tracking-widest text-base-content/35 uppercase mb-5">
+		<div className="p-4 sm:p-6 ">
+			<h1 className="text-xs font-medium tracking-widest text-base-content/60 uppercase mb-5">
 				Settings
 			</h1>
 
@@ -53,7 +53,7 @@ export function SettingsPage() {
 			<div className="rounded-xl border border-base-300/50 bg-base-100 shadow-sm">
 				<div className="px-4 py-3 border-b border-base-300/50">
 					<h3 className="text-sm font-semibold">Tags</h3>
-					<p className="text-xs text-base-content/50 mt-0.5">
+					<p className="text-xs text-base-content/60 mt-0.5">
 						Manage tags for each transaction type. Toggle visibility or add custom tags.
 					</p>
 				</div>
@@ -67,7 +67,7 @@ export function SettingsPage() {
 							className={`flex-1 px-4 py-2.5 text-sm font-medium capitalize transition-colors ${
 								activeTab === type
 									? "border-b-2 border-primary text-primary"
-									: "text-base-content/50 hover:text-base-content"
+									: "text-base-content/60 hover:text-base-content"
 							}`}
 							onClick={() => {
 								setActiveTab(type);
@@ -83,7 +83,7 @@ export function SettingsPage() {
 					{/* Default tags */}
 					{defaultTags.length > 0 && (
 						<div className="mb-4">
-							<h2 className="text-xs font-semibold uppercase tracking-widest text-base-content/50 mb-2">
+							<h2 className="text-xs font-semibold uppercase tracking-widest text-base-content/60 mb-2">
 								Default tags
 							</h2>
 							<div className="flex flex-col gap-1">
@@ -108,7 +108,7 @@ export function SettingsPage() {
 					{/* Custom tags */}
 					{customTags.length > 0 && (
 						<div className="mb-4">
-							<h2 className="text-xs font-semibold uppercase tracking-widest text-base-content/50 mb-2">
+							<h2 className="text-xs font-semibold uppercase tracking-widest text-base-content/60 mb-2">
 								Custom tags
 							</h2>
 							<div className="flex flex-col gap-1">

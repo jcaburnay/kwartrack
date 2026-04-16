@@ -98,7 +98,7 @@ export function BudgetModal({ onClose }: BudgetModalProps) {
 	};
 
 	return (
-		<dialog ref={ref} className="modal modal-bottom sm:modal-middle" onClose={onClose}>
+		<dialog ref={ref} className="modal modal-bottom md:modal-middle" onClose={onClose}>
 			<div className="modal-box flex flex-col" ref={boxRef}>
 				{/* Header */}
 				<div className="flex items-center justify-between mb-4">
@@ -132,7 +132,7 @@ export function BudgetModal({ onClose }: BudgetModalProps) {
 
 							{/* Per-tag allocations */}
 							<div>
-								<span className="label-text text-sm text-base-content/50">
+								<span className="label-text text-sm text-base-content/60">
 									Per-tag allocations (optional)
 								</span>
 							</div>
@@ -202,7 +202,7 @@ export function BudgetModal({ onClose }: BudgetModalProps) {
 					{allocatedTotal > 0 && (
 						<div
 							className={`flex items-center justify-between text-xs mt-3 px-1 ${
-								isOverAllocated ? "text-error" : "text-base-content/50"
+								isOverAllocated ? "text-error" : "text-base-content/60"
 							}`}
 						>
 							<span>Tag allocations total</span>

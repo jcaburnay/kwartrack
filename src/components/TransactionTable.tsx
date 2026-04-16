@@ -1,7 +1,10 @@
-import { ArrowLeftRight, Plus, Search } from "lucide-react";
-import { useMemo } from "react";
-import { formatPesos } from "../utils/currency";
-import { TransactionRowActions } from "./TransactionRowActions";
+import { Plus } from "lucide-react";
+import { useCallback, useMemo } from "react";
+import {
+	TransactionEmptyState,
+	TransactionItem,
+	TransactionTableRow,
+} from "./TransactionTableShared";
 
 export interface TransactionRow {
 	id: bigint;
@@ -26,7 +29,6 @@ interface TransactionTableProps {
 	onEdit: (transaction: TransactionRow) => void;
 	onDelete: (transaction: TransactionRow) => void;
 	onAddNew: () => void;
-	showAccountColumn?: boolean;
 }
 
 function formatSubAccountLabel(
@@ -90,9 +92,9 @@ export function TransactionTable({
 	onEdit,
 	onDelete,
 	onAddNew,
-	showAccountColumn,
 }: TransactionTableProps) {
-	const colCount = showAccountColumn ? 10 : 9;
+	const colCount = 9;
+
 	const sorted = useMemo(
 		() =>
 			[...transactions].sort((a, b) => {
@@ -108,179 +110,104 @@ export function TransactionTable({
 		[transactions],
 	);
 
+	const handleEdit = useCallback((txn: TransactionRow) => onEdit(txn), [onEdit]);
+	const handleDelete = useCallback((txn: TransactionRow) => onDelete(txn), [onDelete]);
+
 	return (
 		<>
-			{/* Mobile card list - per D-06 */}
-			<div className="flex flex-col gap-2 sm:hidden">
-				{/* New transaction button */}
+			{/* Mobile Add Button */}
+			<div className="md:hidden mb-2">
 				<button
 					type="button"
 					onClick={onAddNew}
-					className="inline-flex items-center gap-2 h-[36px] px-3 border border-dashed border-base-content/20 rounded text-base-content/40 hover:text-base-content/60 hover:border-base-content/40 transition-colors text-sm cursor-pointer"
+					className="w-full inline-flex items-center justify-center gap-2 min-h-[44px] px-3 border border-dashed border-base-content/30 rounded text-base-content/60 hover:text-base-content/80 hover:border-base-content/50 transition-colors text-sm cursor-pointer"
 				>
 					<Plus size={14} />
 					New transaction
 				</button>
-
-				{sorted.length === 0 && (
-					<div className="py-6 text-center">
-						<div className="flex flex-col items-center gap-2 text-base-content/40">
-							{hasActiveFilters ? (
-								<>
-									<Search size={20} />
-									<span className="text-sm">No transactions match your filters</span>
-								</>
-							) : (
-								<>
-									<ArrowLeftRight size={20} />
-									<span className="text-sm">No transactions yet</span>
-								</>
-							)}
-						</div>
-					</div>
-				)}
-
-				{sorted.map((txn) => (
-					<button
-						key={txn.id.toString()}
-						type="button"
-						className="rounded-xl bg-base-100 shadow-sm border border-base-300/50 p-3 text-left cursor-pointer hover:bg-base-300 transition-colors"
-						onClick={() => onEdit(txn)}
-					>
-						<div className="flex items-center justify-between">
-							<span className="text-sm font-medium truncate max-w-[60%]">
-								{txn.isRecurring && <span className="mr-0.5 opacity-60">&#8635;</span>}
-								{txn.description || txn.tag?.replace(/-/g, " ")}
-							</span>
-							<span className={amountClass(txn.type)}>{formatPesos(txn.amountCentavos)}</span>
-						</div>
-						<div className="flex items-center gap-2 mt-1">
-							<span className="text-xs text-base-content/60">{formatDate(txn.date)}</span>
-							<span className={typeBadgeClass(txn.type)}>{txn.type}</span>
-							{txn.tag && (
-								<span className="text-xs text-base-content/60 capitalize">
-									{txn.tag.replace(/-/g, " ")}
-								</span>
-							)}
-							{showAccountColumn && (
-								<span className="text-xs text-base-content/35">
-									· {formatAccountLabel(txn, accounts, subAccounts)}
-								</span>
-							)}
-						</div>
-					</button>
-				))}
 			</div>
 
-			{/* Desktop table */}
-			<div className="hidden sm:block overflow-visible">
-				<table className="table table-sm w-full">
-					<thead>
-						<tr className="bg-base-200">
-							<th className="text-xs font-semibold tracking-widest text-base-content/40 uppercase">
-								AMOUNT
-							</th>
-							<th className="text-xs font-semibold tracking-widest text-base-content/40 uppercase">
-								TYPE
-							</th>
-							<th className="text-xs font-semibold tracking-widest text-base-content/40 uppercase">
-								TAG
-							</th>
-							{showAccountColumn && (
-								<th className="text-xs font-semibold tracking-widest text-base-content/40 uppercase">
-									ACCOUNT
+			{sorted.length === 0 && <TransactionEmptyState hasActiveFilters={hasActiveFilters} />}
+
+			{/* Desktop table layout with mobile-hidden columns and custom mobile list items */}
+			<div className="overflow-visible">
+				{/* Mobile list view */}
+				<div className="flex flex-col gap-2 md:hidden">
+					{sorted.map((txn) => (
+						<TransactionItem
+							key={txn.id.toString()}
+							txn={txn}
+							onEdit={handleEdit}
+							formatDate={formatDate}
+							amountClass={amountClass}
+							typeBadgeClass={typeBadgeClass}
+						/>
+					))}
+				</div>
+
+				{/* Desktop table view */}
+				<div className="hidden md:block overflow-x-auto">
+					<table className="table table-sm w-full">
+						<thead>
+							<tr className="bg-base-200">
+								<th className="text-xs font-semibold tracking-widest text-base-content/60 uppercase">
+									AMOUNT
 								</th>
-							)}
-							<th className="text-xs font-semibold tracking-widest text-base-content/40 uppercase">
-								FROM
-							</th>
-							<th className="text-xs font-semibold tracking-widest text-base-content/40 uppercase">
-								TO
-							</th>
-							<th className="text-xs font-semibold tracking-widest text-base-content/40 uppercase">
-								FEE
-							</th>
-							<th className="text-xs font-semibold tracking-widest text-base-content/40 uppercase">
-								DESCRIPTION
-							</th>
-							<th className="text-xs font-semibold tracking-widest text-base-content/40 uppercase">
-								DATE
-							</th>
-							<th />
-						</tr>
-					</thead>
-					<tbody>
-						<tr>
-							<td colSpan={colCount} className="py-1">
-								<button
-									type="button"
-									onClick={onAddNew}
-									className="inline-flex items-center gap-2 h-[36px] px-3 border border-dashed border-base-content/20 rounded text-base-content/40 hover:text-base-content/60 hover:border-base-content/40 transition-colors text-sm cursor-pointer"
-								>
-									<Plus size={14} />
-									New transaction
-								</button>
-							</td>
-						</tr>
-						{sorted.length === 0 && (
+								<th className="text-xs font-semibold tracking-widest text-base-content/60 uppercase">
+									TYPE
+								</th>
+								<th className="text-xs font-semibold tracking-widest text-base-content/60 uppercase">
+									TAG
+								</th>
+								<th className="text-xs font-semibold tracking-widest text-base-content/60 uppercase">
+									FROM
+								</th>
+								<th className="text-xs font-semibold tracking-widest text-base-content/60 uppercase">
+									TO
+								</th>
+								<th className="text-xs font-semibold tracking-widest text-base-content/60 uppercase">
+									FEE
+								</th>
+								<th className="text-xs font-semibold tracking-widest text-base-content/60 uppercase">
+									DESCRIPTION
+								</th>
+								<th className="text-xs font-semibold tracking-widest text-base-content/60 uppercase">
+									DATE
+								</th>
+								<th />
+							</tr>
+						</thead>
+						<tbody>
 							<tr>
-								<td colSpan={colCount} className="py-6 text-center">
-									<div className="flex flex-col items-center gap-2 text-base-content/40">
-										{hasActiveFilters ? (
-											<>
-												<Search size={20} />
-												<span className="text-sm">No transactions match your filters</span>
-											</>
-										) : (
-											<>
-												<ArrowLeftRight size={20} />
-												<span className="text-sm">No transactions yet</span>
-											</>
-										)}
-									</div>
+								<td colSpan={colCount} className="py-1">
+									<button
+										type="button"
+										onClick={onAddNew}
+										className="inline-flex items-center gap-2 min-h-[44px] px-3 border border-dashed border-base-content/30 rounded text-base-content/60 hover:text-base-content/80 hover:border-base-content/50 transition-colors text-sm cursor-pointer"
+									>
+										<Plus size={14} />
+										New transaction
+									</button>
 								</td>
 							</tr>
-						)}
-						{sorted.map((txn) => (
-							<tr key={txn.id.toString()}>
-								<td className={amountClass(txn.type)}>
-									{txn.isRecurring && (
-										<span title="Auto-created recurring transaction" className="mr-0.5 opacity-60">
-											↻
-										</span>
-									)}
-									{formatPesos(txn.amountCentavos)}
-								</td>
-								<td>
-									<span className={typeBadgeClass(txn.type)}>{txn.type}</span>
-								</td>
-								<td className="text-sm capitalize">{txn.tag?.replace(/-/g, " ")}</td>
-								{showAccountColumn && (
-									<td className="text-sm text-base-content/50">
-										{formatAccountLabel(txn, accounts, subAccounts)}
-									</td>
-								)}
-								<td className="text-sm">
-									{formatSubAccountLabel(txn.sourceSubAccountId, accounts, subAccounts)}
-								</td>
-								<td className="text-sm">
-									{formatSubAccountLabel(txn.destinationSubAccountId, accounts, subAccounts)}
-								</td>
-								<td className="text-sm text-base-content/60 font-mono">
-									{txn.serviceFeeCentavos !== 0n ? formatPesos(txn.serviceFeeCentavos) : ""}
-								</td>
-								<td className="text-sm text-base-content/60">{txn.description || "—"}</td>
-								<td className="text-sm">{formatDate(txn.date)}</td>
-								<td>
-									<TransactionRowActions
-										onEdit={() => onEdit(txn)}
-										onDelete={() => onDelete(txn)}
-									/>
-								</td>
-							</tr>
-						))}
-					</tbody>
-				</table>
+							{sorted.map((txn) => (
+								<TransactionTableRow
+									key={txn.id.toString()}
+									txn={txn}
+									accounts={accounts}
+									subAccounts={subAccounts}
+									colCount={colCount}
+									onEdit={handleEdit}
+									onDelete={handleDelete}
+									formatDate={formatDate}
+									formatSubAccountLabel={formatSubAccountLabel}
+									amountClass={amountClass}
+									typeBadgeClass={typeBadgeClass}
+								/>
+							))}
+						</tbody>
+					</table>
+				</div>
 			</div>
 		</>
 	);

@@ -48,18 +48,22 @@ export function OverviewPage() {
 	const budgetRemaining = budgetTotal - totalSpentCentavos;
 
 	const barColor =
-		budgetPct >= 100 ? "#ef4444" : budgetPct >= 80 ? "#d97706" : "oklch(62% 0.12 180)";
+		budgetPct >= 100
+			? "var(--color-error)"
+			: budgetPct >= 80
+				? "var(--color-warning)"
+				: "var(--color-primary)";
 
 	return (
-		<div className="p-4 sm:p-6 animate-card-enter">
+		<div className="p-4 sm:p-6 ">
 			{/* Section header */}
-			<h1 className="text-xs font-medium tracking-widest text-base-content/35 uppercase mb-5">
+			<h1 className="text-xs font-medium tracking-widest text-base-content/60 uppercase mb-5">
 				Overview
 			</h1>
 
 			{/* Hero: Total Net Balance */}
-			<div className="mb-8 animate-card-enter">
-				<span className="text-xs text-base-content/40 uppercase tracking-widest">
+			<div className="mb-8 ">
+				<span className="text-xs text-base-content/60 uppercase tracking-widest">
 					Total Balance
 				</span>
 				<div
@@ -69,7 +73,7 @@ export function OverviewPage() {
 				>
 					{formatPesos(totalBalance)}
 				</div>
-				<span className="text-xs text-base-content/40">
+				<span className="text-xs text-base-content/60">
 					across {accounts.length} account{accounts.length !== 1 ? "s" : ""}
 				</span>
 			</div>
@@ -79,12 +83,12 @@ export function OverviewPage() {
 				{/* LEFT column */}
 				<div className="flex flex-col gap-5">
 					{/* Account Summary Cards */}
-					<div className="animate-card-enter" style={{ animationDelay: `0.06s` }}>
-						<h2 className="text-xs font-semibold uppercase tracking-widest text-base-content/50 mb-2">
+					<div>
+						<h2 className="text-xs font-semibold uppercase tracking-widest text-base-content/60 mb-2">
 							Accounts
 						</h2>
 						{accountSummaries.length === 0 ? (
-							<p className="text-sm text-base-content/50">
+							<p className="text-sm text-base-content/60">
 								No accounts yet &middot;{" "}
 								<Link to="/accounts" className="text-primary hover:underline">
 									Add one
@@ -95,10 +99,10 @@ export function OverviewPage() {
 								<table className="table table-sm w-full">
 									<thead>
 										<tr className="bg-base-200">
-											<th className="text-xs font-semibold tracking-widest text-base-content/40 uppercase">
+											<th className="text-xs font-semibold tracking-widest text-base-content/60 uppercase">
 												ACCOUNT
 											</th>
-											<th className="text-xs font-semibold tracking-widest text-base-content/40 uppercase text-right">
+											<th className="text-xs font-semibold tracking-widest text-base-content/60 uppercase text-right">
 												BALANCE
 											</th>
 										</tr>
@@ -136,12 +140,12 @@ export function OverviewPage() {
 					</div>
 
 					{/* Budget Summary */}
-					<div className="animate-card-enter" style={{ animationDelay: `0.12s` }}>
-						<h2 className="text-xs font-semibold uppercase tracking-widest text-base-content/50 mb-2">
+					<div>
+						<h2 className="text-xs font-semibold uppercase tracking-widest text-base-content/60 mb-2">
 							Budget This Month
 						</h2>
 						{budgetTotal === 0n ? (
-							<p className="text-sm text-base-content/50">
+							<p className="text-sm text-base-content/60">
 								No budget set &middot;{" "}
 								<Link to="/budget" className="text-primary hover:underline">
 									Set one
@@ -153,7 +157,7 @@ export function OverviewPage() {
 									<span className="text-xl font-bold font-mono">
 										{formatPesos(totalSpentCentavos)}
 									</span>
-									<span className="text-xs text-base-content/40">
+									<span className="text-xs text-base-content/60">
 										of {formatPesos(budgetTotal)}
 									</span>
 								</div>
@@ -166,7 +170,7 @@ export function OverviewPage() {
 										}}
 									/>
 								</div>
-								<p className="text-xs text-base-content/50">
+								<p className="text-xs text-base-content/60">
 									{budgetPct}% spent &middot; {formatPesos(budgetRemaining)} remaining
 								</p>
 							</div>
@@ -177,12 +181,12 @@ export function OverviewPage() {
 				{/* RIGHT column */}
 				<div className="flex flex-col gap-5">
 					{/* Spending by Category (DASH-03) */}
-					<div className="animate-card-enter" style={{ animationDelay: `0.18s` }}>
+					<div>
 						<SpendingByCategoryChart spending={spendingByTag} />
 					</div>
 
 					{/* Monthly Trend (DASH-04) */}
-					<div className="animate-card-enter" style={{ animationDelay: `0.24s` }}>
+					<div>
 						<MonthlyTrendChart trend={monthlyTrend} />
 					</div>
 				</div>
@@ -194,11 +198,11 @@ export function OverviewPage() {
 // --- Chart Components ---
 
 const TAG_PALETTE = [
-	"oklch(62% 0.12 180)",
-	"oklch(65% 0.14 40)",
-	"oklch(55% 0.12 290)",
-	"oklch(64% 0.17 155)",
-	"oklch(62% 0.1 240)",
+	"var(--color-primary)",
+	"var(--color-secondary)",
+	"var(--color-accent)",
+	"var(--color-success)",
+	"var(--color-info)",
 ];
 
 interface SpendingByCategoryChartProps {
@@ -213,13 +217,13 @@ function SpendingByCategoryChart({ spending }: SpendingByCategoryChartProps) {
 
 	return (
 		<div>
-			<h2 className="text-xs font-semibold uppercase tracking-widest text-base-content/50 mb-2">
+			<h2 className="text-xs font-semibold uppercase tracking-widest text-base-content/60 mb-2">
 				Spending by Category
 			</h2>
 			<div className="bg-base-100 shadow-sm border border-base-300/50 rounded-xl p-3.5">
-				<p className="text-xs text-base-content/40 mb-3">{getMonthHeading()}</p>
+				<p className="text-xs text-base-content/60 mb-3">{getMonthHeading()}</p>
 				{spending.length === 0 ? (
-					<p className="text-sm text-base-content/50 py-4 text-center">No expenses this month</p>
+					<p className="text-sm text-base-content/60 py-4 text-center">No expenses this month</p>
 				) : (
 					<div className="flex flex-col gap-2.5">
 						{top5.map((item, i) => {
@@ -246,7 +250,7 @@ function SpendingByCategoryChart({ spending }: SpendingByCategoryChartProps) {
 							);
 						})}
 						{remaining.length > 0 && (
-							<div className="flex items-center justify-between text-xs text-base-content/40">
+							<div className="flex items-center justify-between text-xs text-base-content/60">
 								<span>+ {remaining.length} more</span>
 								<span className="font-mono">{formatPesos(remainingTotal)}</span>
 							</div>
@@ -280,12 +284,12 @@ function MonthlyTrendChart({ trend }: MonthlyTrendChartProps) {
 
 	return (
 		<div>
-			<h2 className="text-xs font-semibold uppercase tracking-widest text-base-content/50 mb-2">
+			<h2 className="text-xs font-semibold uppercase tracking-widest text-base-content/60 mb-2">
 				Monthly Trend
 			</h2>
 			<div className="bg-base-100 shadow-sm border border-base-300/50 rounded-xl p-3.5">
 				{!hasData ? (
-					<p className="text-sm text-base-content/50 py-4 text-center">
+					<p className="text-sm text-base-content/60 py-4 text-center">
 						Not enough data for trends
 					</p>
 				) : (
@@ -293,31 +297,38 @@ function MonthlyTrendChart({ trend }: MonthlyTrendChartProps) {
 						{/* Inline legend */}
 						<div className="flex items-center gap-4 mb-2">
 							<div className="flex items-center gap-1.5">
-								<div className="w-3 h-0.5 rounded-full" style={{ background: "#4ade80" }} />
-								<span className="text-xs text-base-content/50">Income</span>
+								<div className="w-3 h-0.5 rounded-full bg-success" />
+								<span className="text-xs text-base-content/60">Income</span>
 							</div>
 							<div className="flex items-center gap-1.5">
-								<div className="w-3 h-0.5 rounded-full" style={{ background: "#f87171" }} />
-								<span className="text-xs text-base-content/50">Expenses</span>
+								<div className="w-3 h-0.5 rounded-full bg-error" />
+								<span className="text-xs text-base-content/60">Expenses</span>
 							</div>
 						</div>
 						<ResponsiveContainer width="100%" height={180}>
 							<LineChart data={chartData}>
-								<CartesianGrid horizontal vertical={false} stroke="oklch(50% 0 0 / 0.1)" />
+								<CartesianGrid
+									horizontal
+									vertical={false}
+									stroke="color-mix(in oklab, var(--color-base-content) 10%, transparent)"
+								/>
 								<XAxis
 									dataKey="label"
 									axisLine={false}
 									tickLine={false}
-									tick={{ fontSize: 11, fill: "oklch(50% 0 0 / 0.4)" }}
+									tick={{
+										fontSize: 11,
+										fill: "color-mix(in oklab, var(--color-base-content) 40%, transparent)",
+									}}
 								/>
 								<Tooltip
 									contentStyle={{
-										background: "oklch(20% 0 0)",
+										background: "var(--color-base-300)",
 										border: "none",
-										borderRadius: "8px",
+										borderRadius: "var(--radius-box)",
 										fontSize: "12px",
 									}}
-									itemStyle={{ color: "oklch(90% 0 0)" }}
+									itemStyle={{ color: "var(--color-base-content)" }}
 									formatter={(value) => {
 										const numericValue = typeof value === "number" ? value : Number(value ?? 0);
 										return `P${numericValue.toLocaleString("en-PH", {
@@ -329,7 +340,7 @@ function MonthlyTrendChart({ trend }: MonthlyTrendChartProps) {
 								<Line
 									type="monotone"
 									dataKey="income"
-									stroke="#4ade80"
+									stroke="var(--color-success)"
 									strokeWidth={2.5}
 									dot={false}
 									name="Income"
@@ -337,7 +348,7 @@ function MonthlyTrendChart({ trend }: MonthlyTrendChartProps) {
 								<Line
 									type="monotone"
 									dataKey="expenses"
-									stroke="#f87171"
+									stroke="var(--color-error)"
 									strokeWidth={2.5}
 									dot={false}
 									name="Expenses"

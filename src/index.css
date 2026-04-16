@@ -39,6 +39,9 @@
 	--color-error: oklch(58% 0.19 25);
 	--color-error-content: oklch(100% 0 0);
 
+	--fallback-l: 62%;
+	--fallback-c: 0.12;
+
 	--radius-selector: 1rem;
 	--radius-field: 0.5rem;
 	--radius-box: 0.75rem;
@@ -84,6 +87,9 @@
 
 	--color-error: oklch(68% 0.17 25);
 	--color-error-content: oklch(16% 0.01 25);
+
+	--fallback-l: 72%;
+	--fallback-c: 0.14;
 
 	--radius-selector: 1rem;
 	--radius-field: 0.5rem;

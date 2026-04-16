@@ -29,7 +29,7 @@ export function DeleteConfirmModal({
 	useDragToDismiss(boxRef, onDismiss);
 
 	return (
-		<dialog ref={ref} className="modal modal-bottom sm:modal-middle" onClose={onDismiss}>
+		<dialog ref={ref} className="modal modal-bottom md:modal-middle" onClose={onDismiss}>
 			<div className="modal-box flex flex-col" ref={boxRef}>
 				<h3 className="text-lg font-semibold mb-2">{title}</h3>
 				<p className="text-sm text-base-content/60 mb-4">{body}</p>

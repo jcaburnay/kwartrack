@@ -142,37 +142,33 @@ export function RecurringCard({ definition }: RecurringCardProps) {
 							definition.isPaused && (
 								<span className="badge badge-sm badge-success">Completed</span>
 							)}
-						<span className="text-xs text-base-content/50">{anchorLabel}</span>
+						<span className="text-xs text-base-content/60">{anchorLabel}</span>
 					</div>
 
 					{/* Installment counter */}
 					{definition.totalOccurrences > 0 && (
-						<span className="text-xs text-base-content/50">
+						<span className="text-xs text-base-content/60">
 							{definition.remainingOccurrences} of {definition.totalOccurrences} payments
 						</span>
 					)}
 
 					{/* Tag + partition */}
-					<p className="text-xs text-base-content/50 truncate">
+					<p className="text-xs text-base-content/60 truncate">
 						{definition.tag.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())}
 						{partitionLabel ? ` · ${partitionLabel}` : ""}
 					</p>
 				</div>
 
 				{/* ⋮ menu — absolute top-right */}
-				<div className="absolute top-3 right-3 z-10 dropdown dropdown-end">
+				<div className="absolute top-3 right-3 dropdown dropdown-end">
 					<button
 						type="button"
-						tabIndex={0}
 						className="btn btn-ghost btn-xs btn-circle"
-						aria-label="More actions"
+						aria-label="Recurring options"
 					>
 						<MoreVertical size={14} />
 					</button>
-					<ul
-						tabIndex={0}
-						className="dropdown-content menu bg-base-100 rounded-xl z-10 w-36 p-1 shadow-lg border border-base-300/50"
-					>
+					<ul className="dropdown-content menu bg-base-100 rounded-xl z-10 w-32 p-1 shadow-lg border border-base-300/50">
 						<li>
 							<button type="button" onClick={() => setShowEdit(true)}>
 								Edit
