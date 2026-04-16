@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "react-router";
+import { ThemeToggle } from "./ThemeToggle";
 
 const TABS = [
 	{ label: "Overview", icon: LayoutDashboard, to: "/overview" },
@@ -22,15 +23,17 @@ const TABS = [
 const MORE_ITEMS = [
 	{ label: "Recurring", icon: CalendarClock, to: "/recurring" },
 	{ label: "Debts & Splits", icon: HandCoins, to: "/debts" },
-	{ label: "Settings", icon: Settings, to: "/settings" },
 ];
+
+const SETTINGS_ITEM = { label: "Settings", icon: Settings, to: "/settings" };
 
 export function BottomTabBar() {
 	const { pathname } = useLocation();
 	const [moreOpen, setMoreOpen] = useState(false);
-	const moreRef = useRef<HTMLDivElement>(null);
+	const moreRef = useRef<HTMLButtonElement>(null);
 
-	const isMoreActive = MORE_ITEMS.some((item) => pathname.startsWith(item.to));
+	const isMoreActive =
+		[...MORE_ITEMS, SETTINGS_ITEM].some((item) => pathname.startsWith(item.to));
 
 	useEffect(() => {
 		if (!moreOpen) return;
@@ -53,11 +56,15 @@ export function BottomTabBar() {
 				if (tab.to === null) {
 					const active = isMoreActive;
 					return (
-						<div key={tab.label} className="relative" ref={moreRef}>
+						<div
+							key={tab.label}
+							ref={moreRef}
+							className={active ? "dock-active" : ""}
+						>
 							<button
 								type="button"
 								onClick={() => setMoreOpen((prev) => !prev)}
-								className={active ? "dock-active" : ""}
+								className="flex flex-col items-center justify-center gap-[1px] w-full h-full"
 							>
 								<Icon size={20} />
 								<span className="dock-label">{tab.label}</span>
@@ -82,6 +89,22 @@ export function BottomTabBar() {
 											</Link>
 										);
 									})}
+									<ThemeToggle className="flex items-center gap-3 px-4 py-2 min-h-[44px] hover:bg-base-200 rounded-lg text-sm w-full cursor-pointer transition-colors" />
+									{(() => {
+										const itemActive = pathname.startsWith(SETTINGS_ITEM.to);
+										return (
+											<Link
+												to={SETTINGS_ITEM.to}
+												onClick={() => setMoreOpen(false)}
+												className={`flex items-center gap-3 px-4 py-2 min-h-[44px] hover:bg-base-200 rounded-lg ${
+													itemActive ? "text-primary" : ""
+												}`}
+											>
+												<SETTINGS_ITEM.icon size={18} />
+												<span className="text-sm whitespace-nowrap">{SETTINGS_ITEM.label}</span>
+											</Link>
+										);
+									})()}
 								</div>
 							)}
 						</div>
