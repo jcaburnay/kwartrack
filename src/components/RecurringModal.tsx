@@ -1,9 +1,8 @@
 import { X } from "lucide-react";
 import { useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
-import { useReducer, useTable } from "spacetimedb/react";
+import { useAccounts, useRecurringActions, useSubAccounts, useTags } from "../hooks";
 import { useDragToDismiss } from "../hooks/useDragToDismiss";
-import { reducers, tables } from "../module_bindings";
 import { openAsModal } from "../utils/dialog";
 import { getVisibleTags } from "../utils/tagConfig";
 import { Input } from "./Input";
@@ -116,11 +115,10 @@ export function RecurringModal({
 	useEffect(() => {
 		openAsModal(ref.current);
 	}, []);
-	const createRecurring = useReducer(reducers.createRecurringDefinition);
-	const editRecurring = useReducer(reducers.editRecurringDefinition);
-	const [accounts] = useTable(tables.my_accounts);
-	const [subAccounts] = useTable(tables.my_sub_accounts);
-	const [tagConfigs] = useTable(tables.my_tag_configs);
+	const { create: createRecurring, edit: editRecurring } = useRecurringActions();
+	const { accounts } = useAccounts();
+	const { subAccounts } = useSubAccounts();
+	const { tagConfigs } = useTags();
 	const isEdit = !!definition;
 	const effectiveMode = isEdit
 		? definition.totalOccurrences > 0

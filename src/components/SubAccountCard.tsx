@@ -1,7 +1,6 @@
 import { MoreVertical } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { useReducer } from "spacetimedb/react";
-import { reducers } from "../module_bindings";
+import { useSubAccountActions } from "../hooks";
 import { formatPesos } from "../utils/currency";
 
 interface SubAccountCardProps {
@@ -31,7 +30,7 @@ export function SubAccountCard({
 	maturityDate,
 	isMatured = false,
 }: SubAccountCardProps) {
-	const renameSubAccount = useReducer(reducers.renameSubAccount);
+	const { rename: renameSubAccount } = useSubAccountActions();
 	const [isRenaming, setIsRenaming] = useState(false);
 	const [renameValue, setRenameValue] = useState(name);
 	const inputRef = useRef<HTMLInputElement>(null);

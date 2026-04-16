@@ -1,16 +1,17 @@
 import { Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
-import { useReducer, useTable } from "spacetimedb/react";
-import { reducers, tables } from "../module_bindings";
+import { useTagActions, useTags } from "../hooks";
 import { DEFAULT_TAGS } from "../utils/tagConfig";
 
 const TYPES = ["expense", "income", "transfer"] as const;
 
 export function SettingsPage() {
-	const [tagConfigs, isTagConfigsReady] = useTable(tables.my_tag_configs);
-	const addCustomTag = useReducer(reducers.addCustomTag);
-	const deleteCustomTag = useReducer(reducers.deleteCustomTag);
-	const toggleTagVisibility = useReducer(reducers.toggleTagVisibility);
+	const { tagConfigs, isLoading: isTagConfigsReady } = useTags();
+	const {
+		addCustom: addCustomTag,
+		removeCustom: deleteCustomTag,
+		toggleVisibility: toggleTagVisibility,
+	} = useTagActions();
 
 	const [activeTab, setActiveTab] = useState<string>("expense");
 	const [newTagInput, setNewTagInput] = useState("");

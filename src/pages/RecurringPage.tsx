@@ -1,12 +1,11 @@
 import { useState } from "react";
-import { useTable } from "spacetimedb/react";
 import { NewItemCard } from "../components/NewItemCard";
 import { RecurringCard } from "../components/RecurringCard";
 import { RecurringModal } from "../components/RecurringModal";
-import { tables } from "../module_bindings";
+import { useRecurring } from "../hooks";
 
 export function RecurringPage() {
-	const [definitions, isReady] = useTable(tables.my_recurring_definitions);
+	const { definitions, isLoading: isReady } = useRecurring();
 	const [modalMode, setModalMode] = useState<"subscription" | "installment" | null>(null);
 
 	if (!isReady) return null;

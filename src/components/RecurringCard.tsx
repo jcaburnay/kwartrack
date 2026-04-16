@@ -1,7 +1,6 @@
 import { MoreVertical } from "lucide-react";
 import { useState } from "react";
-import { useReducer, useTable } from "spacetimedb/react";
-import { reducers, tables } from "../module_bindings";
+import { useAccounts, useRecurringActions, useSubAccounts } from "../hooks";
 import { getAccountBackground } from "../utils/brandColors";
 import { formatPesos } from "../utils/currency";
 import { DeleteConfirmModal } from "./DeleteConfirmModal";
@@ -59,11 +58,13 @@ function formatSubAccountLabel(
 }
 
 export function RecurringCard({ definition }: RecurringCardProps) {
-	const pauseDefinition = useReducer(reducers.pauseRecurringDefinition);
-	const resumeDefinition = useReducer(reducers.resumeRecurringDefinition);
-	const deleteDefinition = useReducer(reducers.deleteRecurringDefinition);
-	const [accounts] = useTable(tables.my_accounts);
-	const [subAccounts] = useTable(tables.my_sub_accounts);
+	const {
+		pause: pauseDefinition,
+		resume: resumeDefinition,
+		remove: deleteDefinition,
+	} = useRecurringActions();
+	const { accounts } = useAccounts();
+	const { subAccounts } = useSubAccounts();
 
 	const [showEdit, setShowEdit] = useState(false);
 	const [showDelete, setShowDelete] = useState(false);

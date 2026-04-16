@@ -2,9 +2,8 @@ import { Minus, Plus, Trash2, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Timestamp } from "spacetimedb";
-import { useReducer, useTable } from "spacetimedb/react";
+import { useAccounts, useSplitActions, useSubAccounts, useTags } from "../hooks";
 import { useDragToDismiss } from "../hooks/useDragToDismiss";
-import { reducers, tables } from "../module_bindings";
 import { formatPesos } from "../utils/currency";
 import { openAsModal } from "../utils/dialog";
 import { getVisibleTags } from "../utils/tagConfig";
@@ -62,11 +61,10 @@ export function SplitModal({ onClose, editTarget }: SplitModalProps) {
 		openAsModal(ref.current);
 	}, []);
 
-	const createSplit = useReducer(reducers.createSplit);
-	const editSplit = useReducer(reducers.editSplit);
-	const [accounts] = useTable(tables.my_accounts);
-	const [subAccounts] = useTable(tables.my_sub_accounts);
-	const [tagConfigs] = useTable(tables.my_tag_configs);
+	const { create: createSplit, edit: editSplit } = useSplitActions();
+	const { accounts } = useAccounts();
+	const { subAccounts } = useSubAccounts();
+	const { tagConfigs } = useTags();
 	const expenseTags = getVisibleTags("expense", tagConfigs);
 
 	const isEditMode = !!editTarget;

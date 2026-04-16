@@ -1,17 +1,19 @@
 import { useState } from "react";
-import { useTable } from "spacetimedb/react";
 import { DebtCard } from "../components/DebtCard";
 import { DebtModal } from "../components/DebtModal";
 import { NewItemCard } from "../components/NewItemCard";
 import { SplitCard } from "../components/SplitCard";
 import { SplitModal } from "../components/SplitModal";
-import { tables } from "../module_bindings";
+import { useDebts, useSplits } from "../hooks";
 import { formatPesos } from "../utils/currency";
 
 export function DebtSplitPage() {
-	const [debts, isDebtsReady] = useTable(tables.my_debts);
-	const [splitEvents, isSplitsReady] = useTable(tables.my_split_events);
-	const [splitParticipants] = useTable(tables.my_split_participants);
+	const { debts, isLoading: isDebtsReady } = useDebts();
+	const {
+		events: splitEvents,
+		participants: splitParticipants,
+		isEventsLoading: isSplitsReady,
+	} = useSplits();
 	const [showDebtModal, setShowDebtModal] = useState(false);
 	const [showSplitModal, setShowSplitModal] = useState(false);
 

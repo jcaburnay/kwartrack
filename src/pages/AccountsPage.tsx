@@ -1,11 +1,10 @@
 import { TrendingUp } from "lucide-react";
 import { useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router";
-import { useTable } from "spacetimedb/react";
 import { AccountCard } from "../components/AccountCard";
 import { AccountModal } from "../components/AccountModal";
 import { NewItemCard } from "../components/NewItemCard";
-import { tables } from "../module_bindings";
+import { useAccounts, useSubAccounts } from "../hooks";
 import { formatPesos } from "../utils/currency";
 
 export function AccountsPage() {
@@ -13,7 +12,7 @@ export function AccountsPage() {
 	const navigate = useNavigate();
 	const pendingNavigation = useRef(false);
 
-	const [accounts, isReady] = useTable(tables.my_accounts, {
+	const { accounts, isLoading: isReady } = useAccounts({
 		onInsert: (row) => {
 			if (pendingNavigation.current) {
 				pendingNavigation.current = false;
@@ -21,7 +20,7 @@ export function AccountsPage() {
 			}
 		},
 	});
-	const [subAccounts] = useTable(tables.my_sub_accounts);
+	const { subAccounts } = useSubAccounts();
 
 	// Aggregate sub-account stats in one pass instead of filtering per account
 	const accountStats = useMemo(() => {

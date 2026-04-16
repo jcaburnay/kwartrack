@@ -1,8 +1,7 @@
 import { X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { useReducer } from "spacetimedb/react";
+import { useAccountActions } from "../hooks";
 import { useDragToDismiss } from "../hooks/useDragToDismiss";
-import { reducers } from "../module_bindings";
 import { openAsModal } from "../utils/dialog";
 import { Input } from "./Input";
 
@@ -16,7 +15,7 @@ interface EditAccountModalProps {
 export function EditAccountModal({ accountId, currentName, onClose }: EditAccountModalProps) {
 	const ref = useRef<HTMLDialogElement>(null);
 	const boxRef = useRef<HTMLDivElement>(null);
-	const renameAccount = useReducer(reducers.renameAccount);
+	const { rename: renameAccount } = useAccountActions();
 
 	const [name, setName] = useState(currentName);
 

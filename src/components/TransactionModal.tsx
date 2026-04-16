@@ -2,9 +2,15 @@ import { X } from "lucide-react";
 import { useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { Timestamp } from "spacetimedb";
-import { useReducer, useTable } from "spacetimedb/react";
+import {
+	useAccounts,
+	useBudget,
+	useSubAccounts,
+	useTags,
+	useTransactionActions,
+	useTransactions,
+} from "../hooks";
 import { useDragToDismiss } from "../hooks/useDragToDismiss";
-import { reducers, tables } from "../module_bindings";
 import { getCurrentMonthExpenses } from "../utils/budgetCompute";
 import { formatPesos } from "../utils/currency";
 import { openAsModal } from "../utils/dialog";
@@ -117,14 +123,12 @@ export function TransactionModal({ onClose, transaction }: TransactionModalProps
 	useEffect(() => {
 		openAsModal(ref.current);
 	}, []);
-	const createTransaction = useReducer(reducers.createTransaction);
-	const editTransaction = useReducer(reducers.editTransaction);
-	const [accounts] = useTable(tables.my_accounts);
-	const [subAccounts] = useTable(tables.my_sub_accounts);
-	const [budgetConfigRows] = useTable(tables.my_budget_config);
-	const [budgetAllocations] = useTable(tables.my_budget_allocations);
-	const [allTransactions] = useTable(tables.my_transactions);
-	const [tagConfigs] = useTable(tables.my_tag_configs);
+	const { create: createTransaction, edit: editTransaction } = useTransactionActions();
+	const { accounts } = useAccounts();
+	const { subAccounts } = useSubAccounts();
+	const { config: budgetConfigRows, allocations: budgetAllocations } = useBudget();
+	const { transactions: allTransactions } = useTransactions();
+	const { tagConfigs } = useTags();
 
 	const expenseTags = getVisibleTags("expense", tagConfigs);
 	const incomeTags = getVisibleTags("income", tagConfigs);

@@ -1,7 +1,6 @@
 import { ArrowLeft } from "lucide-react";
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router";
-import { useReducer, useTable } from "spacetimedb/react";
 import { DeleteConfirmModal } from "../components/DeleteConfirmModal";
 import { NewItemCard } from "../components/NewItemCard";
 import { PayCreditModal } from "../components/PayCreditModal";
@@ -12,7 +11,14 @@ import { TransactionFilterRow } from "../components/TransactionFilterRow";
 import { TransactionModal } from "../components/TransactionModal";
 import type { TransactionRow } from "../components/TransactionTable";
 import { TransactionTable } from "../components/TransactionTable";
-import { reducers, tables } from "../module_bindings";
+import {
+	useAccounts,
+	useSubAccountActions,
+	useSubAccounts,
+	useTimeDeposits,
+	useTransactionActions,
+	useTransactions,
+} from "../hooks";
 import { getAccountBackground } from "../utils/brandColors";
 import { formatPesos } from "../utils/currency";
 
@@ -26,8 +32,8 @@ export function AccountDetailPage() {
 		}
 	})();
 	const navigate = useNavigate();
-	const deleteSubAccount = useReducer(reducers.deleteSubAccount);
-	const deleteTransaction = useReducer(reducers.deleteTransaction);
+	const { remove: deleteSubAccount } = useSubAccountActions();
+	const { remove: deleteTransaction } = useTransactionActions();
 
 	const [showSubAccountModal, setShowSubAccountModal] = useState(false);
 	const [deleteTarget, setDeleteTarget] = useState<{
@@ -61,10 +67,10 @@ export function AccountDetailPage() {
 		dateTo: "",
 	});
 
-	const [accounts, isReady] = useTable(tables.my_accounts);
-	const [subAccounts] = useTable(tables.my_sub_accounts);
-	const [allTransactions] = useTable(tables.my_transactions);
-	const [tdMetadataRows] = useTable(tables.my_time_deposit_metadata);
+	const { accounts, isLoading: isReady } = useAccounts();
+	const { subAccounts } = useSubAccounts();
+	const { transactions: allTransactions } = useTransactions();
+	const { metadata: tdMetadataRows } = useTimeDeposits();
 
 	if (!isReady) return null;
 

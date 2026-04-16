@@ -1,8 +1,7 @@
 import { MoreVertical } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router";
-import { useReducer } from "spacetimedb/react";
-import { reducers } from "../module_bindings";
+import { useAccountActions } from "../hooks";
 import { getAccountBackground } from "../utils/brandColors";
 import { formatPesos } from "../utils/currency";
 import { EditAccountModal } from "./AccountIconModal";
@@ -23,7 +22,7 @@ export function AccountCard({
 	subAccountCount,
 	iconBankId,
 }: AccountCardProps) {
-	const deleteAccount = useReducer(reducers.deleteAccount);
+	const { remove: deleteAccount } = useAccountActions();
 
 	const [showEditModal, setShowEditModal] = useState(false);
 	const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);

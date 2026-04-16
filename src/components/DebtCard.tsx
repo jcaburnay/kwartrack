@@ -1,7 +1,6 @@
 import { MoreVertical } from "lucide-react";
 import { useState } from "react";
-import { useReducer } from "spacetimedb/react";
-import { reducers } from "../module_bindings";
+import { useDebtActions } from "../hooks";
 import { getAvatarColor } from "../utils/avatarColor";
 import { formatPesos } from "../utils/currency";
 import { DeleteConfirmModal } from "./DeleteConfirmModal";
@@ -27,7 +26,7 @@ interface DebtCardProps {
 }
 
 export function DebtCard({ personName, debts }: DebtCardProps) {
-	const deleteDebt = useReducer(reducers.deleteDebt);
+	const { remove: deleteDebt } = useDebtActions();
 	const [settleTarget, setSettleTarget] = useState<Debt | null>(null);
 	const [deleteTarget, setDeleteTarget] = useState<Debt | null>(null);
 

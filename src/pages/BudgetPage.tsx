@@ -11,9 +11,8 @@ import {
 	XAxis,
 	YAxis,
 } from "recharts";
-import { useTable } from "spacetimedb/react";
 import { BudgetModal } from "../components/BudgetModal";
-import { tables } from "../module_bindings";
+import { useBudget, useTransactions } from "../hooks";
 import { computeTagStatuses, getCurrentMonthExpenses } from "../utils/budgetCompute";
 import { formatPesos } from "../utils/currency";
 
@@ -46,9 +45,8 @@ function getMonthHeading(): string {
 }
 
 export function BudgetPage() {
-	const [budgetConfigRows, isConfigReady] = useTable(tables.my_budget_config);
-	const [allocations] = useTable(tables.my_budget_allocations);
-	const [transactions] = useTable(tables.my_transactions);
+	const { config: budgetConfigRows, allocations, isLoading: isConfigReady } = useBudget();
+	const { transactions } = useTransactions();
 	const [showModal, setShowModal] = useState(false);
 	const [expandedTag, setExpandedTag] = useState<string | null>(null);
 

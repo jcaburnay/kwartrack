@@ -1,9 +1,8 @@
 import { X } from "lucide-react";
 import { useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
-import { useReducer, useTable } from "spacetimedb/react";
+import { useAccounts, useDebtActions, useSubAccounts } from "../hooks";
 import { useDragToDismiss } from "../hooks/useDragToDismiss";
-import { reducers, tables } from "../module_bindings";
 import { formatPesos } from "../utils/currency";
 import { openAsModal } from "../utils/dialog";
 import { Input } from "./Input";
@@ -37,9 +36,9 @@ export function SettleModal({ debt, onClose }: SettleModalProps) {
 		openAsModal(ref.current);
 	}, []);
 
-	const settleDebt = useReducer(reducers.settleDebt);
-	const [accounts] = useTable(tables.my_accounts);
-	const [subAccounts] = useTable(tables.my_sub_accounts);
+	const { settle: settleDebt } = useDebtActions();
+	const { accounts } = useAccounts();
+	const { subAccounts } = useSubAccounts();
 
 	const remaining = Number(debt.amountCentavos - debt.settledAmountCentavos) / 100;
 

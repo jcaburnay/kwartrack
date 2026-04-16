@@ -1,15 +1,14 @@
 import { useMemo, useState } from "react";
-import { useReducer, useTable } from "spacetimedb/react";
 import { DeleteConfirmModal } from "../components/DeleteConfirmModal";
 import type { TransactionFilters } from "../components/TransactionFilterRow";
 import { TransactionFilterRow } from "../components/TransactionFilterRow";
 import { TransactionModal } from "../components/TransactionModal";
 import type { TransactionRow } from "../components/TransactionTable";
 import { TransactionTable } from "../components/TransactionTable";
-import { reducers, tables } from "../module_bindings";
+import { useAccounts, useSubAccounts, useTransactionActions, useTransactions } from "../hooks";
 
 export function TransactionsPage() {
-	const deleteTransaction = useReducer(reducers.deleteTransaction);
+	const { remove: deleteTransaction } = useTransactionActions();
 
 	const [showTransactionModal, setShowTransactionModal] = useState(false);
 	const [editingTransaction, setEditingTransaction] = useState<TransactionRow | null>(null);
@@ -23,9 +22,9 @@ export function TransactionsPage() {
 		dateTo: "",
 	});
 
-	const [accounts] = useTable(tables.my_accounts);
-	const [subAccounts] = useTable(tables.my_sub_accounts);
-	const [allTransactions, isReady] = useTable(tables.my_transactions);
+	const { accounts } = useAccounts();
+	const { subAccounts } = useSubAccounts();
+	const { transactions: allTransactions, isLoading: isReady } = useTransactions();
 
 	// Filter by account/partition
 	const accountFiltered = useMemo(() => {

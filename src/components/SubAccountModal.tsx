@@ -2,9 +2,8 @@ import { X } from "lucide-react";
 import { useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { Timestamp } from "spacetimedb";
-import { useReducer } from "spacetimedb/react";
+import { useSubAccountActions } from "../hooks";
 import { useDragToDismiss } from "../hooks/useDragToDismiss";
-import { reducers } from "../module_bindings";
 import { formatPesos } from "../utils/currency";
 import { openAsModal } from "../utils/dialog";
 import { Input } from "./Input";
@@ -53,11 +52,13 @@ export function SubAccountModal({
 }: SubAccountModalProps) {
 	const ref = useRef<HTMLDialogElement>(null);
 	const boxRef = useRef<HTMLDivElement>(null);
-	const addSubAccount = useReducer(reducers.addSubAccount);
-	const convertAndCreateSubAccount = useReducer(reducers.convertAndCreateSubAccount);
-	const editSubAccountReducer = useReducer(reducers.editSubAccount);
-	const createTimeDeposit = useReducer(reducers.createTimeDeposit);
-	const editTimeDepositMetadata = useReducer(reducers.editTimeDepositMetadata);
+	const {
+		add: addSubAccount,
+		convertAndCreate: convertAndCreateSubAccount,
+		edit: editSubAccountReducer,
+		createTimeDeposit,
+		editTimeDepositMetadata,
+	} = useSubAccountActions();
 	const isEditMode = !!subAccount;
 
 	const showConversionSection = isStandalone && !isEditMode && existingBalanceCentavos > 0n;

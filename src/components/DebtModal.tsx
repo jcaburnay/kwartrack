@@ -2,9 +2,8 @@ import { X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Timestamp } from "spacetimedb";
-import { useReducer, useTable } from "spacetimedb/react";
+import { useAccounts, useDebtActions, useSubAccounts, useTags } from "../hooks";
 import { useDragToDismiss } from "../hooks/useDragToDismiss";
-import { reducers, tables } from "../module_bindings";
 import { openAsModal } from "../utils/dialog";
 import { getVisibleTags } from "../utils/tagConfig";
 import { Input } from "./Input";
@@ -29,10 +28,10 @@ export function DebtModal({ onClose }: DebtModalProps) {
 		openAsModal(ref.current);
 	}, []);
 
-	const createDebt = useReducer(reducers.createDebt);
-	const [accounts] = useTable(tables.my_accounts);
-	const [subAccounts] = useTable(tables.my_sub_accounts);
-	const [tagConfigs] = useTable(tables.my_tag_configs);
+	const { create: createDebt } = useDebtActions();
+	const { accounts } = useAccounts();
+	const { subAccounts } = useSubAccounts();
+	const { tagConfigs } = useTags();
 	const [direction, setDirection] = useState<"loaned" | "owed">("loaned");
 	const expenseTags = getVisibleTags("expense", tagConfigs);
 

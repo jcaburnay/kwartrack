@@ -1,9 +1,8 @@
 import { X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
-import { useReducer, useTable } from "spacetimedb/react";
+import { useBudget, useBudgetActions, useTags } from "../hooks";
 import { useDragToDismiss } from "../hooks/useDragToDismiss";
-import { reducers, tables } from "../module_bindings";
 import { openAsModal } from "../utils/dialog";
 import { getVisibleTags } from "../utils/tagConfig";
 import { Input } from "./Input";
@@ -22,13 +21,11 @@ interface BudgetModalProps {
 }
 
 export function BudgetModal({ onClose }: BudgetModalProps) {
-	const setBudget = useReducer(reducers.setBudget);
+	const { setBudget, setAllocations: setBudgetAllocations } = useBudgetActions();
 	const ref = useRef<HTMLDialogElement>(null);
 	const boxRef = useRef<HTMLDivElement>(null);
-	const setBudgetAllocations = useReducer(reducers.setBudgetAllocations);
-	const [budgetConfigRows] = useTable(tables.my_budget_config);
-	const [allocationRows] = useTable(tables.my_budget_allocations);
-	const [tagConfigs] = useTable(tables.my_tag_configs);
+	const { config: budgetConfigRows, allocations: allocationRows } = useBudget();
+	const { tagConfigs } = useTags();
 
 	const budgetConfig = budgetConfigRows[0] ?? null;
 	const allocations = allocationRows as readonly { tag: string; allocatedCentavos: bigint }[];

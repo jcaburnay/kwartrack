@@ -1,8 +1,7 @@
 import { useMemo } from "react";
 import { Link } from "react-router";
 import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis } from "recharts";
-import { useTable } from "spacetimedb/react";
-import { tables } from "../module_bindings";
+import { useAccounts, useBudget, useSubAccounts, useTransactions } from "../hooks";
 import { getAccountBackground } from "../utils/brandColors";
 import { getCurrentMonthExpenses } from "../utils/budgetCompute";
 import { formatPesos } from "../utils/currency";
@@ -18,10 +17,10 @@ function getMonthHeading(): string {
 }
 
 export function OverviewPage() {
-	const [accounts, isAccountsReady] = useTable(tables.my_accounts);
-	const [subAccounts, isSubAccountsReady] = useTable(tables.my_sub_accounts);
-	const [transactions, isTransactionsReady] = useTable(tables.my_transactions);
-	const [budgetConfigRows, isBudgetReady] = useTable(tables.my_budget_config);
+	const { accounts, isLoading: isAccountsReady } = useAccounts();
+	const { subAccounts, isLoading: isSubAccountsReady } = useSubAccounts();
+	const { transactions, isLoading: isTransactionsReady } = useTransactions();
+	const { config: budgetConfigRows, isLoading: isBudgetReady } = useBudget();
 
 	const isReady = isAccountsReady && isSubAccountsReady && isTransactionsReady && isBudgetReady;
 

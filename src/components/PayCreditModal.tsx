@@ -2,9 +2,8 @@ import { X } from "lucide-react";
 import { useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { Timestamp } from "spacetimedb";
-import { useReducer, useTable } from "spacetimedb/react";
+import { useSubAccounts, useTags, useTransactionActions } from "../hooks";
 import { useDragToDismiss } from "../hooks/useDragToDismiss";
-import { reducers, tables } from "../module_bindings";
 import { formatPesos } from "../utils/currency";
 import { openAsModal } from "../utils/dialog";
 import { getVisibleTags } from "../utils/tagConfig";
@@ -29,9 +28,9 @@ export function PayCreditModal({
 }: PayCreditModalProps) {
 	const dialogRef = useRef<HTMLDialogElement>(null);
 	const boxRef = useRef<HTMLDivElement>(null);
-	const createTransaction = useReducer(reducers.createTransaction);
-	const [allSubAccounts] = useTable(tables.my_sub_accounts);
-	const [tagConfigs] = useTable(tables.my_tag_configs);
+	const { create: createTransaction } = useTransactionActions();
+	const { subAccounts: allSubAccounts } = useSubAccounts();
+	const { tagConfigs } = useTags();
 	const transferTags = getVisibleTags("transfer", tagConfigs);
 	// Preserve the old "bills" categorization only if the user explicitly created it
 	// as a transfer tag. Otherwise use the first visible transfer tag or the sentinel.

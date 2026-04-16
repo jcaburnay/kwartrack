@@ -1,11 +1,10 @@
 import { ArrowLeft, Edit, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router";
-import { useReducer, useTable } from "spacetimedb/react";
 import { DeleteConfirmModal } from "../components/DeleteConfirmModal";
 import { SettleModal } from "../components/SettleModal";
 import { SplitModal } from "../components/SplitModal";
-import { reducers, tables } from "../module_bindings";
+import { useDebts, useSplitActions, useSplits, useSubAccounts } from "../hooks";
 import { getAvatarColor } from "../utils/avatarColor";
 import { formatPesos } from "../utils/currency";
 
@@ -19,12 +18,16 @@ export function SplitDetailPage() {
 		}
 	})();
 	const navigate = useNavigate();
-	const deleteSplit = useReducer(reducers.deleteSplit);
+	const { remove: deleteSplit } = useSplitActions();
 
-	const [splitEvents, isEventsReady] = useTable(tables.my_split_events);
-	const [splitParticipants, isParticipantsReady] = useTable(tables.my_split_participants);
-	const [debts, isDebtsReady] = useTable(tables.my_debts);
-	const [subAccounts] = useTable(tables.my_sub_accounts);
+	const {
+		events: splitEvents,
+		participants: splitParticipants,
+		isEventsLoading: isEventsReady,
+		isParticipantsLoading: isParticipantsReady,
+	} = useSplits();
+	const { debts, isLoading: isDebtsReady } = useDebts();
+	const { subAccounts } = useSubAccounts();
 
 	const [settleTarget, setSettleTarget] = useState<(typeof debts)[number] | null>(null);
 	const [showEdit, setShowEdit] = useState(false);

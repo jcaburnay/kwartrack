@@ -1,15 +1,19 @@
 import { useMemo } from "react";
 import { SpacetimeDBProvider as StdbProvider } from "spacetimedb/react";
 import { DbConnection } from "../module_bindings";
+import { useClerkIdentity } from "./ClerkTokenProvider";
 
 const SPACETIMEDB_URI = import.meta.env.VITE_SPACETIMEDB_URI ?? "wss://maincloud.spacetimedb.com";
 const MODULE_NAME = import.meta.env.VITE_SPACETIMEDB_MODULE ?? "kwartrack";
 const TOKEN_KEY = "spacetimedb_token";
 
 export function SpacetimeDBProvider({ children }: { children: React.ReactNode }) {
+	const { clerkUserId, displayName } = useClerkIdentity();
+
 	// Use persisted SpacetimeDB token so identity stays stable across refreshes.
 	// Clerk JWT is NOT a valid SpacetimeDB token — using it causes a new anonymous
-	// identity on every connection, so my_accounts (filtered by ctx.sender) returns empty.
+	// identity on every connection (tested 2026-04-16 on kwartrack-dev).
+	// biome-ignore lint/correctness/useExhaustiveDependencies: clerkUserId/displayName are stable once SpacetimeDBGate allows rendering — reconnecting on identity change would break the session
 	const connectionBuilder = useMemo(() => {
 		const storedToken = localStorage.getItem(TOKEN_KEY) ?? undefined;
 
@@ -23,11 +27,12 @@ export function SpacetimeDBProvider({ children }: { children: React.ReactNode })
 				}
 
 				// Link Clerk user ID to this SpacetimeDB identity (D-09 data privacy)
-				// Ensures same Clerk user sees same data across devices/sessions
-				const clerkUserId = localStorage.getItem("clerk_user_id");
-				const displayName = localStorage.getItem("clerk_display_name") ?? clerkUserId ?? "";
+				// clerkUserId is guaranteed to be available — SpacetimeDBGate blocks rendering until Clerk is ready
 				if (clerkUserId) {
-					conn.reducers.linkClerkIdentity({ clerkUserId, displayName });
+					conn.reducers.linkClerkIdentity({
+						clerkUserId,
+						displayName: displayName ?? clerkUserId,
+					});
 				}
 
 				conn
@@ -58,7 +63,7 @@ export function SpacetimeDBProvider({ children }: { children: React.ReactNode })
 			})
 			.onDisconnect(() => {})
 			.withToken(storedToken ?? "");
-	}, []); // Only build once — token is read from localStorage directly
+	}, []); // Only build once — clerkUserId is stable once gate allows rendering
 
 	return <StdbProvider connectionBuilder={connectionBuilder}>{children}</StdbProvider>;
 }

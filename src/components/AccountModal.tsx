@@ -1,9 +1,8 @@
 import { X } from "lucide-react";
 import { useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
-import { useReducer } from "spacetimedb/react";
+import { useAccountActions } from "../hooks";
 import { useDragToDismiss } from "../hooks/useDragToDismiss";
-import { reducers } from "../module_bindings";
 import { openAsModal } from "../utils/dialog";
 import { Input } from "./Input";
 
@@ -20,7 +19,7 @@ interface AccountModalProps {
 export function AccountModal({ onClose, onAccountCreated }: AccountModalProps) {
 	const ref = useRef<HTMLDialogElement>(null);
 	const boxRef = useRef<HTMLDivElement>(null);
-	const createAccount = useReducer(reducers.createAccount);
+	const { create: createAccount } = useAccountActions();
 
 	const {
 		register,
