@@ -1,5 +1,6 @@
 import { ScheduleAt } from "spacetimedb";
 import { schema, t, table } from "spacetimedb/server";
+import { computeNextOccurrence } from "./helpers";
 
 // user_profile: maps Clerk identity to SpacetimeDB identity — unchanged from Phase 1
 const userProfile = table(
@@ -426,45 +427,6 @@ const spacetimedb = schema({
 	td_maturity_schedule,
 });
 export default spacetimedb;
-
-// Compute the microsecond timestamp for the next occurrence based on the interval.
-// For weekly/biweekly: adds 7 or 14 days to nowMicros (dayOfMonth anchors only first fire).
-// For month-based intervals: advances by N months and pins to dayOfMonth.
-// NEVER call with dayOfMonth > 28; enforced at creation time (D-05).
-export function computeNextOccurrence(
-	nowMicros: bigint,
-	interval: string,
-	dayOfMonth: number,
-): bigint {
-	if (interval === "weekly") {
-		return nowMicros + 7n * 24n * 60n * 60n * 1_000_000n;
-	}
-	if (interval === "biweekly") {
-		return nowMicros + 14n * 24n * 60n * 60n * 1_000_000n;
-	}
-	const monthsToAdd =
-		interval === "monthly"
-			? 1
-			: interval === "quarterly"
-				? 3
-				: interval === "semiannual"
-					? 6
-					: interval === "yearly"
-						? 12
-						: (() => {
-								throw new Error(`Unknown interval: ${interval}`);
-							})();
-	const nowMs = Number(nowMicros / 1000n);
-	const now = new Date(nowMs);
-	let targetYear = now.getUTCFullYear();
-	let targetMonth = now.getUTCMonth() + monthsToAdd;
-	while (targetMonth > 11) {
-		targetMonth -= 12;
-		targetYear += 1;
-	}
-	const fireDate = new Date(Date.UTC(targetYear, targetMonth, dayOfMonth, 0, 0, 0, 0));
-	return BigInt(fireDate.getTime()) * 1000n;
-}
 
 // fire_recurring_transaction: scheduled reducer that fires when scheduledAt arrives (D-15)
 // SpacetimeDB auto-deletes the schedule row after this reducer completes.

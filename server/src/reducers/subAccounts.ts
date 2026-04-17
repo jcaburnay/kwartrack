@@ -1,6 +1,12 @@
 import { ScheduleAt } from "spacetimedb";
 import { SenderError, t } from "spacetimedb/server";
-import { computeFirstFireMicros, isAuthorized, resolveOwner } from "../helpers";
+import {
+	computeFirstFireMicros,
+	computeMonthlyNetInterestCentavos,
+	isAuthorized,
+	resolveOwner,
+	validateCreditAccountEdit,
+} from "../helpers";
 import spacetimedb from "../schema";
 
 // =============================================================================
@@ -146,16 +152,13 @@ export const edit_sub_account = spacetimedb.reducer(
 	},
 	(ctx, { subAccountId, newName, newCreditLimitCentavos, newBalanceCentavos }) => {
 		if (!newName.trim()) throw new SenderError("Sub-account name is required");
-		if (newCreditLimitCentavos <= 0n) throw new SenderError("Credit limit must be greater than 0");
 		const existing = ctx.db.sub_account.id.find(subAccountId);
 		if (!existing) throw new SenderError("Sub-account not found");
 		if (!isAuthorized(ctx, existing.ownerIdentity)) throw new SenderError("Not authorized");
 		if (existing.subAccountType !== "credit")
 			throw new SenderError("Only credit sub-accounts can be edited");
-		if (newBalanceCentavos != null && newBalanceCentavos < 0n)
-			throw new SenderError("Outstanding balance cannot be negative");
-		if (newBalanceCentavos != null && newBalanceCentavos > newCreditLimitCentavos)
-			throw new SenderError("Outstanding balance cannot exceed credit limit");
+		const limitError = validateCreditAccountEdit(newCreditLimitCentavos, newBalanceCentavos);
+		if (limitError) throw new SenderError(limitError);
 		ctx.db.sub_account.id.update({
 			...existing,
 			name: newName.trim(),
@@ -232,8 +235,10 @@ export const create_time_deposit = spacetimedb.reducer(
 		});
 
 		// 2. Compute monthly net interest
-		const monthlyNetCentavos =
-			(initialBalanceCentavos * BigInt(interestRateBps) * 80n) / 12_000_000n;
+		const monthlyNetCentavos = computeMonthlyNetInterestCentavos(
+			initialBalanceCentavos,
+			interestRateBps,
+		);
 		if (monthlyNetCentavos <= 0n)
 			throw new SenderError("Computed monthly interest is zero — check rate and balance");
 
@@ -316,8 +321,10 @@ export const edit_time_deposit_metadata = spacetimedb.reducer(
 
 		// If rate changed, recompute monthly net interest using original principal
 		if (interestRateBps !== meta.interestRateBps) {
-			const newMonthlyNetCentavos =
-				(meta.principalCentavos * BigInt(interestRateBps) * 80n) / 12_000_000n;
+			const newMonthlyNetCentavos = computeMonthlyNetInterestCentavos(
+				meta.principalCentavos,
+				interestRateBps,
+			);
 			if (newMonthlyNetCentavos <= 0n)
 				throw new SenderError("Computed monthly interest is zero — check rate and balance");
 			if (defUpdate) defUpdate = { ...defUpdate, amountCentavos: newMonthlyNetCentavos };

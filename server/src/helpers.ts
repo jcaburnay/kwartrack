@@ -71,6 +71,72 @@ export function applyBalance(
 	}
 }
 
+// Compute the microsecond timestamp for the next occurrence based on the interval.
+// For weekly/biweekly: adds 7 or 14 days to nowMicros (dayOfMonth anchors only first fire).
+// For month-based intervals: advances by N months and pins to dayOfMonth.
+// NEVER call with dayOfMonth > 28; enforced at creation time (D-05).
+export function computeNextOccurrence(
+	nowMicros: bigint,
+	interval: string,
+	dayOfMonth: number,
+): bigint {
+	if (interval === "weekly") {
+		return nowMicros + 7n * 24n * 60n * 60n * 1_000_000n;
+	}
+	if (interval === "biweekly") {
+		return nowMicros + 14n * 24n * 60n * 60n * 1_000_000n;
+	}
+	const monthsToAdd =
+		interval === "monthly"
+			? 1
+			: interval === "quarterly"
+				? 3
+				: interval === "semiannual"
+					? 6
+					: interval === "yearly"
+						? 12
+						: (() => {
+								throw new Error(`Unknown interval: ${interval}`);
+							})();
+	const nowMs = Number(nowMicros / 1000n);
+	const now = new Date(nowMs);
+	let targetYear = now.getUTCFullYear();
+	let targetMonth = now.getUTCMonth() + monthsToAdd;
+	while (targetMonth > 11) {
+		targetMonth -= 12;
+		targetYear += 1;
+	}
+	const fireDate = new Date(Date.UTC(targetYear, targetMonth, dayOfMonth, 0, 0, 0, 0));
+	return BigInt(fireDate.getTime()) * 1000n;
+}
+
+// Validate the creditLimit / outstanding-balance invariants for a credit sub-account edit.
+// Returns a human-readable error message, or null when the edit is acceptable.
+// Called from edit_sub_account; lifted out so the invariant is testable in one place.
+export function validateCreditAccountEdit(
+	creditLimitCentavos: bigint,
+	balanceCentavos: bigint | null | undefined,
+): string | null {
+	if (creditLimitCentavos <= 0n) return "Credit limit must be greater than 0";
+	if (balanceCentavos != null) {
+		if (balanceCentavos < 0n) return "Outstanding balance cannot be negative";
+		if (balanceCentavos > creditLimitCentavos)
+			return "Outstanding balance cannot exceed credit limit";
+	}
+	return null;
+}
+
+// Monthly *net* time-deposit interest in centavos, after 20% final withholding tax.
+// Formula: principal × (bps/10_000) / 12 × 0.80
+// Held in integer space to preserve centavo precision: (principal × bps × 80) / 12_000_000.
+// Denominator breakdown: 10_000 (bps→rate) × 12 (months/year) × 100 (1/0.80 inverse) = 12_000_000.
+export function computeMonthlyNetInterestCentavos(
+	principalCentavos: bigint,
+	interestRateBps: number,
+): bigint {
+	return (principalCentavos * BigInt(interestRateBps) * 80n) / 12_000_000n;
+}
+
 // Compute the microsecond timestamp for the first fire of a new/resumed definition.
 // Dispatch order:
 //   1. weekly/biweekly + anchorDayOfWeek > 0 → next occurrence of that weekday
