@@ -6,11 +6,16 @@ import { useAccounts, useSplitActions, useSubAccounts, useTags } from "../hooks"
 import { useDragToDismiss } from "../hooks/useDragToDismiss";
 import { formatPesos } from "../utils/currency";
 import { openAsModal } from "../utils/dialog";
+import {
+	computeParticipantShareCentavos,
+	computeYourShareCentavos,
+	parseCentavos,
+	type SplitMethod,
+	validateShares,
+} from "../utils/splitShares";
 import { getVisibleTags } from "../utils/tagConfig";
 import { Input } from "./Input";
 import { SubmitButton } from "./SubmitButton";
-
-type SplitMethod = "equal" | "exact" | "percentage" | "shares";
 
 interface ParticipantInput {
 	participantId: bigint;
@@ -104,64 +109,7 @@ export function SplitModal({ onClose, editTarget }: SplitModalProps) {
 		},
 	});
 
-	const totalAmountFloat = parseFloat(watch("totalAmount") || "0");
-	const totalCentavos = BigInt(Math.round(totalAmountFloat * 100));
-
-	// Compute total shares (for "shares" mode)
-	const totalShares = participants.reduce((s, p) => s + p.shareCount, 0) + 1;
-
-	// "Your share" display value
-	function yourShareCentavos(): bigint {
-		const validParticipants = participants.filter((p) => p.name.trim());
-		const count = validParticipants.length + 1;
-		if (splitMethod === "equal") return totalCentavos / BigInt(count);
-		if (splitMethod === "exact") {
-			const sum = validParticipants.reduce(
-				(s, p) => s + BigInt(Math.round(parseFloat(p.shareAmount || "0") * 100)),
-				0n,
-			);
-			return totalCentavos - sum;
-		}
-		if (splitMethod === "percentage") {
-			const sumPct = validParticipants.reduce(
-				(s, p) => s + parseFloat(p.sharePercentage || "0"),
-				0,
-			);
-			return BigInt(Math.round(((100 - sumPct) / 100) * Number(totalCentavos)));
-		}
-		// shares
-		return BigInt(Math.round((1 / totalShares) * Number(totalCentavos)));
-	}
-
-	function getParticipantShareCentavos(p: ParticipantInput): bigint {
-		const count = participants.filter((pp) => pp.name.trim()).length + 1;
-		if (splitMethod === "equal") return totalCentavos / BigInt(count);
-		if (splitMethod === "exact") return BigInt(Math.round(parseFloat(p.shareAmount || "0") * 100));
-		if (splitMethod === "percentage")
-			return BigInt(
-				Math.round((parseFloat(p.sharePercentage || "0") / 100) * Number(totalCentavos)),
-			);
-		// shares
-		return BigInt(Math.round((p.shareCount / totalShares) * Number(totalCentavos)));
-	}
-
-	// Validation helpers
-	function validateShares(): string | null {
-		const valid = participants.filter((p) => p.name.trim());
-		if (valid.length === 0) return "At least one participant name is required";
-		if (splitMethod === "exact") {
-			const sum = valid.reduce(
-				(s, p) => s + BigInt(Math.round(parseFloat(p.shareAmount || "0") * 100)),
-				0n,
-			);
-			if (sum > totalCentavos) return "Participant shares exceed the total amount";
-		}
-		if (splitMethod === "percentage") {
-			const sum = valid.reduce((s, p) => s + parseFloat(p.sharePercentage || "0"), 0);
-			if (sum > 100) return "Participant percentages exceed 100%";
-		}
-		return null;
-	}
+	const totalCentavos = parseCentavos(watch("totalAmount"));
 
 	const addParticipant = () =>
 		setParticipants((prev) => [
@@ -176,20 +124,22 @@ export function SplitModal({ onClose, editTarget }: SplitModalProps) {
 	};
 
 	const onSubmit = async (values: SplitFormValues) => {
-		const error = validateShares();
+		const totalAmountCentavos = parseCentavos(values.totalAmount);
+		const error = validateShares(splitMethod, participants, totalAmountCentavos);
 		if (error) {
 			setParticipantsError(error);
 			return;
 		}
 
 		setFormError(null);
-		const totalAmountCentavos = BigInt(Math.round(parseFloat(values.totalAmount) * 100));
 		const payerSubAccountId = BigInt(values.payerSubAccountId);
 		const dateTimestamp = Timestamp.fromDate(new Date(values.date));
 		const validParticipants = participants.filter((p) => p.name.trim());
 
 		const participantNames = validParticipants.map((p) => p.name.trim());
-		const participantShares = validParticipants.map((p) => getParticipantShareCentavos(p));
+		const participantShares = validParticipants.map((p) =>
+			computeParticipantShareCentavos(p, splitMethod, participants, totalAmountCentavos),
+		);
 		const participantShareCounts = validParticipants.map((p) =>
 			splitMethod === "shares" ? p.shareCount : 0,
 		);
@@ -470,7 +420,14 @@ export function SplitModal({ onClose, editTarget }: SplitModalProps) {
 											{splitMethod !== "exact" && (
 												<span className="text-xs text-base-content/60 min-w-[70px] text-right">
 													{totalCentavos > 0n && p.name.trim()
-														? formatPesos(getParticipantShareCentavos(p))
+														? formatPesos(
+																computeParticipantShareCentavos(
+																	p,
+																	splitMethod,
+																	participants,
+																	totalCentavos,
+																),
+															)
 														: "—"}
 												</span>
 											)}
@@ -498,7 +455,11 @@ export function SplitModal({ onClose, editTarget }: SplitModalProps) {
 									<span className="text-xs text-base-content/60">
 										Your share:{" "}
 										{totalCentavos > 0n ? (
-											<span className="font-mono">{formatPesos(yourShareCentavos())}</span>
+											<span className="font-mono">
+												{formatPesos(
+													computeYourShareCentavos(splitMethod, participants, totalCentavos),
+												)}
+											</span>
 										) : (
 											"—"
 										)}
