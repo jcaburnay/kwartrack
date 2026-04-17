@@ -21,6 +21,7 @@ import {
 } from "../hooks";
 import { getAccountBackground } from "../utils/brandColors";
 import { formatPesos } from "../utils/currency";
+import { fromTimestamp } from "../utils/date";
 
 export function AccountDetailPage() {
 	const { id } = useParams<{ id: string }>();
@@ -107,11 +108,11 @@ export function AccountDetailPage() {
 		if (filters.type && t.type !== filters.type) return false;
 		if (filters.tag && t.tag !== filters.tag) return false;
 		if (filters.dateFrom) {
-			const txnDate = new Date(Number(t.date.microsSinceUnixEpoch / 1000n));
+			const txnDate = fromTimestamp(t.date);
 			if (txnDate < new Date(filters.dateFrom)) return false;
 		}
 		if (filters.dateTo) {
-			const txnDate = new Date(Number(t.date.microsSinceUnixEpoch / 1000n));
+			const txnDate = fromTimestamp(t.date);
 			if (txnDate > new Date(`${filters.dateTo}T23:59:59`)) return false;
 		}
 		return true;
@@ -238,19 +239,13 @@ export function AccountDetailPage() {
 																balanceCentavos: sa.balanceCentavos,
 																interestRateBps: tdMeta?.interestRateBps,
 																maturityDate: tdMeta
-																	? new Date(
-																			Number(tdMeta.maturityDate.microsSinceUnixEpoch / 1000n),
-																		)
+																	? fromTimestamp(tdMeta.maturityDate)
 																	: undefined,
 															});
 														}
 													}}
 													interestRateBps={meta?.interestRateBps}
-													maturityDate={
-														meta
-															? new Date(Number(meta.maturityDate.microsSinceUnixEpoch / 1000n))
-															: undefined
-													}
+													maturityDate={meta ? fromTimestamp(meta.maturityDate) : undefined}
 													isMatured={meta?.isMatured}
 												/>
 											</div>

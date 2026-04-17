@@ -15,6 +15,7 @@ import { BudgetModal } from "../components/BudgetModal";
 import { useBudget, useTransactions } from "../hooks";
 import { computeTagStatuses, getCurrentMonthExpenses } from "../utils/budgetCompute";
 import { formatPesos } from "../utils/currency";
+import { fromTimestamp } from "../utils/date";
 
 const TAG_PALETTE = [
 	"var(--color-primary)",
@@ -128,7 +129,7 @@ export function BudgetPage() {
 		return transactions
 			.filter((txn) => {
 				if (txn.type !== "expense") return false;
-				const d = new Date(Number(txn.date.microsSinceUnixEpoch / 1000n));
+				const d = fromTimestamp(txn.date);
 				if (d.getFullYear() !== now.getFullYear() || d.getMonth() !== now.getMonth()) return false;
 				if (tag === "__others__") return !allocatedTags.has(txn.tag);
 				return txn.tag === tag;
@@ -392,7 +393,7 @@ export function BudgetPage() {
 										<p className="text-xs text-base-content/60 py-1">No transactions this month.</p>
 									) : (
 										tagTxns.map((txn) => {
-											const d = new Date(Number(txn.date.microsSinceUnixEpoch / 1000n));
+											const d = fromTimestamp(txn.date);
 											const dateStr = d.toLocaleDateString("en-PH", {
 												month: "short",
 												day: "numeric",
@@ -460,7 +461,7 @@ export function BudgetPage() {
 											</p>
 										) : (
 											otherTxns.map((txn) => {
-												const d = new Date(Number(txn.date.microsSinceUnixEpoch / 1000n));
+												const d = fromTimestamp(txn.date);
 												const dateStr = d.toLocaleDateString("en-PH", {
 													month: "short",
 													day: "numeric",

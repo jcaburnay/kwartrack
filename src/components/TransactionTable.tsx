@@ -1,5 +1,6 @@
 import { Plus } from "lucide-react";
 import { useCallback, useMemo } from "react";
+import { fromTimestamp } from "../utils/date";
 import {
 	TransactionEmptyState,
 	TransactionItem,
@@ -64,7 +65,7 @@ export function formatAccountLabel(
 }
 
 function formatDate(ts: { microsSinceUnixEpoch: bigint }): string {
-	const date = new Date(Number(ts.microsSinceUnixEpoch / 1000n));
+	const date = fromTimestamp(ts);
 	return date.toLocaleDateString("en-US", {
 		month: "short",
 		day: "numeric",

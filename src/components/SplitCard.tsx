@@ -1,6 +1,7 @@
 import { Link } from "react-router";
 import { getAvatarColor } from "../utils/avatarColor";
 import { formatPesos } from "../utils/currency";
+import { fromTimestamp } from "../utils/date";
 
 interface SplitEvent {
 	id: bigint;
@@ -43,10 +44,11 @@ export function SplitCard({ splitEvent, participants, debts }: SplitCardProps) {
 	const shareAmount = splitEvent.totalAmountCentavos / BigInt(splitCount);
 
 	const avatar = getAvatarColor(splitEvent.description);
-	const dateStr = new Date(Number(splitEvent.date.microsSinceUnixEpoch / 1000n)).toLocaleDateString(
-		"en-PH",
-		{ month: "short", day: "numeric", year: "numeric" },
-	);
+	const dateStr = fromTimestamp(splitEvent.date).toLocaleDateString("en-PH", {
+		month: "short",
+		day: "numeric",
+		year: "numeric",
+	});
 
 	return (
 		<Link

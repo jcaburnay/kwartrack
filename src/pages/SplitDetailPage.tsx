@@ -7,6 +7,7 @@ import { SplitModal } from "../components/SplitModal";
 import { useDebts, useSplitActions, useSplits, useSubAccounts } from "../hooks";
 import { getAvatarColor } from "../utils/avatarColor";
 import { formatPesos } from "../utils/currency";
+import { fromTimestamp } from "../utils/date";
 
 export function SplitDetailPage() {
 	const { id } = useParams<{ id: string }>();
@@ -67,10 +68,11 @@ export function SplitDetailPage() {
 	const yourShare =
 		splitEvent.totalAmountCentavos - participants.reduce((s, p) => s + p.shareAmountCentavos, 0n);
 
-	const dateStr = new Date(Number(splitEvent.date.microsSinceUnixEpoch / 1000n)).toLocaleDateString(
-		"en-PH",
-		{ month: "short", day: "numeric", year: "numeric" },
-	);
+	const dateStr = fromTimestamp(splitEvent.date).toLocaleDateString("en-PH", {
+		month: "short",
+		day: "numeric",
+		year: "numeric",
+	});
 
 	const avatar = getAvatarColor(splitEvent.description);
 
