@@ -1,4 +1,5 @@
 import { type RefObject, useEffect, useRef } from "react";
+import { DRAG_DISMISS_THRESHOLD, HEADER_HEIGHT_PX } from "../constants";
 
 /**
  * Adds drag-to-dismiss behaviour to a bottom-sheet modal on mobile.
@@ -32,11 +33,9 @@ export function useDragToDismiss(
 		let isDragging = false;
 		let currentDelta = 0;
 
-		const HEADER_HEIGHT = 72; // px — covers title row + DaisyUI top padding
-
 		const onTouchStart = (e: TouchEvent) => {
 			const relativeY = e.touches[0].clientY - box.getBoundingClientRect().top;
-			if (relativeY > HEADER_HEIGHT) return; // only top section initiates drag
+			if (relativeY > HEADER_HEIGHT_PX) return; // only top section initiates drag
 			startY = e.touches[0].clientY;
 			startTime = Date.now();
 			isDragging = true;
@@ -61,7 +60,7 @@ export function useDragToDismiss(
 
 			const elapsed = Date.now() - startTime;
 			const velocity = elapsed > 0 ? currentDelta / elapsed : 0; // px/ms
-			const distanceThreshold = box.offsetHeight * 0.35;
+			const distanceThreshold = box.offsetHeight * DRAG_DISMISS_THRESHOLD;
 			const shouldDismiss = currentDelta > distanceThreshold || velocity >= 0.5;
 
 			if (shouldDismiss) {

@@ -1,5 +1,6 @@
 import { useAuth, useUser } from "@clerk/react";
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { CLERK_TOKEN_REFRESH_MS } from "../constants";
 
 interface ClerkContextValue {
 	token: string | undefined;
@@ -39,8 +40,7 @@ export function ClerkTokenProvider({ children }: { children: React.ReactNode }) 
 		}
 		refreshToken();
 
-		// Poll every 55 minutes to refresh token before 1-hour Clerk JWT expiry
-		const interval = setInterval(refreshToken, 55 * 60 * 1000);
+		const interval = setInterval(refreshToken, CLERK_TOKEN_REFRESH_MS);
 		return () => clearInterval(interval);
 	}, [isLoaded, isSignedIn, getToken, user]);
 
