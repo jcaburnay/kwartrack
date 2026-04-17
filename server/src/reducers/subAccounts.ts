@@ -4,8 +4,10 @@ import {
 	computeFirstFireMicros,
 	computeMonthlyNetInterestCentavos,
 	isAuthorized,
+	nextRecurringDefinitionId,
 	resolveOwner,
 	validateCreditAccountEdit,
+	validateTimeDepositCreation,
 } from "../helpers";
 import spacetimedb from "../schema";
 
@@ -207,11 +209,13 @@ export const create_time_deposit = spacetimedb.reducer(
 	},
 	(ctx, { accountId, name, initialBalanceCentavos, interestRateBps, maturityDate }) => {
 		if (!name.trim()) throw new SenderError("Sub-account name is required");
-		if (initialBalanceCentavos <= 0n)
-			throw new SenderError("Initial balance must be greater than 0");
-		if (interestRateBps === 0) throw new SenderError("Interest rate is required");
-		if (maturityDate.microsSinceUnixEpoch <= ctx.timestamp.microsSinceUnixEpoch)
-			throw new SenderError("Maturity date must be in the future");
+		const validationError = validateTimeDepositCreation({
+			initialBalanceCentavos,
+			interestRateBps,
+			maturityDateMicros: maturityDate.microsSinceUnixEpoch,
+			nowMicros: ctx.timestamp.microsSinceUnixEpoch,
+		});
+		if (validationError) throw new SenderError(validationError);
 
 		const acc = ctx.db.account.id.find(accountId);
 		if (!acc) throw new SenderError("Account not found");
@@ -243,16 +247,11 @@ export const create_time_deposit = spacetimedb.reducer(
 			throw new SenderError("Computed monthly interest is zero — check rate and balance");
 
 		// 3. Create recurring income definition (same ID strategy as create_recurring_definition)
-		let maxId = 0n;
-		for (const row of ctx.db.recurring_transaction_definition.iter()) {
-			if (row.id > maxId) maxId = row.id;
-		}
-		for (const row of ctx.db.recurring_transaction_definition_v2.iter()) {
-			if (row.id > maxId) maxId = row.id;
-		}
-
 		const defRow = ctx.db.recurring_transaction_definition_v2.insert({
-			id: maxId + 1n,
+			id: nextRecurringDefinitionId(
+				ctx.db.recurring_transaction_definition.iter(),
+				ctx.db.recurring_transaction_definition_v2.iter(),
+			),
 			ownerIdentity,
 			name: `${name.trim()} — Interest`,
 			type: "income",

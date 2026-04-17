@@ -126,6 +126,40 @@ export function validateCreditAccountEdit(
 	return null;
 }
 
+// Validate time-deposit creation inputs (balance, rate, maturity).
+// Returns the first failure's message, or null when all checks pass.
+// Caller still validates the sub-account name via its own reducer-level check.
+export function validateTimeDepositCreation(input: {
+	initialBalanceCentavos: bigint;
+	interestRateBps: number;
+	maturityDateMicros: bigint;
+	nowMicros: bigint;
+}): string | null {
+	if (input.initialBalanceCentavos <= 0n) return "Initial balance must be greater than 0";
+	if (input.interestRateBps === 0) return "Interest rate is required";
+	if (input.maturityDateMicros <= input.nowMicros) return "Maturity date must be in the future";
+	return null;
+}
+
+// Next safe ID for recurring_transaction_definition_v2 inserts.
+// The v2 table's autoInc does not account for v1 rows inserted with explicit IDs
+// by migrateV1RowToV2(); using autoInc alone risks collisions that the view's
+// dedup filter would then hide. Scanning both tables and taking max+1 avoids it.
+// Both iterables yield rows with a bigint `id`; an empty state returns 1n.
+export function nextRecurringDefinitionId(
+	v1Rows: Iterable<{ id: bigint }>,
+	v2Rows: Iterable<{ id: bigint }>,
+): bigint {
+	let maxId = 0n;
+	for (const row of v1Rows) {
+		if (row.id > maxId) maxId = row.id;
+	}
+	for (const row of v2Rows) {
+		if (row.id > maxId) maxId = row.id;
+	}
+	return maxId + 1n;
+}
+
 // Monthly *net* time-deposit interest in centavos, after 20% final withholding tax.
 // Formula: principal × (bps/10_000) / 12 × 0.80
 // Held in integer space to preserve centavo precision: (principal × bps × 80) / 12_000_000.

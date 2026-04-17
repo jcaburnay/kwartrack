@@ -6,9 +6,11 @@ import {
 	computeMonthlyNetInterestCentavos,
 	computeNextOccurrence,
 	isAuthorized,
+	nextRecurringDefinitionId,
 	normalizeTagName,
 	resolveOwner,
 	validateCreditAccountEdit,
+	validateTimeDepositCreation,
 } from "../helpers";
 
 // =============================================================================
@@ -512,5 +514,139 @@ describe("validateCreditAccountEdit", () => {
 	it("checks the credit limit before the balance", () => {
 		// Both invalid — should return the limit message since that runs first.
 		expect(validateCreditAccountEdit(0n, -50_000_00n)).toBe("Credit limit must be greater than 0");
+	});
+});
+
+// =============================================================================
+// validateTimeDepositCreation — balance / rate / maturity invariants.
+// Name validation stays in the reducer so it can share the message with other
+// sub-account reducers; this helper covers the TD-specific checks only.
+// =============================================================================
+
+describe("validateTimeDepositCreation", () => {
+	const now = 1_700_000_000_000_000n;
+	const future = now + 1n;
+	const past = now - 1n;
+
+	it("returns null for a valid input", () => {
+		expect(
+			validateTimeDepositCreation({
+				initialBalanceCentavos: 100_000_00n,
+				interestRateBps: 600,
+				maturityDateMicros: future,
+				nowMicros: now,
+			}),
+		).toBeNull();
+	});
+
+	it("rejects zero or negative initial balance", () => {
+		const err = "Initial balance must be greater than 0";
+		expect(
+			validateTimeDepositCreation({
+				initialBalanceCentavos: 0n,
+				interestRateBps: 600,
+				maturityDateMicros: future,
+				nowMicros: now,
+			}),
+		).toBe(err);
+		expect(
+			validateTimeDepositCreation({
+				initialBalanceCentavos: -1n,
+				interestRateBps: 600,
+				maturityDateMicros: future,
+				nowMicros: now,
+			}),
+		).toBe(err);
+	});
+
+	it("rejects zero interest rate (even with valid balance and maturity)", () => {
+		expect(
+			validateTimeDepositCreation({
+				initialBalanceCentavos: 100_000_00n,
+				interestRateBps: 0,
+				maturityDateMicros: future,
+				nowMicros: now,
+			}),
+		).toBe("Interest rate is required");
+	});
+
+	it("rejects maturity equal to or before now", () => {
+		const err = "Maturity date must be in the future";
+		expect(
+			validateTimeDepositCreation({
+				initialBalanceCentavos: 100_000_00n,
+				interestRateBps: 600,
+				maturityDateMicros: now,
+				nowMicros: now,
+			}),
+		).toBe(err);
+		expect(
+			validateTimeDepositCreation({
+				initialBalanceCentavos: 100_000_00n,
+				interestRateBps: 600,
+				maturityDateMicros: past,
+				nowMicros: now,
+			}),
+		).toBe(err);
+	});
+
+	it("reports errors in order: balance, rate, maturity", () => {
+		// All three invalid — balance error surfaces first.
+		expect(
+			validateTimeDepositCreation({
+				initialBalanceCentavos: 0n,
+				interestRateBps: 0,
+				maturityDateMicros: past,
+				nowMicros: now,
+			}),
+		).toBe("Initial balance must be greater than 0");
+		// Balance ok, rate and maturity bad — rate surfaces next.
+		expect(
+			validateTimeDepositCreation({
+				initialBalanceCentavos: 100_000_00n,
+				interestRateBps: 0,
+				maturityDateMicros: past,
+				nowMicros: now,
+			}),
+		).toBe("Interest rate is required");
+	});
+});
+
+// =============================================================================
+// nextRecurringDefinitionId — safe ID for v2 inserts that avoids colliding with
+// unmigrated v1 rows (see migrateV1RowToV2 in reducers/recurring.ts).
+// =============================================================================
+
+describe("nextRecurringDefinitionId", () => {
+	it("returns 1n when both tables are empty", () => {
+		expect(nextRecurringDefinitionId([], [])).toBe(1n);
+	});
+
+	it("returns maxId+1 from a single v2 row", () => {
+		expect(nextRecurringDefinitionId([], [{ id: 7n }])).toBe(8n);
+	});
+
+	it("returns maxId+1 from a single v1 row (unmigrated)", () => {
+		expect(nextRecurringDefinitionId([{ id: 12n }], [])).toBe(13n);
+	});
+
+	it("takes the max across v1 and v2 when both tables have rows", () => {
+		const v1 = [{ id: 3n }, { id: 15n }, { id: 8n }];
+		const v2 = [{ id: 9n }, { id: 4n }];
+		expect(nextRecurringDefinitionId(v1, v2)).toBe(16n);
+	});
+
+	it("handles gaps — the IDs between 1 and max don't matter", () => {
+		// A deleted-row gap must not cause the new ID to land inside the gap.
+		const v2 = [{ id: 1n }, { id: 100n }];
+		expect(nextRecurringDefinitionId([], v2)).toBe(101n);
+	});
+
+	it("accepts iterators (not just arrays)", () => {
+		function* gen() {
+			yield { id: 5n };
+			yield { id: 42n };
+		}
+		expect(nextRecurringDefinitionId([], gen())).toBe(43n);
 	});
 });
