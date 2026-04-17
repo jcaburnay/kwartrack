@@ -8,6 +8,7 @@ import { openAsModal } from "../utils/dialog";
 import { getVisibleTags } from "../utils/tagConfig";
 import { CurrencyInput } from "./CurrencyInput";
 import { Input } from "./Input";
+import { SubAccountGroupedSelect } from "./SubAccountGroupedSelect";
 import { SubmitButton } from "./SubmitButton";
 
 interface RecurringDefinition {
@@ -37,69 +38,6 @@ interface RecurringFormValues {
 	anchorMonth: string;
 	anchorDayOfWeek: string;
 	remainingOccurrences: string;
-}
-
-interface SubAccountGroupedSelectProps {
-	id: string;
-	value: string;
-	onChange: (value: string) => void;
-	error?: string;
-	accounts: readonly { id: bigint; name: string; isStandalone: boolean }[];
-	subAccounts: readonly {
-		id: bigint;
-		accountId: bigint;
-		name: string;
-		balanceCentavos: bigint;
-		isDefault: boolean;
-	}[];
-}
-
-function SubAccountGroupedSelect({
-	id,
-	value,
-	onChange,
-	error,
-	accounts,
-	subAccounts,
-}: SubAccountGroupedSelectProps) {
-	return (
-		<select
-			id={id}
-			value={value}
-			onChange={(e) => onChange(e.target.value)}
-			className={`select select-bordered w-full${error ? " input-error" : ""}`}
-		>
-			<option value="">Select sub-account</option>
-			{accounts.map((account) => {
-				if (account.isStandalone) {
-					// Find the default partition for this standalone account
-					const defaultPartition = subAccounts.find(
-						(p) => p.accountId === account.id && p.isDefault,
-					);
-					if (!defaultPartition) return null;
-					return (
-						<optgroup key={account.id.toString()} label={account.name}>
-							<option value={defaultPartition.id.toString()}>{account.name}</option>
-						</optgroup>
-					);
-				}
-				// Partitioned account: show non-default partitions
-				const accountPartitions = subAccounts.filter(
-					(p) => p.accountId === account.id && !p.isDefault,
-				);
-				if (accountPartitions.length === 0) return null;
-				return (
-					<optgroup key={account.id.toString()} label={account.name}>
-						{accountPartitions.map((partition) => (
-							<option key={partition.id.toString()} value={partition.id.toString()}>
-								{partition.name}
-							</option>
-						))}
-					</optgroup>
-				);
-			})}
-		</select>
-	);
 }
 
 interface RecurringModalProps {
