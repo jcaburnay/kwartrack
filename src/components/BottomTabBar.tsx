@@ -30,10 +30,9 @@ const SETTINGS_ITEM = { label: "Settings", icon: Settings, to: "/settings" };
 export function BottomTabBar() {
 	const { pathname } = useLocation();
 	const [moreOpen, setMoreOpen] = useState(false);
-	const moreRef = useRef<HTMLButtonElement>(null);
+	const moreRef = useRef<HTMLDivElement>(null);
 
-	const isMoreActive =
-		[...MORE_ITEMS, SETTINGS_ITEM].some((item) => pathname.startsWith(item.to));
+	const isMoreActive = [...MORE_ITEMS, SETTINGS_ITEM].some((item) => pathname.startsWith(item.to));
 
 	useEffect(() => {
 		if (!moreOpen) return;
@@ -56,11 +55,7 @@ export function BottomTabBar() {
 				if (tab.to === null) {
 					const active = isMoreActive;
 					return (
-						<div
-							key={tab.label}
-							ref={moreRef}
-							className={active ? "dock-active" : ""}
-						>
+						<div key={tab.label} ref={moreRef} className={active ? "dock-active" : ""}>
 							<button
 								type="button"
 								onClick={() => setMoreOpen((prev) => !prev)}

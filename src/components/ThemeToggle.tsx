@@ -18,7 +18,10 @@ export function ThemeToggle({ className }: { className?: string }) {
 		<button
 			type="button"
 			onClick={() => setIsDark(!isDark)}
-			className={className ?? "is-drawer-close:tooltip is-drawer-close:tooltip-right flex items-center gap-2.5 w-full rounded-lg text-base-content/60 hover:text-base-content transition-colors cursor-pointer text-sm"}
+			className={
+				className ??
+				"is-drawer-close:tooltip is-drawer-close:tooltip-right flex items-center gap-2.5 w-full rounded-lg text-base-content/60 hover:text-base-content transition-colors cursor-pointer text-sm"
+			}
 			aria-label={label}
 			data-tip={label}
 		>
