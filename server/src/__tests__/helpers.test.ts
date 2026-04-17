@@ -5,6 +5,7 @@ import {
 	computeFirstFireMicros,
 	computeMonthlyNetInterestCentavos,
 	computeNextOccurrence,
+	computeTransactionMutations,
 	isAuthorized,
 	nextRecurringDefinitionId,
 	normalizeTagName,
@@ -648,5 +649,108 @@ describe("nextRecurringDefinitionId", () => {
 			yield { id: 42n };
 		}
 		expect(nextRecurringDefinitionId([], gen())).toBe(43n);
+	});
+});
+
+// =============================================================================
+// computeTransactionMutations — which sub-accounts get which balance direction
+// when a transaction is applied (forward) or undone (reverse). Used by create,
+// edit, delete, and the fire_recurring_transaction scheduled reducer.
+// =============================================================================
+
+describe("computeTransactionMutations", () => {
+	const expense = {
+		type: "expense",
+		amountCentavos: 100_00n,
+		sourceSubAccountId: 1n,
+		destinationSubAccountId: 0n,
+		serviceFeeCentavos: 5_00n,
+	};
+	const income = {
+		type: "income",
+		amountCentavos: 5_000_00n,
+		sourceSubAccountId: 0n,
+		destinationSubAccountId: 2n,
+		serviceFeeCentavos: 0n,
+	};
+	const transfer = {
+		type: "transfer",
+		amountCentavos: 200_00n,
+		sourceSubAccountId: 1n,
+		destinationSubAccountId: 2n,
+		serviceFeeCentavos: 10_00n,
+	};
+
+	describe("forward", () => {
+		it("expense: single debit on source including service fee", () => {
+			expect(computeTransactionMutations(expense)).toEqual([
+				{ subAccountId: 1n, role: "source", direction: "debit", delta: 105_00n },
+			]);
+		});
+
+		it("income: single credit on destination (no fee involvement)", () => {
+			expect(computeTransactionMutations(income)).toEqual([
+				{ subAccountId: 2n, role: "destination", direction: "credit", delta: 5_000_00n },
+			]);
+		});
+
+		it("transfer: source debit (amount+fee) first, destination credit (amount only)", () => {
+			expect(computeTransactionMutations(transfer)).toEqual([
+				{ subAccountId: 1n, role: "source", direction: "debit", delta: 210_00n },
+				{ subAccountId: 2n, role: "destination", direction: "credit", delta: 200_00n },
+			]);
+		});
+
+		it("recurring-shape expense (no fee) charges source by the full amount", () => {
+			// fire_recurring_transaction always sets serviceFeeCentavos = 0n.
+			expect(
+				computeTransactionMutations({
+					type: "expense",
+					amountCentavos: 799_00n,
+					sourceSubAccountId: 5n,
+					destinationSubAccountId: 0n,
+					serviceFeeCentavos: 0n,
+				}),
+			).toEqual([{ subAccountId: 5n, role: "source", direction: "debit", delta: 799_00n }]);
+		});
+
+		it("unknown transaction type produces no mutations", () => {
+			expect(computeTransactionMutations({ ...expense, type: "bogus" })).toEqual([]);
+		});
+	});
+
+	describe("reverse", () => {
+		it("reversing an expense credits the source (undoing the debit)", () => {
+			expect(computeTransactionMutations(expense, true)).toEqual([
+				{ subAccountId: 1n, role: "source", direction: "credit", delta: 105_00n },
+			]);
+		});
+
+		it("reversing an income debits the destination (undoing the credit)", () => {
+			expect(computeTransactionMutations(income, true)).toEqual([
+				{ subAccountId: 2n, role: "destination", direction: "debit", delta: 5_000_00n },
+			]);
+		});
+
+		it("reversing a transfer flips both directions but keeps the per-side deltas", () => {
+			expect(computeTransactionMutations(transfer, true)).toEqual([
+				{ subAccountId: 1n, role: "source", direction: "credit", delta: 210_00n },
+				{ subAccountId: 2n, role: "destination", direction: "debit", delta: 200_00n },
+			]);
+		});
+	});
+
+	it("forward then reverse produces per-sub-account deltas that cancel", () => {
+		// For every sub-account touched, the two mutations must have opposite
+		// directions and the same delta — so applyBalance(applyBalance(x, fwd), rev) = x.
+		const forwardSet = new Map(
+			computeTransactionMutations(transfer).map((m) => [m.subAccountId, m]),
+		);
+		for (const rev of computeTransactionMutations(transfer, true)) {
+			const fwd = forwardSet.get(rev.subAccountId);
+			expect(fwd).toBeDefined();
+			expect(fwd?.delta).toBe(rev.delta);
+			expect(fwd?.direction).not.toBe(rev.direction);
+		}
 	});
 });

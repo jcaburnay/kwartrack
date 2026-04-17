@@ -1,6 +1,6 @@
 import { ScheduleAt } from "spacetimedb";
 import { schema, t, table } from "spacetimedb/server";
-import { computeNextOccurrence } from "./helpers";
+import { applyBalance, computeNextOccurrence, computeTransactionMutations } from "./helpers";
 
 // user_profile: maps Clerk identity to SpacetimeDB identity — unchanged from Phase 1
 const userProfile = table(
@@ -462,6 +462,11 @@ export const fire_recurring_transaction = spacetimedb.reducer(
 		// Definition deleted or paused — do not create transaction
 		if (!def || def.isPaused) return;
 
+		// Recurring fires have no service fee and no transfer type — they're always
+		// a single source (expense) or single destination (income) mutation.
+		const sourceSubAccountId = def.type === "expense" ? def.subAccountId : 0n;
+		const destinationSubAccountId = def.type === "income" ? def.subAccountId : 0n;
+
 		// Create transaction record (isRecurring: true per D-15, D-10)
 		ctx.db.transaction.insert({
 			id: 0n,
@@ -469,8 +474,8 @@ export const fire_recurring_transaction = spacetimedb.reducer(
 			type: def.type,
 			amountCentavos: def.amountCentavos,
 			tag: def.tag,
-			sourceSubAccountId: def.type === "expense" ? def.subAccountId : 0n,
-			destinationSubAccountId: def.type === "income" ? def.subAccountId : 0n,
+			sourceSubAccountId,
+			destinationSubAccountId,
 			serviceFeeCentavos: 0n,
 			description: `Recurring: ${def.name}`,
 			date: ctx.timestamp,
@@ -479,21 +484,20 @@ export const fire_recurring_transaction = spacetimedb.reducer(
 			recurringDefinitionId: def.id,
 		});
 
-		// Update sub-account balance (credit-aware: expense on credit sub-account INCREASES balance)
-		const subAccount = ctx.db.sub_account.id.find(def.subAccountId);
-		if (subAccount) {
-			if (def.type === "expense") {
-				const isCreditSubAccount = subAccount.subAccountType === "credit";
+		// Update sub-account balance via the shared helper so credit-vs-wallet
+		// semantics stay consistent with the manual transaction path.
+		for (const mutation of computeTransactionMutations({
+			type: def.type,
+			amountCentavos: def.amountCentavos,
+			sourceSubAccountId,
+			destinationSubAccountId,
+			serviceFeeCentavos: 0n,
+		})) {
+			const subAccount = ctx.db.sub_account.id.find(mutation.subAccountId);
+			if (subAccount) {
 				ctx.db.sub_account.id.update({
 					...subAccount,
-					balanceCentavos: isCreditSubAccount
-						? subAccount.balanceCentavos + def.amountCentavos
-						: subAccount.balanceCentavos - def.amountCentavos,
-				});
-			} else if (def.type === "income") {
-				ctx.db.sub_account.id.update({
-					...subAccount,
-					balanceCentavos: subAccount.balanceCentavos + def.amountCentavos,
+					balanceCentavos: applyBalance(subAccount, mutation.direction, mutation.delta),
 				});
 			}
 		}

@@ -141,6 +141,55 @@ export function validateTimeDepositCreation(input: {
 	return null;
 }
 
+// A single balance-side effect of applying a transaction: which sub-account,
+// its role (source vs destination), which direction on that sub-account's
+// balance, and by how much. Callers iterate and apply via applyBalance().
+export type TransactionMutation = {
+	subAccountId: bigint;
+	role: "source" | "destination";
+	direction: "debit" | "credit";
+	delta: bigint;
+};
+
+// Compute the balance mutations for a transaction.
+//   - forward (default): expense/transfer debits source by amount+fee,
+//     income/transfer credits destination by amount.
+//   - reverse = true: returns the inverse — used by edit (undo old) and
+//     delete paths so the prior effect cancels cleanly.
+// Unknown types produce no mutations (callers decide how to treat that).
+export function computeTransactionMutations(
+	txn: {
+		type: string;
+		amountCentavos: bigint;
+		sourceSubAccountId: bigint;
+		destinationSubAccountId: bigint;
+		serviceFeeCentavos: bigint;
+	},
+	reverse = false,
+): TransactionMutation[] {
+	const mutations: TransactionMutation[] = [];
+
+	if (txn.type === "expense" || txn.type === "transfer") {
+		mutations.push({
+			subAccountId: txn.sourceSubAccountId,
+			role: "source",
+			direction: reverse ? "credit" : "debit",
+			delta: txn.amountCentavos + txn.serviceFeeCentavos,
+		});
+	}
+
+	if (txn.type === "income" || txn.type === "transfer") {
+		mutations.push({
+			subAccountId: txn.destinationSubAccountId,
+			role: "destination",
+			direction: reverse ? "debit" : "credit",
+			delta: txn.amountCentavos,
+		});
+	}
+
+	return mutations;
+}
+
 // Next safe ID for recurring_transaction_definition_v2 inserts.
 // The v2 table's autoInc does not account for v1 rows inserted with explicit IDs
 // by migrateV1RowToV2(); using autoInc alone risks collisions that the view's

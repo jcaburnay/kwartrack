@@ -1,5 +1,12 @@
 import { SenderError, t } from "spacetimedb/server";
-import { applyBalance, isAuthorized, resolveOwner } from "../helpers";
+import {
+	type AppCtx,
+	applyBalance,
+	computeTransactionMutations,
+	isAuthorized,
+	resolveOwner,
+	type TransactionMutation,
+} from "../helpers";
 import spacetimedb from "../schema";
 
 // =============================================================================
@@ -9,6 +16,36 @@ import spacetimedb from "../schema";
 //   Income:   destination.balanceCentavos += amountCentavos
 //   Transfer: source -= (amount + serviceFee), destination += amount
 // =============================================================================
+
+// Apply a forward-direction mutation: require the sub-account exist + belong to
+// the sender, then write the new balance. Throws SenderError with a role-aware
+// message if validation fails.
+function applyForwardMutation(ctx: AppCtx, mutation: TransactionMutation): void {
+	const subAccount = ctx.db.sub_account.id.find(mutation.subAccountId);
+	if (!subAccount) {
+		throw new SenderError(
+			mutation.role === "source"
+				? "Source sub-account not found"
+				: "Destination sub-account not found",
+		);
+	}
+	if (!isAuthorized(ctx, subAccount.ownerIdentity)) throw new SenderError("Not authorized");
+	ctx.db.sub_account.id.update({
+		...subAccount,
+		balanceCentavos: applyBalance(subAccount, mutation.direction, mutation.delta),
+	});
+}
+
+// Apply a reverse-direction mutation: silently skip if the sub-account is gone
+// (e.g. cascade-deleted) so an edit or delete path can still proceed.
+function applyReverseMutation(ctx: AppCtx, mutation: TransactionMutation): void {
+	const subAccount = ctx.db.sub_account.id.find(mutation.subAccountId);
+	if (!subAccount) return;
+	ctx.db.sub_account.id.update({
+		...subAccount,
+		balanceCentavos: applyBalance(subAccount, mutation.direction, mutation.delta),
+	});
+}
 
 export const create_transaction = spacetimedb.reducer(
 	{
@@ -39,27 +76,14 @@ export const create_transaction = spacetimedb.reducer(
 
 		const ownerIdentity = resolveOwner(ctx);
 
-		// Validate and update source sub-account (expense, transfer)
-		if (type === "expense" || type === "transfer") {
-			const source = ctx.db.sub_account.id.find(sourceSubAccountId);
-			if (!source) throw new SenderError("Source sub-account not found");
-			if (!isAuthorized(ctx, source.ownerIdentity)) throw new SenderError("Not authorized");
-			const debit = amountCentavos + serviceFeeCentavos;
-			ctx.db.sub_account.id.update({
-				...source,
-				balanceCentavos: applyBalance(source, "debit", debit),
-			});
-		}
-
-		// Validate and update destination sub-account (income, transfer)
-		if (type === "income" || type === "transfer") {
-			const destination = ctx.db.sub_account.id.find(destinationSubAccountId);
-			if (!destination) throw new SenderError("Destination sub-account not found");
-			if (!isAuthorized(ctx, destination.ownerIdentity)) throw new SenderError("Not authorized");
-			ctx.db.sub_account.id.update({
-				...destination,
-				balanceCentavos: applyBalance(destination, "credit", amountCentavos),
-			});
+		for (const mutation of computeTransactionMutations({
+			type,
+			amountCentavos,
+			sourceSubAccountId,
+			destinationSubAccountId,
+			serviceFeeCentavos,
+		})) {
+			applyForwardMutation(ctx, mutation);
 		}
 
 		ctx.db.transaction.insert({
@@ -111,46 +135,20 @@ export const edit_transaction = spacetimedb.reducer(
 		if (!isAuthorized(ctx, existing.ownerIdentity)) throw new SenderError("Not authorized");
 		if (amountCentavos <= 0n) throw new SenderError("Amount must be greater than 0");
 
-		// --- Reverse old transaction's balance effect ---
-		if (existing.type === "expense" || existing.type === "transfer") {
-			const oldSource = ctx.db.sub_account.id.find(existing.sourceSubAccountId);
-			if (oldSource) {
-				const oldDebit = existing.amountCentavos + existing.serviceFeeCentavos;
-				ctx.db.sub_account.id.update({
-					...oldSource,
-					balanceCentavos: applyBalance(oldSource, "credit", oldDebit), // reversal = opposite direction
-				});
-			}
-		}
-		if (existing.type === "income" || existing.type === "transfer") {
-			const oldDest = ctx.db.sub_account.id.find(existing.destinationSubAccountId);
-			if (oldDest) {
-				ctx.db.sub_account.id.update({
-					...oldDest,
-					balanceCentavos: applyBalance(oldDest, "debit", existing.amountCentavos), // reversal = opposite direction
-				});
-			}
+		// Reverse the old transaction's balance effect…
+		for (const mutation of computeTransactionMutations(existing, true)) {
+			applyReverseMutation(ctx, mutation);
 		}
 
-		// --- Apply new transaction's balance effect ---
-		if (type === "expense" || type === "transfer") {
-			const source = ctx.db.sub_account.id.find(sourceSubAccountId);
-			if (!source) throw new SenderError("Source sub-account not found");
-			if (!isAuthorized(ctx, source.ownerIdentity)) throw new SenderError("Not authorized");
-			const debit = amountCentavos + serviceFeeCentavos;
-			ctx.db.sub_account.id.update({
-				...source,
-				balanceCentavos: applyBalance(source, "debit", debit),
-			});
-		}
-		if (type === "income" || type === "transfer") {
-			const dest = ctx.db.sub_account.id.find(destinationSubAccountId);
-			if (!dest) throw new SenderError("Destination sub-account not found");
-			if (!isAuthorized(ctx, dest.ownerIdentity)) throw new SenderError("Not authorized");
-			ctx.db.sub_account.id.update({
-				...dest,
-				balanceCentavos: applyBalance(dest, "credit", amountCentavos),
-			});
+		// …then apply the new one.
+		for (const mutation of computeTransactionMutations({
+			type,
+			amountCentavos,
+			sourceSubAccountId,
+			destinationSubAccountId,
+			serviceFeeCentavos,
+		})) {
+			applyForwardMutation(ctx, mutation);
 		}
 
 		ctx.db.transaction.id.update({
@@ -174,25 +172,8 @@ export const delete_transaction = spacetimedb.reducer(
 		if (!existing) throw new SenderError("Transaction not found");
 		if (!isAuthorized(ctx, existing.ownerIdentity)) throw new SenderError("Not authorized");
 
-		// Reverse balance effect (opposite direction to undo the original transaction)
-		if (existing.type === "expense" || existing.type === "transfer") {
-			const source = ctx.db.sub_account.id.find(existing.sourceSubAccountId);
-			if (source) {
-				const debit = existing.amountCentavos + existing.serviceFeeCentavos;
-				ctx.db.sub_account.id.update({
-					...source,
-					balanceCentavos: applyBalance(source, "credit", debit), // undo the debit
-				});
-			}
-		}
-		if (existing.type === "income" || existing.type === "transfer") {
-			const dest = ctx.db.sub_account.id.find(existing.destinationSubAccountId);
-			if (dest) {
-				ctx.db.sub_account.id.update({
-					...dest,
-					balanceCentavos: applyBalance(dest, "debit", existing.amountCentavos), // undo the credit
-				});
-			}
+		for (const mutation of computeTransactionMutations(existing, true)) {
+			applyReverseMutation(ctx, mutation);
 		}
 
 		ctx.db.transaction.id.delete(transactionId);
