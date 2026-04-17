@@ -90,26 +90,14 @@ describe("MobileHeader (D-02)", () => {
 		expect(header?.className).toContain("md:hidden");
 	});
 
-	it('contains text "Kwartrack"', async () => {
+	it('contains brand text "kwartrack"', async () => {
 		const { MobileHeader } = await import("../components/MobileHeader");
 		render(
 			<MemoryRouter>
 				<MobileHeader />
 			</MemoryRouter>,
 		);
-		expect(screen.getByText("Kwartrack")).toBeInTheDocument();
-	});
-
-	it("contains ThemeToggle (theme button)", async () => {
-		const { MobileHeader } = await import("../components/MobileHeader");
-		render(
-			<MemoryRouter>
-				<MobileHeader />
-			</MemoryRouter>,
-		);
-		// ThemeToggle renders a button with aria-label "Light mode" or "Dark mode"
-		const toggle = screen.getByLabelText(/^(light|dark) mode$/i);
-		expect(toggle).toBeInTheDocument();
+		expect(screen.getByText("kwartrack")).toBeInTheDocument();
 	});
 
 	it("contains UserButton (mocked)", async () => {
@@ -121,7 +109,7 @@ describe("MobileHeader (D-02)", () => {
 		);
 		// UserButton is mocked in setup.ts to return null, so we just verify no crash
 		// The component renders without error — this confirms UserButton is included
-		expect(screen.getByText("Kwartrack")).toBeInTheDocument();
+		expect(screen.getByText("kwartrack")).toBeInTheDocument();
 	});
 });
 
@@ -181,7 +169,7 @@ describe("BottomTabBar (D-01)", () => {
 		expect(screen.getByText("More")).toBeInTheDocument();
 	});
 
-	it("shows Settings in the More menu", async () => {
+	it("shows Settings, Recurring, Debts & Splits, and ThemeToggle in the More menu", async () => {
 		const user = userEvent.setup();
 		const { BottomTabBar } = await import("../components/BottomTabBar");
 		render(
@@ -193,6 +181,8 @@ describe("BottomTabBar (D-01)", () => {
 		expect(screen.getByText("Settings")).toBeInTheDocument();
 		expect(screen.getByText("Recurring")).toBeInTheDocument();
 		expect(screen.getByText("Debts & Splits")).toBeInTheDocument();
+		// ThemeToggle renders a button with aria-label "Light mode" or "Dark mode"
+		expect(screen.getByLabelText(/^(light|dark) mode$/i)).toBeInTheDocument();
 	});
 });
 
