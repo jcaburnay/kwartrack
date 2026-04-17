@@ -3,6 +3,10 @@
  * Resolves visible tags by merging defaults with user customizations.
  */
 
+// Keep this in sync with server/src/helpers.ts DEFAULT_TAGS_BY_TYPE.
+// The server module runs on a different build target and cannot import
+// this file, so the defaults are duplicated. If you change one, change
+// the other — validation on the server assumes they match.
 export const DEFAULT_TAGS: Record<string, readonly string[]> = {
 	expense: [
 		"foods",
