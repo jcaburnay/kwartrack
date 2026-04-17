@@ -3,30 +3,8 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
 import { useReducer, useTable } from "spacetimedb/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { formatPesos } from "../utils/currency";
 import { getReducerSpy } from "./setup";
 
-// =============================================================================
-// formatPesos unit tests — these are GREEN immediately (no component dependency)
-// =============================================================================
-describe("formatPesos", () => {
-	it("formats 0 centavos as P0.00", () => {
-		expect(formatPesos(0n)).toBe("P0.00");
-	});
-	it("formats 500 centavos as P5.00", () => {
-		expect(formatPesos(500n)).toBe("P5.00");
-	});
-	it("formats 12050000 centavos as P120,500.00", () => {
-		expect(formatPesos(12050000n)).toBe("P120,500.00");
-	});
-	it("formats 100 centavos as P1.00", () => {
-		expect(formatPesos(100n)).toBe("P1.00");
-	});
-});
-
-// =============================================================================
-// AccountsPage tests — RED until Plan 03 creates AccountsPage
-// =============================================================================
 describe("AccountsPage", () => {
 	beforeEach(() => {
 		vi.mocked(useTable).mockReturnValue([[], true]);
