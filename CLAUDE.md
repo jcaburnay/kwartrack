@@ -37,9 +37,13 @@ src/
   module_bindings/      # AUTO-GENERATED — never edit, run pnpm generate
   __tests__/            # Vitest tests
 server/
-  spacetimedb/src/
+  src/
     schema.ts           # table definitions
-    index.ts            # reducers + lifecycle hooks
+    helpers.ts          # pure helpers (tested via helpers.test.ts)
+    index.ts            # re-exports reducers + scheduled reducers
+    lifecycle.ts        # clientConnected / clientDisconnected
+    reducers/           # one file per domain (accounts, transactions, ...)
+    __tests__/          # Vitest tests (server-side pure helpers)
 ```
 
 ## Auth & Identity — Critical Gotchas

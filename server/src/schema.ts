@@ -1,6 +1,11 @@
 import { ScheduleAt } from "spacetimedb";
 import { schema, t, table } from "spacetimedb/server";
-import { applyBalance, computeNextOccurrence, computeTransactionMutations } from "./helpers";
+import {
+	applyBalance,
+	computeInstallmentNextState,
+	computeNextOccurrence,
+	computeTransactionMutations,
+} from "./helpers";
 
 // user_profile: maps Clerk identity to SpacetimeDB identity — unchanged from Phase 1
 const userProfile = table(
@@ -503,23 +508,15 @@ export const fire_recurring_transaction = spacetimedb.reducer(
 		}
 
 		// Installment countdown: decrement remainingOccurrences and auto-pause at 0 (D-01)
+		const nextState = computeInstallmentNextState(def.remainingOccurrences);
 		if (def.remainingOccurrences > 0) {
-			const newRemaining = def.remainingOccurrences - 1;
-			if (newRemaining === 0) {
-				// Auto-pause: set isPaused=true, update remainingOccurrences to 0, do NOT schedule next fire
-				ctx.db.recurring_transaction_definition_v2.id.update({
-					...def,
-					remainingOccurrences: 0,
-					isPaused: true,
-				});
-				return; // Early return — no next schedule (per D-01)
-			}
-			// Decrement and continue to schedule next fire
 			ctx.db.recurring_transaction_definition_v2.id.update({
 				...def,
-				remainingOccurrences: newRemaining,
+				remainingOccurrences: nextState.newRemainingOccurrences,
+				isPaused: nextState.autoPause ? true : def.isPaused,
 			});
 		}
+		if (!nextState.scheduleNextFire) return;
 
 		// Schedule next fire based on interval (D-15)
 		const nextFireMicros = computeNextOccurrence(

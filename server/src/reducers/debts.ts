@@ -1,5 +1,5 @@
 import { SenderError, t } from "spacetimedb/server";
-import { applyBalance, isAuthorized, resolveOwner } from "../helpers";
+import { applyBalance, isAuthorized, resolveOwner, validateDebtSettlement } from "../helpers";
 import spacetimedb from "../schema";
 
 // =============================================================================
@@ -83,10 +83,8 @@ export const settle_debt = spacetimedb.reducer(
 		const existing = ctx.db.debt.id.find(debtId);
 		if (!existing) throw new SenderError("Debt not found");
 		if (!isAuthorized(ctx, existing.ownerIdentity)) throw new SenderError("Not authorized");
-		if (amountCentavos <= 0n) throw new SenderError("Amount must be greater than 0");
-
-		const remaining = existing.amountCentavos - existing.settledAmountCentavos;
-		if (amountCentavos > remaining) throw new SenderError("Amount exceeds remaining balance");
+		const settlementError = validateDebtSettlement(existing, amountCentavos);
+		if (settlementError) throw new SenderError(settlementError);
 
 		const ownerIdentity = resolveOwner(ctx);
 		const subAccountRow = ctx.db.sub_account.id.find(subAccountId);

@@ -190,6 +190,72 @@ export function computeTransactionMutations(
 	return mutations;
 }
 
+// Validate the shared input shape for create_split and edit_split.
+// Returns the first failure's message, or null when all checks pass.
+// Kept out of the reducer bodies so the ordering is testable in one place.
+export function validateSplitInput(input: {
+	description: string;
+	totalAmountCentavos: bigint;
+	participantNames: readonly unknown[];
+	participantShares: readonly unknown[];
+	participantShareCounts: readonly unknown[];
+}): string | null {
+	if (!input.description.trim()) return "Description is required";
+	if (input.totalAmountCentavos <= 0n) return "Amount must be greater than 0";
+	if (input.participantNames.length === 0) return "At least one participant is required";
+	if (
+		input.participantNames.length !== input.participantShares.length ||
+		input.participantNames.length !== input.participantShareCounts.length
+	)
+		return "Participant arrays must have the same length";
+	return null;
+}
+
+// Remaining unpaid balance on a debt. Settlement writes (settle_debt) must stay
+// at or below this value, otherwise the debt ends up with settledAmount > amount.
+export function computeDebtRemaining(debt: {
+	amountCentavos: bigint;
+	settledAmountCentavos: bigint;
+}): bigint {
+	return debt.amountCentavos - debt.settledAmountCentavos;
+}
+
+// Validate a settle_debt amount against the debt's current state.
+// Returns an error message or null. Separate helper so the boundary cases
+// (amount <= 0, amount > remaining, exact payoff) are easy to pin down.
+export function validateDebtSettlement(
+	debt: { amountCentavos: bigint; settledAmountCentavos: bigint },
+	settlementCentavos: bigint,
+): string | null {
+	if (settlementCentavos <= 0n) return "Amount must be greater than 0";
+	if (settlementCentavos > computeDebtRemaining(debt)) return "Amount exceeds remaining balance";
+	return null;
+}
+
+// Compute the next state of an installment definition after a fire.
+// - Non-installment (remainingOccurrences = 0 on the stored row): no change,
+//   keep scheduling indefinitely.
+// - Installment about to reach zero (remainingOccurrences = 1): decrement to
+//   0 AND auto-pause AND skip scheduling the next fire (D-01).
+// - Installment with more fires left: decrement, stay active, schedule next.
+// The caller does the writes; this helper just returns the booleans + value.
+export type InstallmentNextState = {
+	newRemainingOccurrences: number;
+	autoPause: boolean;
+	scheduleNextFire: boolean;
+};
+export function computeInstallmentNextState(remainingOccurrences: number): InstallmentNextState {
+	if (remainingOccurrences <= 0) {
+		// Open-ended subscription: fire forever, never auto-pause.
+		return { newRemainingOccurrences: 0, autoPause: false, scheduleNextFire: true };
+	}
+	const newRemaining = remainingOccurrences - 1;
+	if (newRemaining === 0) {
+		return { newRemainingOccurrences: 0, autoPause: true, scheduleNextFire: false };
+	}
+	return { newRemainingOccurrences: newRemaining, autoPause: false, scheduleNextFire: true };
+}
+
 // Next safe ID for recurring_transaction_definition_v2 inserts.
 // The v2 table's autoInc does not account for v1 rows inserted with explicit IDs
 // by migrateV1RowToV2(); using autoInc alone risks collisions that the view's

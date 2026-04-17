@@ -2,7 +2,9 @@ import { describe, expect, it } from "vitest";
 import type { AppCtx } from "../helpers";
 import {
 	applyBalance,
+	computeDebtRemaining,
 	computeFirstFireMicros,
+	computeInstallmentNextState,
 	computeMonthlyNetInterestCentavos,
 	computeNextOccurrence,
 	computeTransactionMutations,
@@ -11,6 +13,8 @@ import {
 	normalizeTagName,
 	resolveOwner,
 	validateCreditAccountEdit,
+	validateDebtSettlement,
+	validateSplitInput,
 	validateTimeDepositCreation,
 } from "../helpers";
 
@@ -752,5 +756,152 @@ describe("computeTransactionMutations", () => {
 			expect(fwd?.delta).toBe(rev.delta);
 			expect(fwd?.direction).not.toBe(rev.direction);
 		}
+	});
+});
+
+// =============================================================================
+// validateSplitInput — shared validation for create_split + edit_split.
+// =============================================================================
+
+describe("validateSplitInput", () => {
+	const base = {
+		description: "Team lunch",
+		totalAmountCentavos: 300_00n,
+		participantNames: ["Alice", "Bob"],
+		participantShares: [150_00n, 150_00n],
+		participantShareCounts: [1, 1],
+	};
+
+	it("returns null for a valid input", () => {
+		expect(validateSplitInput(base)).toBeNull();
+	});
+
+	it("rejects an empty or whitespace-only description", () => {
+		expect(validateSplitInput({ ...base, description: "" })).toBe("Description is required");
+		expect(validateSplitInput({ ...base, description: "   " })).toBe("Description is required");
+	});
+
+	it("rejects zero or negative total amount", () => {
+		expect(validateSplitInput({ ...base, totalAmountCentavos: 0n })).toBe(
+			"Amount must be greater than 0",
+		);
+		expect(validateSplitInput({ ...base, totalAmountCentavos: -1n })).toBe(
+			"Amount must be greater than 0",
+		);
+	});
+
+	it("rejects an empty participant list", () => {
+		expect(
+			validateSplitInput({
+				...base,
+				participantNames: [],
+				participantShares: [],
+				participantShareCounts: [],
+			}),
+		).toBe("At least one participant is required");
+	});
+
+	it("rejects mismatched participant array lengths", () => {
+		expect(validateSplitInput({ ...base, participantShares: [150_00n] })).toBe(
+			"Participant arrays must have the same length",
+		);
+		expect(validateSplitInput({ ...base, participantShareCounts: [1] })).toBe(
+			"Participant arrays must have the same length",
+		);
+	});
+
+	it("reports errors in order: description, amount, participants.length, array-mismatch", () => {
+		// All failure conditions present — description error surfaces first.
+		expect(
+			validateSplitInput({
+				description: "",
+				totalAmountCentavos: 0n,
+				participantNames: [],
+				participantShares: [1n],
+				participantShareCounts: [1],
+			}),
+		).toBe("Description is required");
+	});
+});
+
+// =============================================================================
+// computeDebtRemaining + validateDebtSettlement — over-settlement guard.
+// =============================================================================
+
+describe("computeDebtRemaining", () => {
+	it("returns amount − settled", () => {
+		expect(
+			computeDebtRemaining({ amountCentavos: 1_000_00n, settledAmountCentavos: 300_00n }),
+		).toBe(700_00n);
+	});
+
+	it("is 0 for a fully settled debt", () => {
+		expect(computeDebtRemaining({ amountCentavos: 500_00n, settledAmountCentavos: 500_00n })).toBe(
+			0n,
+		);
+	});
+});
+
+describe("validateDebtSettlement", () => {
+	const debt = { amountCentavos: 1_000_00n, settledAmountCentavos: 300_00n }; // remaining = 700_00
+
+	it("accepts a partial settlement within remaining", () => {
+		expect(validateDebtSettlement(debt, 200_00n)).toBeNull();
+	});
+
+	it("accepts an exact payoff (settlement == remaining)", () => {
+		expect(validateDebtSettlement(debt, 700_00n)).toBeNull();
+	});
+
+	it("rejects zero or negative settlement", () => {
+		expect(validateDebtSettlement(debt, 0n)).toBe("Amount must be greater than 0");
+		expect(validateDebtSettlement(debt, -1n)).toBe("Amount must be greater than 0");
+	});
+
+	it("rejects a settlement that exceeds remaining by even 1 centavo", () => {
+		expect(validateDebtSettlement(debt, 700_01n)).toBe("Amount exceeds remaining balance");
+	});
+
+	it("rejects any settlement on a fully-settled debt", () => {
+		const paid = { amountCentavos: 100_00n, settledAmountCentavos: 100_00n };
+		expect(validateDebtSettlement(paid, 1n)).toBe("Amount exceeds remaining balance");
+	});
+});
+
+// =============================================================================
+// computeInstallmentNextState — boundary logic around the auto-pause at 0 (D-01).
+// =============================================================================
+
+describe("computeInstallmentNextState", () => {
+	it("open-ended (remaining = 0): stays at 0, no auto-pause, schedules next fire", () => {
+		expect(computeInstallmentNextState(0)).toEqual({
+			newRemainingOccurrences: 0,
+			autoPause: false,
+			scheduleNextFire: true,
+		});
+	});
+
+	it("remaining > 1: decrements, stays active, schedules next", () => {
+		expect(computeInstallmentNextState(5)).toEqual({
+			newRemainingOccurrences: 4,
+			autoPause: false,
+			scheduleNextFire: true,
+		});
+	});
+
+	it("remaining = 1 (last fire): decrements to 0 AND auto-pauses AND skips next schedule", () => {
+		expect(computeInstallmentNextState(1)).toEqual({
+			newRemainingOccurrences: 0,
+			autoPause: true,
+			scheduleNextFire: false,
+		});
+	});
+
+	it("defensive: negative input is treated as open-ended (no-op, still schedules)", () => {
+		expect(computeInstallmentNextState(-3)).toEqual({
+			newRemainingOccurrences: 0,
+			autoPause: false,
+			scheduleNextFire: true,
+		});
 	});
 });

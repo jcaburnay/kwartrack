@@ -1,5 +1,5 @@
 import { SenderError, t } from "spacetimedb/server";
-import { applyBalance, isAuthorized, resolveOwner } from "../helpers";
+import { applyBalance, isAuthorized, resolveOwner, validateSplitInput } from "../helpers";
 import spacetimedb from "../schema";
 
 // =============================================================================
@@ -36,15 +36,14 @@ export const create_split = spacetimedb.reducer(
 			participantShareCounts,
 		},
 	) => {
-		if (!description.trim()) throw new SenderError("Description is required");
-		if (totalAmountCentavos <= 0n) throw new SenderError("Amount must be greater than 0");
-		if (participantNames.length === 0)
-			throw new SenderError("At least one participant is required");
-		if (
-			participantNames.length !== participantShares.length ||
-			participantNames.length !== participantShareCounts.length
-		)
-			throw new SenderError("Participant arrays must have the same length");
+		const splitError = validateSplitInput({
+			description,
+			totalAmountCentavos,
+			participantNames,
+			participantShares,
+			participantShareCounts,
+		});
+		if (splitError) throw new SenderError(splitError);
 
 		const ownerIdentity = resolveOwner(ctx);
 
@@ -180,16 +179,17 @@ export const edit_split = spacetimedb.reducer(
 		const existing = ctx.db.split_event.id.find(splitEventId);
 		if (!existing) throw new SenderError("Split not found");
 		if (!isAuthorized(ctx, existing.ownerIdentity)) throw new SenderError("Not authorized");
-		if (!description.trim()) throw new SenderError("Description is required");
-		if (totalAmountCentavos <= 0n) throw new SenderError("Amount must be greater than 0");
-		if (
-			participantIds.length !== participantNames.length ||
-			participantIds.length !== participantShares.length ||
-			participantIds.length !== participantShareCounts.length
-		)
+		const splitError = validateSplitInput({
+			description,
+			totalAmountCentavos,
+			participantNames,
+			participantShares,
+			participantShareCounts,
+		});
+		if (splitError) throw new SenderError(splitError);
+		// edit_split also has participantIds; its length must track the other arrays.
+		if (participantIds.length !== participantNames.length)
 			throw new SenderError("Participant arrays must have the same length");
-		if (participantNames.length === 0)
-			throw new SenderError("At least one participant is required");
 
 		const ownerIdentity = resolveOwner(ctx);
 
