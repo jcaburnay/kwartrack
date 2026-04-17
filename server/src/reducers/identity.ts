@@ -18,6 +18,13 @@ export const link_clerk_identity = spacetimedb.reducer(
 		// If this STDB identity is already registered, just update display name if needed
 		const existingAlias = ctx.db.identity_alias.stdbIdentity.find(ctx.sender);
 		if (existingAlias) {
+			// Defense-in-depth: refuse to re-point an already-linked identity at a different
+			// Clerk user. This would only happen if a client reused a cached SpacetimeDB token
+			// after signing in as a different Clerk user — a cross-tenant data leak. The client
+			// is expected to clear its token in this case; rejecting here catches regressions.
+			if (existingAlias.clerkUserId !== clerkUserId) {
+				throw new SenderError("SpacetimeDB identity already linked to a different Clerk user");
+			}
 			const profile = ctx.db.userProfile.identity.find(existingAlias.primaryIdentity);
 			if (profile && profile.displayName !== displayName) {
 				ctx.db.userProfile.identity.update({ ...profile, displayName });

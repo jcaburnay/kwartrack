@@ -9,46 +9,56 @@ import { SpacetimeDBProvider } from "./providers/SpacetimeDBProvider";
 import { ToastProvider } from "./providers/ToastProvider";
 import "./index.css";
 
-// Gate: only render SpacetimeDBProvider (and App) once Clerk identity is available.
-// This eliminates the race condition where SpacetimeDB connects before Clerk resolves.
-// On sign-out, clerkUserId becomes undefined → gate unmounts SpacetimeDBProvider →
-// WebSocket disconnects → sign in again → fresh connection with correct identity.
-// When signed out or Clerk is still loading, pass through so sign-in/sign-up routes work.
-function SpacetimeDBGate({ children }: { children: React.ReactNode }) {
+function LoadingSpinner() {
+	return (
+		<div className="flex items-center justify-center h-screen">
+			<span className="loading loading-spinner loading-lg" />
+		</div>
+	);
+}
+
+function SignedInTree() {
+	return (
+		<SpacetimeDBProvider>
+			<ToastProvider>
+				<ConnectionStatus />
+				<RootErrorBoundary>
+					<App />
+				</RootErrorBoundary>
+			</ToastProvider>
+		</SpacetimeDBProvider>
+	);
+}
+
+function SignedOutTree() {
+	return (
+		<ToastProvider>
+			<RootErrorBoundary>
+				<App />
+			</RootErrorBoundary>
+		</ToastProvider>
+	);
+}
+
+// Gate: SpacetimeDBProvider is only mounted when a Clerk identity is available.
+// On sign-out, we switch to SignedOutTree so React unmounts SpacetimeDBProvider
+// and the WebSocket closes. The next sign-in mounts a fresh provider — a
+// different Clerk user cannot inherit the previous user's live connection.
+function AppGate() {
 	const { isLoaded, isSignedIn } = useAuth();
 	const { clerkUserId } = useClerkIdentity();
 
-	// Clerk still loading — show spinner
-	if (!isLoaded) {
-		return (
-			<div className="flex items-center justify-center h-screen">
-				<span className="loading loading-spinner loading-lg" />
-			</div>
-		);
-	}
-
-	// Signed out — pass through so sign-in page renders
-	if (!isSignedIn) {
-		return <>{children}</>;
-	}
-
-	// Signed in but identity not yet resolved — show spinner
-	if (!clerkUserId) {
-		return (
-			<div className="flex items-center justify-center h-screen">
-				<span className="loading loading-spinner loading-lg" />
-			</div>
-		);
-	}
-
-	return <>{children}</>;
+	if (!isLoaded) return <LoadingSpinner />;
+	if (!isSignedIn) return <SignedOutTree />;
+	if (!clerkUserId) return <LoadingSpinner />;
+	return <SignedInTree />;
 }
 
 // Provider nesting order is MANDATORY (D-10):
-// ClerkProvider (outer) → ClerkTokenProvider → SpacetimeDBGate → SpacetimeDBProvider → ToastProvider (inner)
+// ClerkProvider (outer) → ClerkTokenProvider → AppGate → SpacetimeDBProvider → ToastProvider (inner)
 // ClerkProvider must be outermost so useAuth() works inside ClerkTokenProvider
-// ClerkTokenProvider must wrap SpacetimeDBGate so identity is available for the gate check
-// SpacetimeDBGate blocks SpacetimeDBProvider until Clerk has resolved the user
+// ClerkTokenProvider must wrap AppGate so identity is available for the gate check
+// AppGate swaps trees on sign-in/out so SpacetimeDBProvider mounts/unmounts with the session
 // ToastProvider wraps ConnectionStatus + App so both can call useToast
 createRoot(document.getElementById("root")!).render(
 	<StrictMode>
@@ -57,16 +67,7 @@ createRoot(document.getElementById("root")!).render(
 			afterSignOutUrl="/sign-in"
 		>
 			<ClerkTokenProvider>
-				<SpacetimeDBGate>
-					<SpacetimeDBProvider>
-						<ToastProvider>
-							<ConnectionStatus />
-							<RootErrorBoundary>
-								<App />
-							</RootErrorBoundary>
-						</ToastProvider>
-					</SpacetimeDBProvider>
-				</SpacetimeDBGate>
+				<AppGate />
 			</ClerkTokenProvider>
 		</ClerkProvider>
 	</StrictMode>,

@@ -32,6 +32,7 @@ const MAX_BACKOFF_MS = 30_000;
 const SPACETIMEDB_URI = import.meta.env.VITE_SPACETIMEDB_URI ?? "wss://maincloud.spacetimedb.com";
 const MODULE_NAME = import.meta.env.VITE_SPACETIMEDB_MODULE ?? "kwartrack";
 const TOKEN_KEY = "spacetimedb_token";
+const TOKEN_OWNER_KEY = "spacetimedb_token_owner";
 
 export function SpacetimeDBProvider({ children }: { children: React.ReactNode }) {
 	const { clerkUserId, displayName } = useClerkIdentity();
@@ -58,9 +59,19 @@ export function SpacetimeDBProvider({ children }: { children: React.ReactNode })
 		setReconnectKey((k) => k + 1);
 	}, []);
 
-	// biome-ignore lint/correctness/useExhaustiveDependencies: clerkUserId/displayName are stable once SpacetimeDBGate allows rendering; reconnectKey triggers reconnection
+	// biome-ignore lint/correctness/useExhaustiveDependencies: displayName updates flow through linkClerkIdentity on the live connection; reconnectKey triggers reconnection
 	const connectionBuilder = useMemo(() => {
-		const storedToken = localStorage.getItem(TOKEN_KEY) ?? undefined;
+		// Only reuse a cached token if it belongs to the currently signed-in Clerk user.
+		// Prevents User2 from inheriting User1's SpacetimeDB identity on the same browser.
+		const storedToken = localStorage.getItem(TOKEN_KEY);
+		const storedOwner = localStorage.getItem(TOKEN_OWNER_KEY);
+		const reusableToken =
+			storedToken && storedOwner && storedOwner === clerkUserId ? storedToken : undefined;
+		if (!reusableToken && (storedToken || storedOwner)) {
+			localStorage.removeItem(TOKEN_KEY);
+			localStorage.removeItem(TOKEN_OWNER_KEY);
+		}
+
 		// Append reconnect key to URI to force a new ConnectionManager entry on each retry.
 		// The query param is dropped when constructing WebSocket URLs (used as base URL),
 		// so the actual connection is unaffected.
@@ -70,9 +81,10 @@ export function SpacetimeDBProvider({ children }: { children: React.ReactNode })
 			.withUri(uri)
 			.withDatabaseName(MODULE_NAME)
 			.onConnect((conn) => {
-				// Persist the SpacetimeDB-issued token so the same identity is reused next session
-				if (conn.token) {
+				// Persist the SpacetimeDB-issued token and tag it with the Clerk user it belongs to
+				if (conn.token && clerkUserId) {
 					localStorage.setItem(TOKEN_KEY, conn.token);
+					localStorage.setItem(TOKEN_OWNER_KEY, clerkUserId);
 				}
 
 				// Link Clerk user ID to this SpacetimeDB identity
@@ -125,8 +137,8 @@ export function SpacetimeDBProvider({ children }: { children: React.ReactNode })
 				console.warn("[SpacetimeDB] Connect error — scheduling reconnect");
 				scheduleReconnect();
 			})
-			.withToken(storedToken ?? "");
-	}, [reconnectKey]);
+			.withToken(reusableToken ?? "");
+	}, [reconnectKey, clerkUserId]);
 
 	// Cleanup backoff timer on unmount
 	useEffect(() => {
