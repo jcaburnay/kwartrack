@@ -4,13 +4,12 @@ import { useForm } from "react-hook-form";
 import { Timestamp } from "spacetimedb";
 import { useAccounts, useSplitActions, useSubAccounts, useTags } from "../hooks";
 import { useDragToDismiss } from "../hooks/useDragToDismiss";
-import { formatPesos, toAmountString } from "../utils/currency";
+import { formatPesos, toAmountString, toCentavos } from "../utils/currency";
 import { fromTimestamp, todayISO, toISODate } from "../utils/date";
 import { openAsModal } from "../utils/dialog";
 import {
 	computeParticipantShareCentavos,
 	computeYourShareCentavos,
-	parseCentavos,
 	type SplitMethod,
 	validateShares,
 } from "../utils/splitShares";
@@ -105,7 +104,7 @@ export function SplitModal({ onClose, editTarget }: SplitModalProps) {
 		},
 	});
 
-	const totalCentavos = parseCentavos(watch("totalAmount"));
+	const totalCentavos = toCentavos(watch("totalAmount"));
 
 	const addParticipant = () =>
 		setParticipants((prev) => [
@@ -120,7 +119,7 @@ export function SplitModal({ onClose, editTarget }: SplitModalProps) {
 	};
 
 	const onSubmit = async (values: SplitFormValues) => {
-		const totalAmountCentavos = parseCentavos(values.totalAmount);
+		const totalAmountCentavos = toCentavos(values.totalAmount);
 		const error = validateShares(splitMethod, participants, totalAmountCentavos);
 		if (error) {
 			setParticipantsError(error);

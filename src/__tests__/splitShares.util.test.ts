@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
+import { toCentavos } from "../utils/currency";
 import {
 	computeParticipantShareCentavos,
 	computeYourShareCentavos,
-	parseCentavos,
 	type SplitShareInput,
 	validateShares,
 } from "../utils/splitShares";
@@ -20,29 +20,27 @@ const p = (partial: Partial<SplitShareInput>): SplitShareInput => ({
 });
 
 // =============================================================================
-// parseCentavos — peso-string → BigInt centavos
+// toCentavos — peso-string → BigInt centavos
 // =============================================================================
 
-describe("parseCentavos", () => {
+describe("toCentavos", () => {
 	it("converts a whole-peso amount to centavos", () => {
-		expect(parseCentavos("100")).toBe(10_000n);
+		expect(toCentavos("100")).toBe(10_000n);
 	});
 
 	it("rounds to the nearest centavo on fractional pesos", () => {
-		expect(parseCentavos("1.234")).toBe(123n); // 123.4 → 123
-		expect(parseCentavos("1.235")).toBe(124n); // 123.5 → 124 (banker's? no, Math.round rounds half up)
+		expect(toCentavos("1.234")).toBe(123n); // 123.4 → 123
+		expect(toCentavos("1.235")).toBe(124n); // 123.5 → 124 (banker's? no, Math.round rounds half up)
 	});
 
 	it("returns 0n for empty or undefined-like input", () => {
-		expect(parseCentavos("")).toBe(0n);
-		expect(parseCentavos("0")).toBe(0n);
+		expect(toCentavos("")).toBe(0n);
+		expect(toCentavos("0")).toBe(0n);
 	});
 
-	it("returns 0n for non-numeric input (parseFloat → NaN → Math.round(NaN) = 0)", () => {
-		// parseFloat("abc") is NaN; Math.round(NaN) is NaN; BigInt(NaN) throws.
-		// The function guards via `|| "0"` ONLY when input is falsy — "abc" is truthy.
-		// This test pins the current behaviour: non-numeric strings will throw.
-		expect(() => parseCentavos("abc")).toThrow();
+	it("returns 0n for non-numeric input (parseFloat → NaN)", () => {
+		// toCentavos guards against NaN and returns 0n for non-numeric input
+		expect(toCentavos("abc")).toBe(0n);
 	});
 });
 

@@ -9,6 +9,8 @@
 //   shares can be up to (count - 1) centavos less than the total — existing
 //   behaviour of the app, preserved here bug-for-bug
 
+import { toCentavos } from "./currency";
+
 export type SplitMethod = "equal" | "exact" | "percentage" | "shares";
 
 export interface SplitShareInput {
@@ -16,10 +18,6 @@ export interface SplitShareInput {
 	shareAmount: string; // used by "exact"
 	sharePercentage: string; // used by "percentage"
 	shareCount: number; // used by "shares"
-}
-
-export function parseCentavos(input: string): bigint {
-	return BigInt(Math.round(parseFloat(input || "0") * 100));
 }
 
 function filterValid(participants: readonly SplitShareInput[]): SplitShareInput[] {
@@ -37,7 +35,7 @@ export function computeYourShareCentavos(
 
 	if (method === "equal") return totalCentavos / BigInt(count);
 	if (method === "exact") {
-		const sum = valid.reduce((s, p) => s + parseCentavos(p.shareAmount), 0n);
+		const sum = valid.reduce((s, p) => s + toCentavos(p.shareAmount), 0n);
 		return totalCentavos - sum;
 	}
 	if (method === "percentage") {
@@ -61,7 +59,7 @@ export function computeParticipantShareCentavos(
 	const count = valid.length + 1;
 
 	if (method === "equal") return totalCentavos / BigInt(count);
-	if (method === "exact") return parseCentavos(participant.shareAmount);
+	if (method === "exact") return toCentavos(participant.shareAmount);
 	if (method === "percentage")
 		return BigInt(
 			Math.round((parseFloat(participant.sharePercentage || "0") / 100) * Number(totalCentavos)),
@@ -81,7 +79,7 @@ export function validateShares(
 	if (valid.length === 0) return "At least one participant name is required";
 
 	if (method === "exact") {
-		const sum = valid.reduce((s, p) => s + parseCentavos(p.shareAmount), 0n);
+		const sum = valid.reduce((s, p) => s + toCentavos(p.shareAmount), 0n);
 		if (sum > totalCentavos) return "Participant shares exceed the total amount";
 	}
 	if (method === "percentage") {

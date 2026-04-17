@@ -3,7 +3,9 @@ import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useAccountActions } from "../hooks";
 import { useDragToDismiss } from "../hooks/useDragToDismiss";
+import { toCentavos } from "../utils/currency";
 import { openAsModal } from "../utils/dialog";
+import { CurrencyInput } from "./CurrencyInput";
 import { Input } from "./Input";
 import { SubmitButton } from "./SubmitButton";
 
@@ -42,9 +44,7 @@ export function AccountModal({ onClose, onAccountCreated }: AccountModalProps) {
 
 	const onSubmit = async (data: AccountFormValues) => {
 		setFormError(null);
-		const centavos = data.initialBalance
-			? BigInt(Math.round(parseFloat(data.initialBalance) * 100))
-			: 0n;
+		const centavos = data.initialBalance ? toCentavos(data.initialBalance) : 0n;
 		try {
 			await createAccount({
 				name: data.name.trim(),
@@ -91,13 +91,10 @@ export function AccountModal({ onClose, onAccountCreated }: AccountModalProps) {
 							/>
 
 							{/* Initial balance */}
-							<Input
+							<CurrencyInput
 								label="Initial balance (P)"
 								id="account-balance"
-								type="number"
-								step="0.01"
 								min="0"
-								placeholder="0.00"
 								hint={
 									showStandaloneHint ? (
 										<p className="text-xs text-base-content/60 mt-1">
