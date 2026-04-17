@@ -1,10 +1,11 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useTable } from "spacetimedb/react";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { BudgetModal } from "../components/BudgetModal";
 import { BudgetPage } from "../pages/BudgetPage";
 import { computeTagStatuses, getCurrentMonthExpenses } from "../utils/budgetCompute";
+import { getReducerSpy } from "./setup";
 
 // Helper: build a microseconds-since-unix-epoch BigInt from a Date
 function toMicros(d: Date): bigint {
@@ -127,6 +128,47 @@ describe("BudgetModal", () => {
 		expect(screen.getAllByRole("combobox")).toHaveLength(2);
 		// totalAmount + foods amount = 2 spinbuttons (empty row has no amount input)
 		expect(screen.getAllByRole("spinbutton")).toHaveLength(2);
+	});
+
+	it("submits setBudget with centavos-converted total, then setBudgetAllocations with only positive-amount rows", async () => {
+		const setBudgetSpy = getReducerSpy("setBudget");
+		const setAllocsSpy = getReducerSpy("setBudgetAllocations");
+		const user = userEvent.setup();
+
+		render(<BudgetModal onClose={vi.fn()} />);
+
+		const spinbuttons = () => screen.getAllByRole("spinbutton");
+		const comboboxes = () => screen.getAllByRole("combobox");
+
+		// Total budget ₱50,000.00
+		await user.type(spinbuttons()[0], "50000");
+
+		// Row 1: foods @ ₱10,000
+		await user.selectOptions(comboboxes()[0], "foods");
+		await user.type(spinbuttons()[1], "10000");
+
+		// Row 2 (auto-appended): grocery @ ₱7,500.50
+		await user.selectOptions(comboboxes()[1], "grocery");
+		await user.type(spinbuttons()[2], "7500.50");
+
+		// Row 3 (auto-appended): transportation with NO amount — should be filtered out
+		await user.selectOptions(comboboxes()[2], "transportation");
+
+		await user.click(screen.getByRole("button", { name: /save|update budget/i }));
+
+		await waitFor(() => expect(setBudgetSpy).toHaveBeenCalledTimes(1));
+		expect(setBudgetSpy).toHaveBeenCalledWith({ totalCentavos: 5_000_000n });
+
+		await waitFor(() => expect(setAllocsSpy).toHaveBeenCalledTimes(1));
+		const allocArg = setAllocsSpy.mock.calls[0][0] as {
+			allocations: { tag: string; allocatedCentavos: bigint }[];
+		};
+		expect(allocArg.allocations).toEqual([
+			{ tag: "foods", allocatedCentavos: 1_000_000n },
+			{ tag: "grocery", allocatedCentavos: 750_050n },
+		]);
+		// transportation row had no amount — must NOT appear
+		expect(allocArg.allocations.find((a) => a.tag === "transportation")).toBeUndefined();
 	});
 });
 

@@ -1,6 +1,7 @@
-import { render, screen, within } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes } from "react-router";
+import { useTable } from "spacetimedb/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { DebtCard } from "../components/DebtCard";
 import { DebtModal } from "../components/DebtModal";
@@ -9,19 +10,15 @@ import { SplitCard } from "../components/SplitCard";
 import { SplitModal } from "../components/SplitModal";
 import { DebtSplitPage } from "../pages/DebtSplitPage";
 import { SplitDetailPage } from "../pages/SplitDetailPage";
+import { getReducerSpy } from "./setup";
 
-const mockCreateDebt = vi.fn();
-vi.mock("spacetimedb/react", async (importOriginal) => {
-	const original = await importOriginal<typeof import("spacetimedb/react")>();
-	return {
-		...original,
-		useReducer: vi.fn((reducer) => {
-			if (reducer?.accessorName === "createDebt") return mockCreateDebt;
-			return vi.fn();
-		}),
-		useTable: vi.fn(() => [[], false]),
-	};
+// File-wide table stub — earlier local vi.mock returned [[], false] so tests see
+// the "not loading" path. Match that here before each test.
+beforeEach(() => {
+	vi.mocked(useTable).mockReturnValue([[], false]);
 });
+
+const mockCreateDebt = getReducerSpy("createDebt");
 
 describe("DebtModal", () => {
 	const onClose = vi.fn();
@@ -56,6 +53,61 @@ describe("DebtModal", () => {
 		render(<DebtModal onClose={onClose} />);
 		await userEvent.click(screen.getByRole("button", { name: /cancel/i }));
 		expect(onClose).toHaveBeenCalledOnce();
+	});
+
+	it("submits createDebt for loaned direction with centavos, sub-account, and trimmed personName", async () => {
+		vi.mocked(useTable).mockImplementation((table: unknown) => {
+			const name = (table as { name?: string } | undefined)?.name;
+			if (name === "my_accounts")
+				return [[{ id: 10n, name: "BDO", isStandalone: false }], false] as never;
+			if (name === "my_sub_accounts")
+				return [
+					[{ id: 99n, accountId: 10n, name: "Savings", isDefault: false, balanceCentavos: 0n }],
+					false,
+				] as never;
+			return [[], false] as never;
+		});
+		const user = userEvent.setup();
+
+		render(<DebtModal onClose={vi.fn()} />);
+
+		await user.type(screen.getByLabelText(/Person/i), "  Juan  ");
+		await user.type(screen.getByLabelText(/^Amount$/i), "150");
+		await user.selectOptions(screen.getByLabelText(/Tag/i), "foods");
+		await user.selectOptions(screen.getByLabelText(/Sub-account/i), "99");
+		await user.click(screen.getByRole("button", { name: /Add debt/i }));
+
+		await waitFor(() => expect(mockCreateDebt).toHaveBeenCalledTimes(1));
+		expect(mockCreateDebt).toHaveBeenCalledWith(
+			expect.objectContaining({
+				personName: "Juan",
+				direction: "loaned",
+				amountCentavos: 15_000n,
+				subAccountId: 99n,
+				tag: "foods",
+			}),
+		);
+	});
+
+	it("submits createDebt for owed direction with subAccountId = 0n (no sub-account needed)", async () => {
+		const user = userEvent.setup();
+		render(<DebtModal onClose={vi.fn()} />);
+
+		await user.click(screen.getByText(/I owe money/i));
+		await user.type(screen.getByLabelText(/Person/i), "Maria");
+		await user.type(screen.getByLabelText(/^Amount$/i), "42.50");
+		await user.selectOptions(screen.getByLabelText(/Tag/i), "foods");
+		await user.click(screen.getByRole("button", { name: /Add debt/i }));
+
+		await waitFor(() => expect(mockCreateDebt).toHaveBeenCalledTimes(1));
+		expect(mockCreateDebt).toHaveBeenCalledWith(
+			expect.objectContaining({
+				personName: "Maria",
+				direction: "owed",
+				amountCentavos: 4_250n,
+				subAccountId: 0n,
+			}),
+		);
 	});
 });
 
@@ -93,6 +145,35 @@ describe("SettleModal", () => {
 		await userEvent.click(screen.getByRole("button", { name: /cancel/i }));
 		expect(onClose).toHaveBeenCalledOnce();
 	});
+
+	it("submits settleDebt with debtId, centavos-converted amount, and selected sub-account", async () => {
+		vi.mocked(useTable).mockImplementation((table: unknown) => {
+			const name = (table as { name?: string } | undefined)?.name;
+			if (name === "my_accounts")
+				return [[{ id: 10n, name: "BDO", isStandalone: false }], false] as never;
+			if (name === "my_sub_accounts")
+				return [
+					[{ id: 99n, accountId: 10n, name: "Savings", isDefault: false, balanceCentavos: 0n }],
+					false,
+				] as never;
+			return [[], false] as never;
+		});
+		const spy = getReducerSpy("settleDebt");
+		const user = userEvent.setup();
+
+		render(<SettleModal debt={baseDebt} onClose={onClose} />);
+		// Use the pre-filled remaining balance of ₱700.00 as the settlement amount;
+		// just pick a sub-account and submit.
+		await user.selectOptions(screen.getByLabelText(/Receive to/i), "99");
+		await user.click(screen.getByRole("button", { name: /^Settle$/i }));
+
+		await waitFor(() => expect(spy).toHaveBeenCalledTimes(1));
+		expect(spy).toHaveBeenCalledWith({
+			debtId: 1n,
+			amountCentavos: 70_000n,
+			subAccountId: 99n,
+		});
+	});
 });
 
 describe("SplitModal", () => {
@@ -123,6 +204,107 @@ describe("SplitModal", () => {
 		render(<SplitModal onClose={onClose} />);
 		await userEvent.click(screen.getByRole("button", { name: /cancel/i }));
 		expect(onClose).toHaveBeenCalledOnce();
+	});
+
+	it("submits createSplit with equal-mode participants, centavos-converted total, and aligned share arrays", async () => {
+		vi.mocked(useTable).mockImplementation((table: unknown) => {
+			const name = (table as { name?: string } | undefined)?.name;
+			if (name === "my_accounts")
+				return [[{ id: 10n, name: "BDO", isStandalone: false }], false] as never;
+			if (name === "my_sub_accounts")
+				return [
+					[{ id: 99n, accountId: 10n, name: "Savings", isDefault: false, balanceCentavos: 0n }],
+					false,
+				] as never;
+			return [[], false] as never;
+		});
+		const spy = getReducerSpy("createSplit");
+		const user = userEvent.setup();
+
+		render(<SplitModal onClose={vi.fn()} />);
+
+		await user.type(screen.getByLabelText(/Description/i), "Team lunch");
+		await user.type(screen.getByLabelText(/Total amount/i), "300");
+		await user.selectOptions(screen.getByLabelText(/^Tag$/i), "foods");
+		await user.selectOptions(screen.getByLabelText(/Paid from/i), "99");
+		// Add a second participant so we have two named friends alongside "you".
+		await user.click(screen.getByText("+ Add person"));
+		const nameInputs = screen.getAllByPlaceholderText("Name");
+		await user.type(nameInputs[0], "Alice");
+		await user.type(nameInputs[1], "Bob");
+		await user.click(screen.getByRole("button", { name: /Create split/i }));
+
+		await waitFor(() => expect(spy).toHaveBeenCalledTimes(1));
+		const payload = spy.mock.calls[0][0] as {
+			description: string;
+			totalAmountCentavos: bigint;
+			payerSubAccountId: bigint;
+			splitMethod: string;
+			tag: string;
+			participantNames: string[];
+			participantShares: bigint[];
+			participantShareCounts: number[];
+		};
+		expect(payload.description).toBe("Team lunch");
+		expect(payload.totalAmountCentavos).toBe(30_000n);
+		expect(payload.payerSubAccountId).toBe(99n);
+		expect(payload.splitMethod).toBe("equal");
+		expect(payload.tag).toBe("foods");
+		expect(payload.participantNames).toEqual(["Alice", "Bob"]);
+		// Equal mode with 2 named + you = 3-way → ₱100 (10_000 centavos) each, BigInt floor.
+		expect(payload.participantShares).toEqual([10_000n, 10_000n]);
+		// participantShareCounts is all zeros outside "shares" mode.
+		expect(payload.participantShareCounts).toEqual([0, 0]);
+	});
+
+	it("edit mode submits editSplit with splitEventId and preserves participantIds for existing participants", async () => {
+		vi.mocked(useTable).mockImplementation((table: unknown) => {
+			const name = (table as { name?: string } | undefined)?.name;
+			if (name === "my_accounts")
+				return [[{ id: 10n, name: "BDO", isStandalone: false }], false] as never;
+			if (name === "my_sub_accounts")
+				return [
+					[{ id: 99n, accountId: 10n, name: "Savings", isDefault: false, balanceCentavos: 0n }],
+					false,
+				] as never;
+			return [[], false] as never;
+		});
+		const createSpy = getReducerSpy("createSplit");
+		const editSpy = getReducerSpy("editSplit");
+		const user = userEvent.setup();
+
+		const editTarget = {
+			splitEvent: {
+				id: 42n,
+				description: "Team lunch",
+				totalAmountCentavos: 30_000n,
+				payerSubAccountId: 99n,
+				tag: "foods",
+				date: { microsSinceUnixEpoch: BigInt(new Date("2026-04-01").getTime()) * 1000n },
+				splitMethod: "equal",
+			},
+			participants: [
+				{ participantId: 7n, name: "Alice", shareAmountCentavos: 10_000n, shareCount: 1 },
+				{ participantId: 8n, name: "Bob", shareAmountCentavos: 10_000n, shareCount: 1 },
+			],
+		};
+
+		render(<SplitModal onClose={vi.fn()} editTarget={editTarget} />);
+		// Submit unchanged — verifies the edit form round-trips existing participantIds.
+		await user.click(screen.getByRole("button", { name: /Save changes/i }));
+
+		await waitFor(() => expect(editSpy).toHaveBeenCalledTimes(1));
+		expect(createSpy).not.toHaveBeenCalled();
+		expect(editSpy).toHaveBeenCalledWith(
+			expect.objectContaining({
+				splitEventId: 42n,
+				splitMethod: "equal",
+				totalAmountCentavos: 30_000n,
+				payerSubAccountId: 99n,
+				participantIds: [7n, 8n],
+				participantNames: ["Alice", "Bob"],
+			}),
+		);
 	});
 });
 

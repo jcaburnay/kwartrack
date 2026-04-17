@@ -34,12 +34,46 @@ vi.mock("@clerk/react", () => ({
 	}),
 }));
 
+// Registry of reducer spies keyed by a reducer's accessorName (e.g. "createAccount").
+// Tests grab the stable spy for a given reducer via `getReducerSpy("createAccount")`
+// and assert on payloads with `.toHaveBeenCalledWith({ ... })`. The same spy instance
+// is returned across renders within a test; call histories are cleared before each
+// test via the global `beforeEach` below.
+//
+// Declared with `vi.hoisted` so the map exists by the time the `vi.mock` factory
+// below runs (factories are hoisted above top-level `const` declarations).
+const { reducerSpies, getReducerSpy } = vi.hoisted(() => {
+	const spies = new Map<string, ReturnType<typeof vi.fn>>();
+	return {
+		reducerSpies: spies,
+		getReducerSpy: (accessorName: string) => {
+			let spy = spies.get(accessorName);
+			if (!spy) {
+				spy = vi.fn(async () => {});
+				spies.set(accessorName, spy);
+			}
+			return spy;
+		},
+	};
+});
+
+export { getReducerSpy };
+
+beforeEach(() => {
+	for (const spy of reducerSpies.values()) {
+		spy.mockClear();
+	}
+});
+
 // Mock SpacetimeDB — no live connection in tests
 vi.mock("spacetimedb/react", () => ({
 	SpacetimeDBProvider: ({ children }: { children: React.ReactNode }) => children,
 	useSpacetimeDB: () => ({ isActive: false, getConnection: () => null }),
 	useTable: vi.fn(() => [[], true] as [unknown[], boolean]),
-	useReducer: vi.fn(() => vi.fn()),
+	useReducer: vi.fn((reducer: { accessorName?: string } | undefined) => {
+		if (reducer?.accessorName) return getReducerSpy(reducer.accessorName);
+		return vi.fn();
+	}),
 }));
 
 // Mock generated module_bindings — prevents import errors in tests

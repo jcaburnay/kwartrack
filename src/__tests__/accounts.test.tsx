@@ -4,6 +4,7 @@ import { MemoryRouter } from "react-router";
 import { useReducer, useTable } from "spacetimedb/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { formatPesos } from "../utils/currency";
+import { getReducerSpy } from "./setup";
 
 // =============================================================================
 // formatPesos unit tests — these are GREEN immediately (no component dependency)
@@ -93,6 +94,41 @@ describe("AccountModal", () => {
 		expect(
 			screen.getByText("Initial balance set — this will be a standalone account"),
 		).toBeInTheDocument();
+	});
+
+	it("submits createAccount with trimmed name, centavos-converted initial balance, and undefined iconBankId", async () => {
+		const spy = getReducerSpy("createAccount");
+		const { AccountModal } = await import("../components/AccountModal");
+		render(<AccountModal onClose={vi.fn()} />);
+
+		fireEvent.change(screen.getByPlaceholderText(/maya, gcash, rcbc/i), {
+			target: { value: "  Savings  " },
+		});
+		fireEvent.change(screen.getByPlaceholderText("0.00"), { target: { value: "1234.56" } });
+		fireEvent.click(screen.getByRole("button", { name: /save savings/i }));
+
+		await waitFor(() => expect(spy).toHaveBeenCalledTimes(1));
+		expect(spy).toHaveBeenCalledWith({
+			name: "Savings",
+			initialBalanceCentavos: 123_456n,
+			iconBankId: undefined,
+		});
+	});
+
+	it("defaults initialBalanceCentavos to 0n when the balance field is left empty", async () => {
+		const spy = getReducerSpy("createAccount");
+		const { AccountModal } = await import("../components/AccountModal");
+		render(<AccountModal onClose={vi.fn()} />);
+
+		fireEvent.change(screen.getByPlaceholderText(/maya, gcash, rcbc/i), {
+			target: { value: "Maya" },
+		});
+		fireEvent.click(screen.getByRole("button", { name: /save maya/i }));
+
+		await waitFor(() => expect(spy).toHaveBeenCalledTimes(1));
+		expect(spy).toHaveBeenCalledWith(
+			expect.objectContaining({ initialBalanceCentavos: 0n, name: "Maya" }),
+		);
 	});
 });
 

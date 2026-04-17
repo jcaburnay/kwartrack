@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useTable } from "spacetimedb/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -336,6 +336,38 @@ describe("SubAccountModal credit edit — remaining available field", () => {
 		);
 		// remaining = (12000000 - 620000) / 100 = 113800.00
 		expect(screen.getByDisplayValue("113800.00")).toBeInTheDocument();
+	});
+
+	it("submits editSubAccount with newBalanceCentavos = creditLimit - remainingAvailable", async () => {
+		const { getReducerSpy } = await import("./setup");
+		const spy = getReducerSpy("editSubAccount");
+		const user = userEvent.setup();
+		const { SubAccountModal } = await import("../components/SubAccountModal");
+		render(
+			<SubAccountModal
+				accountId={1n}
+				accountName="Test"
+				isStandalone={false}
+				existingBalanceCentavos={0n}
+				onClose={vi.fn()}
+				subAccount={editCreditSubAccount}
+			/>,
+		);
+
+		// Change "Remaining available" from 113_800 → 100_000 (user spent ₱13,800 more).
+		// Expected newBalanceCentavos = 12_000_000 - 10_000_000 = 2_000_000.
+		const remaining = screen.getByLabelText(/Remaining available/i);
+		await user.clear(remaining);
+		await user.type(remaining, "100000");
+		await user.click(screen.getByRole("button", { name: /update RCBC Credit/i }));
+
+		await waitFor(() => expect(spy).toHaveBeenCalledTimes(1));
+		expect(spy).toHaveBeenCalledWith({
+			subAccountId: 1n,
+			newName: "RCBC Credit",
+			newCreditLimitCentavos: 12_000_000n,
+			newBalanceCentavos: 2_000_000n,
+		});
 	});
 });
 

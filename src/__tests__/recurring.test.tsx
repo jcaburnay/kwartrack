@@ -248,6 +248,45 @@ describe("RecurringModal", () => {
 				}),
 			);
 		});
+
+		it("subscription monthly submit: amountCentavos is pesos×100 and totalOccurrences=0", async () => {
+			render(<RecurringModal onClose={onClose} />);
+			await userEvent.type(screen.getByLabelText(/name/i), "Netflix");
+			await userEvent.type(screen.getByLabelText(/amount/i), "799.50");
+			await userEvent.selectOptions(screen.getByLabelText(/interval/i), "monthly");
+			await userEvent.selectOptions(screen.getByLabelText(/day of month/i), "15");
+			await setSubAccountId("1");
+			await userEvent.click(screen.getByRole("button", { name: /add subscription/i }));
+			expect(mockCreateReducer).toHaveBeenCalledWith(
+				expect.objectContaining({
+					name: "Netflix",
+					amountCentavos: 79_950n,
+					totalOccurrences: 0, // subscription mode → open-ended
+					remainingOccurrences: 0,
+				}),
+			);
+		});
+
+		it("installment mode: totalOccurrences mirrors remainingOccurrences from the form", async () => {
+			render(<RecurringModal onClose={onClose} mode="installment" />);
+			await userEvent.type(screen.getByLabelText(/name/i), "Phone payment");
+			await userEvent.type(screen.getByLabelText(/amount/i), "500");
+			// Installment defaults tag to "" — must be explicitly picked before submit.
+			await userEvent.selectOptions(screen.getByLabelText(/^tag$/i), "gadgets");
+			await userEvent.type(screen.getByLabelText(/Remaining occurrences/i), "12");
+			await userEvent.selectOptions(screen.getByLabelText(/interval/i), "monthly");
+			await userEvent.selectOptions(screen.getByLabelText(/day of month/i), "5");
+			await setSubAccountId("1");
+			await userEvent.click(screen.getByRole("button", { name: /add installment/i }));
+			expect(mockCreateReducer).toHaveBeenCalledWith(
+				expect.objectContaining({
+					name: "Phone payment",
+					amountCentavos: 50_000n,
+					remainingOccurrences: 12,
+					totalOccurrences: 12, // installment copies remaining → total at creation
+				}),
+			);
+		});
 	});
 });
 

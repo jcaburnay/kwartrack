@@ -52,20 +52,28 @@ describe("SubAccountModal — time deposit fields", () => {
 		expect(screen.getByLabelText(/maturity date/i)).toBeInTheDocument();
 	});
 
-	it("calls createTimeDeposit reducer when saving a new time deposit", async () => {
+	it("calls createTimeDeposit reducer with centavos balance, bps-converted rate, and accountId", async () => {
 		render(<SubAccountModal {...baseProps} />);
-		await userEvent.type(screen.getByLabelText(/sub-account name/i), "6-Month TD");
+		await userEvent.type(screen.getByLabelText(/sub-account name/i), "  6-Month TD  ");
 		const typeSelect = screen.getByLabelText(/sub-account type/i) as HTMLSelectElement;
 		await userEvent.selectOptions(typeSelect, "time-deposit");
 		await userEvent.type(screen.getByLabelText(/initial balance/i), "100000");
-		await userEvent.type(screen.getByLabelText(/interest rate/i), "6");
+		await userEvent.type(screen.getByLabelText(/interest rate/i), "6.25");
 		await userEvent.type(screen.getByLabelText(/maturity date/i), "2027-01-01");
 		await userEvent.click(screen.getByRole("button", { name: /save/i }));
-		expect(mockCreateTimeDeposit).toHaveBeenCalledOnce();
+		expect(mockCreateTimeDeposit).toHaveBeenCalledTimes(1);
 		expect(mockAddSubAccount).not.toHaveBeenCalled();
+		expect(mockCreateTimeDeposit).toHaveBeenCalledWith(
+			expect.objectContaining({
+				accountId: 1n,
+				name: "6-Month TD",
+				initialBalanceCentavos: 10_000_000n, // ₱100,000 × 100
+				interestRateBps: 625, // 6.25% × 100
+			}),
+		);
 	});
 
-	it("calls editTimeDepositMetadata when editing a time deposit", async () => {
+	it("editing a time deposit calls editTimeDepositMetadata with subAccountId and rate — NOT editSubAccount", async () => {
 		const tdSubAccount = {
 			id: 5n,
 			name: "6-Month TD",
@@ -76,11 +84,19 @@ describe("SubAccountModal — time deposit fields", () => {
 			maturityDate: new Date("2027-01-01"),
 		};
 		render(<SubAccountModal {...baseProps} subAccount={tdSubAccount} />);
-		expect(screen.getByLabelText(/interest rate/i)).toBeInTheDocument();
-		expect(screen.getByLabelText(/maturity date/i)).toBeInTheDocument();
+		// Change the interest rate to verify the rate-bps conversion in edit mode too.
+		const rateInput = screen.getByLabelText(/interest rate/i);
+		await userEvent.clear(rateInput);
+		await userEvent.type(rateInput, "7");
 		await userEvent.click(screen.getByRole("button", { name: /update/i }));
-		expect(mockEditTimeDepositMetadata).toHaveBeenCalledOnce();
+		expect(mockEditTimeDepositMetadata).toHaveBeenCalledTimes(1);
 		expect(mockEditSubAccount).not.toHaveBeenCalled();
+		expect(mockEditTimeDepositMetadata).toHaveBeenCalledWith(
+			expect.objectContaining({
+				subAccountId: 5n,
+				interestRateBps: 700,
+			}),
+		);
 	});
 });
 

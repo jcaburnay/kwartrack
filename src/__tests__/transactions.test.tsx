@@ -1,10 +1,13 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it, type vi } from "vitest";
+import { Timestamp } from "spacetimedb";
+import { useTable } from "spacetimedb/react";
+import { describe, expect, it, vi } from "vitest";
 import type { TransactionFilters } from "../components/TransactionFilterRow";
 import { TransactionModal } from "../components/TransactionModal";
 import { formatAccountLabel, type TransactionRow } from "../components/TransactionTable";
 import { formatPesos } from "../utils/currency";
+import { getReducerSpy } from "./setup";
 
 // =============================================================================
 // Account filter: TransactionFilters interface
@@ -403,5 +406,164 @@ describe("Tag validation: expense and income require a tag selection", () => {
 		await user.type(screen.getByLabelText(/Amount \(P\)/i), "100");
 		await user.click(screen.getByRole("button", { name: /Save transaction/i }));
 		expect(screen.getByText(/Tag is required/i)).toBeInTheDocument();
+	});
+});
+
+// =============================================================================
+// TransactionModal → reducer payload assertions
+// Verify that the modal ships the correct shape to createTransaction /
+// editTransaction — centavos conversion, sourceSubAccountId vs destinationSubAccountId
+// routing per type, and the edit branch including transactionId.
+// =============================================================================
+describe("TransactionModal reducer call payloads", () => {
+	// Minimal dataset so the sub-account <Select> renders at least one option per account.
+	const accounts = [
+		{ id: 10n, name: "Maya", isStandalone: false },
+		{ id: 20n, name: "GCash", isStandalone: false },
+	];
+	const subAccounts = [
+		{
+			id: 1n,
+			accountId: 10n,
+			name: "Wallet",
+			balanceCentavos: 0n,
+			isDefault: false,
+			subAccountType: "wallet",
+			creditLimitCentavos: 0n,
+		},
+		{
+			id: 2n,
+			accountId: 20n,
+			name: "Wallet",
+			balanceCentavos: 0n,
+			isDefault: false,
+			subAccountType: "wallet",
+			creditLimitCentavos: 0n,
+		},
+	];
+	const tagConfigs: unknown[] = [];
+
+	// Route useTable by table name so the modal's three consumers each get their rows.
+	function mockTables() {
+		vi.mocked(useTable).mockImplementation((table: { name?: string } | unknown) => {
+			const name = (table as { name?: string } | undefined)?.name;
+			if (name === "my_accounts") return [accounts, false] as never;
+			if (name === "my_sub_accounts") return [subAccounts, false] as never;
+			if (name === "my_tag_configs") return [tagConfigs, false] as never;
+			return [[], false] as never;
+		});
+	}
+
+	it("expense submit calls createTransaction with amountCentavos converted from pesos, sourceSubAccountId set, destinationSubAccountId = 0n", async () => {
+		mockTables();
+		const spy = getReducerSpy("createTransaction");
+		const user = userEvent.setup();
+
+		render(<TransactionModal onClose={vi.fn()} />);
+		await user.type(screen.getByLabelText(/Amount \(P\)/i), "12.34");
+		await user.selectOptions(screen.getByRole("combobox", { name: /Tag/i }), "foods");
+		await user.selectOptions(screen.getByRole("combobox", { name: /^From$/i }), "1");
+		await user.click(screen.getByRole("button", { name: /Save transaction/i }));
+
+		await waitFor(() => expect(spy).toHaveBeenCalledTimes(1));
+		expect(spy).toHaveBeenCalledWith(
+			expect.objectContaining({
+				type: "expense",
+				amountCentavos: 1234n,
+				tag: "foods",
+				sourceSubAccountId: 1n,
+				destinationSubAccountId: 0n,
+				serviceFeeCentavos: 0n,
+			}),
+		);
+	});
+
+	it("income submit routes the sub-account onto destinationSubAccountId (source stays 0n)", async () => {
+		mockTables();
+		const spy = getReducerSpy("createTransaction");
+		const user = userEvent.setup();
+
+		render(<TransactionModal onClose={vi.fn()} />);
+		await user.click(screen.getByRole("button", { name: /Income/i }));
+		await user.type(screen.getByLabelText(/Amount \(P\)/i), "5000");
+		// Income auto-selects the first income tag; keep whatever was picked.
+		await user.selectOptions(screen.getByRole("combobox", { name: /^To$/i }), "2");
+		await user.click(screen.getByRole("button", { name: /Save transaction/i }));
+
+		await waitFor(() => expect(spy).toHaveBeenCalledTimes(1));
+		const call = spy.mock.calls[0][0] as {
+			type: string;
+			amountCentavos: bigint;
+			sourceSubAccountId: bigint;
+			destinationSubAccountId: bigint;
+		};
+		expect(call.type).toBe("income");
+		expect(call.amountCentavos).toBe(500_000n);
+		expect(call.sourceSubAccountId).toBe(0n);
+		expect(call.destinationSubAccountId).toBe(2n);
+	});
+
+	it("transfer submit populates both source AND destination and uses the transfer sentinel tag", async () => {
+		mockTables();
+		const spy = getReducerSpy("createTransaction");
+		const user = userEvent.setup();
+
+		render(<TransactionModal onClose={vi.fn()} />);
+		await user.click(screen.getByRole("button", { name: /Transfer/i }));
+		await user.type(screen.getByLabelText(/Amount \(P\)/i), "100");
+		await user.selectOptions(screen.getByRole("combobox", { name: /^From$/i }), "1");
+		await user.selectOptions(screen.getByRole("combobox", { name: /^To$/i }), "2");
+		await user.type(screen.getByLabelText(/Service fee/i), "5");
+		await user.click(screen.getByRole("button", { name: /Save transaction/i }));
+
+		await waitFor(() => expect(spy).toHaveBeenCalledTimes(1));
+		expect(spy).toHaveBeenCalledWith(
+			expect.objectContaining({
+				type: "transfer",
+				amountCentavos: 10_000n,
+				tag: "transfer",
+				sourceSubAccountId: 1n,
+				destinationSubAccountId: 2n,
+				serviceFeeCentavos: 500n,
+			}),
+		);
+	});
+
+	it("edit mode calls editTransaction instead of createTransaction and includes transactionId", async () => {
+		mockTables();
+		const createSpy = getReducerSpy("createTransaction");
+		const editSpy = getReducerSpy("editTransaction");
+		const user = userEvent.setup();
+
+		const existing = {
+			id: 42n,
+			type: "expense" as const,
+			amountCentavos: 500n,
+			tag: "foods",
+			sourceSubAccountId: 1n,
+			destinationSubAccountId: 0n,
+			serviceFeeCentavos: 0n,
+			description: "Lunch",
+			date: {
+				microsSinceUnixEpoch: Timestamp.fromDate(new Date("2026-01-15")).microsSinceUnixEpoch,
+			},
+		};
+
+		render(<TransactionModal onClose={vi.fn()} transaction={existing} />);
+		// Bump the amount from ₱5.00 to ₱7.50
+		const amount = screen.getByLabelText(/Amount \(P\)/i);
+		await user.clear(amount);
+		await user.type(amount, "7.50");
+		await user.click(screen.getByRole("button", { name: /Update transaction/i }));
+
+		await waitFor(() => expect(editSpy).toHaveBeenCalledTimes(1));
+		expect(createSpy).not.toHaveBeenCalled();
+		expect(editSpy).toHaveBeenCalledWith(
+			expect.objectContaining({
+				transactionId: 42n,
+				amountCentavos: 750n,
+				sourceSubAccountId: 1n,
+			}),
+		);
 	});
 });
