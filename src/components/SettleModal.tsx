@@ -3,9 +3,9 @@ import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useAccounts, useDebtActions, useSubAccounts } from "../hooks";
 import { useDragToDismiss } from "../hooks/useDragToDismiss";
-import { formatPesos } from "../utils/currency";
+import { formatPesos, toCentavos } from "../utils/currency";
 import { openAsModal } from "../utils/dialog";
-import { Input } from "./Input";
+import { CurrencyInput } from "./CurrencyInput";
 import { SubmitButton } from "./SubmitButton";
 
 interface Debt {
@@ -53,7 +53,7 @@ export function SettleModal({ debt, onClose }: SettleModalProps) {
 
 	const onSubmit = async (values: SettleFormValues) => {
 		setFormError(null);
-		const amountCentavos = BigInt(Math.round(parseFloat(values.amount) * 100));
+		const amountCentavos = toCentavos(values.amount);
 		const subAccountId = BigInt(values.subAccountId);
 
 		try {
@@ -98,11 +98,9 @@ export function SettleModal({ debt, onClose }: SettleModalProps) {
 
 				<form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-3">
 					<div className="grid sm:grid-cols-2 gap-3">
-						<Input
+						<CurrencyInput
 							label="Settlement amount"
 							id="settle-amount"
-							type="number"
-							step="0.01"
 							min="0.01"
 							max={remaining}
 							error={errors.amount?.message}

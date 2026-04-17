@@ -4,10 +4,10 @@ import { useForm } from "react-hook-form";
 import { Timestamp } from "spacetimedb";
 import { useSubAccounts, useTags, useTransactionActions } from "../hooks";
 import { useDragToDismiss } from "../hooks/useDragToDismiss";
-import { formatPesos } from "../utils/currency";
+import { formatPesos, toAmountString, toCentavos } from "../utils/currency";
 import { openAsModal } from "../utils/dialog";
 import { getVisibleTags } from "../utils/tagConfig";
-import { Input } from "./Input";
+import { CurrencyInput } from "./CurrencyInput";
 import { SubmitButton } from "./SubmitButton";
 
 interface PayCreditModalProps {
@@ -44,7 +44,7 @@ export function PayCreditModal({
 
 	const defaultValues: PayCreditFormValues = {
 		payFromSubAccountId: "",
-		amount: (Number(outstandingCentavos) / 100).toFixed(2),
+		amount: toAmountString(outstandingCentavos),
 		serviceFee: "",
 	};
 
@@ -61,10 +61,8 @@ export function PayCreditModal({
 
 	const onSubmit = async (data: PayCreditFormValues) => {
 		setFormError(null);
-		const amountCentavos = BigInt(Math.round(parseFloat(data.amount) * 100));
-		const serviceFeeCentavos = data.serviceFee
-			? BigInt(Math.round(parseFloat(data.serviceFee) * 100))
-			: 0n;
+		const amountCentavos = toCentavos(data.amount);
+		const serviceFeeCentavos = data.serviceFee ? toCentavos(data.serviceFee) : 0n;
 		try {
 			await createTransaction({
 				type: "transfer",
@@ -138,11 +136,9 @@ export function PayCreditModal({
 					</div>
 
 					{/* Amount */}
-					<Input
+					<CurrencyInput
 						label="Amount"
 						id="payAmount"
-						type="number"
-						step="0.01"
 						min="0.01"
 						error={errors.amount?.message}
 						hint={
@@ -158,13 +154,10 @@ export function PayCreditModal({
 					/>
 
 					{/* Service fee */}
-					<Input
+					<CurrencyInput
 						label="Service fee (P)"
 						id="serviceFee"
-						type="number"
-						step="0.01"
 						min="0"
-						placeholder="0.00"
 						{...register("serviceFee")}
 					/>
 

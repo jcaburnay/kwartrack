@@ -1,5 +1,5 @@
-import { describe, expect, it } from "vitest";
 import type { Timestamp } from "spacetimedb";
+import { describe, expect, it } from "vitest";
 import { fromTimestamp, todayISO, toISODate } from "../utils/date";
 
 function makeTimestamp(d: Date): Timestamp {

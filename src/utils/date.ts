@@ -1,11 +1,14 @@
-import type { Timestamp } from "spacetimedb";
-
 /**
  * Converts a SpacetimeDB Timestamp to a JavaScript Date.
  * Timestamps store microseconds since the Unix epoch as a BigInt;
  * Date expects milliseconds as a Number.
+ *
+ * Typed structurally so callers can pass either a full `Timestamp` class
+ * instance (which exposes `microsSinceUnixEpoch` via getter) or the
+ * `{ microsSinceUnixEpoch: bigint }` shape used throughout local row
+ * interfaces (e.g., TransactionRow).
  */
-export function fromTimestamp(ts: Timestamp): Date {
+export function fromTimestamp(ts: { microsSinceUnixEpoch: bigint }): Date {
 	return new Date(Number(ts.microsSinceUnixEpoch / 1000n));
 }
 

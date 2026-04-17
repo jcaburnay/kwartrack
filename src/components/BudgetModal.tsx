@@ -3,9 +3,10 @@ import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useBudget, useBudgetActions, useTags } from "../hooks";
 import { useDragToDismiss } from "../hooks/useDragToDismiss";
+import { toAmountString, toCentavos } from "../utils/currency";
 import { openAsModal } from "../utils/dialog";
 import { getVisibleTags } from "../utils/tagConfig";
-import { Input } from "./Input";
+import { CurrencyInput } from "./CurrencyInput";
 import { SubmitButton } from "./SubmitButton";
 
 interface AllocationRow {
@@ -39,7 +40,7 @@ export function BudgetModal({ onClose }: BudgetModalProps) {
 	const [rows, setRows] = useState<AllocationRow[]>(() => [
 		...allocations.map((a) => ({
 			tag: a.tag,
-			amount: (Number(a.allocatedCentavos) / 100).toFixed(2),
+			amount: toAmountString(a.allocatedCentavos),
 		})),
 		{ tag: "", amount: "" },
 	]);
@@ -51,7 +52,7 @@ export function BudgetModal({ onClose }: BudgetModalProps) {
 		formState: { errors, isSubmitting },
 	} = useForm<BudgetFormValues>({
 		defaultValues: {
-			totalAmount: budgetConfig ? (Number(budgetConfig.totalCentavos) / 100).toFixed(2) : "",
+			totalAmount: budgetConfig ? toAmountString(budgetConfig.totalCentavos) : "",
 		},
 	});
 
@@ -84,14 +85,14 @@ export function BudgetModal({ onClose }: BudgetModalProps) {
 	const onSubmit = async (values: BudgetFormValues) => {
 		setFormError(null);
 		try {
-			const totalCentavos = BigInt(Math.round(parseFloat(values.totalAmount) * 100));
+			const totalCentavos = toCentavos(values.totalAmount);
 			await setBudget({ totalCentavos });
 
 			const allocationList = rows
 				.filter((r) => r.tag && r.amount && parseFloat(r.amount) > 0)
 				.map((r) => ({
 					tag: r.tag,
-					allocatedCentavos: BigInt(Math.round(parseFloat(r.amount) * 100)),
+					allocatedCentavos: toCentavos(r.amount),
 				}));
 			await setBudgetAllocations({ allocations: allocationList });
 
@@ -121,12 +122,10 @@ export function BudgetModal({ onClose }: BudgetModalProps) {
 					<div className="flex-1 overflow-y-auto">
 						<div className="flex flex-col gap-3">
 							{/* Total monthly budget — required */}
-							<Input
+							<CurrencyInput
 								label="Total monthly budget (required)"
 								id="budget-total"
-								type="number"
 								min="0"
-								step="0.01"
 								error={errors.totalAmount?.message}
 								{...register("totalAmount", {
 									required: "Total budget is required",

@@ -4,8 +4,11 @@ import { useForm } from "react-hook-form";
 import { Timestamp } from "spacetimedb";
 import { useSubAccountActions } from "../hooks";
 import { useDragToDismiss } from "../hooks/useDragToDismiss";
-import { formatPesos } from "../utils/currency";
+import { formatPesos, toAmountString, toCentavos } from "../utils/currency";
+import { toISODate } from "../utils/date";
 import { openAsModal } from "../utils/dialog";
+import { CurrencyInput } from "./CurrencyInput";
+import { DateInput } from "./DateInput";
 import { Input } from "./Input";
 import { SubmitButton } from "./SubmitButton";
 
@@ -79,19 +82,15 @@ export function SubAccountModal({
 					initialBalance: "",
 					remainingAvailable:
 						subAccount.subAccountType === "credit"
-							? (Number(subAccount.creditLimitCentavos - subAccount.balanceCentavos) / 100).toFixed(
-									2,
-								)
+							? toAmountString(subAccount.creditLimitCentavos - subAccount.balanceCentavos)
 							: "",
 					subAccountType: subAccount.subAccountType,
-					creditLimit: (Number(subAccount.creditLimitCentavos) / 100).toFixed(2),
+					creditLimit: toAmountString(subAccount.creditLimitCentavos),
 					existingName: "Main",
 					existingSubAccountType: "wallet",
 					interestRate:
 						subAccount.interestRateBps != null ? (subAccount.interestRateBps / 100).toFixed(2) : "",
-					maturityDate: subAccount.maturityDate
-						? subAccount.maturityDate.toISOString().split("T")[0]
-						: "",
+					maturityDate: subAccount.maturityDate ? toISODate(subAccount.maturityDate) : "",
 				}
 			: {
 					name: "",
@@ -122,13 +121,13 @@ export function SubAccountModal({
 	const onSubmit = async (data: SubAccountFormValues & ConversionFormValues) => {
 		setFormError(null);
 		const creditLimitCentavos =
-			data.subAccountType === "credit" && data.creditLimit
-				? BigInt(Math.round(parseFloat(data.creditLimit) * 100))
-				: 0n;
+			data.subAccountType === "credit" && data.creditLimit ? toCentavos(data.creditLimit) : 0n;
 
 		try {
 			if (isEditMode && subAccount) {
 				if (subAccount.subAccountType === "time-deposit") {
+					// interestRate is in percent and rateBps is basis points (1 bp = 0.01%),
+					// so `* 100` here is percent→bps, not peso→centavo. Do not use toCentavos.
 					const rateBps = data.interestRate ? Math.round(parseFloat(data.interestRate) * 100) : 0;
 					await editTimeDepositMetadata({
 						subAccountId: subAccount.id,
@@ -137,7 +136,7 @@ export function SubAccountModal({
 					});
 				} else {
 					const remainingCentavos = data.remainingAvailable
-						? BigInt(Math.round(parseFloat(data.remainingAvailable) * 100))
+						? toCentavos(data.remainingAvailable)
 						: creditLimitCentavos;
 					const newBalanceCentavos = creditLimitCentavos - remainingCentavos;
 					await editSubAccountReducer({
@@ -148,9 +147,9 @@ export function SubAccountModal({
 					});
 				}
 			} else if (data.subAccountType === "time-deposit" && !isStandalone) {
-				const initialCentavos = data.initialBalance
-					? BigInt(Math.round(parseFloat(data.initialBalance) * 100))
-					: 0n;
+				const initialCentavos = data.initialBalance ? toCentavos(data.initialBalance) : 0n;
+				// interestRate is in percent and rateBps is basis points (1 bp = 0.01%),
+				// so `* 100` here is percent→bps, not peso→centavo. Do not use toCentavos.
 				const rateBps = data.interestRate ? Math.round(parseFloat(data.interestRate) * 100) : 0;
 				await createTimeDeposit({
 					accountId,
@@ -160,12 +159,10 @@ export function SubAccountModal({
 					maturityDate: Timestamp.fromDate(new Date(data.maturityDate)),
 				});
 			} else if (isStandalone) {
-				const initialCentavos = data.initialBalance
-					? BigInt(Math.round(parseFloat(data.initialBalance) * 100))
-					: 0n;
+				const initialCentavos = data.initialBalance ? toCentavos(data.initialBalance) : 0n;
 				const remainingCentavos =
 					data.subAccountType === "credit" && data.remainingAvailable
-						? BigInt(Math.round(parseFloat(data.remainingAvailable) * 100))
+						? toCentavos(data.remainingAvailable)
 						: creditLimitCentavos;
 				const newSubAccountInitialBalanceCentavos =
 					data.subAccountType === "credit"
@@ -181,12 +178,10 @@ export function SubAccountModal({
 					existingSubAccountType: data.existingSubAccountType || "wallet",
 				});
 			} else {
-				const initialCentavos = data.initialBalance
-					? BigInt(Math.round(parseFloat(data.initialBalance) * 100))
-					: 0n;
+				const initialCentavos = data.initialBalance ? toCentavos(data.initialBalance) : 0n;
 				const remainingCentavos =
 					data.subAccountType === "credit" && data.remainingAvailable
-						? BigInt(Math.round(parseFloat(data.remainingAvailable) * 100))
+						? toCentavos(data.remainingAvailable)
 						: creditLimitCentavos;
 				const initialBalanceCentavos =
 					data.subAccountType === "credit"
@@ -258,11 +253,9 @@ export function SubAccountModal({
 							</div>
 
 							{selectedType === "credit" && (
-								<Input
+								<CurrencyInput
 									label="Credit limit (P)"
 									id="creditLimit"
-									type="number"
-									step="0.01"
 									min="0"
 									placeholder="e.g. 120000.00"
 									error={errors.creditLimit?.message}
@@ -291,10 +284,9 @@ export function SubAccountModal({
 											max: { value: 100, message: "Rate must be 100 or less" },
 										})}
 									/>
-									<Input
+									<DateInput
 										label="Maturity date"
 										id="maturity-date"
-										type="date"
 										error={errors.maturityDate?.message}
 										{...register("maturityDate", {
 											required:
@@ -305,23 +297,18 @@ export function SubAccountModal({
 							)}
 
 							{!isEditMode && selectedType !== "credit" && (
-								<Input
+								<CurrencyInput
 									label="Initial balance (P)"
 									id="sub-account-balance"
-									type="number"
-									step="0.01"
 									min="0"
-									placeholder="0.00"
 									{...register("initialBalance")}
 								/>
 							)}
 
 							{selectedType === "credit" && (
-								<Input
+								<CurrencyInput
 									label="Remaining available (P)"
 									id="remaining-available"
-									type="number"
-									step="0.01"
 									min="0"
 									placeholder="e.g. 113800.00"
 									error={errors.remainingAvailable?.message}

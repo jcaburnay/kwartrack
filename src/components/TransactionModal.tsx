@@ -12,19 +12,14 @@ import {
 } from "../hooks";
 import { useDragToDismiss } from "../hooks/useDragToDismiss";
 import { getCurrentMonthExpenses } from "../utils/budgetCompute";
-import { formatPesos } from "../utils/currency";
+import { formatPesos, toAmountString, toCentavos } from "../utils/currency";
+import { fromTimestamp, todayISO, toISODate } from "../utils/date";
 import { openAsModal } from "../utils/dialog";
 import { getVisibleTags } from "../utils/tagConfig";
+import { CurrencyInput } from "./CurrencyInput";
+import { DateInput } from "./DateInput";
 import { Input } from "./Input";
 import { SubmitButton } from "./SubmitButton";
-
-const todayISO = () => {
-	const d = new Date();
-	const y = d.getFullYear();
-	const m = String(d.getMonth() + 1).padStart(2, "0");
-	const day = String(d.getDate()).padStart(2, "0");
-	return `${y}-${m}-${day}`;
-};
 
 interface Transaction {
 	id: bigint;
@@ -143,7 +138,7 @@ export function TransactionModal({ onClose, transaction }: TransactionModalProps
 	const defaultValues: TransactionFormValues = transaction
 		? {
 				type: transaction.type as "expense" | "income" | "transfer",
-				amount: (Number(transaction.amountCentavos) / 100).toFixed(2),
+				amount: toAmountString(transaction.amountCentavos),
 				tag: transaction.tag,
 				sourceSubAccountId:
 					transaction.sourceSubAccountId !== 0n ? transaction.sourceSubAccountId.toString() : "",
@@ -153,12 +148,10 @@ export function TransactionModal({ onClose, transaction }: TransactionModalProps
 						: "",
 				serviceFee:
 					transaction.serviceFeeCentavos !== 0n
-						? (Number(transaction.serviceFeeCentavos) / 100).toFixed(2)
+						? toAmountString(transaction.serviceFeeCentavos)
 						: "",
 				description: transaction.description,
-				date: new Date(Number(transaction.date.microsSinceUnixEpoch / 1000n))
-					.toISOString()
-					.split("T")[0],
+				date: toISODate(fromTimestamp(transaction.date)),
 			}
 		: {
 				type: "expense",
@@ -214,7 +207,7 @@ export function TransactionModal({ onClose, transaction }: TransactionModalProps
 		if (budgetConfig.totalCentavos > 0n) {
 			const spentByTag = getCurrentMonthExpenses(allTransactions);
 			const allocation = budgetAllocations.find((a) => a.tag === selectedTag);
-			const enteredCentavos = BigInt(Math.round(parseFloat(enteredAmount || "0") * 100));
+			const enteredCentavos = toCentavos(enteredAmount || "0");
 
 			if (allocation) {
 				const spentCentavos = spentByTag.get(selectedTag) ?? 0n;
@@ -260,7 +253,7 @@ export function TransactionModal({ onClose, transaction }: TransactionModalProps
 			const outstanding = sourcePart.balanceCentavos;
 			const limit = sourcePart.creditLimitCentavos;
 			const available = limit - outstanding;
-			const enteredCentavos = BigInt(Math.round(parseFloat(enteredAmount || "0") * 100));
+			const enteredCentavos = toCentavos(enteredAmount || "0");
 			if (enteredCentavos > available) {
 				const overBy = enteredCentavos - available;
 				creditHint = `⚠ This will exceed your credit limit by ${formatPesos(overBy)}`;
@@ -274,10 +267,8 @@ export function TransactionModal({ onClose, transaction }: TransactionModalProps
 	const onSubmit = async (data: TransactionFormValues) => {
 		if (!data.tag) return;
 		setFormError(null);
-		const amountCentavos = BigInt(Math.round(parseFloat(data.amount) * 100));
-		const serviceFeeCentavos = data.serviceFee
-			? BigInt(Math.round(parseFloat(data.serviceFee) * 100))
-			: 0n;
+		const amountCentavos = toCentavos(data.amount);
+		const serviceFeeCentavos = data.serviceFee ? toCentavos(data.serviceFee) : 0n;
 		const dateTimestamp = Timestamp.fromDate(new Date(data.date));
 
 		const sourceId = data.sourceSubAccountId ? BigInt(data.sourceSubAccountId) : 0n;
@@ -368,13 +359,10 @@ export function TransactionModal({ onClose, transaction }: TransactionModalProps
 
 							{/* Amount + Tag (expense/income) or Amount + Service fee (transfer) */}
 							<div className="grid sm:grid-cols-2 gap-4">
-								<Input
+								<CurrencyInput
 									label="Amount (P)"
 									id="txn-amount"
-									type="number"
-									step="0.01"
 									min="0.01"
-									placeholder="0.00"
 									error={errors.amount?.message}
 									{...register("amount", {
 										required: "Amount is required",
@@ -427,13 +415,10 @@ export function TransactionModal({ onClose, transaction }: TransactionModalProps
 								) : null}
 
 								{selectedType === "transfer" && (
-									<Input
+									<CurrencyInput
 										label="Service fee (P)"
 										id="txn-service-fee"
-										type="number"
-										step="0.01"
 										min="0"
-										placeholder="0.00"
 										{...register("serviceFee")}
 									/>
 								)}
@@ -567,10 +552,9 @@ export function TransactionModal({ onClose, transaction }: TransactionModalProps
 							)}
 
 							{/* Date */}
-							<Input
+							<DateInput
 								label="Date"
 								id="txn-date"
-								type="date"
 								error={errors.date?.message}
 								{...register("date", { required: "Date is required" })}
 							/>

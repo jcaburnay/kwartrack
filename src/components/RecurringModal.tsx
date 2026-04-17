@@ -3,8 +3,10 @@ import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useAccounts, useRecurringActions, useSubAccounts, useTags } from "../hooks";
 import { useDragToDismiss } from "../hooks/useDragToDismiss";
+import { toAmountString, toCentavos } from "../utils/currency";
 import { openAsModal } from "../utils/dialog";
 import { getVisibleTags } from "../utils/tagConfig";
+import { CurrencyInput } from "./CurrencyInput";
 import { Input } from "./Input";
 import { SubmitButton } from "./SubmitButton";
 
@@ -137,7 +139,7 @@ export function RecurringModal({
 		? {
 				name: definition.name,
 				type: definition.type as "expense" | "income",
-				amount: (Number(definition.amountCentavos) / 100).toFixed(2),
+				amount: toAmountString(definition.amountCentavos),
 				tag: definition.tag,
 				subAccountId: definition.subAccountId.toString(),
 				dayOfMonth: definition.dayOfMonth.toString(),
@@ -190,7 +192,7 @@ export function RecurringModal({
 
 	const onSubmit = async (values: RecurringFormValues) => {
 		setFormError(null);
-		const amountCentavos = BigInt(Math.round(parseFloat(values.amount) * 100));
+		const amountCentavos = toCentavos(values.amount);
 		const subAccountId = BigInt(values.subAccountId);
 		const dayOfMonth = parseInt(values.dayOfMonth, 10);
 		const anchorMonth = hasMonthAnchor ? parseInt(values.anchorMonth, 10) : 0;
@@ -283,11 +285,9 @@ export function RecurringModal({
 
 							{/* Amount + Tag side by side */}
 							<div className="grid sm:grid-cols-2 gap-3">
-								<Input
+								<CurrencyInput
 									label="Amount"
 									id="rec-amount"
-									type="number"
-									step="0.01"
 									min="0.01"
 									error={errors.amount?.message}
 									{...register("amount", {

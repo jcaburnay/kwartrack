@@ -4,7 +4,8 @@ import { useForm } from "react-hook-form";
 import { Timestamp } from "spacetimedb";
 import { useAccounts, useSplitActions, useSubAccounts, useTags } from "../hooks";
 import { useDragToDismiss } from "../hooks/useDragToDismiss";
-import { formatPesos } from "../utils/currency";
+import { formatPesos, toAmountString } from "../utils/currency";
+import { fromTimestamp, todayISO, toISODate } from "../utils/date";
 import { openAsModal } from "../utils/dialog";
 import {
 	computeParticipantShareCentavos,
@@ -14,6 +15,8 @@ import {
 	validateShares,
 } from "../utils/splitShares";
 import { getVisibleTags } from "../utils/tagConfig";
+import { CurrencyInput } from "./CurrencyInput";
+import { DateInput } from "./DateInput";
 import { Input } from "./Input";
 import { SubmitButton } from "./SubmitButton";
 
@@ -56,10 +59,6 @@ interface SplitModalProps {
 	editTarget?: EditTarget;
 }
 
-function toDateInputValue(ts: { microsSinceUnixEpoch: bigint }): string {
-	return new Date(Number(ts.microsSinceUnixEpoch / 1000n)).toISOString().slice(0, 10);
-}
-
 export function SplitModal({ onClose, editTarget }: SplitModalProps) {
 	const ref = useRef<HTMLDialogElement>(null);
 	const boxRef = useRef<HTMLDivElement>(null);
@@ -83,7 +82,7 @@ export function SplitModal({ onClose, editTarget }: SplitModalProps) {
 			? editTarget.participants.map((p) => ({
 					participantId: p.participantId,
 					name: p.name,
-					shareAmount: (Number(p.shareAmountCentavos) / 100).toFixed(2),
+					shareAmount: toAmountString(p.shareAmountCentavos),
 					sharePercentage: "",
 					shareCount: p.shareCount > 0 ? p.shareCount : 1,
 				}))
@@ -91,7 +90,6 @@ export function SplitModal({ onClose, editTarget }: SplitModalProps) {
 	);
 	const [participantsError, setParticipantsError] = useState<string | null>(null);
 
-	const today = new Date().toISOString().slice(0, 10);
 	const {
 		register,
 		handleSubmit,
@@ -100,12 +98,10 @@ export function SplitModal({ onClose, editTarget }: SplitModalProps) {
 	} = useForm<SplitFormValues>({
 		defaultValues: {
 			description: editTarget?.splitEvent.description ?? "",
-			totalAmount: editTarget
-				? (Number(editTarget.splitEvent.totalAmountCentavos) / 100).toFixed(2)
-				: "",
+			totalAmount: editTarget ? toAmountString(editTarget.splitEvent.totalAmountCentavos) : "",
 			tag: editTarget?.splitEvent.tag ?? "",
 			payerSubAccountId: editTarget?.splitEvent.payerSubAccountId.toString() ?? "",
-			date: editTarget ? toDateInputValue(editTarget.splitEvent.date) : today,
+			date: editTarget ? toISODate(fromTimestamp(editTarget.splitEvent.date)) : todayISO(),
 		},
 	});
 
@@ -271,11 +267,9 @@ export function SplitModal({ onClose, editTarget }: SplitModalProps) {
 
 							{/* Total + Tag */}
 							<div className="grid sm:grid-cols-2 gap-3">
-								<Input
+								<CurrencyInput
 									label="Total amount"
 									id="split-amount"
-									type="number"
-									step="0.01"
 									min="0.01"
 									error={errors.totalAmount?.message}
 									{...register("totalAmount", {
@@ -306,18 +300,12 @@ export function SplitModal({ onClose, editTarget }: SplitModalProps) {
 							{/* Partition + Date */}
 							<div className="grid sm:grid-cols-2 gap-3">
 								<SubAccountSelect fieldName="payerSubAccountId" />
-								<div>
-									<label className="label" htmlFor="split-date">
-										<span className="label-text text-sm">Date</span>
-									</label>
-									<input
-										id="split-date"
-										type="date"
-										className={`input input-bordered w-full${errors.date ? " input-error" : ""}`}
-										{...register("date", { required: "Date is required" })}
-									/>
-									{errors.date && <p className="text-error text-xs mt-1">{errors.date.message}</p>}
-								</div>
+								<DateInput
+									label="Date"
+									id="split-date"
+									error={errors.date?.message}
+									{...register("date", { required: "Date is required" })}
+								/>
 							</div>
 
 							{/* Split method tabs */}

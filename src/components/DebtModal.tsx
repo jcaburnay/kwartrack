@@ -4,8 +4,12 @@ import { useForm } from "react-hook-form";
 import { Timestamp } from "spacetimedb";
 import { useAccounts, useDebtActions, useSubAccounts, useTags } from "../hooks";
 import { useDragToDismiss } from "../hooks/useDragToDismiss";
+import { toCentavos } from "../utils/currency";
+import { todayISO } from "../utils/date";
 import { openAsModal } from "../utils/dialog";
 import { getVisibleTags } from "../utils/tagConfig";
+import { CurrencyInput } from "./CurrencyInput";
+import { DateInput } from "./DateInput";
 import { Input } from "./Input";
 import { SubmitButton } from "./SubmitButton";
 
@@ -36,7 +40,6 @@ export function DebtModal({ onClose }: DebtModalProps) {
 	const [direction, setDirection] = useState<"loaned" | "owed">("loaned");
 	const expenseTags = getVisibleTags("expense", tagConfigs);
 
-	const today = new Date().toISOString().slice(0, 10);
 	const {
 		register,
 		handleSubmit,
@@ -49,13 +52,13 @@ export function DebtModal({ onClose }: DebtModalProps) {
 			tag: "",
 			subAccountId: "",
 			description: "",
-			date: today,
+			date: todayISO(),
 		},
 	});
 
 	const onSubmit = async (values: DebtFormValues) => {
 		setFormError(null);
-		const amountCentavos = BigInt(Math.round(parseFloat(values.amount) * 100));
+		const amountCentavos = toCentavos(values.amount);
 		const subAccountId = direction === "loaned" ? BigInt(values.subAccountId) : 0n;
 		const dateTimestamp = Timestamp.fromDate(new Date(values.date));
 
@@ -135,11 +138,9 @@ export function DebtModal({ onClose }: DebtModalProps) {
 
 							{/* Amount + Tag side by side */}
 							<div className="grid sm:grid-cols-2 gap-3">
-								<Input
+								<CurrencyInput
 									label="Amount"
 									id="debt-amount"
-									type="number"
-									step="0.01"
 									min="0.01"
 									error={errors.amount?.message}
 									{...register("amount", {
@@ -221,10 +222,9 @@ export function DebtModal({ onClose }: DebtModalProps) {
 										)}
 									</div>
 								)}
-								<Input
+								<DateInput
 									label="Date"
 									id="debt-date"
-									type="date"
 									error={errors.date?.message}
 									{...register("date", { required: "Date is required" })}
 								/>
