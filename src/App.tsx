@@ -47,6 +47,7 @@ export default function App() {
 				<Routes>
 					{/* Public routes */}
 					<Route path="/sign-in" element={<SignInPage />} />
+					<Route path="/sign-in/*" element={<SignInPage />} />
 					<Route path="/sign-up" element={<SignUpPage />} />
 					<Route path="/sign-up/*" element={<SignUpPage />} />
 					{/* Protected routes: / and all nested paths */}
