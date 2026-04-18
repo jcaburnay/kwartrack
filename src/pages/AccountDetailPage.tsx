@@ -157,7 +157,7 @@ export function AccountDetailPage() {
 	};
 
 	return (
-		<div className="p-4 sm:p-6 ">
+		<div className="p-4 sm:p-6 pb-24 ">
 			<button
 				type="button"
 				className="btn btn-ghost btn-xs gap-1 mb-4 -ml-1 text-base-content/60"

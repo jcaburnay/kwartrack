@@ -103,7 +103,7 @@ export function TransactionsPage() {
 	};
 
 	return (
-		<div className="p-4 sm:p-6 ">
+		<div className="p-4 sm:p-6 pb-24 ">
 			<h1 className="text-xs font-medium tracking-widest text-base-content/60 uppercase mb-5 ">
 				TRANSACTIONS
 			</h1>
