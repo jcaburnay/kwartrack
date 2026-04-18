@@ -144,6 +144,16 @@ export function TransactionsPage() {
 						setShowTransactionModal(false);
 						setEditingTransaction(null);
 					}}
+					onDelete={
+						editingTransaction
+							? () => {
+									const target = editingTransaction;
+									setShowTransactionModal(false);
+									setEditingTransaction(null);
+									setTransactionDeleteTarget(target);
+								}
+							: undefined
+					}
 				/>
 			)}
 

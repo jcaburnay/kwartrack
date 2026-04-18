@@ -1,4 +1,4 @@
-import { X } from "lucide-react";
+import { Trash2, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Timestamp } from "spacetimedb";
@@ -40,6 +40,8 @@ interface TransactionModalProps {
 	transaction?: Transaction;
 	/** When provided AND not in edit mode, pre-selects this sub-account as source */
 	defaultSourceSubAccountId?: bigint;
+	/** When provided in edit mode, renders a Delete button that delegates to the parent */
+	onDelete?: () => void;
 }
 
 interface TransactionFormValues {
@@ -57,6 +59,7 @@ export function TransactionModal({
 	onClose,
 	transaction,
 	defaultSourceSubAccountId,
+	onDelete,
 }: TransactionModalProps) {
 	const ref = useRef<HTMLDialogElement>(null);
 	const boxRef = useRef<HTMLDivElement>(null);
@@ -269,9 +272,21 @@ export function TransactionModal({
 				{/* Header */}
 				<div className="flex items-center justify-between mb-4">
 					<h3 className="text-lg font-semibold">{title}</h3>
-					<button type="button" className="btn btn-ghost btn-sm btn-circle" onClick={handleClose}>
-						<X size={16} />
-					</button>
+					<div className="flex items-center gap-3">
+						{isEditMode && onDelete && (
+							<button
+								type="button"
+								className="btn btn-ghost btn-sm btn-circle text-error md:hidden"
+								onClick={onDelete}
+								aria-label="Delete transaction"
+							>
+								<Trash2 size={16} />
+							</button>
+						)}
+						<button type="button" className="btn btn-ghost btn-sm btn-circle" onClick={handleClose}>
+							<X size={16} />
+						</button>
+					</div>
 				</div>
 
 				<form onSubmit={handleSubmit(onSubmit)} noValidate className="flex flex-col flex-1 min-h-0">
