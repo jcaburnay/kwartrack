@@ -147,7 +147,7 @@ export function TransactionTable({
 				</div>
 
 				{/* Desktop table view */}
-				<div className="hidden md:block overflow-x-auto">
+				<div className="hidden md:block">
 					<table className="table table-sm w-full">
 						<thead>
 							<tr className="bg-base-200">
