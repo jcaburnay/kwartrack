@@ -38,12 +38,13 @@ export function DebtModal({ onClose }: DebtModalProps) {
 	const { subAccounts } = useSubAccounts();
 	const { tagConfigs } = useTags();
 	const [direction, setDirection] = useState<"loaned" | "owed">("loaned");
-	const expenseTags = getVisibleTags("expense", tagConfigs);
+	const tagOptions = getVisibleTags(direction === "loaned" ? "expense" : "income", tagConfigs);
 
 	const {
 		register,
 		handleSubmit,
 		reset,
+		setValue,
 		formState: { errors, isSubmitting },
 	} = useForm<DebtFormValues>({
 		defaultValues: {
@@ -56,10 +57,16 @@ export function DebtModal({ onClose }: DebtModalProps) {
 		},
 	});
 
+	const switchDirection = (next: "loaned" | "owed") => {
+		if (next === direction) return;
+		setDirection(next);
+		setValue("tag", "");
+	};
+
 	const onSubmit = async (values: DebtFormValues) => {
 		setFormError(null);
 		const amountCentavos = toCentavos(values.amount);
-		const subAccountId = direction === "loaned" ? BigInt(values.subAccountId) : 0n;
+		const subAccountId = BigInt(values.subAccountId);
 		const dateTimestamp = Timestamp.fromDate(new Date(values.date));
 
 		try {
@@ -110,14 +117,14 @@ export function DebtModal({ onClose }: DebtModalProps) {
 									<button
 										type="button"
 										className={`btn btn-sm flex-1 ${direction === "loaned" ? "btn-success" : "btn-ghost"}`}
-										onClick={() => setDirection("loaned")}
+										onClick={() => switchDirection("loaned")}
 									>
 										I lent money
 									</button>
 									<button
 										type="button"
 										className={`btn btn-sm flex-1 ${direction === "owed" ? "btn-error" : "btn-ghost"}`}
-										onClick={() => setDirection("owed")}
+										onClick={() => switchDirection("owed")}
 									>
 										I owe money
 									</button>
@@ -151,77 +158,71 @@ export function DebtModal({ onClose }: DebtModalProps) {
 								<div>
 									<label className="label" htmlFor="debt-tag">
 										<span className="label-text text-sm">
-											Tag
-											{direction === "loaned" && (
-												<span className="text-base-content/60 ml-1">(optional)</span>
-											)}
+											Tag <span className="text-base-content/60 ml-1">(optional)</span>
 										</span>
 									</label>
 									<select
 										id="debt-tag"
-										className={`select select-bordered w-full${errors.tag ? " select-error" : ""}`}
-										{...register("tag", {
-											validate: (v) => direction === "loaned" || !!v || "Tag is required",
-										})}
+										className="select select-bordered w-full"
+										{...register("tag")}
 									>
 										<option value="">Select tag</option>
-										{expenseTags.map((tag) => (
+										{tagOptions.map((tag) => (
 											<option key={tag} value={tag}>
 												{tag.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())}
 											</option>
 										))}
 									</select>
-									{errors.tag && <p className="text-error text-xs mt-1">{errors.tag.message}</p>}
 								</div>
 							</div>
 
 							{/* Partition + Date side by side */}
-							<div className={`grid ${direction === "loaned" ? "sm:grid-cols-2" : ""} gap-3`}>
-								{direction === "loaned" && (
-									<div>
-										<label className="label" htmlFor="debt-partition">
-											<span className="label-text text-sm">Source sub-account</span>
-										</label>
-										<select
-											id="debt-partition"
-											className={`select select-bordered w-full${errors.subAccountId ? " select-error" : ""}`}
-											{...register("subAccountId", {
-												required: direction === "loaned" ? "Sub-account is required" : false,
-											})}
-										>
-											<option value="">Select sub-account</option>
-											{accounts.map((account) => {
-												if (account.isStandalone) {
-													const defaultPartition = subAccounts.find(
-														(p) => p.accountId === account.id && p.isDefault,
-													);
-													if (!defaultPartition) return null;
-													return (
-														<optgroup key={account.id.toString()} label={account.name}>
-															<option value={defaultPartition.id.toString()}>{account.name}</option>
-														</optgroup>
-													);
-												}
-												const accountPartitions = subAccounts.filter(
-													(p) => p.accountId === account.id && !p.isDefault,
+							<div className="grid sm:grid-cols-2 gap-3">
+								<div>
+									<label className="label" htmlFor="debt-partition">
+										<span className="label-text text-sm">
+											{direction === "loaned" ? "Source sub-account" : "Destination sub-account"}
+										</span>
+									</label>
+									<select
+										id="debt-partition"
+										className={`select select-bordered w-full${errors.subAccountId ? " select-error" : ""}`}
+										{...register("subAccountId", {
+											required: "Sub-account is required",
+										})}
+									>
+										<option value="">Select sub-account</option>
+										{accounts.map((account) => {
+											if (account.isStandalone) {
+												const defaultPartition = subAccounts.find(
+													(p) => p.accountId === account.id && p.isDefault,
 												);
-												if (accountPartitions.length === 0) return null;
+												if (!defaultPartition) return null;
 												return (
 													<optgroup key={account.id.toString()} label={account.name}>
-														{accountPartitions.map((p) => (
-															<option key={p.id.toString()} value={p.id.toString()}>
-																{p.name}
-															</option>
-														))}
+														<option value={defaultPartition.id.toString()}>{account.name}</option>
 													</optgroup>
 												);
-											})}
-										</select>
-										{errors.subAccountId && (
-											<p className="text-error text-xs mt-1">{errors.subAccountId.message}</p>
-										)}
-									</div>
-								)}
+											}
+											const accountPartitions = subAccounts.filter(
+												(p) => p.accountId === account.id && !p.isDefault,
+											);
+											if (accountPartitions.length === 0) return null;
+											return (
+												<optgroup key={account.id.toString()} label={account.name}>
+													{accountPartitions.map((p) => (
+														<option key={p.id.toString()} value={p.id.toString()}>
+															{p.name}
+														</option>
+													))}
+												</optgroup>
+											);
+										})}
+									</select>
+									{errors.subAccountId && (
+										<p className="text-error text-xs mt-1">{errors.subAccountId.message}</p>
+									)}
+								</div>
 								<DateInput
 									label="Date"
 									id="debt-date"

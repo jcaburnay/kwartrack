@@ -6,8 +6,9 @@ import spacetimedb from "../schema";
 // DEBT REDUCERS
 // =============================================================================
 
-// create_debt: records a new debt. Loaned debts debit the source sub-account immediately.
-// Owed debts are tracking-only (no balance impact until settled).
+// create_debt: records a new debt and the corresponding cash movement.
+// Loaned → debit source sub-account + expense transaction.
+// Owed → credit destination sub-account + income transaction.
 export const create_debt = spacetimedb.reducer(
 	{
 		personName: t.string(),
@@ -26,14 +27,15 @@ export const create_debt = spacetimedb.reducer(
 
 		const ownerIdentity = resolveOwner(ctx);
 
+		const subAccount = ctx.db.sub_account.id.find(subAccountId);
+		if (!subAccount) throw new SenderError("Sub-account not found");
+		if (!isAuthorized(ctx, subAccount.ownerIdentity)) throw new SenderError("Not authorized");
+
 		if (direction === "loaned") {
 			// Debit source sub-account (money going out to the person)
-			const source = ctx.db.sub_account.id.find(subAccountId);
-			if (!source) throw new SenderError("Source sub-account not found");
-			if (!isAuthorized(ctx, source.ownerIdentity)) throw new SenderError("Not authorized");
 			ctx.db.sub_account.id.update({
-				...source,
-				balanceCentavos: applyBalance(source, "debit", amountCentavos),
+				...subAccount,
+				balanceCentavos: applyBalance(subAccount, "debit", amountCentavos),
 			});
 
 			// Create expense transaction to record the outflow
@@ -52,6 +54,29 @@ export const create_debt = spacetimedb.reducer(
 				isRecurring: false,
 				recurringDefinitionId: 0n,
 			});
+		} else {
+			// Credit destination sub-account (money coming in from the person)
+			ctx.db.sub_account.id.update({
+				...subAccount,
+				balanceCentavos: applyBalance(subAccount, "credit", amountCentavos),
+			});
+
+			// Create income transaction to record the inflow
+			ctx.db.transaction.insert({
+				id: 0n,
+				ownerIdentity,
+				type: "income",
+				amountCentavos,
+				tag,
+				sourceSubAccountId: 0n,
+				destinationSubAccountId: subAccountId,
+				serviceFeeCentavos: 0n,
+				description: `Borrowed from ${personName.trim()}${description ? `: ${description}` : ""}`,
+				date,
+				createdAt: ctx.timestamp,
+				isRecurring: false,
+				recurringDefinitionId: 0n,
+			});
 		}
 
 		ctx.db.debt.insert({
@@ -60,7 +85,7 @@ export const create_debt = spacetimedb.reducer(
 			personName: personName.trim(),
 			direction,
 			amountCentavos,
-			subAccountId: direction === "loaned" ? subAccountId : 0n,
+			subAccountId,
 			settledAmountCentavos: 0n,
 			tag,
 			description: description.trim(),

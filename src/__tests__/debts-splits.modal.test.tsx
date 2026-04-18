@@ -29,11 +29,12 @@ function mockAccountAndSubAccount() {
 }
 
 describe("DebtModal", () => {
-	it("hides sub-account field when owed direction is selected", async () => {
+	it("relabels the sub-account field based on direction", async () => {
 		render(<DebtModal onClose={vi.fn()} />);
 		expect(screen.getByLabelText("Source sub-account")).toBeInTheDocument();
 		await userEvent.click(screen.getByText("I owe money"));
 		expect(screen.queryByLabelText("Source sub-account")).not.toBeInTheDocument();
+		expect(screen.getByLabelText("Destination sub-account")).toBeInTheDocument();
 	});
 
 	it("loaned: createDebt with centavos-converted amount, sub-account, trimmed personName", async () => {
@@ -60,7 +61,8 @@ describe("DebtModal", () => {
 		);
 	});
 
-	it("owed: createDebt with subAccountId = 0n (no sub-account selection)", async () => {
+	it("owed: createDebt with centavos-converted amount, destination sub-account, income tag", async () => {
+		mockAccountAndSubAccount();
 		const createDebt = getReducerSpy("createDebt");
 		const user = userEvent.setup();
 
@@ -68,7 +70,8 @@ describe("DebtModal", () => {
 		await user.click(screen.getByText(/I owe money/i));
 		await user.type(screen.getByLabelText(/Person/i), "Maria");
 		await user.type(screen.getByLabelText(/^Amount$/i), "42.50");
-		await user.selectOptions(screen.getByLabelText(/Tag/i), "foods");
+		await user.selectOptions(screen.getByLabelText(/Tag/i), "freelance");
+		await user.selectOptions(screen.getByLabelText(/Sub-account/i), "99");
 		await user.click(screen.getByRole("button", { name: /Add debt/i }));
 
 		await waitFor(() => expect(createDebt).toHaveBeenCalledTimes(1));
@@ -77,7 +80,8 @@ describe("DebtModal", () => {
 				personName: "Maria",
 				direction: "owed",
 				amountCentavos: 4_250n,
-				subAccountId: 0n,
+				subAccountId: 99n,
+				tag: "freelance",
 			}),
 		);
 	});
