@@ -63,10 +63,19 @@ const MONTH_LABELS = [
 ];
 
 /**
- * Sum all balanceCentavos across sub-accounts.
+ * Net-worth contribution of a single sub-account. Credit sub-accounts store
+ * balanceCentavos as outstanding debt (positive = owed), so they subtract
+ * from net worth instead of adding.
+ */
+export function netBalance(sa: { subAccountType: string; balanceCentavos: bigint }): bigint {
+	return sa.subAccountType === "credit" ? -sa.balanceCentavos : sa.balanceCentavos;
+}
+
+/**
+ * Sum net-worth contributions across sub-accounts (assets minus credit debt).
  */
 export function computeTotalBalance(subAccounts: readonly SubAccountRow[]): bigint {
-	return subAccounts.reduce((sum, sa) => sum + sa.balanceCentavos, 0n);
+	return subAccounts.reduce((sum, sa) => sum + netBalance(sa), 0n);
 }
 
 /**
@@ -81,7 +90,7 @@ export function computeAccountSummaries(
 	return accounts
 		.map((acct) => {
 			const acctSubAccounts = subAccounts.filter((sa) => sa.accountId === acct.id);
-			const balanceCentavos = acctSubAccounts.reduce((sum, sa) => sum + sa.balanceCentavos, 0n);
+			const balanceCentavos = acctSubAccounts.reduce((sum, sa) => sum + netBalance(sa), 0n);
 			const type = acctSubAccounts.some((sa) => sa.subAccountType === "credit")
 				? "Credit Card"
 				: "Savings";

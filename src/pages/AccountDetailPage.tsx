@@ -21,6 +21,7 @@ import {
 } from "../hooks";
 import { getAccountBackground } from "../utils/brandColors";
 import { formatPesos } from "../utils/currency";
+import { netBalance } from "../utils/dashboardCompute";
 import { fromTimestamp } from "../utils/date";
 
 export function AccountDetailPage() {
@@ -86,10 +87,10 @@ export function AccountDetailPage() {
 		(sa) => sa.accountId === accountId && !sa.isDefault,
 	);
 
-	// Balance: sum ALL sub-accounts for this account (including isDefault for standalone)
+	// Balance: sum net contributions for this account (credit sub-accounts subtract as debt)
 	const totalBalance = subAccounts
 		.filter((sa) => sa.accountId === accountId)
-		.reduce((sum, sa) => sum + sa.balanceCentavos, 0n);
+		.reduce((sum, sa) => sum + netBalance(sa), 0n);
 
 	// All sub-account IDs for this account (including default)
 	const accountSubAccountIds = subAccounts

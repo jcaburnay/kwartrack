@@ -47,10 +47,12 @@ const subAccounts = [
 		creditLimitCentavos: 0n,
 	},
 	{
+		// Credit sub-accounts store balanceCentavos as positive outstanding debt
+		// (see server/src/helpers.ts: applyBalance + validateCreditAccountEdit).
 		id: 30n,
 		accountId: 3n,
 		name: "__default__",
-		balanceCentavos: -750000n,
+		balanceCentavos: 750000n,
 		isDefault: true,
 		subAccountType: "credit",
 		creditLimitCentavos: 5000000n,
@@ -64,9 +66,9 @@ const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 15);
 
 describe("dashboardCompute", () => {
 	describe("computeTotalBalance", () => {
-		it("sums all partition balances including negative for credit", () => {
+		it("sums asset balances and subtracts credit outstanding as debt", () => {
 			const total = computeTotalBalance(subAccounts);
-			// 5000000 + 3520000 + 1273050 + (-750000) = 9043050
+			// 5000000 + 3520000 + 1273050 - 750000 = 9043050
 			expect(total).toBe(9043050n);
 		});
 
@@ -87,6 +89,7 @@ describe("dashboardCompute", () => {
 			expect(result[0].type).toBe("Savings");
 
 			expect(result[1].name).toBe("BPI Credit");
+			// Credit outstanding of 750000 subtracts from net worth
 			expect(result[1].balanceCentavos).toBe(-750000n);
 			expect(result[1].type).toBe("Credit Card");
 
