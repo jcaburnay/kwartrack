@@ -229,3 +229,63 @@ describe("TransactionModal reducer payloads", () => {
 		);
 	});
 });
+
+describe("TransactionModal default pre-fill", () => {
+	const accounts = [{ id: 10n, name: "Maya", isStandalone: false }];
+	const subAccounts = [
+		{
+			id: 1n,
+			accountId: 10n,
+			name: "Wallet",
+			balanceCentavos: 0n,
+			isDefault: false,
+			subAccountType: "wallet",
+			creditLimitCentavos: 0n,
+		},
+		{
+			id: 2n,
+			accountId: 10n,
+			name: "Savings",
+			balanceCentavos: 0n,
+			isDefault: false,
+			subAccountType: "savings",
+			creditLimitCentavos: 0n,
+		},
+	];
+
+	function mockTables() {
+		vi.mocked(useTable).mockImplementation((table: { name?: string } | unknown) => {
+			const name = (table as { name?: string } | undefined)?.name;
+			if (name === "my_accounts") return [accounts, false] as never;
+			if (name === "my_sub_accounts") return [subAccounts, false] as never;
+			return [[], false] as never;
+		});
+	}
+
+	it("defaultSourceSubAccountId pre-selects the source for a new expense", () => {
+		mockTables();
+		render(<TransactionModal onClose={() => {}} defaultSourceSubAccountId={2n} />);
+		const fromSelect = screen.getByRole("combobox", { name: /^From$/i }) as HTMLSelectElement;
+		expect(fromSelect.value).toBe("2");
+	});
+
+	it("defaultSourceSubAccountId is ignored in edit mode", () => {
+		mockTables();
+		const existing = {
+			id: 42n,
+			type: "expense" as const,
+			amountCentavos: 500n,
+			tag: "foods",
+			sourceSubAccountId: 1n,
+			destinationSubAccountId: 0n,
+			serviceFeeCentavos: 0n,
+			description: "",
+			date: { microsSinceUnixEpoch: BigInt(new Date("2026-01-15").getTime()) * 1000n },
+		};
+		render(
+			<TransactionModal onClose={() => {}} transaction={existing} defaultSourceSubAccountId={2n} />,
+		);
+		const fromSelect = screen.getByRole("combobox", { name: /^From$/i }) as HTMLSelectElement;
+		expect(fromSelect.value).toBe("1");
+	});
+});

@@ -2,7 +2,7 @@ import { X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Timestamp } from "spacetimedb";
-import { useSubAccountActions } from "../hooks";
+import { useAccounts, useSubAccountActions, useSubAccounts } from "../hooks";
 import { useDragToDismiss } from "../hooks/useDragToDismiss";
 import { formatPesos, toAmountString, toCentavos } from "../utils/currency";
 import { toISODate } from "../utils/date";
@@ -38,19 +38,23 @@ interface SubAccountData {
 }
 
 interface SubAccountModalProps {
-	accountId: bigint;
-	accountName: string;
-	isStandalone: boolean;
-	existingBalanceCentavos: bigint;
+	/** When omitted, the modal renders an account selector to choose one */
+	accountId?: bigint;
+	accountName?: string;
+	isStandalone?: boolean;
+	existingBalanceCentavos?: bigint;
+	/** When `accountId` is omitted, pre-selects this account in the selector */
+	defaultAccountId?: bigint;
 	onClose: () => void;
 	subAccount?: SubAccountData;
 }
 
 export function SubAccountModal({
-	accountId,
-	accountName,
-	isStandalone,
-	existingBalanceCentavos,
+	accountId: providedAccountId,
+	accountName: providedAccountName,
+	isStandalone: providedIsStandalone,
+	existingBalanceCentavos: providedExistingBalance,
+	defaultAccountId,
 	onClose,
 	subAccount,
 }: SubAccountModalProps) {
@@ -65,7 +69,26 @@ export function SubAccountModal({
 	} = useSubAccountActions();
 	const isEditMode = !!subAccount;
 
-	const showConversionSection = isStandalone && !isEditMode && existingBalanceCentavos > 0n;
+	const { accounts } = useAccounts();
+	const { subAccounts: allSubAccounts } = useSubAccounts();
+
+	const showAccountSelector = providedAccountId === undefined;
+	const [selectedAccountId, setSelectedAccountId] = useState<bigint | null>(
+		providedAccountId ?? defaultAccountId ?? null,
+	);
+
+	const effectiveAccountId = providedAccountId ?? selectedAccountId ?? 0n;
+	const effectiveAccount = accounts.find((a) => a.id === effectiveAccountId);
+	const effectiveAccountName = providedAccountName ?? effectiveAccount?.name ?? "";
+	const effectiveIsStandalone = providedIsStandalone ?? effectiveAccount?.isStandalone ?? false;
+	const defaultSub =
+		effectiveIsStandalone && effectiveAccountId !== 0n
+			? allSubAccounts.find((sa) => sa.accountId === effectiveAccountId && sa.isDefault)
+			: undefined;
+	const effectiveExistingBalance = providedExistingBalance ?? defaultSub?.balanceCentavos ?? 0n;
+
+	const showConversionSection =
+		effectiveIsStandalone && !isEditMode && effectiveExistingBalance > 0n;
 
 	const {
 		register,
@@ -119,6 +142,10 @@ export function SubAccountModal({
 	}, [creditLimitValue, selectedType, trigger]);
 
 	const onSubmit = async (data: SubAccountFormValues & ConversionFormValues) => {
+		if (effectiveAccountId === 0n) {
+			setFormError("Please select an account first.");
+			return;
+		}
 		setFormError(null);
 		const creditLimitCentavos =
 			data.subAccountType === "credit" && data.creditLimit ? toCentavos(data.creditLimit) : 0n;
@@ -146,19 +173,19 @@ export function SubAccountModal({
 						newBalanceCentavos,
 					});
 				}
-			} else if (data.subAccountType === "time-deposit" && !isStandalone) {
+			} else if (data.subAccountType === "time-deposit" && !effectiveIsStandalone) {
 				const initialCentavos = data.initialBalance ? toCentavos(data.initialBalance) : 0n;
 				// interestRate is in percent and rateBps is basis points (1 bp = 0.01%),
 				// so `* 100` here is percent→bps, not peso→centavo. Do not use toCentavos.
 				const rateBps = data.interestRate ? Math.round(parseFloat(data.interestRate) * 100) : 0;
 				await createTimeDeposit({
-					accountId,
+					accountId: effectiveAccountId,
 					name: data.name.trim(),
 					initialBalanceCentavos: initialCentavos,
 					interestRateBps: rateBps,
 					maturityDate: Timestamp.fromDate(new Date(data.maturityDate)),
 				});
-			} else if (isStandalone) {
+			} else if (effectiveIsStandalone) {
 				const initialCentavos = data.initialBalance ? toCentavos(data.initialBalance) : 0n;
 				const remainingCentavos =
 					data.subAccountType === "credit" && data.remainingAvailable
@@ -169,7 +196,7 @@ export function SubAccountModal({
 						? creditLimitCentavos - remainingCentavos
 						: initialCentavos;
 				await convertAndCreateSubAccount({
-					accountId,
+					accountId: effectiveAccountId,
 					newName: data.name.trim(),
 					newSubAccountType: data.subAccountType,
 					newCreditLimitCentavos: creditLimitCentavos,
@@ -188,7 +215,7 @@ export function SubAccountModal({
 						? creditLimitCentavos - remainingCentavos
 						: initialCentavos;
 				await addSubAccount({
-					accountId,
+					accountId: effectiveAccountId,
 					name: data.name.trim(),
 					initialBalanceCentavos,
 					subAccountType: data.subAccountType,
@@ -225,6 +252,28 @@ export function SubAccountModal({
 				<form onSubmit={handleSubmit(onSubmit)} noValidate className="flex flex-col flex-1 min-h-0">
 					<div className="flex-1 overflow-y-auto">
 						<div className="flex flex-col gap-4">
+							{showAccountSelector && (
+								<div className="form-control">
+									<label className="label" htmlFor="sa-account">
+										<span className="label-text">Account</span>
+									</label>
+									<select
+										id="sa-account"
+										className="select select-bordered w-full"
+										value={selectedAccountId?.toString() ?? ""}
+										onChange={(e) =>
+											setSelectedAccountId(e.target.value ? BigInt(e.target.value) : null)
+										}
+									>
+										<option value="">Select an account</option>
+										{accounts.map((a) => (
+											<option key={a.id.toString()} value={a.id.toString()}>
+												{a.name}
+											</option>
+										))}
+									</select>
+								</div>
+							)}
 							<Input
 								label="Sub-account name"
 								id="sub-account-name"
@@ -332,9 +381,9 @@ export function SubAccountModal({
 									<div className="flex flex-col gap-3">
 										<p className="text-sm text-base-content/60">
 											<span className="font-medium text-base-content">
-												{accountName}'s existing balance
+												{effectiveAccountName}'s existing balance
 											</span>{" "}
-											(<span className="font-mono">{formatPesos(existingBalanceCentavos)}</span>)
+											(<span className="font-mono">{formatPesos(effectiveExistingBalance)}</span>)
 											will be moved to a sub-account. What should it be called?
 										</p>
 										<div className="flex gap-2">

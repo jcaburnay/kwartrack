@@ -143,6 +143,30 @@
 	box-shadow: 0 0 0 1.5px var(--input-color) inset;
 }
 
+/* ── FAB backdrop visibility: only the opacity flip is custom CSS;
+   all visual properties (blur, bg, position) live as Tailwind classes
+   on the .fab-backdrop element so vendor prefixes are handled. ── */
+body:has(.fab:focus-within) .fab-backdrop {
+	opacity: 1;
+}
+
+/* ── FAB: align to content column right edge on desktop ── */
+/* Mobile: pinned to viewport right edge (Tailwind right-4).
+   Desktop ≥ md (768px) but viewport narrower than the centered
+   max-w-[1152px] content column: 1.5rem from viewport right edge.
+   Desktop ≥ 1152px: tracks the content column's right edge with a
+   1.5rem inset, so the FAB stays anchored to content on wide screens. */
+@media (min-width: 768px) {
+	.fab-content-right {
+		right: 1.5rem;
+	}
+}
+@media (min-width: 1152px) {
+	.fab-content-right {
+		right: calc(50vw - 576px + 1.5rem);
+	}
+}
+
 /* ── Bottom sheet drag handle for mobile ── */
 @media (max-width: 639px) {
 	.modal-bottom > .modal-box {

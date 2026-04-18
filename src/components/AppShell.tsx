@@ -1,5 +1,6 @@
 import { Outlet } from "react-router";
 import { BottomTabBar } from "./BottomTabBar";
+import { Fab } from "./Fab";
 import { MobileHeader } from "./MobileHeader";
 import { RouteErrorBoundary } from "./RouteErrorBoundary";
 import { Sidebar } from "./Sidebar";
@@ -28,6 +29,7 @@ export function AppShell() {
 						</RouteErrorBoundary>
 					</div>
 				</main>
+				<Fab />
 				<BottomTabBar />
 			</div>
 			<div

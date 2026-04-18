@@ -1,5 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { useTable } from "spacetimedb/react";
 import { describe, expect, it, vi } from "vitest";
 import { RecurringModal } from "../components/RecurringModal";
 import { getReducerSpy } from "./setup";
@@ -181,5 +182,45 @@ describe("RecurringModal", () => {
 				}),
 			);
 		});
+	});
+});
+
+describe("RecurringModal default pre-fill", () => {
+	const accounts = [{ id: 10n, name: "Maya", isStandalone: false }];
+	const subAccounts = [
+		{
+			id: 1n,
+			accountId: 10n,
+			name: "Wallet",
+			balanceCentavos: 0n,
+			isDefault: false,
+			subAccountType: "wallet",
+			creditLimitCentavos: 0n,
+		},
+		{
+			id: 2n,
+			accountId: 10n,
+			name: "Savings",
+			balanceCentavos: 0n,
+			isDefault: false,
+			subAccountType: "savings",
+			creditLimitCentavos: 0n,
+		},
+	];
+
+	function mockTables() {
+		vi.mocked(useTable).mockImplementation((table: { name?: string } | unknown) => {
+			const name = (table as { name?: string } | undefined)?.name;
+			if (name === "my_accounts") return [accounts, false] as never;
+			if (name === "my_sub_accounts") return [subAccounts, false] as never;
+			return [[], false] as never;
+		});
+	}
+
+	it("defaultSubAccountId pre-selects the sub-account for a new subscription", () => {
+		mockTables();
+		render(<RecurringModal onClose={() => {}} defaultSubAccountId={2n} />);
+		const subAccountSelect = screen.getByLabelText(/Sub-account/i) as HTMLSelectElement;
+		expect(subAccountSelect.value).toBe("2");
 	});
 });

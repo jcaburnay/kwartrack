@@ -213,6 +213,94 @@ describe("SubAccountModal standalone conversion — new sub-account initial bala
 	});
 });
 
+describe("SubAccountModal standalone use (no accountId provided)", () => {
+	const accounts = [
+		{ id: 10n, name: "Maya", isStandalone: false },
+		{ id: 20n, name: "GCash", isStandalone: true },
+	];
+	const subAccounts = [
+		{
+			id: 1n,
+			accountId: 10n,
+			name: "Wallet",
+			balanceCentavos: 50000n,
+			isDefault: false,
+			subAccountType: "wallet",
+			creditLimitCentavos: 0n,
+		},
+		{
+			id: 99n,
+			accountId: 20n,
+			name: "Default",
+			balanceCentavos: 200000n,
+			isDefault: true,
+			subAccountType: "wallet",
+			creditLimitCentavos: 0n,
+		},
+	];
+
+	function mockTables() {
+		vi.mocked(useTable).mockImplementation((table: { name?: string } | unknown) => {
+			const name = (table as { name?: string } | undefined)?.name;
+			if (name === "my_accounts") return [accounts, false] as never;
+			if (name === "my_sub_accounts") return [subAccounts, false] as never;
+			return [[], false] as never;
+		});
+		// Reset useReducer to default (route to shared reducer spies) — earlier
+		// describe block overrides this with a stub that only handles
+		// convertAndCreateSubAccount, which would otherwise leak into these tests.
+		vi.mocked(useReducer).mockImplementation((reducer: { accessorName?: string } | unknown) => {
+			const accessorName = (reducer as { accessorName?: string } | undefined)?.accessorName;
+			if (accessorName) return getReducerSpy(accessorName) as never;
+			return vi.fn() as never;
+		});
+	}
+
+	it("renders an account selector when accountId is not provided", async () => {
+		mockTables();
+		const { SubAccountModal } = await import("../components/SubAccountModal");
+		render(<SubAccountModal onClose={() => {}} />);
+		expect(screen.getByLabelText(/^Account$/i)).toBeInTheDocument();
+	});
+
+	it("does not render an account selector when accountId is provided", async () => {
+		mockTables();
+		const { SubAccountModal } = await import("../components/SubAccountModal");
+		render(
+			<SubAccountModal
+				accountId={10n}
+				accountName="Maya"
+				isStandalone={false}
+				existingBalanceCentavos={0n}
+				onClose={() => {}}
+			/>,
+		);
+		expect(screen.queryByLabelText(/^Account$/i)).not.toBeInTheDocument();
+	});
+
+	it("defaultAccountId pre-selects the corresponding account in the selector", async () => {
+		mockTables();
+		const { SubAccountModal } = await import("../components/SubAccountModal");
+		render(<SubAccountModal onClose={() => {}} defaultAccountId={20n} />);
+		const select = screen.getByLabelText(/^Account$/i) as HTMLSelectElement;
+		expect(select.value).toBe("20");
+	});
+
+	it("submits with the selected accountId when picking from selector", async () => {
+		mockTables();
+		const addSubAccount = getReducerSpy("addSubAccount");
+		const user = userEvent.setup();
+		const { SubAccountModal } = await import("../components/SubAccountModal");
+		render(<SubAccountModal onClose={() => {}} defaultAccountId={10n} />);
+		await user.type(screen.getByLabelText(/Sub-account name/i), "Bonus");
+		await user.click(screen.getByRole("button", { name: /Save/i }));
+		await waitFor(() => expect(addSubAccount).toHaveBeenCalledTimes(1));
+		expect(addSubAccount).toHaveBeenCalledWith(
+			expect.objectContaining({ accountId: 10n, name: "Bonus" }),
+		);
+	});
+});
+
 // =============================================================================
 // DeleteConfirmModal tests — RED until Plan 04 creates DeleteConfirmModal
 // =============================================================================

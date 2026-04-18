@@ -38,6 +38,8 @@ interface TransactionModalProps {
 	onClose: () => void;
 	/** When provided, opens in edit mode pre-filled with existing values */
 	transaction?: Transaction;
+	/** When provided AND not in edit mode, pre-selects this sub-account as source */
+	defaultSourceSubAccountId?: bigint;
 }
 
 interface TransactionFormValues {
@@ -51,7 +53,11 @@ interface TransactionFormValues {
 	date: string;
 }
 
-export function TransactionModal({ onClose, transaction }: TransactionModalProps) {
+export function TransactionModal({
+	onClose,
+	transaction,
+	defaultSourceSubAccountId,
+}: TransactionModalProps) {
 	const ref = useRef<HTMLDialogElement>(null);
 	const boxRef = useRef<HTMLDivElement>(null);
 	useEffect(() => {
@@ -95,7 +101,7 @@ export function TransactionModal({ onClose, transaction }: TransactionModalProps
 				type: "expense",
 				amount: "",
 				tag: "",
-				sourceSubAccountId: "",
+				sourceSubAccountId: defaultSourceSubAccountId ? defaultSourceSubAccountId.toString() : "",
 				destinationSubAccountId: "",
 				serviceFee: "",
 				description: "",

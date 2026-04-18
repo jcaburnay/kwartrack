@@ -44,12 +44,15 @@ interface RecurringModalProps {
 	onClose: () => void;
 	definition?: RecurringDefinition;
 	mode?: "subscription" | "installment";
+	/** When provided AND not in edit mode, pre-selects this sub-account */
+	defaultSubAccountId?: bigint;
 }
 
 export function RecurringModal({
 	onClose,
 	definition,
 	mode = "subscription",
+	defaultSubAccountId,
 }: RecurringModalProps) {
 	const ref = useRef<HTMLDialogElement>(null);
 	const boxRef = useRef<HTMLDivElement>(null);
@@ -97,7 +100,7 @@ export function RecurringModal({
 				type: "expense",
 				amount: "",
 				tag: isInstallment ? "" : "digital-subscriptions",
-				subAccountId: "",
+				subAccountId: defaultSubAccountId ? defaultSubAccountId.toString() : "",
 				dayOfMonth: "1",
 				interval: "monthly",
 				anchorMonth: (new Date().getMonth() + 1).toString(),
