@@ -2,6 +2,7 @@ import { SenderError, t } from "spacetimedb/server";
 import {
 	type AppCtx,
 	applyBalance,
+	applyReverseMutation,
 	computeTransactionMutations,
 	isAuthorized,
 	resolveOwner,
@@ -30,17 +31,6 @@ function applyForwardMutation(ctx: AppCtx, mutation: TransactionMutation): void 
 		);
 	}
 	if (!isAuthorized(ctx, subAccount.ownerIdentity)) throw new SenderError("Not authorized");
-	ctx.db.sub_account.id.update({
-		...subAccount,
-		balanceCentavos: applyBalance(subAccount, mutation.direction, mutation.delta),
-	});
-}
-
-// Apply a reverse-direction mutation: silently skip if the sub-account is gone
-// (e.g. cascade-deleted) so an edit or delete path can still proceed.
-function applyReverseMutation(ctx: AppCtx, mutation: TransactionMutation): void {
-	const subAccount = ctx.db.sub_account.id.find(mutation.subAccountId);
-	if (!subAccount) return;
 	ctx.db.sub_account.id.update({
 		...subAccount,
 		balanceCentavos: applyBalance(subAccount, mutation.direction, mutation.delta),
@@ -100,6 +90,7 @@ export const create_transaction = spacetimedb.reducer(
 			createdAt: ctx.timestamp,
 			isRecurring: false, // manually created transactions are never recurring
 			recurringDefinitionId: 0n, // 0n sentinel for non-recurring (D-10)
+			debtId: undefined,
 		});
 	},
 );

@@ -211,6 +211,7 @@ export const Transaction = __t.object("Transaction", {
   createdAt: __t.timestamp(),
   isRecurring: __t.bool(),
   recurringDefinitionId: __t.u64(),
+  debtId: __t.option(__t.u64()),
 });
 export type Transaction = __Infer<typeof Transaction>;
 

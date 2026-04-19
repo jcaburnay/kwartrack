@@ -1,5 +1,11 @@
 import { SenderError, t } from "spacetimedb/server";
-import { applyBalance, isAuthorized, resolveOwner, validateSplitInput } from "../helpers";
+import {
+	applyBalance,
+	cascadeDeleteDebt,
+	isAuthorized,
+	resolveOwner,
+	validateSplitInput,
+} from "../helpers";
 import spacetimedb from "../schema";
 
 // =============================================================================
@@ -71,6 +77,9 @@ export const create_split = spacetimedb.reducer(
 			createdAt: ctx.timestamp,
 			isRecurring: false,
 			recurringDefinitionId: 0n,
+			// The split's main expense is the shared bill, not a per-debt transaction.
+			// Leaving debtId unset means delete_debt on any participant won't touch it.
+			debtId: undefined,
 		});
 
 		// Insert split_event
@@ -227,10 +236,13 @@ export const edit_split = spacetimedb.reducer(
 		const keepIds = new Set(participantIds.filter((id) => id !== 0n));
 
 		// --- Remove participants not in the new list ---
+		// cascadeDeleteDebt also removes any settlement transactions stamped with the
+		// debt's id, so removing a participant mid-edit doesn't leave orphaned txns.
 		for (const p of ctx.db.split_participant.split_participant_event.filter(splitEventId)) {
 			if (!keepIds.has(p.id)) {
 				ctx.db.split_participant.id.delete(p.id);
-				ctx.db.debt.id.delete(p.debtId);
+				const debtRow = ctx.db.debt.id.find(p.debtId);
+				if (debtRow) cascadeDeleteDebt(ctx, debtRow);
 			}
 		}
 

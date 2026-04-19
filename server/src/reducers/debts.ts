@@ -1,5 +1,11 @@
 import { SenderError, t } from "spacetimedb/server";
-import { applyBalance, isAuthorized, resolveOwner, validateDebtSettlement } from "../helpers";
+import {
+	applyBalance,
+	cascadeDeleteDebt,
+	isAuthorized,
+	resolveOwner,
+	validateDebtSettlement,
+} from "../helpers";
 import spacetimedb from "../schema";
 
 // =============================================================================
@@ -9,6 +15,7 @@ import spacetimedb from "../schema";
 // create_debt: records a new debt and the corresponding cash movement.
 // Loaned → debit source sub-account + expense transaction.
 // Owed → credit destination sub-account + income transaction.
+// The created transaction is stamped with debtId so delete_debt can cascade.
 export const create_debt = spacetimedb.reducer(
 	{
 		personName: t.string(),
@@ -30,6 +37,22 @@ export const create_debt = spacetimedb.reducer(
 		const subAccount = ctx.db.sub_account.id.find(subAccountId);
 		if (!subAccount) throw new SenderError("Sub-account not found");
 		if (!isAuthorized(ctx, subAccount.ownerIdentity)) throw new SenderError("Not authorized");
+
+		// Insert debt first so we can stamp debtRow.id on the linked transaction.
+		const debtRow = ctx.db.debt.insert({
+			id: 0n,
+			ownerIdentity,
+			personName: personName.trim(),
+			direction,
+			amountCentavos,
+			subAccountId,
+			settledAmountCentavos: 0n,
+			tag,
+			description: description.trim(),
+			date,
+			splitEventId: 0n,
+			createdAt: ctx.timestamp,
+		});
 
 		if (direction === "loaned") {
 			// Debit source sub-account (money going out to the person)
@@ -53,6 +76,7 @@ export const create_debt = spacetimedb.reducer(
 				createdAt: ctx.timestamp,
 				isRecurring: false,
 				recurringDefinitionId: 0n,
+				debtId: debtRow.id,
 			});
 		} else {
 			// Credit destination sub-account (money coming in from the person)
@@ -76,28 +100,15 @@ export const create_debt = spacetimedb.reducer(
 				createdAt: ctx.timestamp,
 				isRecurring: false,
 				recurringDefinitionId: 0n,
+				debtId: debtRow.id,
 			});
 		}
-
-		ctx.db.debt.insert({
-			id: 0n,
-			ownerIdentity,
-			personName: personName.trim(),
-			direction,
-			amountCentavos,
-			subAccountId,
-			settledAmountCentavos: 0n,
-			tag,
-			description: description.trim(),
-			date,
-			splitEventId: 0n,
-			createdAt: ctx.timestamp,
-		});
 	},
 );
 
 // settle_debt: partially or fully settle a debt. Creates real transaction + updates settled amount.
 // Loaned settlement → income (money coming back). Owed settlement → expense (you're paying them).
+// Settlement transactions are stamped with debtId so delete_debt cascades to them too.
 export const settle_debt = spacetimedb.reducer(
 	{
 		debtId: t.u64(),
@@ -136,6 +147,7 @@ export const settle_debt = spacetimedb.reducer(
 				createdAt: ctx.timestamp,
 				isRecurring: false,
 				recurringDefinitionId: 0n,
+				debtId: existing.id,
 			});
 		} else {
 			// You're paying them → expense transaction, debit the sub-account
@@ -157,6 +169,7 @@ export const settle_debt = spacetimedb.reducer(
 				createdAt: ctx.timestamp,
 				isRecurring: false,
 				recurringDefinitionId: 0n,
+				debtId: existing.id,
 			});
 		}
 
@@ -167,10 +180,13 @@ export const settle_debt = spacetimedb.reducer(
 	},
 );
 
-// delete_debt: removes a debt record. Does NOT reverse linked transactions.
+// delete_debt: remove the debt + every transaction stamped with its debtId,
+// reversing each transaction's balance impact on its sub-account.
+// Debts created before the debtId column existed have no matching transactions,
+// so they degrade to a plain debt-row delete (matches pre-cascade behavior).
 export const delete_debt = spacetimedb.reducer({ debtId: t.u64() }, (ctx, { debtId }) => {
 	const existing = ctx.db.debt.id.find(debtId);
 	if (!existing) throw new SenderError("Debt not found");
 	if (!isAuthorized(ctx, existing.ownerIdentity)) throw new SenderError("Not authorized");
-	ctx.db.debt.id.delete(debtId);
+	cascadeDeleteDebt(ctx, existing);
 });

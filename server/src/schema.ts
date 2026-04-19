@@ -127,6 +127,11 @@ export const transaction = table(
 		createdAt: t.timestamp(),
 		isRecurring: t.bool(), // D-10: true if auto-created by scheduler
 		recurringDefinitionId: t.u64(), // D-10: 0n if not recurring
+		// Optional FK to debt: set when this transaction was created by create_debt or
+		// settle_debt. delete_debt cascades to transactions whose debtId matches.
+		// Optional (not 0n sentinel) per docs/migration.md — adding a non-optional column
+		// with default to a populated table is the migration shape that broke prod.
+		debtId: t.u64().optional().default(undefined),
 	},
 );
 
@@ -487,6 +492,7 @@ export const fire_recurring_transaction = spacetimedb.reducer(
 			createdAt: ctx.timestamp,
 			isRecurring: true,
 			recurringDefinitionId: def.id,
+			debtId: undefined,
 		});
 
 		// Update sub-account balance via the shared helper so credit-vs-wallet

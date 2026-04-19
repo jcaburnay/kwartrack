@@ -141,7 +141,7 @@ export function DebtCard({ personName, debts }: DebtCardProps) {
 			{deleteTarget && (
 				<DeleteConfirmModal
 					title={`Delete debt with ${personName}?`}
-					body="This removes the debt record. Transactions already created are not affected."
+					body="This removes the debt and any transactions created from it (the original record and any settlements), reversing their balance impact. Transactions from debts created before this update are not removed."
 					confirmLabel="Delete"
 					dismissLabel="Keep it"
 					onConfirm={() => {
