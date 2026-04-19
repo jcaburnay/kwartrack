@@ -90,7 +90,7 @@ export const create_transaction = spacetimedb.reducer(
 			createdAt: ctx.timestamp,
 			isRecurring: false, // manually created transactions are never recurring
 			recurringDefinitionId: 0n, // 0n sentinel for non-recurring (D-10)
-			debtId: undefined,
+			debtId: 0n,
 		});
 	},
 );

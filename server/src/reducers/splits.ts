@@ -78,8 +78,8 @@ export const create_split = spacetimedb.reducer(
 			isRecurring: false,
 			recurringDefinitionId: 0n,
 			// The split's main expense is the shared bill, not a per-debt transaction.
-			// Leaving debtId unset means delete_debt on any participant won't touch it.
-			debtId: undefined,
+			// 0n means delete_debt on any participant won't touch it.
+			debtId: 0n,
 		});
 
 		// Insert split_event
