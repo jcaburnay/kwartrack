@@ -45,6 +45,40 @@ function getMonthHeading(): string {
 	return new Intl.DateTimeFormat("en-PH", { month: "long", year: "numeric" }).format(new Date());
 }
 
+function formatPesosFromNumber(n: number): string {
+	return `P${n.toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
+
+interface BudgetChartTooltipPayload {
+	payload: { name: string; declared: number; actual: number };
+}
+
+function BudgetChartTooltip({
+	active,
+	payload,
+}: {
+	active?: boolean;
+	payload?: BudgetChartTooltipPayload[];
+}) {
+	if (!active || !payload || payload.length === 0) return null;
+	const row = payload[0].payload;
+	const remaining = row.declared - row.actual;
+	const isOver = remaining < 0;
+	return (
+		<div
+			className="rounded-box bg-base-300 px-3 py-2 text-xs shadow-sm"
+			style={{ color: "var(--color-base-content)" }}
+		>
+			<div className="font-semibold mb-1">{row.name}</div>
+			<div>Actual: {formatPesosFromNumber(row.actual)}</div>
+			<div>Budget: {formatPesosFromNumber(row.declared)}</div>
+			<div className={isOver ? "text-error" : undefined}>
+				{isOver ? "Over by" : "Remaining"}: {formatPesosFromNumber(Math.abs(remaining))}
+			</div>
+		</div>
+	);
+}
+
 export function BudgetPage() {
 	const { config: budgetConfigRows, allocations, isLoading: isConfigReady } = useBudget();
 	const { transactions } = useTransactions();
@@ -293,22 +327,8 @@ export function BudgetPage() {
 								tickLine={false}
 								width={70}
 							/>
-							<Tooltip
-								formatter={(value, name) => {
-									const numericValue = typeof value === "number" ? value : Number(value ?? 0);
-									return [
-										`P${numericValue.toLocaleString("en-PH", { minimumFractionDigits: 2 })}`,
-										String(name ?? ""),
-									];
-								}}
-								contentStyle={{
-									background: "var(--color-base-300)",
-									border: "none",
-									borderRadius: "var(--radius-box)",
-									fontSize: "12px",
-								}}
-								itemStyle={{ color: "var(--color-base-content)" }}
-							/>
+							<Tooltip content={<BudgetChartTooltip />} />
+
 							<Bar dataKey="declared" name="Budget" radius={[4, 4, 0, 0]} barSize={14}>
 								{chartData.map((entry) => (
 									<Cell key={`budget-${entry.name}`} fill="url(#budget-stripes)" />
