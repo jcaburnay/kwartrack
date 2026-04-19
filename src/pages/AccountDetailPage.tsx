@@ -97,6 +97,8 @@ export function AccountDetailPage() {
 		.filter((sa) => sa.accountId === accountId)
 		.map((sa) => sa.id);
 
+	const defaultSourceSubAccountId = subAccounts.find((sa) => sa.accountId === accountId)?.id;
+
 	// Step 1: transactions for this account (D-14 — show all for the account)
 	const accountTransactions = allTransactions.filter(
 		(t) =>
@@ -327,6 +329,7 @@ export function AccountDetailPage() {
 			{showTransactionModal && (
 				<TransactionModal
 					transaction={editingTransaction ?? undefined}
+					defaultSourceSubAccountId={defaultSourceSubAccountId}
 					onClose={() => {
 						setShowTransactionModal(false);
 						setEditingTransaction(null);
