@@ -190,49 +190,6 @@ export function computeTransactionMutations(
 	return mutations;
 }
 
-// applyReverseMutation: undo a transaction's balance effect on a sub-account.
-// Silently no-ops if the sub-account is gone (e.g. cascade-deleted), so callers
-// can use this from edit/delete paths without worrying about ordering.
-export function applyReverseMutation(ctx: AppCtx, mutation: TransactionMutation): void {
-	const subAccount = ctx.db.sub_account.id.find(mutation.subAccountId);
-	if (!subAccount) return;
-	ctx.db.sub_account.id.update({
-		...subAccount,
-		balanceCentavos: applyBalance(subAccount, mutation.direction, mutation.delta),
-	});
-}
-
-// cascadeDeleteDebt: delete a debt and every transaction stamped with its id,
-// reversing each transaction's balance impact. Shared by delete_debt and by
-// edit_split when a participant is removed mid-edit.
-// Old debts created before the debtId column existed have no matching transactions,
-// so this degrades to a plain debt delete for them — matches pre-cascade behavior.
-export function cascadeDeleteDebt(
-	ctx: AppCtx,
-	debt: { id: bigint; ownerIdentity: ReturnType<typeof resolveOwner> },
-): void {
-	// Collect matching transactions before deleting so we don't risk skipping
-	// rows if the btree iterator is invalidated by deletions in the same range.
-	const matches: Array<{
-		id: bigint;
-		type: string;
-		amountCentavos: bigint;
-		sourceSubAccountId: bigint;
-		destinationSubAccountId: bigint;
-		serviceFeeCentavos: bigint;
-	}> = [];
-	for (const txn of ctx.db.transaction.transaction_owner.filter(debt.ownerIdentity)) {
-		if (txn.debtId === debt.id) matches.push(txn);
-	}
-	for (const txn of matches) {
-		for (const mutation of computeTransactionMutations(txn, true)) {
-			applyReverseMutation(ctx, mutation);
-		}
-		ctx.db.transaction.id.delete(txn.id);
-	}
-	ctx.db.debt.id.delete(debt.id);
-}
-
 // Validate the shared input shape for create_split and edit_split.
 // Returns the first failure's message, or null when all checks pass.
 // Kept out of the reducer bodies so the ordering is testable in one place.

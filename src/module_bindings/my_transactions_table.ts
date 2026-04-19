@@ -24,5 +24,4 @@ export default __t.row({
   createdAt: __t.timestamp().name("created_at"),
   isRecurring: __t.bool().name("is_recurring"),
   recurringDefinitionId: __t.u64().name("recurring_definition_id"),
-  debtId: __t.u64().name("debt_id"),
 });
