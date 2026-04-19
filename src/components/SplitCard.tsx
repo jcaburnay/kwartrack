@@ -11,6 +11,7 @@ interface SplitEvent {
 	tag: string;
 	date: { microsSinceUnixEpoch: bigint };
 	createdAt: { microsSinceUnixEpoch: bigint };
+	splitMethod: string;
 }
 
 interface SplitParticipant {
@@ -41,7 +42,17 @@ export function SplitCard({ splitEvent, participants, debts }: SplitCardProps) {
 
 	const allSettled = settledCount === participants.length;
 	const splitCount = participants.length + 1; // +1 for you
-	const shareAmount = splitEvent.totalAmountCentavos / BigInt(splitCount);
+	// Use actual stored shares (not total/count) — floor division on odd totals
+	// gives participants a smaller share than "you" even on equal splits.
+	const yourShare =
+		splitEvent.totalAmountCentavos - participants.reduce((s, p) => s + p.shareAmountCentavos, 0n);
+	const allEqual = participants.every((p) => p.shareAmountCentavos === yourShare);
+	const splitMethodLabel: Record<string, string> = {
+		equal: "equal",
+		exact: "exact amounts",
+		percentage: "by percentage",
+		shares: "by shares",
+	};
 
 	const avatar = getAvatarColor(splitEvent.description);
 	const dateStr = fromTimestamp(splitEvent.date).toLocaleDateString("en-PH", {
@@ -76,8 +87,17 @@ export function SplitCard({ splitEvent, participants, debts }: SplitCardProps) {
 
 				{/* Share info */}
 				<p className="text-xs text-base-content/60">
-					{splitCount}-way split · <span className="font-mono">{formatPesos(shareAmount)}</span>{" "}
-					each
+					{allEqual ? (
+						<>
+							{splitCount}-way split · <span className="font-mono">{formatPesos(yourShare)}</span>{" "}
+							each
+						</>
+					) : (
+						<>
+							{splitCount}-way split ·{" "}
+							{splitMethodLabel[splitEvent.splitMethod] ?? splitEvent.splitMethod}
+						</>
+					)}
 				</p>
 
 				{/* Settlement badge + tag */}
