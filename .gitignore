@@ -32,10 +32,6 @@ dist-ssr
 .env.local
 .env.*.local
 
-# SpacetimeDB generated bindings (committed so CI/CD can build without SpacetimeDB CLI)
-server/package-lock.json
-server/dist/
-
 # Test coverage
 coverage/
 

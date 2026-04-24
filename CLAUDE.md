@@ -1,101 +1,78 @@
-# Kwartrack
+# Kwartrack (v2)
 
-Personal finance tracker. Users manage accounts, partitions (sub-buckets), transactions, recurring transactions, budgets, and debt splits.
+Personal finance tracker — v2 rebuild on Supabase. Authoritative spec: [`specs_v2.md`](specs_v2.md).
 
-## Tech Stack
+v2 lives on the `v2` branch. `main` still holds v1 (SpacetimeDB + Clerk); it stays untouched until v2 is ready to merge.
+
+## Tech Stack (v2)
 
 | Layer | Tool |
 |-------|------|
 | Frontend | React 19, TypeScript, Vite |
-| Routing | React Router v7 |
-| Auth | Clerk (`@clerk/react`) |
-| Backend/DB | SpacetimeDB 2.x — see `server/CLAUDE.md` for all backend rules |
+| Auth / DB / Realtime / Storage | Supabase |
 | Styling | Tailwind CSS v4 + DaisyUI v5 |
 | Linting/Formatting | Biome (NOT ESLint or Prettier — do not add them) |
 | Testing | Vitest + Testing Library |
+| Package manager | pnpm |
+
+Slice-specific dependencies (React Router, React Hook Form, Recharts, `@supabase/supabase-js`, lucide-react) get installed as each vertical slice reaches them.
 
 ## Commands
 
 ```bash
 pnpm dev                # start dev server
-pnpm test               # run tests
+pnpm test               # run tests (vitest run)
+pnpm test:watch         # watch mode
 pnpm check              # biome format + lint (auto-fix)
-pnpm generate           # regenerate src/module_bindings/ after schema changes
-pnpm server:publish     # publish SpacetimeDB module to maincloud
+pnpm run ci             # biome ci (no autofix) — must use `run` because `pnpm ci` is reserved
+pnpm build              # tsc -b && vite build
+pnpm supabase:start     # boot local Supabase stack (requires Docker)
+pnpm supabase:status    # list local service URLs
+pnpm supabase:stop      # tear down local stack
 ```
 
-## Project Structure
+## Project Structure (Slice 0)
 
 ```
 src/
-  main.tsx              # entry — provider tree
-  App.tsx               # routes
-  providers/            # ClerkTokenProvider, SpacetimeDBProvider
-  pages/                # one file per route
-  components/           # shared UI
-  utils/                # pure computation (budgetCompute, currency, etc.)
-  module_bindings/      # AUTO-GENERATED — never edit, run pnpm generate
-  __tests__/            # Vitest tests
-server/
-  src/
-    schema.ts           # table definitions
-    helpers.ts          # pure helpers (tested via helpers.test.ts)
-    index.ts            # re-exports reducers + scheduled reducers
-    lifecycle.ts        # clientConnected / clientDisconnected
-    reducers/           # one file per domain (accounts, transactions, ...)
-    __tests__/          # Vitest tests (server-side pure helpers)
+  main.tsx              # entry
+  App.tsx               # placeholder shell
+  index.css             # tailwind + daisyui imports
+  __tests__/            # vitest tests (jsdom)
+supabase/
+  config.toml           # local CLI config
 ```
 
-## Auth & Identity — Critical Gotchas
-
-Provider nesting is mandatory — do not reorder:
-```
-ClerkProvider → ClerkTokenProvider → SpacetimeDBProvider → App
-```
-
-**Clerk JWT ≠ SpacetimeDB token.** SpacetimeDB uses its own token (persisted in `localStorage` as `spacetimedb_token`). Using the Clerk JWT as a SpacetimeDB token creates a new anonymous identity on every session, breaking all per-user data.
-
-**Do not build a custom ProtectedRoute.** Use Clerk's `<Show when="signed-in">` component directly (see `App.tsx`).
-
-On connect, `linkClerkIdentity` reducer links the Clerk user ID to the SpacetimeDB identity so the same user sees the same data across devices.
-
-## SpacetimeDB Client — Key Rules
-
-- `useTable(tables.myAccounts)` returns `[rows, isLoading]` — always destructure as a tuple
-- Reducer calls use object syntax: `conn.reducers.createAccount({ name: 'Savings' })` — never positional
-- Never optimistically update UI state — let subscriptions drive all data
-- Subscriptions are set up once in `SpacetimeDBProvider` — do not add subscriptions elsewhere
-- All data views are prefixed `my_` and are per-user (filtered by `ctx.sender` server-side)
-- Timestamps: `new Date(Number(row.createdAt.microsSinceUnixEpoch / 1000n))` — not `new Date(row.createdAt)`
+Every later slice adds files under `src/` (providers, hooks, pages, components, utils) and `supabase/migrations/` for schema changes. See `specs_v2.md` for the full feature model and `/Users/binong/.claude/projects/-Users-binong-Projects-kwartrack/memory/project_supabase_migration.md` for the slice roadmap.
 
 ## TypeScript
 
-`strict: true` is on (`tsconfig.app.json`) — the compiler enforces it. Additionally:
-- No explicit `any` — use `unknown` + type narrowing instead
-- No `@ts-ignore` — fix the underlying type issue
-- Prefer type inference over verbose explicit annotations where the type is obvious
+`strict: true` in `tsconfig.app.json`. Additionally:
+- No explicit `any` — use `unknown` + narrowing.
+- No `@ts-ignore` — fix the underlying type issue.
+- Prefer inference over verbose annotations where obvious.
 
 ## Commit Messages
 
-Conventional Commits format: `type(scope): description`
+Conventional Commits: `type(scope): description`.
 
-Types: `feat`, `fix`, `refactor`, `chore`, `docs`, `test`, `perf`
+Types: `feat`, `fix`, `refactor`, `chore`, `docs`, `test`, `perf`.
 
-Common scopes from this project: `ui`, `budget`, `accounts`, `transactions`, `tags`, `partition`, `recurring`, `debts`, `settings`, `charts`, `auth`
+Likely scopes (from the spec): `ui`, `auth`, `accounts`, `transactions`, `tags`, `recurring`, `budget`, `debts`, `splits`, `settings`, `overview`, `db`, `ci`.
 
 Examples:
 ```
-feat(budget): add monthly rollover toggle
-fix(tags): handle empty tag list in modal
-refactor(accounts): extract balance calculation to util
+feat(budget): add per-tag allocation table
+fix(accounts): clamp monthly recurring day-of-month to last day
+refactor(transactions): extract balance-delta helper
 ```
-
-## Assets
-
-- `public/` — for assets referenced by URL (favicons, manifests, etc.)
-- `src/assets/` — for assets imported directly in components
 
 ## Tailwind / DaisyUI
 
-- Tailwind v4: config is in `vite.config.ts` via `@tailwindcss/vite` — there is no `tailwind.config.js`
-- Prefer DaisyUI component classes (`btn`, `modal`, `card`, `badge`, etc.) before writing custom Tailwind utilities
+- Tailwind v4: config lives in `vite.config.ts` via `@tailwindcss/vite` and `src/index.css` via `@plugin "daisyui"`. There is no `tailwind.config.js`.
+- Prefer DaisyUI component classes (`btn`, `modal`, `card`, `badge`, etc.) before writing custom utility stacks.
+
+## Assets
+
+- `public/` — referenced by URL (favicons, `_headers`, `_redirects`).
+- `src/assets/` — imported directly in components.

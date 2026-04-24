@@ -2,92 +2,17 @@ name: CI
 
 on:
   push:
-    branches: [main]
-    paths:
-      - 'src/**'
-      - 'public/**'
-      - 'index.html'
-      - 'server/**'
-      - 'package.json'
-      - 'pnpm-lock.yaml'
-      - 'vite.config.ts'
+    branches: [v2]
   pull_request:
-    paths:
-      - 'src/**'
-      - 'public/**'
-      - 'index.html'
-      - 'server/**'
-      - 'package.json'
-      - 'pnpm-lock.yaml'
-      - 'vite.config.ts'
+    branches: [v2]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  changes:
-    name: Detect changed paths
-    runs-on: ubuntu-latest
-    outputs:
-      server: ${{ steps.filter.outputs.server }}
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: dorny/paths-filter@v3
-        id: filter
-        with:
-          filters: |
-            server:
-              - 'server/**'
-
-  publish-server:
-    name: Validate bindings and publish to Maincloud
-    needs: changes
-    if: needs.changes.outputs.server == 'true' && github.event_name == 'push'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 10
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '24'
-          cache: 'pnpm'
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Install SpacetimeDB CLI
-        run: |
-          curl --proto '=https' --tlsv1.2 -sSf https://install.spacetimedb.com | sh -s -- --yes
-          echo "$HOME/.local/bin" >> $GITHUB_PATH
-
-      - name: Regenerate module bindings
-        run: pnpm generate
-
-      - name: Check bindings are committed
-        run: |
-          if [ -n "$(git status --porcelain src/module_bindings/)" ]; then
-            echo ""
-            echo "❌ Module bindings are out of sync."
-            echo "   Run 'pnpm generate' locally and commit the result before pushing."
-            exit 1
-          fi
-
-      - name: Authenticate with SpacetimeDB
-        env:
-          SPACETIMEDB_TOKEN: ${{ secrets.SPACETIMEDB_TOKEN }}
-        run: spacetime login --token "$SPACETIMEDB_TOKEN"
-
-      - name: Publish module to Maincloud
-        run: spacetime publish kwartrack --module-path server -y
-
-  validate-client:
-    name: Lint, type-check, and test
+  validate:
+    name: Lint, type-check, test, build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -107,43 +32,8 @@ jobs:
       - name: Lint and format check
         run: pnpm run ci
 
-      - name: Type-check and build
-        env:
-          VITE_CLERK_PUBLISHABLE_KEY: ${{ secrets.VITE_CLERK_PUBLISHABLE_KEY }}
-          VITE_SPACETIMEDB_URI: ${{ secrets.VITE_SPACETIMEDB_URI }}
-          VITE_SPACETIMEDB_MODULE: ${{ secrets.VITE_SPACETIMEDB_MODULE }}
-        run: pnpm build
-
       - name: Run tests
         run: pnpm test
 
-      - name: Upload build artifact
-        if: github.event_name == 'push'
-        uses: actions/upload-artifact@v4
-        with:
-          name: dist
-          path: dist/
-          retention-days: 1
-
-  deploy-client:
-    name: Deploy to Cloudflare Pages
-    needs: [validate-client, publish-server]
-    if: |
-      always() &&
-      github.event_name == 'push' &&
-      needs.validate-client.result == 'success' &&
-      (needs.publish-server.result == 'success' || needs.publish-server.result == 'skipped')
-    runs-on: ubuntu-latest
-    steps:
-      - name: Download build artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: dist
-          path: dist/
-
-      - name: Deploy to Cloudflare Pages
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy dist --project-name kwartrack
+      - name: Type-check and build
+        run: pnpm build

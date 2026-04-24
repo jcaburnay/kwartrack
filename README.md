@@ -1,56 +1,46 @@
 # Kwartrack
 
-A personal finance tracker for managing accounts, partitions (sub-buckets), transactions, recurring transactions, budgets, and debt splits.
+Personal finance tracker (PHP, single-user). Manage accounts, transactions, recurring charges, budgets, and debt splits.
 
-## Tech Stack
+This branch (`v2`) is a ground-up rebuild on a new stack. The authoritative design lives in [`specs_v2.md`](specs_v2.md). `main` still carries v1 (SpacetimeDB + Clerk) and is frozen until v2 merges.
 
-- **Frontend:** React 19, TypeScript, Vite
-- **Routing:** React Router v7
-- **Auth:** Clerk
-- **Backend/DB:** SpacetimeDB 2.x
-- **Styling:** Tailwind CSS v4 + DaisyUI v5
+## Stack
 
-## Getting Started
+React 19 + TypeScript + Vite · Supabase (Auth + DB + Realtime + Storage) · Tailwind v4 + DaisyUI v5 · Biome · Vitest · pnpm.
 
-### Prerequisites
+## Setup
 
-- [Node.js](https://nodejs.org/) (LTS)
-- [pnpm](https://pnpm.io/)
-- A [Clerk](https://clerk.com/) account
-- A [SpacetimeDB](https://spacetimedb.com/) account
+```bash
+git clone <repo-url>
+cd kwartrack
+pnpm install
+cp .env.example .env.local
+```
 
-### Setup
+## Local Supabase
 
-1. Clone the repo and install dependencies:
+Requires Docker Desktop running.
 
-   ```bash
-   git clone <repo-url>
-   cd kwartrack
-   pnpm install
-   ```
+```bash
+pnpm supabase:start     # boot local Postgres + Auth + Studio
+pnpm supabase:status    # print live service URLs & keys
+pnpm supabase:stop      # tear it all down
+```
 
-2. Copy the example env file and fill in your keys:
+Paste the live `API URL` and `anon key` from `supabase:status` into `.env.local`.
 
-   ```bash
-   cp .env.example .env.local
-   ```
-
-3. Start the dev server:
-
-   ```bash
-   pnpm dev
-   ```
-
-## Commands
+## Dev commands
 
 | Command | Description |
 |---------|-------------|
-| `pnpm dev` | Start dev server |
-| `pnpm test` | Run tests |
-| `pnpm check` | Biome format + lint (auto-fix) |
-| `pnpm generate` | Regenerate SpacetimeDB bindings after schema changes |
-| `pnpm server:publish` | Publish SpacetimeDB module |
+| `pnpm dev`       | Vite dev server |
+| `pnpm test`      | Vitest run |
+| `pnpm test:watch`| Vitest watch mode |
+| `pnpm check`     | Biome format + lint (auto-fix) |
+| `pnpm run ci`    | Biome CI check (no autofix) — `run` is required; `pnpm ci` is reserved |
+| `pnpm build`     | `tsc -b && vite build` |
 
-## Environment Variables
+## Where to look
 
-See `.env.example` for required variables.
+- **[`specs_v2.md`](specs_v2.md)** — full v2 feature spec and data model.
+- **[`CLAUDE.md`](CLAUDE.md) / [`AGENTS.md`](AGENTS.md)** — conventions for AI coding agents working in the repo.
