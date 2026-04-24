@@ -28,6 +28,98 @@ export type Database = {
 	};
 	public: {
 		Tables: {
+			account: {
+				Row: {
+					balance_centavos: number;
+					created_at: string;
+					credit_limit_centavos: number | null;
+					group_id: string | null;
+					id: string;
+					initial_balance_centavos: number;
+					installment_limit_centavos: number | null;
+					interest_posting_interval: Database["public"]["Enums"]["posting_interval"] | null;
+					interest_rate_bps: number | null;
+					is_archived: boolean;
+					is_matured: boolean;
+					maturity_date: string | null;
+					name: string;
+					principal_centavos: number | null;
+					type: Database["public"]["Enums"]["account_type"];
+					updated_at: string;
+					user_id: string;
+				};
+				Insert: {
+					balance_centavos?: number;
+					created_at?: string;
+					credit_limit_centavos?: number | null;
+					group_id?: string | null;
+					id?: string;
+					initial_balance_centavos: number;
+					installment_limit_centavos?: number | null;
+					interest_posting_interval?: Database["public"]["Enums"]["posting_interval"] | null;
+					interest_rate_bps?: number | null;
+					is_archived?: boolean;
+					is_matured?: boolean;
+					maturity_date?: string | null;
+					name: string;
+					principal_centavos?: number | null;
+					type: Database["public"]["Enums"]["account_type"];
+					updated_at?: string;
+					user_id: string;
+				};
+				Update: {
+					balance_centavos?: number;
+					created_at?: string;
+					credit_limit_centavos?: number | null;
+					group_id?: string | null;
+					id?: string;
+					initial_balance_centavos?: number;
+					installment_limit_centavos?: number | null;
+					interest_posting_interval?: Database["public"]["Enums"]["posting_interval"] | null;
+					interest_rate_bps?: number | null;
+					is_archived?: boolean;
+					is_matured?: boolean;
+					maturity_date?: string | null;
+					name?: string;
+					principal_centavos?: number | null;
+					type?: Database["public"]["Enums"]["account_type"];
+					updated_at?: string;
+					user_id?: string;
+				};
+				Relationships: [
+					{
+						foreignKeyName: "account_group_id_fkey";
+						columns: ["group_id"];
+						isOneToOne: false;
+						referencedRelation: "account_group";
+						referencedColumns: ["id"];
+					},
+				];
+			};
+			account_group: {
+				Row: {
+					created_at: string;
+					id: string;
+					name: string;
+					updated_at: string;
+					user_id: string;
+				};
+				Insert: {
+					created_at?: string;
+					id?: string;
+					name: string;
+					updated_at?: string;
+					user_id: string;
+				};
+				Update: {
+					created_at?: string;
+					id?: string;
+					name?: string;
+					updated_at?: string;
+					user_id?: string;
+				};
+				Relationships: [];
+			};
 			budget_config: {
 				Row: {
 					created_at: string;
@@ -117,6 +209,8 @@ export type Database = {
 			[_ in never]: never;
 		};
 		Enums: {
+			account_type: "cash" | "e-wallet" | "savings" | "credit" | "time-deposit";
+			posting_interval: "monthly" | "quarterly" | "semi-annual" | "annual" | "at-maturity";
 			tag_type: "expense" | "income" | "transfer" | "any";
 		};
 		CompositeTypes: {
@@ -246,6 +340,8 @@ export const Constants = {
 	},
 	public: {
 		Enums: {
+			account_type: ["cash", "e-wallet", "savings", "credit", "time-deposit"],
+			posting_interval: ["monthly", "quarterly", "semi-annual", "annual", "at-maturity"],
 			tag_type: ["expense", "income", "transfer", "any"],
 		},
 	},

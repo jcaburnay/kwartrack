@@ -1,6 +1,9 @@
-import { createBrowserRouter, RouterProvider } from "react-router";
+import { createBrowserRouter, Navigate, RouterProvider } from "react-router";
 import { ProtectedRoute } from "./components/ProtectedRoute";
+import { AccountsPage } from "./pages/AccountsPage";
 import { OverviewPage } from "./pages/OverviewPage";
+import { SettingsGroupsPage } from "./pages/SettingsGroupsPage";
+import { SettingsPage } from "./pages/SettingsPage";
 import { SignInPage } from "./pages/SignInPage";
 import { SignUpPage } from "./pages/SignUpPage";
 
@@ -12,6 +15,26 @@ const router = createBrowserRouter([
 				<OverviewPage />
 			</ProtectedRoute>
 		),
+	},
+	{
+		path: "/accounts",
+		element: (
+			<ProtectedRoute>
+				<AccountsPage />
+			</ProtectedRoute>
+		),
+	},
+	{
+		path: "/settings",
+		element: (
+			<ProtectedRoute>
+				<SettingsPage />
+			</ProtectedRoute>
+		),
+		children: [
+			{ index: true, element: <Navigate to="groups" replace /> },
+			{ path: "groups", element: <SettingsGroupsPage /> },
+		],
 	},
 	{ path: "/signin", element: <SignInPage /> },
 	{ path: "/signup", element: <SignUpPage /> },
