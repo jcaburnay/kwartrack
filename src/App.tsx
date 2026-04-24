@@ -1,17 +1,22 @@
+import { createBrowserRouter, RouterProvider } from "react-router";
+import { ProtectedRoute } from "./components/ProtectedRoute";
+import { OverviewPage } from "./pages/OverviewPage";
+import { SignInPage } from "./pages/SignInPage";
+import { SignUpPage } from "./pages/SignUpPage";
+
+const router = createBrowserRouter([
+	{
+		path: "/",
+		element: (
+			<ProtectedRoute>
+				<OverviewPage />
+			</ProtectedRoute>
+		),
+	},
+	{ path: "/signin", element: <SignInPage /> },
+	{ path: "/signup", element: <SignUpPage /> },
+]);
+
 export function App() {
-	return (
-		<main className="min-h-dvh bg-base-200 flex items-center justify-center p-6">
-			<div className="card bg-base-100 shadow-md max-w-md w-full">
-				<div className="card-body items-center text-center gap-4">
-					<h1 className="card-title text-3xl">kwartrack v2</h1>
-					<p className="text-base-content/70">
-						Scaffold is live. Spec: <code>specs_v2.md</code>.
-					</p>
-					<button type="button" className="btn btn-primary">
-						DaisyUI wired
-					</button>
-				</div>
-			</div>
-		</main>
-	);
+	return <RouterProvider router={router} />;
 }
