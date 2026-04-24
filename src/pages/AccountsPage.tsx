@@ -1,33 +1,110 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { AccountsTable } from "../components/accounts/AccountsTable";
 import { EditAccountModal } from "../components/accounts/EditAccountModal";
 import { NewAccountModal } from "../components/accounts/NewAccountModal";
 import { Fab } from "../components/Fab";
 import { Header } from "../components/Header";
 import { AccountDetailStrip } from "../components/strips/AccountDetailStrip";
+import { EditTransactionModal } from "../components/transactions/EditTransactionModal";
+import { NewTransactionModal } from "../components/transactions/NewTransactionModal";
+import { TransactionFilterBar } from "../components/transactions/TransactionFilterBar";
+import type { TransactionFormValues } from "../components/transactions/TransactionForm";
+import { TransactionsTable } from "../components/transactions/TransactionsTable";
 import { useAccountGroups } from "../hooks/useAccountGroups";
 import { useAccounts } from "../hooks/useAccounts";
 import { useSelectedAccount } from "../hooks/useSelectedAccount";
+import { useTags } from "../hooks/useTags";
+import { useTransactions } from "../hooks/useTransactions";
+import { useAuth } from "../providers/AuthProvider";
 import type { Account } from "../utils/accountBalances";
 import { computeNetWorth } from "../utils/accountBalances";
 import { formatCentavos } from "../utils/currency";
+import {
+	type AccountLookup,
+	EMPTY_FILTERS,
+	matchesFilters,
+	type Transaction,
+	type TransactionFilters,
+} from "../utils/transactionFilters";
 
 export function AccountsPage() {
+	const { profile } = useAuth();
 	const { accounts, isLoading: accountsLoading, refetch: refetchAccounts } = useAccounts();
 	const { groups, refetch: refetchGroups } = useAccountGroups();
+	const { transactions, refetch: refetchTransactions } = useTransactions();
+	const { tags, createInline } = useTags();
 	const { selection, selectAccount, selectGroup, clear } = useSelectedAccount(accounts, groups);
 
 	const [fabOpen, setFabOpen] = useState(false);
-	const [showNew, setShowNew] = useState(false);
-	const [editing, setEditing] = useState<Account | null>(null);
+	const [showNewAccount, setShowNewAccount] = useState(false);
+	const [editingAccount, setEditingAccount] = useState<Account | null>(null);
 	const [showArchived, setShowArchived] = useState(false);
 
+	const [filters, setFilters] = useState<TransactionFilters>(EMPTY_FILTERS);
+	const [showNewTx, setShowNewTx] = useState(false);
+	const [newTxPrefill, setNewTxPrefill] = useState<Partial<TransactionFormValues>>({});
+	const [editingTx, setEditingTx] = useState<Transaction | null>(null);
+
 	const net = computeNetWorth(accounts);
+	const timezone = profile?.timezone ?? "Asia/Manila";
+
+	// Lookup map so the filter predicate can check group membership cheaply.
+	const accountsById = useMemo(() => {
+		const m = new Map<string, AccountLookup>();
+		for (const a of accounts) m.set(a.id, { id: a.id, groupId: a.group_id });
+		return m;
+	}, [accounts]);
+
+	// Compose URL selection with filter-bar state.
+	const effectiveFilters: TransactionFilters = useMemo(() => {
+		if (selection.kind === "account") {
+			return { ...filters, accountId: selection.account.id, groupId: null };
+		}
+		if (selection.kind === "group") {
+			return { ...filters, groupId: selection.group.id, accountId: null };
+		}
+		return filters;
+	}, [selection, filters]);
+
+	const filteredTransactions = useMemo(
+		() => transactions.filter((t) => matchesFilters(t, effectiveFilters, accountsById)),
+		[transactions, effectiveFilters, accountsById],
+	);
+
+	function openNewTransaction(prefill: Partial<TransactionFormValues>) {
+		setNewTxPrefill(prefill);
+		setShowNewTx(true);
+	}
+
+	function openNewTransactionFromFab() {
+		// Pre-fill based on current account/group selection.
+		if (selection.kind === "account") {
+			const type: "expense" | "income" | "transfer" = "expense";
+			openNewTransaction({
+				type,
+				fromAccountId: selection.account.id,
+			});
+		} else {
+			openNewTransaction({});
+		}
+	}
+
+	function openPayThisCard(accountId: string) {
+		openNewTransaction({
+			type: "transfer",
+			toAccountId: accountId,
+			fromAccountId: null,
+		});
+	}
+
+	async function onTxChanged() {
+		await Promise.all([refetchTransactions(), refetchAccounts()]);
+	}
 
 	return (
 		<div className="min-h-dvh bg-base-200 flex flex-col">
 			<Header />
-			<main className="flex-1 p-4 sm:p-6 max-w-5xl w-full mx-auto flex flex-col gap-5">
+			<main className="flex-1 p-4 sm:p-6 max-w-6xl w-full mx-auto flex flex-col gap-5">
 				<section className="flex items-end justify-between gap-4 flex-wrap">
 					<div>
 						<h1 className="text-2xl font-semibold">Accounts</h1>
@@ -69,19 +146,48 @@ export function AccountsPage() {
 						selectedGroupId={selection.kind === "group" ? selection.group.id : null}
 						onSelectAccount={selectAccount}
 						onSelectGroup={selectGroup}
-						onEdit={(a) => setEditing(a)}
+						onEdit={(a) => setEditingAccount(a)}
 						onChanged={() => refetchAccounts()}
 						showArchived={showArchived}
 					/>
 				)}
 
 				{selection.kind === "account" && (
-					<AccountDetailStrip account={selection.account} onClear={clear} />
+					<AccountDetailStrip
+						account={selection.account}
+						transactions={transactions}
+						timezone={timezone}
+						onClear={clear}
+						onPayThisCard={() => openPayThisCard(selection.account.id)}
+					/>
 				)}
-				{selection.kind === "group" && (
-					<div className="text-sm text-base-content/60 italic">
-						Group selected: transactions filter arrives with the next slice.
-					</div>
+
+				{accounts.length > 0 && (
+					<>
+						<section className="flex flex-col gap-2">
+							<h2 className="text-lg font-semibold">Transactions</h2>
+							<TransactionFilterBar
+								filters={filters}
+								onChange={setFilters}
+								accounts={accounts}
+								groups={groups}
+								tags={tags}
+							/>
+						</section>
+						<TransactionsTable
+							transactions={filteredTransactions}
+							accounts={accounts}
+							groups={groups}
+							tags={tags}
+							onEdit={(tx) => setEditingTx(tx)}
+							onChanged={onTxChanged}
+							emptyCopy={
+								selection.kind === "account"
+									? "No transactions in this account yet."
+									: "No transactions yet. Create one from the + button."
+							}
+						/>
+					</>
 				)}
 			</main>
 
@@ -91,35 +197,72 @@ export function AccountsPage() {
 				onDismiss={() => setFabOpen(false)}
 				actions={[
 					{
+						label: "New Transaction",
+						description: "Expense, income, or transfer.",
+						onClick: openNewTransactionFromFab,
+					},
+					{
 						label: "New Account",
 						description: "Cash, e-wallet, savings, credit, or time deposit.",
-						onClick: () => setShowNew(true),
+						onClick: () => setShowNewAccount(true),
 					},
 				]}
 			/>
 
-			{showNew && (
+			{showNewAccount && (
 				<NewAccountModal
 					groups={groups}
 					onRefetchGroups={refetchGroups}
 					onSaved={async () => {
-						setShowNew(false);
+						setShowNewAccount(false);
 						await refetchAccounts();
 					}}
-					onCancel={() => setShowNew(false)}
+					onCancel={() => setShowNewAccount(false)}
 				/>
 			)}
 
-			{editing && (
+			{editingAccount && (
 				<EditAccountModal
-					account={editing}
+					account={editingAccount}
 					groups={groups}
 					onRefetchGroups={refetchGroups}
 					onSaved={async () => {
-						setEditing(null);
+						setEditingAccount(null);
 						await refetchAccounts();
 					}}
-					onCancel={() => setEditing(null)}
+					onCancel={() => setEditingAccount(null)}
+				/>
+			)}
+
+			{showNewTx && (
+				<NewTransactionModal
+					accounts={accounts}
+					tags={tags}
+					createTag={createInline}
+					prefill={newTxPrefill}
+					onSaved={async () => {
+						setShowNewTx(false);
+						setNewTxPrefill({});
+						await onTxChanged();
+					}}
+					onCancel={() => {
+						setShowNewTx(false);
+						setNewTxPrefill({});
+					}}
+				/>
+			)}
+
+			{editingTx && (
+				<EditTransactionModal
+					transaction={editingTx}
+					accounts={accounts}
+					tags={tags}
+					createTag={createInline}
+					onSaved={async () => {
+						setEditingTx(null);
+						await onTxChanged();
+					}}
+					onCancel={() => setEditingTx(null)}
 				/>
 			)}
 		</div>

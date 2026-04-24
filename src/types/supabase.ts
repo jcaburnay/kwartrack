@@ -174,6 +174,83 @@ export type Database = {
 				};
 				Relationships: [];
 			};
+			transaction: {
+				Row: {
+					amount_centavos: number;
+					created_at: string;
+					date: string;
+					description: string | null;
+					fee_centavos: number | null;
+					from_account_id: string | null;
+					id: string;
+					parent_transaction_id: string | null;
+					tag_id: string | null;
+					to_account_id: string | null;
+					type: Database["public"]["Enums"]["transaction_type"];
+					updated_at: string;
+					user_id: string;
+				};
+				Insert: {
+					amount_centavos: number;
+					created_at?: string;
+					date: string;
+					description?: string | null;
+					fee_centavos?: number | null;
+					from_account_id?: string | null;
+					id?: string;
+					parent_transaction_id?: string | null;
+					tag_id?: string | null;
+					to_account_id?: string | null;
+					type: Database["public"]["Enums"]["transaction_type"];
+					updated_at?: string;
+					user_id: string;
+				};
+				Update: {
+					amount_centavos?: number;
+					created_at?: string;
+					date?: string;
+					description?: string | null;
+					fee_centavos?: number | null;
+					from_account_id?: string | null;
+					id?: string;
+					parent_transaction_id?: string | null;
+					tag_id?: string | null;
+					to_account_id?: string | null;
+					type?: Database["public"]["Enums"]["transaction_type"];
+					updated_at?: string;
+					user_id?: string;
+				};
+				Relationships: [
+					{
+						foreignKeyName: "transaction_from_account_id_fkey";
+						columns: ["from_account_id"];
+						isOneToOne: false;
+						referencedRelation: "account";
+						referencedColumns: ["id"];
+					},
+					{
+						foreignKeyName: "transaction_parent_transaction_id_fkey";
+						columns: ["parent_transaction_id"];
+						isOneToOne: false;
+						referencedRelation: "transaction";
+						referencedColumns: ["id"];
+					},
+					{
+						foreignKeyName: "transaction_tag_id_fkey";
+						columns: ["tag_id"];
+						isOneToOne: false;
+						referencedRelation: "tag";
+						referencedColumns: ["id"];
+					},
+					{
+						foreignKeyName: "transaction_to_account_id_fkey";
+						columns: ["to_account_id"];
+						isOneToOne: false;
+						referencedRelation: "account";
+						referencedColumns: ["id"];
+					},
+				];
+			};
 			user_profile: {
 				Row: {
 					created_at: string;
@@ -212,6 +289,7 @@ export type Database = {
 			account_type: "cash" | "e-wallet" | "savings" | "credit" | "time-deposit";
 			posting_interval: "monthly" | "quarterly" | "semi-annual" | "annual" | "at-maturity";
 			tag_type: "expense" | "income" | "transfer" | "any";
+			transaction_type: "expense" | "income" | "transfer";
 		};
 		CompositeTypes: {
 			[_ in never]: never;
@@ -343,6 +421,7 @@ export const Constants = {
 			account_type: ["cash", "e-wallet", "savings", "credit", "time-deposit"],
 			posting_interval: ["monthly", "quarterly", "semi-annual", "annual", "at-maturity"],
 			tag_type: ["expense", "income", "transfer", "any"],
+			transaction_type: ["expense", "income", "transfer"],
 		},
 	},
 } as const;

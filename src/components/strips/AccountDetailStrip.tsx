@@ -1,17 +1,24 @@
 import type { Account } from "../../utils/accountBalances";
+import type { Transaction } from "../../utils/transactionFilters";
 import { CreditAccountStrip } from "./CreditAccountStrip";
+import { SimpleAccountStrip } from "./SimpleAccountStrip";
 import { TimeDepositStrip } from "./TimeDepositStrip";
 
 type Props = {
 	account: Account;
+	transactions: readonly Transaction[];
+	timezone: string;
 	onClear: () => void;
+	onPayThisCard: () => void;
 };
 
-export function AccountDetailStrip({ account, onClear }: Props) {
-	// Cash / e-wallet / savings strip is deferred to Slice 3 (needs this-month
-	// inflow / outflow from transactions). Show a minimal selection chip instead.
-	const hasStrip = account.type === "credit" || account.type === "time-deposit";
-
+export function AccountDetailStrip({
+	account,
+	transactions,
+	timezone,
+	onClear,
+	onPayThisCard,
+}: Props) {
 	return (
 		<div className="flex flex-col gap-3">
 			<div className="flex items-center justify-between">
@@ -22,12 +29,12 @@ export function AccountDetailStrip({ account, onClear }: Props) {
 					Clear selection
 				</button>
 			</div>
-			{account.type === "credit" && <CreditAccountStrip account={account} />}
+			{account.type === "credit" && (
+				<CreditAccountStrip account={account} onPayThisCard={onPayThisCard} />
+			)}
 			{account.type === "time-deposit" && <TimeDepositStrip account={account} />}
-			{!hasStrip && (
-				<p className="text-sm text-base-content/60 italic px-1">
-					This-month activity summary arrives with the Transactions slice.
-				</p>
+			{(account.type === "cash" || account.type === "e-wallet" || account.type === "savings") && (
+				<SimpleAccountStrip account={account} transactions={transactions} timezone={timezone} />
 			)}
 		</div>
 	);

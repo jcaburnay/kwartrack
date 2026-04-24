@@ -4,9 +4,10 @@ import { formatCentavos } from "../../utils/currency";
 
 type Props = {
 	account: Account;
+	onPayThisCard: () => void;
 };
 
-export function CreditAccountStrip({ account }: Props) {
+export function CreditAccountStrip({ account, onPayThisCard }: Props) {
 	const utilization = creditUtilization(account);
 	if (!utilization) return null;
 	const { utilizedCentavos, limitCentavos, utilizationPct } = utilization;
@@ -58,12 +59,7 @@ export function CreditAccountStrip({ account }: Props) {
 				)}
 
 				<div className="flex justify-end">
-					<button
-						type="button"
-						className="btn btn-sm btn-primary"
-						disabled
-						title="Pay-this-card arrives with the Transactions slice"
-					>
+					<button type="button" className="btn btn-sm btn-primary" onClick={onPayThisCard}>
 						Pay this card
 					</button>
 				</div>
