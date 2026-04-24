@@ -51,5 +51,38 @@ export function useTags() {
 		[refetch],
 	);
 
-	return { ...state, refetch, createInline };
+	const renameTag = useCallback(
+		async (id: string, newName: string): Promise<string | null> => {
+			const { error } = await supabase.from("tag").update({ name: newName.trim() }).eq("id", id);
+			if (error) return error.message;
+			await refetch();
+			return null;
+		},
+		[refetch],
+	);
+
+	const deleteTag = useCallback(
+		async (id: string): Promise<{ error: string | null }> => {
+			// Check transaction usage before attempting delete.
+			// TODO: When recurring, budget allocation, split, and debt tables are added
+			// in later slices, extend this count to include those tables too.
+			const { count, error: countErr } = await supabase
+				.from("transaction")
+				.select("id", { count: "exact", head: true })
+				.eq("tag_id", id);
+			if (countErr) return { error: countErr.message };
+			if ((count ?? 0) > 0) {
+				return {
+					error: `This tag is used by ${count} transaction${count === 1 ? "" : "s"} and cannot be deleted.`,
+				};
+			}
+			const { error } = await supabase.from("tag").delete().eq("id", id);
+			if (error) return { error: error.message };
+			await refetch();
+			return { error: null };
+		},
+		[refetch],
+	);
+
+	return { ...state, refetch, createInline, renameTag, deleteTag };
 }
