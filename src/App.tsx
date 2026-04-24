@@ -4,6 +4,7 @@ import { AccountsPage } from "./pages/AccountsPage";
 import { OverviewPage } from "./pages/OverviewPage";
 import { SettingsGroupsPage } from "./pages/SettingsGroupsPage";
 import { SettingsPage } from "./pages/SettingsPage";
+import { SettingsTagsPage } from "./pages/SettingsTagsPage";
 import { SignInPage } from "./pages/SignInPage";
 import { SignUpPage } from "./pages/SignUpPage";
 
@@ -32,7 +33,8 @@ const router = createBrowserRouter([
 			</ProtectedRoute>
 		),
 		children: [
-			{ index: true, element: <Navigate to="groups" replace /> },
+			{ index: true, element: <Navigate to="tags" replace /> },
+			{ path: "tags", element: <SettingsTagsPage /> },
 			{ path: "groups", element: <SettingsGroupsPage /> },
 		],
 	},
