@@ -18,7 +18,7 @@ describe("PersonPicker", () => {
 				onCreate={async () => null}
 			/>,
 		);
-		const input = screen.getByRole("combobox");
+		const input = screen.getByPlaceholderText("Search or add…");
 		fireEvent.change(input, { target: { value: "ali" } });
 		expect(screen.getByText("Alice")).toBeInTheDocument();
 		expect(screen.queryByText("Bob")).not.toBeInTheDocument();
@@ -33,7 +33,7 @@ describe("PersonPicker", () => {
 				onCreate={async () => null}
 			/>,
 		);
-		const input = screen.getByRole("combobox");
+		const input = screen.getByPlaceholderText("Search or add…");
 		fireEvent.change(input, { target: { value: "Doris" } });
 		expect(screen.getByText(/\+ New person "Doris"/)).toBeInTheDocument();
 	});
@@ -48,7 +48,9 @@ describe("PersonPicker", () => {
 				onCreate={async () => null}
 			/>,
 		);
-		fireEvent.change(screen.getByRole("combobox"), { target: { value: "ali" } });
+		fireEvent.change(screen.getByPlaceholderText("Search or add…"), {
+			target: { value: "ali" },
+		});
 		fireEvent.click(screen.getByText("Alice"));
 		expect(onChange).toHaveBeenCalledWith("1");
 	});
