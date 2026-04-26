@@ -4,6 +4,8 @@ import { EditAccountModal } from "../components/accounts/EditAccountModal";
 import { NewAccountModal } from "../components/accounts/NewAccountModal";
 import { Fab } from "../components/Fab";
 import { Header } from "../components/Header";
+import { NewRecurringModal } from "../components/recurring/NewRecurringModal";
+import type { RecurringFormValues } from "../components/recurring/RecurringForm";
 import { AccountDetailStrip } from "../components/strips/AccountDetailStrip";
 import { EditTransactionModal } from "../components/transactions/EditTransactionModal";
 import { NewTransactionModal } from "../components/transactions/NewTransactionModal";
@@ -12,6 +14,7 @@ import type { TransactionFormValues } from "../components/transactions/Transacti
 import { TransactionsTable } from "../components/transactions/TransactionsTable";
 import { useAccountGroups } from "../hooks/useAccountGroups";
 import { useAccounts } from "../hooks/useAccounts";
+import { useRecurrings } from "../hooks/useRecurrings";
 import { useSelectedAccount } from "../hooks/useSelectedAccount";
 import { useTags } from "../hooks/useTags";
 import { useTransactions } from "../hooks/useTransactions";
@@ -44,6 +47,10 @@ export function AccountsPage() {
 	const [showNewTx, setShowNewTx] = useState(false);
 	const [newTxPrefill, setNewTxPrefill] = useState<Partial<TransactionFormValues>>({});
 	const [editingTx, setEditingTx] = useState<Transaction | null>(null);
+
+	const { createRecurring } = useRecurrings();
+	const [showNewRecurring, setShowNewRecurring] = useState(false);
+	const [newRecurringPrefill, setNewRecurringPrefill] = useState<Partial<RecurringFormValues>>({});
 
 	const net = computeNetWorth(accounts);
 	const timezone = profile?.timezone ?? "Asia/Manila";
@@ -87,6 +94,18 @@ export function AccountsPage() {
 		} else {
 			openNewTransaction({});
 		}
+	}
+
+	function openNewRecurringFromFab() {
+		if (selection.kind === "account") {
+			setNewRecurringPrefill({
+				type: "expense",
+				fromAccountId: selection.account.id,
+			});
+		} else {
+			setNewRecurringPrefill({});
+		}
+		setShowNewRecurring(true);
 	}
 
 	function openPayThisCard(accountId: string) {
@@ -202,6 +221,11 @@ export function AccountsPage() {
 						onClick: openNewTransactionFromFab,
 					},
 					{
+						label: "New Recurring",
+						description: "Subscription, installment, or recurring income.",
+						onClick: openNewRecurringFromFab,
+					},
+					{
 						label: "New Account",
 						description: "Cash, e-wallet, savings, credit, or time deposit.",
 						onClick: () => setShowNewAccount(true),
@@ -263,6 +287,24 @@ export function AccountsPage() {
 						await onTxChanged();
 					}}
 					onCancel={() => setEditingTx(null)}
+				/>
+			)}
+
+			{showNewRecurring && (
+				<NewRecurringModal
+					accounts={accounts}
+					tags={tags}
+					createTag={createInline}
+					createRecurring={createRecurring}
+					prefill={newRecurringPrefill}
+					onSaved={() => {
+						setShowNewRecurring(false);
+						setNewRecurringPrefill({});
+					}}
+					onCancel={() => {
+						setShowNewRecurring(false);
+						setNewRecurringPrefill({});
+					}}
 				/>
 			)}
 		</div>
