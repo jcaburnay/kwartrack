@@ -180,6 +180,50 @@ describe("AccountsTable", () => {
 		expect(within(bdoRow).getAllByRole("progressbar")).toHaveLength(1);
 	});
 
+	it("renders a Matured badge on a matured time-deposit row", () => {
+		const td = mk({
+			name: "BPI TD",
+			type: "time-deposit",
+			balance_centavos: 100_500_00,
+			initial_balance_centavos: 100_000_00,
+			principal_centavos: 100_000_00,
+			interest_rate_bps: 600,
+			maturity_date: "2026-04-01",
+			interest_posting_interval: "monthly",
+			is_matured: true,
+		});
+		const liveTd = mk({
+			name: "Maya TD",
+			type: "time-deposit",
+			balance_centavos: 50_000_00,
+			initial_balance_centavos: 50_000_00,
+			principal_centavos: 50_000_00,
+			interest_rate_bps: 500,
+			maturity_date: "2027-04-01",
+			interest_posting_interval: "monthly",
+			is_matured: false,
+		});
+		render(
+			<AccountsTable
+				accounts={[td, liveTd]}
+				groups={[]}
+				recurrings={[]}
+				selectedAccountId={null}
+				selectedGroupId={null}
+				onSelectAccount={() => {}}
+				onSelectGroup={() => {}}
+				onEdit={() => {}}
+				onChanged={() => {}}
+				showArchived={false}
+			/>,
+		);
+		const matured = screen.getByText("BPI TD").closest("tr");
+		const live = screen.getByText("Maya TD").closest("tr");
+		if (!matured || !live) throw new Error("missing rows");
+		expect(within(matured).getByText(/^matured$/i)).toBeInTheDocument();
+		expect(within(live).queryByText(/^matured$/i)).not.toBeInTheDocument();
+	});
+
 	it("selecting a row fires onSelectAccount", async () => {
 		const user = (await import("@testing-library/user-event")).default;
 		const onSelectAccount = vi.fn();

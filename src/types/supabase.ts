@@ -39,6 +39,7 @@ export type Database = {
 					installment_limit_centavos: number | null;
 					interest_posting_interval: Database["public"]["Enums"]["posting_interval"] | null;
 					interest_rate_bps: number | null;
+					interest_recurring_id: string | null;
 					is_archived: boolean;
 					is_matured: boolean;
 					maturity_date: string | null;
@@ -58,6 +59,7 @@ export type Database = {
 					installment_limit_centavos?: number | null;
 					interest_posting_interval?: Database["public"]["Enums"]["posting_interval"] | null;
 					interest_rate_bps?: number | null;
+					interest_recurring_id?: string | null;
 					is_archived?: boolean;
 					is_matured?: boolean;
 					maturity_date?: string | null;
@@ -77,6 +79,7 @@ export type Database = {
 					installment_limit_centavos?: number | null;
 					interest_posting_interval?: Database["public"]["Enums"]["posting_interval"] | null;
 					interest_rate_bps?: number | null;
+					interest_recurring_id?: string | null;
 					is_archived?: boolean;
 					is_matured?: boolean;
 					maturity_date?: string | null;
@@ -92,6 +95,13 @@ export type Database = {
 						columns: ["group_id"];
 						isOneToOne: false;
 						referencedRelation: "account_group";
+						referencedColumns: ["id"];
+					},
+					{
+						foreignKeyName: "account_interest_recurring_id_fkey";
+						columns: ["interest_recurring_id"];
+						isOneToOne: false;
+						referencedRelation: "recurring";
 						referencedColumns: ["id"];
 					},
 				];
@@ -448,6 +458,36 @@ export type Database = {
 					p_tz: string;
 				};
 				Returns: string;
+			};
+			td_at_maturity_net_interest_centavos: {
+				Args: {
+					p_anchor_date: string;
+					p_maturity_date: string;
+					p_principal_centavos: number;
+					p_rate_bps: number;
+				};
+				Returns: number;
+			};
+			td_check_maturity_due: { Args: never; Returns: number };
+			td_create_interest_recurring: {
+				Args: { p_account: Database["public"]["Tables"]["account"]["Row"] };
+				Returns: string;
+			};
+			td_periodic_net_interest_centavos: {
+				Args: {
+					p_postings_per_year: number;
+					p_principal_centavos: number;
+					p_rate_bps: number;
+				};
+				Returns: number;
+			};
+			td_postings_per_year: {
+				Args: { p_interval: Database["public"]["Enums"]["posting_interval"] };
+				Returns: number;
+			};
+			td_recurring_interval: {
+				Args: { p_interval: Database["public"]["Enums"]["posting_interval"] };
+				Returns: Database["public"]["Enums"]["recurring_interval"];
 			};
 		};
 		Enums: {

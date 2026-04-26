@@ -157,6 +157,9 @@ export function AccountsTable({
 											{row.account.is_archived && (
 												<span className="badge badge-ghost badge-sm ml-2">Archived</span>
 											)}
+											{row.account.type === "time-deposit" && row.account.is_matured && (
+												<span className="badge badge-ghost badge-sm ml-2">Matured</span>
+											)}
 										</span>
 										<span className="text-xs text-base-content/50">
 											{ACCOUNT_TYPE_LABEL[row.account.type]}

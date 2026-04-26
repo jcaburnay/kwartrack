@@ -237,8 +237,9 @@ runOrSkip("recurring_fire_due", () => {
 			.single();
 		await setNextAtPast(rec!.id);
 
-		const fired = await fireDue();
-		expect(fired).toBe(1);
+		// fireDue() count is global — other parallel test files' users can also
+		// have due rows. Assert per-recurring transaction count instead.
+		await fireDue();
 
 		const { data: txs } = await admin
 			.from("transaction")
@@ -312,8 +313,7 @@ runOrSkip("recurring_fire_due", () => {
 			.single();
 		await setNextAtPast(rec!.id);
 
-		const fired = await fireDue();
-		expect(fired).toBe(0);
+		await fireDue(); // global count not relevant; check per-recurring below.
 
 		const { count } = await admin
 			.from("transaction")
@@ -547,8 +547,7 @@ runOrSkip("recurring_fire_due", () => {
 			.single();
 		await setNextAtPast(rec!.id);
 
-		const fired = await fireDue();
-		expect(fired).toBe(1);
+		await fireDue(); // global count not relevant; check per-recurring below.
 
 		const { data: txs } = await admin
 			.from("transaction")
