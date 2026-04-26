@@ -63,19 +63,27 @@ export function useTags() {
 
 	const deleteTag = useCallback(
 		async (id: string): Promise<{ error: string | null }> => {
-			// Check transaction usage before attempting delete.
+			// Check transaction + recurring usage before attempting delete.
 			// Allocations are intentionally excluded: budget_allocation.tag_id has
 			// ON DELETE CASCADE, so deleting a tag silently removes its allocations.
-			// TODO: When recurring, split, and debt tables are added in later slices,
-			// extend this count to include those tables too.
-			const { count, error: countErr } = await supabase
-				.from("transaction")
-				.select("id", { count: "exact", head: true })
-				.eq("tag_id", id);
-			if (countErr) return { error: countErr.message };
-			if ((count ?? 0) > 0) {
+			// TODO: When split and debt tables are added in later slices, extend
+			// this count to include those tables too.
+			const [txRes, recRes] = await Promise.all([
+				supabase.from("transaction").select("id", { count: "exact", head: true }).eq("tag_id", id),
+				supabase.from("recurring").select("id", { count: "exact", head: true }).eq("tag_id", id),
+			]);
+			if (txRes.error) return { error: txRes.error.message };
+			if (recRes.error) return { error: recRes.error.message };
+			const txCount = txRes.count ?? 0;
+			const recCount = recRes.count ?? 0;
+			if (txCount > 0) {
 				return {
-					error: `This tag is used by ${count} transaction${count === 1 ? "" : "s"} and cannot be deleted.`,
+					error: `This tag is used by ${txCount} transaction${txCount === 1 ? "" : "s"} and cannot be deleted.`,
+				};
+			}
+			if (recCount > 0) {
+				return {
+					error: `This tag is used by ${recCount} recurring${recCount === 1 ? "" : "s"} and cannot be deleted.`,
 				};
 			}
 			const { error } = await supabase.from("tag").delete().eq("id", id);

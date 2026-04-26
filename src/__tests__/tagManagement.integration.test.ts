@@ -113,4 +113,26 @@ runOrSkip("tag delete", () => {
 		// Cleanup transaction so afterAll user-deletion doesn't conflict
 		await admin.from("transaction").delete().eq("user_id", userId).eq("tag_id", foodsTagId);
 	});
+
+	it("fails with FK violation (23503) when a recurring references the tag", async () => {
+		const { error: recErr } = await admin.from("recurring").insert({
+			user_id: userId,
+			service: "Spotify",
+			amount_centavos: 279_00,
+			type: "expense",
+			tag_id: foodsTagId,
+			from_account_id: cashAccountId,
+			interval: "monthly",
+			first_occurrence_date: "2026-04-24",
+			next_occurrence_at: "2026-04-23T16:00:00Z",
+		});
+		expect(recErr).toBeNull();
+
+		const { error: delErr } = await admin.from("tag").delete().eq("id", foodsTagId);
+		expect(delErr).not.toBeNull();
+		expect(delErr!.code).toBe("23503");
+
+		// Deleting the recurring then the tag succeeds.
+		await admin.from("recurring").delete().eq("user_id", userId).eq("tag_id", foodsTagId);
+	});
 });
