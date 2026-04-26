@@ -3,6 +3,7 @@ import { ProtectedRoute } from "./components/ProtectedRoute";
 import { AccountsPage } from "./pages/AccountsPage";
 import { BudgetPage } from "./pages/BudgetPage";
 import { OverviewPage } from "./pages/OverviewPage";
+import { RecurringPage } from "./pages/RecurringPage";
 import { SettingsGroupsPage } from "./pages/SettingsGroupsPage";
 import { SettingsPage } from "./pages/SettingsPage";
 import { SettingsTagsPage } from "./pages/SettingsTagsPage";
@@ -31,6 +32,14 @@ const router = createBrowserRouter([
 		element: (
 			<ProtectedRoute>
 				<BudgetPage />
+			</ProtectedRoute>
+		),
+	},
+	{
+		path: "/recurring",
+		element: (
+			<ProtectedRoute>
+				<RecurringPage />
 			</ProtectedRoute>
 		),
 	},

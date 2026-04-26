@@ -11,6 +11,7 @@ const NAV = [
 	{ to: "/", label: "Overview" },
 	{ to: "/accounts", label: "Accounts" },
 	{ to: "/budget", label: "Budget" },
+	{ to: "/recurring", label: "Recurring" },
 	{ to: "/settings/groups", label: "Settings" },
 ];
 

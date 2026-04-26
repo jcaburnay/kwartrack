@@ -39,11 +39,12 @@ describe("Header", () => {
 		expect(signOut).toHaveBeenCalledTimes(1);
 	});
 
-	it("shows nav links for overview, accounts, budget, settings", () => {
+	it("shows nav links for overview, accounts, budget, recurring, settings", () => {
 		renderHeader();
 		expect(screen.getByRole("link", { name: /overview/i })).toBeInTheDocument();
 		expect(screen.getByRole("link", { name: /accounts/i })).toBeInTheDocument();
 		expect(screen.getByRole("link", { name: /budget/i })).toBeInTheDocument();
+		expect(screen.getByRole("link", { name: /recurring/i })).toBeInTheDocument();
 		expect(screen.getByRole("link", { name: /settings/i })).toBeInTheDocument();
 	});
 });
