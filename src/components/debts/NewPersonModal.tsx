@@ -1,5 +1,6 @@
 import type React from "react";
 import { useState } from "react";
+import { createPortal } from "react-dom";
 import type { Person } from "../../hooks/usePersons";
 import { validatePerson } from "../../utils/personValidation";
 
@@ -28,7 +29,10 @@ export function NewPersonModal({ initialName, create, onCreated, onCancel }: Pro
 		onCreated(created);
 	}
 
-	return (
+	// Portal to document.body so the inner <form> isn't nested inside an outer
+	// modal's <form> (e.g. NewSplitModal opens this via PersonPicker). Slice 2
+	// memory note "modal-inside-form" — same fix.
+	return createPortal(
 		<div className="modal modal-open" role="dialog" aria-modal="true">
 			<div className="modal-box max-w-sm">
 				<h3 className="font-semibold text-lg mb-3">New person</h3>
@@ -57,6 +61,7 @@ export function NewPersonModal({ initialName, create, onCreated, onCancel }: Pro
 				</form>
 			</div>
 			<button type="button" className="modal-backdrop" onClick={onCancel} aria-label="Dismiss" />
-		</div>
+		</div>,
+		document.body,
 	);
 }

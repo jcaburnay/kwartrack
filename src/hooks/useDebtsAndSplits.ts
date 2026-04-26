@@ -89,7 +89,9 @@ export function useDebtsAndSplits() {
 			tagName: "",
 			method: s.method,
 			date: s.date,
-			participantCount: s.participants.length,
+			// +1 to include the user-the-payer (an implicit participant per
+			// spec §622's "{count}-way" wording).
+			participantCount: s.participants.length + 1,
 			settledCount: s.debts.filter((d) => d.settled_centavos >= d.amount_centavos).length,
 			participantNames: s.participants.map((p) => p.person.name),
 		}));
