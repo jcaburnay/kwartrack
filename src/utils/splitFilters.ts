@@ -7,6 +7,7 @@ export type SplitRow = {
 	description: string;
 	totalCentavos: number;
 	userShareCentavos: number;
+	paidFromAccountId: string;
 	tagId: string;
 	tagName: string;
 	method: SplitMethod;

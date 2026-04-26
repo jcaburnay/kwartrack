@@ -6,6 +6,7 @@ const base: SplitRow = {
 	description: "Mama Lou's",
 	totalCentavos: 480000,
 	userShareCentavos: 96000,
+	paidFromAccountId: "a-1",
 	tagId: "t-dates",
 	tagName: "dates",
 	method: "equal",
