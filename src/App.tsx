@@ -46,6 +46,14 @@ const router = createBrowserRouter([
 		),
 	},
 	{
+		path: "/debts-and-splits",
+		element: (
+			<ProtectedRoute>
+				<DebtsAndSplitsPage />
+			</ProtectedRoute>
+		),
+	},
+	{
 		path: "/settings",
 		element: (
 			<ProtectedRoute>
@@ -55,6 +63,7 @@ const router = createBrowserRouter([
 		children: [
 			{ index: true, element: <Navigate to="tags" replace /> },
 			{ path: "tags", element: <SettingsTagsPage /> },
+			{ path: "contacts", element: <SettingsContactsPage /> },
 			{ path: "groups", element: <SettingsGroupsPage /> },
 		],
 	},
