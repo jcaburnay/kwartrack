@@ -1,6 +1,7 @@
 import { createBrowserRouter, Navigate, RouterProvider } from "react-router";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { AccountsPage } from "./pages/AccountsPage";
+import { BudgetPage } from "./pages/BudgetPage";
 import { OverviewPage } from "./pages/OverviewPage";
 import { SettingsGroupsPage } from "./pages/SettingsGroupsPage";
 import { SettingsPage } from "./pages/SettingsPage";
@@ -22,6 +23,14 @@ const router = createBrowserRouter([
 		element: (
 			<ProtectedRoute>
 				<AccountsPage />
+			</ProtectedRoute>
+		),
+	},
+	{
+		path: "/budget",
+		element: (
+			<ProtectedRoute>
+				<BudgetPage />
 			</ProtectedRoute>
 		),
 	},

@@ -10,6 +10,7 @@ function initialsFrom(name: string | null | undefined): string {
 const NAV = [
 	{ to: "/", label: "Overview" },
 	{ to: "/accounts", label: "Accounts" },
+	{ to: "/budget", label: "Budget" },
 	{ to: "/settings/groups", label: "Settings" },
 ];
 
