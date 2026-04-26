@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useNavigate } from "react-router";
 import { Fab } from "../components/Fab";
 import { Header } from "../components/Header";
 import { EditRecurringModal } from "../components/recurring/EditRecurringModal";
@@ -32,6 +33,7 @@ export function RecurringPage() {
 	const [creating, setCreating] = useState(false);
 	const [editing, setEditing] = useState<Recurring | null>(null);
 	const [fabOpen, setFabOpen] = useState(false);
+	const navigate = useNavigate();
 
 	const visible = useMemo(
 		() => recurrings.filter((r) => matchesRecurringFilters(r, filters)),
@@ -80,6 +82,16 @@ export function RecurringPage() {
 						label: "New Recurring",
 						description: "Subscription, installment, or recurring income.",
 						onClick: () => setCreating(true),
+					},
+					{
+						label: "New Split",
+						description: "Splitwise-style group expense.",
+						onClick: () => navigate("/debts-and-splits?modal=new-split"),
+					},
+					{
+						label: "New Debt",
+						description: "Standalone IOU.",
+						onClick: () => navigate("/debts-and-splits?modal=new-debt"),
 					},
 				]}
 			/>

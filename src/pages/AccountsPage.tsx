@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useNavigate } from "react-router";
 import { AccountsTable } from "../components/accounts/AccountsTable";
 import { EditAccountModal } from "../components/accounts/EditAccountModal";
 import { NewAccountModal } from "../components/accounts/NewAccountModal";
@@ -51,6 +52,7 @@ export function AccountsPage() {
 	const { recurrings, createRecurring } = useRecurrings();
 	const [showNewRecurring, setShowNewRecurring] = useState(false);
 	const [newRecurringPrefill, setNewRecurringPrefill] = useState<Partial<RecurringFormValues>>({});
+	const navigate = useNavigate();
 
 	const net = computeNetWorth(accounts);
 	const timezone = profile?.timezone ?? "Asia/Manila";
@@ -221,6 +223,16 @@ export function AccountsPage() {
 						label: "New Transaction",
 						description: "Expense, income, or transfer.",
 						onClick: openNewTransactionFromFab,
+					},
+					{
+						label: "New Split",
+						description: "Splitwise-style group expense.",
+						onClick: () => navigate("/debts-and-splits?modal=new-split"),
+					},
+					{
+						label: "New Debt",
+						description: "Standalone IOU.",
+						onClick: () => navigate("/debts-and-splits?modal=new-debt"),
 					},
 					{
 						label: "New Recurring",

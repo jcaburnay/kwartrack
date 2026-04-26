@@ -1,7 +1,9 @@
 import { useMemo, useState } from "react";
+import { useNavigate } from "react-router";
 import { AllocationTable } from "../components/budget/AllocationTable";
 import { MonthPicker } from "../components/budget/MonthPicker";
 import { OverallHero } from "../components/budget/OverallHero";
+import { Fab } from "../components/Fab";
 import { Header } from "../components/Header";
 import { useBudget } from "../hooks/useBudget";
 import { useTags } from "../hooks/useTags";
@@ -15,6 +17,8 @@ export function BudgetPage() {
 	const [month, setMonth] = useState(initialMonth);
 	const [copyError, setCopyError] = useState<string | null>(null);
 	const [copying, setCopying] = useState(false);
+	const [fabOpen, setFabOpen] = useState(false);
+	const navigate = useNavigate();
 
 	const { tags } = useTags();
 	const {
@@ -90,6 +94,24 @@ export function BudgetPage() {
 					disabled={config == null}
 				/>
 			</main>
+
+			<Fab
+				isOpen={fabOpen}
+				onToggle={() => setFabOpen((v) => !v)}
+				onDismiss={() => setFabOpen(false)}
+				actions={[
+					{
+						label: "New Split",
+						description: "Splitwise-style group expense.",
+						onClick: () => navigate("/debts-and-splits?modal=new-split"),
+					},
+					{
+						label: "New Debt",
+						description: "Standalone IOU.",
+						onClick: () => navigate("/debts-and-splits?modal=new-debt"),
+					},
+				]}
+			/>
 		</div>
 	);
 }
