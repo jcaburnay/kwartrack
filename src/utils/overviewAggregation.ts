@@ -51,3 +51,47 @@ export function bucketSpendByMonth(
 	}
 	return months;
 }
+
+export type TopTagRow = {
+	tagId: string;
+	tagName: string;
+	actualCentavos: number;
+	budgetCentavos: number;
+	pct: number;
+};
+
+type AllocationLite = { tag_id: string; amount_centavos: number };
+type TagLite = { id: string; name: string };
+
+/**
+ * Pick the top N allocated tags by actual spend for the current month.
+ * Excludes zero-actual rows and the synthetic "Others" bucket (unallocated
+ * tags). Ties broken by tag name ascending for deterministic ordering.
+ */
+export function selectTopTagsByActual(
+	actualsByTag: ReadonlyMap<string, number>,
+	allocations: readonly AllocationLite[],
+	tags: readonly TagLite[],
+	n: number,
+): TopTagRow[] {
+	const tagById = new Map(tags.map((t) => [t.id, t]));
+	const rows: TopTagRow[] = [];
+	for (const alloc of allocations) {
+		const actual = actualsByTag.get(alloc.tag_id) ?? 0;
+		if (actual <= 0) continue;
+		const tag = tagById.get(alloc.tag_id);
+		if (!tag) continue;
+		rows.push({
+			tagId: alloc.tag_id,
+			tagName: tag.name,
+			actualCentavos: actual,
+			budgetCentavos: alloc.amount_centavos,
+			pct: alloc.amount_centavos === 0 ? 0 : actual / alloc.amount_centavos,
+		});
+	}
+	rows.sort((a, b) => {
+		if (b.actualCentavos !== a.actualCentavos) return b.actualCentavos - a.actualCentavos;
+		return a.tagName.localeCompare(b.tagName);
+	});
+	return rows.slice(0, n);
+}
