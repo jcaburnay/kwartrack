@@ -247,3 +247,52 @@ describe("AccountsTable", () => {
 		expect(onSelectAccount).toHaveBeenCalledWith("Pocket");
 	});
 });
+
+describe("AccountsTable typeFilter", () => {
+	it("renders only credit accounts when typeFilter is 'credit'", () => {
+		const accounts: Account[] = [
+			mk({ name: "Wallet", type: "cash", balance_centavos: 100_00 }),
+			mk({ name: "Card", type: "credit", balance_centavos: 50_00 }),
+		];
+		render(
+			<AccountsTable
+				accounts={accounts}
+				groups={[]}
+				recurrings={[]}
+				selectedAccountId={null}
+				selectedGroupId={null}
+				onSelectAccount={() => {}}
+				onSelectGroup={() => {}}
+				onEdit={() => {}}
+				onChanged={() => {}}
+				showArchived={false}
+				typeFilter="credit"
+			/>,
+		);
+		expect(screen.queryByText("Wallet")).not.toBeInTheDocument();
+		expect(screen.getByText("Card")).toBeInTheDocument();
+	});
+
+	it("renders all accounts when typeFilter is null/undefined", () => {
+		const accounts: Account[] = [
+			mk({ name: "Wallet", type: "cash", balance_centavos: 100_00 }),
+			mk({ name: "Card", type: "credit", balance_centavos: 50_00 }),
+		];
+		render(
+			<AccountsTable
+				accounts={accounts}
+				groups={[]}
+				recurrings={[]}
+				selectedAccountId={null}
+				selectedGroupId={null}
+				onSelectAccount={() => {}}
+				onSelectGroup={() => {}}
+				onEdit={() => {}}
+				onChanged={() => {}}
+				showArchived={false}
+			/>,
+		);
+		expect(screen.getByText("Wallet")).toBeInTheDocument();
+		expect(screen.getByText("Card")).toBeInTheDocument();
+	});
+});

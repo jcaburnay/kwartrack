@@ -1,4 +1,4 @@
-import type { Account, AccountGroup } from "../../utils/accountBalances";
+import type { Account, AccountGroup, AccountType } from "../../utils/accountBalances";
 import {
 	creditInstallmentMetrics,
 	creditUtilization,
@@ -22,6 +22,7 @@ type Props = {
 	onEdit: (account: Account) => void;
 	onChanged: () => Promise<void> | void;
 	showArchived: boolean;
+	typeFilter?: AccountType | null;
 };
 
 function pctClass(pct: number): string {
@@ -96,8 +97,12 @@ export function AccountsTable({
 	onEdit,
 	onChanged,
 	showArchived,
+	typeFilter,
 }: Props) {
-	const visible = showArchived ? accounts : accounts.filter((a) => !a.is_archived);
+	let visible = showArchived ? accounts : accounts.filter((a) => !a.is_archived);
+	if (typeFilter) {
+		visible = visible.filter((a) => a.type === typeFilter);
+	}
 	const rows = buildRows(visible, groups);
 
 	if (rows.length === 0) {

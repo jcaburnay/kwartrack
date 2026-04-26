@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate, useSearchParams } from "react-router";
 import { AccountsTable } from "../components/accounts/AccountsTable";
 import { EditAccountModal } from "../components/accounts/EditAccountModal";
 import { NewAccountModal } from "../components/accounts/NewAccountModal";
@@ -53,6 +53,16 @@ export function AccountsPage() {
 	const [showNewRecurring, setShowNewRecurring] = useState(false);
 	const [newRecurringPrefill, setNewRecurringPrefill] = useState<Partial<RecurringFormValues>>({});
 	const navigate = useNavigate();
+	const [params] = useSearchParams();
+	const typeFilterRaw = params.get("type");
+	const typeFilter =
+		typeFilterRaw === "cash" ||
+		typeFilterRaw === "e-wallet" ||
+		typeFilterRaw === "savings" ||
+		typeFilterRaw === "credit" ||
+		typeFilterRaw === "time-deposit"
+			? typeFilterRaw
+			: null;
 
 	const net = computeNetWorth(accounts);
 	const timezone = profile?.timezone ?? "Asia/Manila";
@@ -171,6 +181,7 @@ export function AccountsPage() {
 						onEdit={(a) => setEditingAccount(a)}
 						onChanged={() => refetchAccounts()}
 						showArchived={showArchived}
+						typeFilter={typeFilter}
 					/>
 				)}
 
