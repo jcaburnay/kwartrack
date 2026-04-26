@@ -1,113 +1,45 @@
 import { describe, expect, it } from "vitest";
 import {
+	type ActualRow,
 	computeActualsByTag,
 	computeOthersCentavos,
 	computeOverallActualCentavos,
 	progressBucket,
 } from "../utils/budgetMath";
-import type { Transaction } from "../utils/transactionFilters";
-
-function tx(p: Partial<Transaction> & Pick<Transaction, "id" | "type" | "date">): Transaction {
-	return {
-		amount_centavos: 0,
-		created_at: "",
-		description: null,
-		fee_centavos: null,
-		from_account_id: null,
-		parent_transaction_id: null,
-		recurring_id: null,
-		tag_id: null,
-		to_account_id: null,
-		updated_at: "",
-		user_id: "u1",
-		debt_id: null,
-		split_id: null,
-		...p,
-	};
-}
 
 describe("computeActualsByTag", () => {
-	it("sums expense rows by tag for the given month", () => {
-		const txs: Transaction[] = [
-			tx({
-				id: "1",
-				type: "expense",
-				date: "2026-04-02",
-				tag_id: "foods",
-				amount_centavos: 100_00,
-			}),
-			tx({
-				id: "2",
-				type: "expense",
-				date: "2026-04-15",
-				tag_id: "foods",
-				amount_centavos: 50_00,
-			}),
-			tx({ id: "3", type: "expense", date: "2026-04-20", tag_id: "pets", amount_centavos: 200_00 }),
+	it("sums effective centavos by tag for the given month", () => {
+		const rows: ActualRow[] = [
+			{ tagId: "foods", effectiveCentavos: 100_00, date: "2026-04-02" },
+			{ tagId: "foods", effectiveCentavos: 50_00, date: "2026-04-15" },
+			{ tagId: "pets", effectiveCentavos: 200_00, date: "2026-04-20" },
 		];
-		const actuals = computeActualsByTag(txs, "2026-04");
+		const actuals = computeActualsByTag(rows, "2026-04");
 		expect(actuals.get("foods")).toBe(150_00);
 		expect(actuals.get("pets")).toBe(200_00);
 	});
 
-	it("includes paired transfer-fee children (parent_transaction_id set)", () => {
-		const txs: Transaction[] = [
-			tx({
-				id: "fee-child",
-				type: "expense",
-				date: "2026-04-10",
-				tag_id: "transfer-fees",
-				amount_centavos: 25_00,
-				parent_transaction_id: "parent-tx",
-			}),
+	it("uses the user-share for split-linked rows (caller passes user_share_centavos)", () => {
+		// Auto-expense from a ₱4,800 split where the user's share is ₱960.
+		const rows: ActualRow[] = [
+			{ tagId: "dates", effectiveCentavos: 960_00, date: "2026-04-14" },
 		];
-		const actuals = computeActualsByTag(txs, "2026-04");
-		expect(actuals.get("transfer-fees")).toBe(25_00);
+		expect(computeActualsByTag(rows, "2026-04").get("dates")).toBe(960_00);
 	});
 
-	it("excludes transactions outside the given month", () => {
-		const txs: Transaction[] = [
-			tx({
-				id: "1",
-				type: "expense",
-				date: "2026-03-31",
-				tag_id: "foods",
-				amount_centavos: 100_00,
-			}),
-			tx({ id: "2", type: "expense", date: "2026-05-01", tag_id: "foods", amount_centavos: 50_00 }),
+	it("excludes rows outside the given month", () => {
+		const rows: ActualRow[] = [
+			{ tagId: "foods", effectiveCentavos: 100_00, date: "2026-03-31" },
+			{ tagId: "foods", effectiveCentavos: 50_00, date: "2026-05-01" },
 		];
-		const actuals = computeActualsByTag(txs, "2026-04");
-		expect(actuals.size).toBe(0);
-	});
-
-	it("ignores income and transfer rows", () => {
-		const txs: Transaction[] = [
-			tx({
-				id: "1",
-				type: "income",
-				date: "2026-04-02",
-				tag_id: "monthly-salary",
-				amount_centavos: 50_000_00,
-			}),
-			tx({
-				id: "2",
-				type: "transfer",
-				date: "2026-04-02",
-				from_account_id: "a",
-				to_account_id: "b",
-				amount_centavos: 1_000_00,
-			}),
-		];
-		const actuals = computeActualsByTag(txs, "2026-04");
-		expect(actuals.size).toBe(0);
+		expect(computeActualsByTag(rows, "2026-04").size).toBe(0);
 	});
 
 	it("skips rows with null tag_id", () => {
-		const txs: Transaction[] = [
-			tx({ id: "1", type: "expense", date: "2026-04-02", tag_id: null, amount_centavos: 100_00 }),
+		const rows: ActualRow[] = [
+			{ tagId: null, effectiveCentavos: 100_00, date: "2026-04-02" },
 		];
-		const actuals = computeActualsByTag(txs, "2026-04");
-		expect(actuals.size).toBe(0);
+		expect(computeActualsByTag(rows, "2026-04").size).toBe(0);
 	});
 });
 

@@ -2,11 +2,11 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "../lib/supabase";
 import type { Database } from "../types/supabase";
 import {
+	type ActualRow,
 	computeActualsByTag,
 	computeOthersCentavos,
 	computeOverallActualCentavos,
 } from "../utils/budgetMath";
-import type { Transaction } from "../utils/transactionFilters";
 
 export type BudgetConfig = Database["public"]["Tables"]["budget_config"]["Row"];
 export type BudgetAllocation = Database["public"]["Tables"]["budget_allocation"]["Row"];
@@ -14,7 +14,7 @@ export type BudgetAllocation = Database["public"]["Tables"]["budget_allocation"]
 type State = {
 	config: BudgetConfig | null;
 	allocations: BudgetAllocation[];
-	monthExpenses: Transaction[];
+	monthExpenses: ActualRow[];
 	isLoading: boolean;
 	error: string | null;
 };
@@ -47,16 +47,26 @@ export function useBudget(month: string) {
 			supabase.from("budget_allocation").select("*").eq("month", month),
 			supabase
 				.from("transaction")
-				.select("*")
+				.select(
+					"tag_id, amount_centavos, date, split:split_event!split_id(user_share_centavos)",
+				)
 				.eq("type", "expense")
 				.gte("date", startISO)
 				.lt("date", endExclusiveISO),
 		]);
 		const err = cfgRes.error?.message ?? allocRes.error?.message ?? txRes.error?.message ?? null;
+		// For split-linked rows, count only the user's share (spec §689-694).
+		const monthExpenses: ActualRow[] = (txRes.data ?? []).map((t) => ({
+			tagId: t.tag_id,
+			effectiveCentavos:
+				(t.split as unknown as { user_share_centavos: number } | null)
+					?.user_share_centavos ?? t.amount_centavos,
+			date: t.date,
+		}));
 		setState({
 			config: cfgRes.data ?? null,
 			allocations: allocRes.data ?? [],
-			monthExpenses: txRes.data ?? [],
+			monthExpenses,
 			isLoading: false,
 			error: err,
 		});

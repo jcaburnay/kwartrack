@@ -1,20 +1,25 @@
-import type { Transaction } from "./transactionFilters";
-
 export type ActualsByTag = Map<string, number>;
 
-// TODO: subtract participant shares once splits ship (Slice 10).
-//   For split-linked expenses, only the user's share contributes — see
-//   specs_v2.md §Budget rule on splits.
+/**
+ * One row contributing to a tag's monthly actual. For non-split-linked
+ * expenses `effectiveCentavos` equals `amount_centavos`; for split-linked
+ * rows it's `split_event.user_share_centavos` (the user's slice).
+ */
+export type ActualRow = {
+	tagId: string | null;
+	effectiveCentavos: number;
+	date: string;
+};
+
 export function computeActualsByTag(
-	transactions: readonly Transaction[],
+	rows: readonly ActualRow[],
 	monthYYYYMM: string,
 ): ActualsByTag {
 	const actuals: ActualsByTag = new Map();
-	for (const tx of transactions) {
-		if (tx.type !== "expense") continue;
-		if (!tx.tag_id) continue;
-		if (tx.date.slice(0, 7) !== monthYYYYMM) continue;
-		actuals.set(tx.tag_id, (actuals.get(tx.tag_id) ?? 0) + tx.amount_centavos);
+	for (const r of rows) {
+		if (!r.tagId) continue;
+		if (r.date.slice(0, 7) !== monthYYYYMM) continue;
+		actuals.set(r.tagId, (actuals.get(r.tagId) ?? 0) + r.effectiveCentavos);
 	}
 	return actuals;
 }
