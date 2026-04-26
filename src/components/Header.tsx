@@ -1,4 +1,5 @@
 import { NavLink } from "react-router";
+import { useDebtsAndSplits } from "../hooks/useDebtsAndSplits";
 import { useAuth } from "../providers/AuthProvider";
 
 function initialsFrom(name: string | null | undefined): string {
@@ -7,16 +8,18 @@ function initialsFrom(name: string | null | undefined): string {
 	return parts.map((p) => p[0]?.toUpperCase() ?? "").join("") || "?";
 }
 
-const NAV = [
+const NAV: { to: string; label: string; indicator?: "loaned" }[] = [
 	{ to: "/", label: "Overview" },
 	{ to: "/accounts", label: "Accounts" },
 	{ to: "/budget", label: "Budget" },
 	{ to: "/recurring", label: "Recurring" },
+	{ to: "/debts-and-splits", label: "Debts & Splits", indicator: "loaned" },
 	{ to: "/settings/groups", label: "Settings" },
 ];
 
 export function Header() {
 	const { profile, signOut } = useAuth();
+	const { hasUnsettledLoaned } = useDebtsAndSplits();
 	const displayName = profile?.display_name ?? "…";
 
 	return (
@@ -31,7 +34,15 @@ export function Header() {
 							end={n.to === "/"}
 							className={({ isActive }) => `btn btn-sm btn-ghost ${isActive ? "btn-active" : ""}`}
 						>
-							{n.label}
+							<span className="relative">
+								{n.label}
+								{n.indicator === "loaned" && hasUnsettledLoaned && (
+									<span
+										className="absolute -top-1 -right-2 w-2 h-2 rounded-full bg-error"
+										aria-label="Unsettled debts"
+									/>
+								)}
+							</span>
 						</NavLink>
 					))}
 				</nav>
