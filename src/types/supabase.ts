@@ -185,6 +185,94 @@ export type Database = {
 				};
 				Relationships: [];
 			};
+			recurring: {
+				Row: {
+					amount_centavos: number;
+					completed_at: string | null;
+					created_at: string;
+					description: string | null;
+					fee_centavos: number | null;
+					first_occurrence_date: string;
+					from_account_id: string | null;
+					id: string;
+					interval: Database["public"]["Enums"]["recurring_interval"];
+					is_completed: boolean;
+					is_paused: boolean;
+					next_occurrence_at: string;
+					remaining_occurrences: number | null;
+					service: string;
+					tag_id: string | null;
+					to_account_id: string | null;
+					type: Database["public"]["Enums"]["transaction_type"];
+					updated_at: string;
+					user_id: string;
+				};
+				Insert: {
+					amount_centavos: number;
+					completed_at?: string | null;
+					created_at?: string;
+					description?: string | null;
+					fee_centavos?: number | null;
+					first_occurrence_date: string;
+					from_account_id?: string | null;
+					id?: string;
+					interval: Database["public"]["Enums"]["recurring_interval"];
+					is_completed?: boolean;
+					is_paused?: boolean;
+					next_occurrence_at: string;
+					remaining_occurrences?: number | null;
+					service: string;
+					tag_id?: string | null;
+					to_account_id?: string | null;
+					type: Database["public"]["Enums"]["transaction_type"];
+					updated_at?: string;
+					user_id: string;
+				};
+				Update: {
+					amount_centavos?: number;
+					completed_at?: string | null;
+					created_at?: string;
+					description?: string | null;
+					fee_centavos?: number | null;
+					first_occurrence_date?: string;
+					from_account_id?: string | null;
+					id?: string;
+					interval?: Database["public"]["Enums"]["recurring_interval"];
+					is_completed?: boolean;
+					is_paused?: boolean;
+					next_occurrence_at?: string;
+					remaining_occurrences?: number | null;
+					service?: string;
+					tag_id?: string | null;
+					to_account_id?: string | null;
+					type?: Database["public"]["Enums"]["transaction_type"];
+					updated_at?: string;
+					user_id?: string;
+				};
+				Relationships: [
+					{
+						foreignKeyName: "recurring_from_account_id_fkey";
+						columns: ["from_account_id"];
+						isOneToOne: false;
+						referencedRelation: "account";
+						referencedColumns: ["id"];
+					},
+					{
+						foreignKeyName: "recurring_tag_id_fkey";
+						columns: ["tag_id"];
+						isOneToOne: false;
+						referencedRelation: "tag";
+						referencedColumns: ["id"];
+					},
+					{
+						foreignKeyName: "recurring_to_account_id_fkey";
+						columns: ["to_account_id"];
+						isOneToOne: false;
+						referencedRelation: "account";
+						referencedColumns: ["id"];
+					},
+				];
+			};
 			tag: {
 				Row: {
 					created_at: string;
@@ -222,6 +310,7 @@ export type Database = {
 					from_account_id: string | null;
 					id: string;
 					parent_transaction_id: string | null;
+					recurring_id: string | null;
 					tag_id: string | null;
 					to_account_id: string | null;
 					type: Database["public"]["Enums"]["transaction_type"];
@@ -237,6 +326,7 @@ export type Database = {
 					from_account_id?: string | null;
 					id?: string;
 					parent_transaction_id?: string | null;
+					recurring_id?: string | null;
 					tag_id?: string | null;
 					to_account_id?: string | null;
 					type: Database["public"]["Enums"]["transaction_type"];
@@ -252,6 +342,7 @@ export type Database = {
 					from_account_id?: string | null;
 					id?: string;
 					parent_transaction_id?: string | null;
+					recurring_id?: string | null;
 					tag_id?: string | null;
 					to_account_id?: string | null;
 					type?: Database["public"]["Enums"]["transaction_type"];
@@ -271,6 +362,13 @@ export type Database = {
 						columns: ["parent_transaction_id"];
 						isOneToOne: false;
 						referencedRelation: "transaction";
+						referencedColumns: ["id"];
+					},
+					{
+						foreignKeyName: "transaction_recurring_id_fkey";
+						columns: ["recurring_id"];
+						isOneToOne: false;
+						referencedRelation: "recurring";
 						referencedColumns: ["id"];
 					},
 					{
@@ -321,6 +419,15 @@ export type Database = {
 			[_ in never]: never;
 		};
 		Functions: {
+			advance_recurring_next: {
+				Args: {
+					p_anchor: string;
+					p_current_next: string;
+					p_interval: Database["public"]["Enums"]["recurring_interval"];
+					p_tz: string;
+				};
+				Returns: string;
+			};
 			apply_account_delta: {
 				Args: {
 					p_account_id: string;
@@ -333,10 +440,20 @@ export type Database = {
 				Args: { p_month: string; p_user_id: string };
 				Returns: undefined;
 			};
+			recurring_fire_due: { Args: never; Returns: number };
+			recurring_initial_next_at: {
+				Args: {
+					p_anchor: string;
+					p_interval: Database["public"]["Enums"]["recurring_interval"];
+					p_tz: string;
+				};
+				Returns: string;
+			};
 		};
 		Enums: {
 			account_type: "cash" | "e-wallet" | "savings" | "credit" | "time-deposit";
 			posting_interval: "monthly" | "quarterly" | "semi-annual" | "annual" | "at-maturity";
+			recurring_interval: "weekly" | "monthly" | "quarterly" | "semi_annual" | "annual";
 			tag_type: "expense" | "income" | "transfer" | "any";
 			transaction_type: "expense" | "income" | "transfer";
 		};
@@ -469,6 +586,7 @@ export const Constants = {
 		Enums: {
 			account_type: ["cash", "e-wallet", "savings", "credit", "time-deposit"],
 			posting_interval: ["monthly", "quarterly", "semi-annual", "annual", "at-maturity"],
+			recurring_interval: ["weekly", "monthly", "quarterly", "semi_annual", "annual"],
 			tag_type: ["expense", "income", "transfer", "any"],
 			transaction_type: ["expense", "income", "transfer"],
 		},
