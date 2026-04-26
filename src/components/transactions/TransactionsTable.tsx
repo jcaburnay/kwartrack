@@ -1,3 +1,4 @@
+import { Repeat } from "lucide-react";
 import { useMemo, useState } from "react";
 import type { Tag } from "../../hooks/useTags";
 import type { Account, AccountGroup } from "../../utils/accountBalances";
@@ -162,7 +163,15 @@ export function TransactionsTable({
 									{tx.fee_centavos != null ? formatCentavos(tx.fee_centavos) : "—"}
 								</td>
 								<td className="text-base-content/70 max-w-[16rem] truncate">
-									{tx.description ?? ""}
+									<span className="inline-flex items-center gap-1.5">
+										{tx.recurring_id != null && (
+											<Repeat
+												className="w-3.5 h-3.5 text-base-content/50 shrink-0"
+												aria-label="Auto-generated from a recurring"
+											/>
+										)}
+										<span className="truncate">{tx.description ?? ""}</span>
+									</span>
 								</td>
 								<td className="whitespace-nowrap">{formatDate(tx.date)}</td>
 								{/* biome-ignore lint/a11y/useKeyWithClickEvents: stopPropagation wrapper for the row-actions kebab. */}

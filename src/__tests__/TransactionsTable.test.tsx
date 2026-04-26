@@ -35,6 +35,7 @@ const tx = (
 	fee_centavos: null,
 	from_account_id: null,
 	parent_transaction_id: null,
+	recurring_id: null,
 	tag_id: null,
 	to_account_id: null,
 	...p,
@@ -137,6 +138,43 @@ describe("TransactionsTable", () => {
 		await user.click(screen.getByText(/^Amount/));
 		const asc = screen.getAllByRole("row").slice(1);
 		expect(asc[0]).toHaveTextContent("100.00");
+	});
+
+	it("shows the repeat icon on auto-generated rows and not on manual rows", () => {
+		const rows: Transaction[] = [
+			tx({
+				id: "auto",
+				type: "expense",
+				date: "2026-04-10",
+				amount_centavos: 100_00,
+				from_account_id: "cash",
+				tag_id: "foods",
+				recurring_id: "rec-1",
+				description: "Spotify",
+			}),
+			tx({
+				id: "manual",
+				type: "expense",
+				date: "2026-04-09",
+				amount_centavos: 50_00,
+				from_account_id: "cash",
+				tag_id: "foods",
+				description: "Coffee",
+			}),
+		];
+		render(
+			<TransactionsTable
+				transactions={rows}
+				accounts={accounts}
+				groups={[]}
+				tags={tags}
+				onEdit={() => {}}
+				onChanged={() => {}}
+				emptyCopy="empty"
+			/>,
+		);
+		const icons = screen.getAllByLabelText("Auto-generated from a recurring");
+		expect(icons.length).toBe(1);
 	});
 
 	it("shows fee for transfer rows, em-dash otherwise", () => {

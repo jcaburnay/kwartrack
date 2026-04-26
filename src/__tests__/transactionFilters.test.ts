@@ -14,6 +14,7 @@ function tx(p: Partial<Transaction> & Pick<Transaction, "id" | "type" | "date">)
 		fee_centavos: null,
 		from_account_id: null,
 		parent_transaction_id: null,
+		recurring_id: null,
 		tag_id: null,
 		to_account_id: null,
 		updated_at: "2026-04-24T00:00:00Z",
