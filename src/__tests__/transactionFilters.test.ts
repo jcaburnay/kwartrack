@@ -19,6 +19,8 @@ function tx(p: Partial<Transaction> & Pick<Transaction, "id" | "type" | "date">)
 		to_account_id: null,
 		updated_at: "2026-04-24T00:00:00Z",
 		user_id: "u1",
+		debt_id: null,
+		split_id: null,
 		...p,
 	};
 }

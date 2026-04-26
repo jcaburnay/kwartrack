@@ -17,6 +17,7 @@ const acc = (p: Partial<Account> & Pick<Account, "id" | "name" | "type">): Accou
 	interest_rate_bps: null,
 	maturity_date: null,
 	interest_posting_interval: null,
+	interest_recurring_id: null,
 	is_matured: false,
 	initial_balance_centavos: 0,
 	balance_centavos: 0,
@@ -38,6 +39,8 @@ const tx = (
 	recurring_id: null,
 	tag_id: null,
 	to_account_id: null,
+	debt_id: null,
+	split_id: null,
 	...p,
 });
 

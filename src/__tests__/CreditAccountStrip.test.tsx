@@ -22,6 +22,7 @@ function mkCard(over: Partial<Account> = {}): Account {
 		interest_rate_bps: null,
 		maturity_date: null,
 		interest_posting_interval: null,
+		interest_recurring_id: null,
 		is_matured: false,
 		created_at: ts,
 		updated_at: ts,

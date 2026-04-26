@@ -22,6 +22,7 @@ const makeAccount = (p: Partial<Account> & Pick<Account, "id" | "name" | "type">
 	interest_rate_bps: null,
 	maturity_date: null,
 	interest_posting_interval: null,
+	interest_recurring_id: null,
 	is_matured: false,
 	initial_balance_centavos: 0,
 	balance_centavos: 0,

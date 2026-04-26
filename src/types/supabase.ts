@@ -195,6 +195,114 @@ export type Database = {
 				};
 				Relationships: [];
 			};
+			debt: {
+				Row: {
+					amount_centavos: number;
+					created_at: string;
+					date: string;
+					description: string | null;
+					direction: Database["public"]["Enums"]["debt_direction"];
+					id: string;
+					paid_account_id: string | null;
+					participant_id: string | null;
+					person_id: string;
+					settled_centavos: number;
+					split_id: string | null;
+					tag_id: string | null;
+					updated_at: string;
+					user_id: string;
+				};
+				Insert: {
+					amount_centavos: number;
+					created_at?: string;
+					date: string;
+					description?: string | null;
+					direction: Database["public"]["Enums"]["debt_direction"];
+					id?: string;
+					paid_account_id?: string | null;
+					participant_id?: string | null;
+					person_id: string;
+					settled_centavos?: number;
+					split_id?: string | null;
+					tag_id?: string | null;
+					updated_at?: string;
+					user_id: string;
+				};
+				Update: {
+					amount_centavos?: number;
+					created_at?: string;
+					date?: string;
+					description?: string | null;
+					direction?: Database["public"]["Enums"]["debt_direction"];
+					id?: string;
+					paid_account_id?: string | null;
+					participant_id?: string | null;
+					person_id?: string;
+					settled_centavos?: number;
+					split_id?: string | null;
+					tag_id?: string | null;
+					updated_at?: string;
+					user_id?: string;
+				};
+				Relationships: [
+					{
+						foreignKeyName: "debt_paid_account_id_fkey";
+						columns: ["paid_account_id"];
+						isOneToOne: false;
+						referencedRelation: "account";
+						referencedColumns: ["id"];
+					},
+					{
+						foreignKeyName: "debt_participant_id_fkey";
+						columns: ["participant_id"];
+						isOneToOne: false;
+						referencedRelation: "split_participant";
+						referencedColumns: ["id"];
+					},
+					{
+						foreignKeyName: "debt_person_id_fkey";
+						columns: ["person_id"];
+						isOneToOne: false;
+						referencedRelation: "person";
+						referencedColumns: ["id"];
+					},
+					{
+						foreignKeyName: "debt_split_id_fkey";
+						columns: ["split_id"];
+						isOneToOne: false;
+						referencedRelation: "split_event";
+						referencedColumns: ["id"];
+					},
+					{
+						foreignKeyName: "debt_tag_id_fkey";
+						columns: ["tag_id"];
+						isOneToOne: false;
+						referencedRelation: "tag";
+						referencedColumns: ["id"];
+					},
+				];
+			};
+			person: {
+				Row: {
+					created_at: string;
+					id: string;
+					name: string;
+					user_id: string;
+				};
+				Insert: {
+					created_at?: string;
+					id?: string;
+					name: string;
+					user_id: string;
+				};
+				Update: {
+					created_at?: string;
+					id?: string;
+					name?: string;
+					user_id?: string;
+				};
+				Relationships: [];
+			};
 			recurring: {
 				Row: {
 					amount_centavos: number;
@@ -283,6 +391,102 @@ export type Database = {
 					},
 				];
 			};
+			split_event: {
+				Row: {
+					created_at: string;
+					date: string;
+					description: string;
+					id: string;
+					method: Database["public"]["Enums"]["split_method"];
+					paid_from_account_id: string;
+					tag_id: string;
+					total_centavos: number;
+					updated_at: string;
+					user_id: string;
+					user_share_centavos: number;
+				};
+				Insert: {
+					created_at?: string;
+					date: string;
+					description: string;
+					id?: string;
+					method: Database["public"]["Enums"]["split_method"];
+					paid_from_account_id: string;
+					tag_id: string;
+					total_centavos: number;
+					updated_at?: string;
+					user_id: string;
+					user_share_centavos?: number;
+				};
+				Update: {
+					created_at?: string;
+					date?: string;
+					description?: string;
+					id?: string;
+					method?: Database["public"]["Enums"]["split_method"];
+					paid_from_account_id?: string;
+					tag_id?: string;
+					total_centavos?: number;
+					updated_at?: string;
+					user_id?: string;
+					user_share_centavos?: number;
+				};
+				Relationships: [
+					{
+						foreignKeyName: "split_event_paid_from_account_id_fkey";
+						columns: ["paid_from_account_id"];
+						isOneToOne: false;
+						referencedRelation: "account";
+						referencedColumns: ["id"];
+					},
+					{
+						foreignKeyName: "split_event_tag_id_fkey";
+						columns: ["tag_id"];
+						isOneToOne: false;
+						referencedRelation: "tag";
+						referencedColumns: ["id"];
+					},
+				];
+			};
+			split_participant: {
+				Row: {
+					id: string;
+					person_id: string;
+					share_centavos: number;
+					share_input_value: number | null;
+					split_id: string;
+				};
+				Insert: {
+					id?: string;
+					person_id: string;
+					share_centavos: number;
+					share_input_value?: number | null;
+					split_id: string;
+				};
+				Update: {
+					id?: string;
+					person_id?: string;
+					share_centavos?: number;
+					share_input_value?: number | null;
+					split_id?: string;
+				};
+				Relationships: [
+					{
+						foreignKeyName: "split_participant_person_id_fkey";
+						columns: ["person_id"];
+						isOneToOne: false;
+						referencedRelation: "person";
+						referencedColumns: ["id"];
+					},
+					{
+						foreignKeyName: "split_participant_split_id_fkey";
+						columns: ["split_id"];
+						isOneToOne: false;
+						referencedRelation: "split_event";
+						referencedColumns: ["id"];
+					},
+				];
+			};
 			tag: {
 				Row: {
 					created_at: string;
@@ -315,12 +519,14 @@ export type Database = {
 					amount_centavos: number;
 					created_at: string;
 					date: string;
+					debt_id: string | null;
 					description: string | null;
 					fee_centavos: number | null;
 					from_account_id: string | null;
 					id: string;
 					parent_transaction_id: string | null;
 					recurring_id: string | null;
+					split_id: string | null;
 					tag_id: string | null;
 					to_account_id: string | null;
 					type: Database["public"]["Enums"]["transaction_type"];
@@ -331,12 +537,14 @@ export type Database = {
 					amount_centavos: number;
 					created_at?: string;
 					date: string;
+					debt_id?: string | null;
 					description?: string | null;
 					fee_centavos?: number | null;
 					from_account_id?: string | null;
 					id?: string;
 					parent_transaction_id?: string | null;
 					recurring_id?: string | null;
+					split_id?: string | null;
 					tag_id?: string | null;
 					to_account_id?: string | null;
 					type: Database["public"]["Enums"]["transaction_type"];
@@ -347,12 +555,14 @@ export type Database = {
 					amount_centavos?: number;
 					created_at?: string;
 					date?: string;
+					debt_id?: string | null;
 					description?: string | null;
 					fee_centavos?: number | null;
 					from_account_id?: string | null;
 					id?: string;
 					parent_transaction_id?: string | null;
 					recurring_id?: string | null;
+					split_id?: string | null;
 					tag_id?: string | null;
 					to_account_id?: string | null;
 					type?: Database["public"]["Enums"]["transaction_type"];
@@ -360,6 +570,13 @@ export type Database = {
 					user_id?: string;
 				};
 				Relationships: [
+					{
+						foreignKeyName: "transaction_debt_id_fkey";
+						columns: ["debt_id"];
+						isOneToOne: false;
+						referencedRelation: "debt";
+						referencedColumns: ["id"];
+					},
 					{
 						foreignKeyName: "transaction_from_account_id_fkey";
 						columns: ["from_account_id"];
@@ -379,6 +596,13 @@ export type Database = {
 						columns: ["recurring_id"];
 						isOneToOne: false;
 						referencedRelation: "recurring";
+						referencedColumns: ["id"];
+					},
+					{
+						foreignKeyName: "transaction_split_id_fkey";
+						columns: ["split_id"];
+						isOneToOne: false;
+						referencedRelation: "split_event";
 						referencedColumns: ["id"];
 					},
 					{
@@ -446,8 +670,24 @@ export type Database = {
 				};
 				Returns: undefined;
 			};
+			create_split: {
+				Args: {
+					p_date: string;
+					p_description: string;
+					p_method: Database["public"]["Enums"]["split_method"];
+					p_paid_from_account_id: string;
+					p_participants: Json;
+					p_tag_id: string;
+					p_total_centavos: number;
+				};
+				Returns: string;
+			};
 			enforce_budget_cap: {
 				Args: { p_month: string; p_user_id: string };
+				Returns: undefined;
+			};
+			recompute_split_user_share: {
+				Args: { p_split_id: string };
 				Returns: undefined;
 			};
 			recurring_fire_due: { Args: never; Returns: number };
@@ -456,6 +696,15 @@ export type Database = {
 					p_anchor: string;
 					p_interval: Database["public"]["Enums"]["recurring_interval"];
 					p_tz: string;
+				};
+				Returns: string;
+			};
+			settle_debt: {
+				Args: {
+					p_amount_centavos: number;
+					p_date?: string;
+					p_debt_id: string;
+					p_paid_account_id: string;
 				};
 				Returns: string;
 			};
@@ -489,11 +738,26 @@ export type Database = {
 				Args: { p_interval: Database["public"]["Enums"]["posting_interval"] };
 				Returns: Database["public"]["Enums"]["recurring_interval"];
 			};
+			update_split: {
+				Args: {
+					p_date: string;
+					p_description: string;
+					p_method: Database["public"]["Enums"]["split_method"];
+					p_paid_from_account_id: string;
+					p_participants: Json;
+					p_split_id: string;
+					p_tag_id: string;
+					p_total_centavos: number;
+				};
+				Returns: undefined;
+			};
 		};
 		Enums: {
 			account_type: "cash" | "e-wallet" | "savings" | "credit" | "time-deposit";
+			debt_direction: "loaned" | "owed";
 			posting_interval: "monthly" | "quarterly" | "semi-annual" | "annual" | "at-maturity";
 			recurring_interval: "weekly" | "monthly" | "quarterly" | "semi_annual" | "annual";
+			split_method: "equal" | "exact" | "percentage" | "shares";
 			tag_type: "expense" | "income" | "transfer" | "any";
 			transaction_type: "expense" | "income" | "transfer";
 		};
@@ -625,8 +889,10 @@ export const Constants = {
 	public: {
 		Enums: {
 			account_type: ["cash", "e-wallet", "savings", "credit", "time-deposit"],
+			debt_direction: ["loaned", "owed"],
 			posting_interval: ["monthly", "quarterly", "semi-annual", "annual", "at-maturity"],
 			recurring_interval: ["weekly", "monthly", "quarterly", "semi_annual", "annual"],
+			split_method: ["equal", "exact", "percentage", "shares"],
 			tag_type: ["expense", "income", "transfer", "any"],
 			transaction_type: ["expense", "income", "transfer"],
 		},

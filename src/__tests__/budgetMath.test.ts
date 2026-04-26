@@ -20,6 +20,8 @@ function tx(p: Partial<Transaction> & Pick<Transaction, "id" | "type" | "date">)
 		to_account_id: null,
 		updated_at: "",
 		user_id: "u1",
+		debt_id: null,
+		split_id: null,
 		...p,
 	};
 }
