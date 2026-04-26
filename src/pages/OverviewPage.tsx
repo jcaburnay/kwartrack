@@ -6,7 +6,7 @@ export function OverviewPage() {
 		<div className="min-h-dvh bg-base-200 flex flex-col">
 			<Header />
 			<main className="flex-1 flex items-center justify-center p-6">
-				<WelcomeCard />
+				<WelcomeCard onCreateAccount={() => {}} />
 			</main>
 		</div>
 	);
