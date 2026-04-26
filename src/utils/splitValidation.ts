@@ -44,9 +44,12 @@ export function validateSplit(input: SplitInput): SplitValidation {
 	if (input.participants.length === 0) {
 		return { ok: false, field: "participants", message: "Add at least one participant" };
 	}
+	// The user-the-payer absorbs the remainder (spec §652) and is NOT a row in
+	// `participants`. So shares only need to be <= total; the leftover becomes
+	// the payer's share via split_event.user_share_centavos.
 	const sum = input.participants.reduce((a, p) => a + p.shareCentavos, 0);
-	if (sum !== input.totalCentavos) {
-		return { ok: false, field: "participants", message: "Shares must sum to the total" };
+	if (sum > input.totalCentavos) {
+		return { ok: false, field: "participants", message: "Shares exceed the total" };
 	}
 	return { ok: true };
 }

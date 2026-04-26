@@ -55,18 +55,21 @@ describe("validateSplit", () => {
 			message: "Add at least one participant",
 		});
 	});
-	it("rejects when shares don't sum to total", () => {
-		const bad = {
+	it("rejects when shares exceed the total", () => {
+		// Sum 140000 > total 100000 — invalid. (Sum < total is valid; the
+		// remainder is the user-the-payer's implicit share.)
+		const bad: SplitInput = {
 			...base,
+			totalCentavos: 100000,
 			participants: [
-				{ personId: "user-self", shareCentavos: 100000, shareInputValue: null },
-				{ personId: "p-2", shareCentavos: 100000, shareInputValue: null },
+				{ personId: "p-2", shareCentavos: 70000, shareInputValue: null },
+				{ personId: "p-3", shareCentavos: 70000, shareInputValue: null },
 			],
 		};
 		expect(validateSplit(bad)).toEqual({
 			ok: false,
 			field: "participants",
-			message: "Shares must sum to the total",
+			message: "Shares exceed the total",
 		});
 	});
 });
