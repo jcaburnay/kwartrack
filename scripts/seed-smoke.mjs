@@ -70,10 +70,7 @@ async function wipeUserData(userId) {
 }
 
 async function fetchTags(userId) {
-	const { data, error } = await admin
-		.from("tag")
-		.select("id, name, type")
-		.eq("user_id", userId);
+	const { data, error } = await admin.from("tag").select("id, name, type").eq("user_id", userId);
 	if (error) throw error;
 	const map = new Map();
 	for (const t of data) map.set(`${t.type}:${t.name}`, t.id);
