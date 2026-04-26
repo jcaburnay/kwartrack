@@ -64,8 +64,10 @@ export function useTags() {
 	const deleteTag = useCallback(
 		async (id: string): Promise<{ error: string | null }> => {
 			// Check transaction usage before attempting delete.
-			// TODO: When recurring, budget allocation, split, and debt tables are added
-			// in later slices, extend this count to include those tables too.
+			// Allocations are intentionally excluded: budget_allocation.tag_id has
+			// ON DELETE CASCADE, so deleting a tag silently removes its allocations.
+			// TODO: When recurring, split, and debt tables are added in later slices,
+			// extend this count to include those tables too.
 			const { count, error: countErr } = await supabase
 				.from("transaction")
 				.select("id", { count: "exact", head: true })
