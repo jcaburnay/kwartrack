@@ -120,6 +120,44 @@ export type Database = {
 				};
 				Relationships: [];
 			};
+			budget_allocation: {
+				Row: {
+					amount_centavos: number;
+					created_at: string;
+					id: string;
+					month: string;
+					tag_id: string;
+					updated_at: string;
+					user_id: string;
+				};
+				Insert: {
+					amount_centavos: number;
+					created_at?: string;
+					id?: string;
+					month: string;
+					tag_id: string;
+					updated_at?: string;
+					user_id: string;
+				};
+				Update: {
+					amount_centavos?: number;
+					created_at?: string;
+					id?: string;
+					month?: string;
+					tag_id?: string;
+					updated_at?: string;
+					user_id?: string;
+				};
+				Relationships: [
+					{
+						foreignKeyName: "budget_allocation_tag_id_fkey";
+						columns: ["tag_id"];
+						isOneToOne: false;
+						referencedRelation: "tag";
+						referencedColumns: ["id"];
+					},
+				];
+			};
 			budget_config: {
 				Row: {
 					created_at: string;
@@ -283,7 +321,18 @@ export type Database = {
 			[_ in never]: never;
 		};
 		Functions: {
-			[_ in never]: never;
+			apply_account_delta: {
+				Args: {
+					p_account_id: string;
+					p_amount_centavos: number;
+					p_money_in: boolean;
+				};
+				Returns: undefined;
+			};
+			enforce_budget_cap: {
+				Args: { p_month: string; p_user_id: string };
+				Returns: undefined;
+			};
 		};
 		Enums: {
 			account_type: "cash" | "e-wallet" | "savings" | "credit" | "time-deposit";
