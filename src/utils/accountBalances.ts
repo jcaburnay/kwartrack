@@ -1,4 +1,5 @@
 import type { Database } from "../types/supabase";
+import type { Recurring } from "./recurringFilters";
 
 export type Account = Database["public"]["Tables"]["account"]["Row"];
 export type AccountGroup = Database["public"]["Tables"]["account_group"]["Row"];
@@ -55,6 +56,43 @@ export function creditUtilization(account: Account): CreditUtilization | null {
 		utilizedCentavos: utilized,
 		limitCentavos: limit,
 		utilizationPct: limit === 0 ? 0 : utilized / limit,
+	};
+}
+
+export type InstallmentMetrics = {
+	committedCentavos: number;
+	limitCentavos: number;
+	availableCentavos: number;
+	utilizationPct: number;
+};
+
+/**
+ * Future installment commitments against a credit card's separate installment pool.
+ * Sums `remaining_occurrences × amount_centavos` across recurrings whose
+ * `from_account_id` is this card and that have a finite remaining count.
+ * Open-ended recurrings (null `remaining_occurrences`) are treated as ongoing
+ * subscriptions, not installment plans, so they are excluded.
+ *
+ * Returns null when the account has no separate installment limit; in that case
+ * everything shares the regular pool and `creditUtilization` is enough.
+ */
+export function creditInstallmentMetrics(
+	account: Account,
+	recurrings: readonly Recurring[],
+): InstallmentMetrics | null {
+	if (account.type !== "credit" || account.installment_limit_centavos == null) return null;
+	const limit = account.installment_limit_centavos;
+	let committed = 0;
+	for (const r of recurrings) {
+		if (r.from_account_id !== account.id) continue;
+		if (r.remaining_occurrences == null) continue;
+		committed += r.remaining_occurrences * r.amount_centavos;
+	}
+	return {
+		committedCentavos: committed,
+		limitCentavos: limit,
+		availableCentavos: Math.max(0, limit - committed),
+		utilizationPct: limit === 0 ? 0 : committed / limit,
 	};
 }
 

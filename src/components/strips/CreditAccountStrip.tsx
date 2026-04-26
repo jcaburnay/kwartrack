@@ -1,24 +1,36 @@
 import type { Account } from "../../utils/accountBalances";
-import { creditUtilization } from "../../utils/accountBalances";
+import { creditInstallmentMetrics, creditUtilization } from "../../utils/accountBalances";
 import { formatCentavos } from "../../utils/currency";
+import type { Recurring } from "../../utils/recurringFilters";
 
 type Props = {
 	account: Account;
+	recurrings: readonly Recurring[];
 	onPayThisCard: () => void;
 };
 
-export function CreditAccountStrip({ account, onPayThisCard }: Props) {
+function pctClass(pct: number): string {
+	if (pct > 1) return "progress-error";
+	if (pct >= 0.8) return "progress-warning";
+	return "progress-success";
+}
+
+export function CreditAccountStrip({ account, recurrings, onPayThisCard }: Props) {
 	const utilization = creditUtilization(account);
 	if (!utilization) return null;
 	const { utilizedCentavos, limitCentavos, utilizationPct } = utilization;
+	// Spec §"Credit accounts" defines `availableCredit = creditLimit − (balance − installment-linked
+	// portion)`. We don't track which posted transactions are installment-linked, so the
+	// "installment-linked portion of balance" is treated as 0 here — already-posted installments
+	// reduce regular available; the separate installment pool reflects only future commitments.
+	// Refine if/when individual installment transactions become tagged.
 	const available = Math.max(0, limitCentavos - utilizedCentavos);
-	const pct = Math.min(100, Math.round(utilizationPct * 100));
-	const pctColor =
-		utilizationPct > 1
-			? "progress-error"
-			: utilizationPct >= 0.8
-				? "progress-warning"
-				: "progress-success";
+	const utilPctText = Math.round(utilizationPct * 100);
+	const utilPctBar = Math.min(100, utilPctText);
+
+	const installment = creditInstallmentMetrics(account, recurrings);
+	const installmentPctText = installment ? Math.round(installment.utilizationPct * 100) : 0;
+	const installmentPctBar = Math.min(100, installmentPctText);
 
 	return (
 		<section className="card bg-base-100 shadow-sm">
@@ -31,29 +43,48 @@ export function CreditAccountStrip({ account, onPayThisCard }: Props) {
 							<span className="text-base-content/50 text-base">owed</span>
 						</p>
 					</div>
-					<div className="text-sm text-base-content/70">
-						Available <strong className="text-base-content">{formatCentavos(available)}</strong>
+					<div className="text-right text-sm text-base-content/70 flex flex-col gap-0.5">
+						<span>
+							Available <strong className="text-base-content">{formatCentavos(available)}</strong>
+						</span>
+						{installment && (
+							<span>
+								Installment{" "}
+								<strong className="text-base-content">
+									{formatCentavos(installment.availableCentavos)}
+								</strong>
+							</span>
+						)}
 					</div>
 				</header>
 
 				<div className="flex flex-col gap-1">
 					<div className="flex justify-between text-xs text-base-content/60">
-						<span>Utilization</span>
-						<span>{pct}%</span>
+						<span>
+							Utilization · {formatCentavos(utilizedCentavos)} / {formatCentavos(limitCentavos)}
+						</span>
+						<span>{utilPctText}%</span>
 					</div>
-					<progress className={`progress ${pctColor}`} value={pct} max="100" />
+					<progress
+						className={`progress ${pctClass(utilizationPct)}`}
+						value={utilPctBar}
+						max="100"
+					/>
 				</div>
 
-				{account.installment_limit_centavos != null && (
+				{installment && (
 					<div className="flex flex-col gap-1">
 						<div className="flex justify-between text-xs text-base-content/60">
-							<span>Installment (awaiting recurrings in a later slice)</span>
-							<span>0%</span>
+							<span>
+								Installment · {formatCentavos(installment.committedCentavos)} /{" "}
+								{formatCentavos(installment.limitCentavos)}
+							</span>
+							<span>{installmentPctText}%</span>
 						</div>
 						<progress
-							className="progress progress-info"
-							value={0}
-							max={account.installment_limit_centavos || 1}
+							className={`progress ${pctClass(installment.utilizationPct)}`}
+							value={installmentPctBar}
+							max="100"
 						/>
 					</div>
 				)}

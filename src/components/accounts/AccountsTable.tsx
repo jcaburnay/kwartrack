@@ -1,12 +1,20 @@
 import type { Account, AccountGroup } from "../../utils/accountBalances";
-import { groupRollup, isLiability, sortAccountsByGroupAndName } from "../../utils/accountBalances";
+import {
+	creditInstallmentMetrics,
+	creditUtilization,
+	groupRollup,
+	isLiability,
+	sortAccountsByGroupAndName,
+} from "../../utils/accountBalances";
 import { ACCOUNT_TYPE_LABEL } from "../../utils/accountValidation";
 import { formatCentavos } from "../../utils/currency";
+import type { Recurring } from "../../utils/recurringFilters";
 import { AccountRowActions } from "./AccountRowActions";
 
 type Props = {
 	accounts: readonly Account[];
 	groups: readonly AccountGroup[];
+	recurrings: readonly Recurring[];
 	selectedAccountId: string | null;
 	selectedGroupId: string | null;
 	onSelectAccount: (id: string | null) => void;
@@ -15,6 +23,41 @@ type Props = {
 	onChanged: () => Promise<void> | void;
 	showArchived: boolean;
 };
+
+function pctClass(pct: number): string {
+	if (pct > 1) return "progress-error";
+	if (pct >= 0.8) return "progress-warning";
+	return "progress-success";
+}
+
+function CompactCreditBars({
+	account,
+	recurrings,
+}: {
+	account: Account;
+	recurrings: readonly Recurring[];
+}) {
+	const util = creditUtilization(account);
+	if (!util) return null;
+	const installment = creditInstallmentMetrics(account, recurrings);
+	const utilPct = Math.min(100, Math.round(util.utilizationPct * 100));
+	return (
+		<div className="flex flex-col gap-0.5 mt-1 w-32 sm:w-40 ml-auto">
+			<progress
+				className={`progress h-1 ${pctClass(util.utilizationPct)}`}
+				value={utilPct}
+				max="100"
+			/>
+			{installment && (
+				<progress
+					className={`progress h-1 ${pctClass(installment.utilizationPct)}`}
+					value={Math.min(100, Math.round(installment.utilizationPct * 100))}
+					max="100"
+				/>
+			)}
+		</div>
+	);
+}
 
 type DisplayRow =
 	| { kind: "group-header"; group: AccountGroup; netCentavos: number }
@@ -45,6 +88,7 @@ function buildRows(accounts: readonly Account[], groups: readonly AccountGroup[]
 export function AccountsTable({
 	accounts,
 	groups,
+	recurrings,
 	selectedAccountId,
 	selectedGroupId,
 	onSelectAccount,
@@ -122,7 +166,10 @@ export function AccountsTable({
 								<td
 									className={`text-right font-mono ${isLiability(row.account) ? "text-error" : ""}`}
 								>
-									{formatCentavos(row.account.balance_centavos)}
+									<div>{formatCentavos(row.account.balance_centavos)}</div>
+									{row.account.type === "credit" && (
+										<CompactCreditBars account={row.account} recurrings={recurrings} />
+									)}
 								</td>
 								{/* biome-ignore lint/a11y/useKeyWithClickEvents: stopPropagation wrapper for the row-actions kebab. */}
 								<td onClick={(e) => e.stopPropagation()}>

@@ -48,7 +48,7 @@ export function AccountsPage() {
 	const [newTxPrefill, setNewTxPrefill] = useState<Partial<TransactionFormValues>>({});
 	const [editingTx, setEditingTx] = useState<Transaction | null>(null);
 
-	const { createRecurring } = useRecurrings();
+	const { recurrings, createRecurring } = useRecurrings();
 	const [showNewRecurring, setShowNewRecurring] = useState(false);
 	const [newRecurringPrefill, setNewRecurringPrefill] = useState<Partial<RecurringFormValues>>({});
 
@@ -161,6 +161,7 @@ export function AccountsPage() {
 					<AccountsTable
 						accounts={accounts}
 						groups={groups}
+						recurrings={recurrings}
 						selectedAccountId={selection.kind === "account" ? selection.account.id : null}
 						selectedGroupId={selection.kind === "group" ? selection.group.id : null}
 						onSelectAccount={selectAccount}
@@ -175,6 +176,7 @@ export function AccountsPage() {
 					<AccountDetailStrip
 						account={selection.account}
 						transactions={transactions}
+						recurrings={recurrings}
 						timezone={timezone}
 						onClear={clear}
 						onPayThisCard={() => openPayThisCard(selection.account.id)}

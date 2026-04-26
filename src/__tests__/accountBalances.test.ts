@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { Account, AccountGroup } from "../utils/accountBalances";
 import {
 	computeNetWorth,
+	creditInstallmentMetrics,
 	creditUtilization,
 	daysToMaturity,
 	estimatedTimeDepositValue,
@@ -9,6 +10,7 @@ import {
 	interestAccrued,
 	sortAccountsByGroupAndName,
 } from "../utils/accountBalances";
+import type { Recurring } from "../utils/recurringFilters";
 
 const ts = "2026-04-24T00:00:00Z";
 
@@ -111,6 +113,123 @@ describe("creditUtilization", () => {
 			limitCentavos: 1000_00,
 			utilizationPct: 0.25,
 		});
+	});
+});
+
+describe("creditInstallmentMetrics", () => {
+	function mkRecurring(
+		p: Partial<Recurring> & Pick<Recurring, "id" | "from_account_id">,
+	): Recurring {
+		return {
+			id: p.id,
+			user_id: "u1",
+			service: p.service ?? "Plan",
+			description: null,
+			amount_centavos: p.amount_centavos ?? 100_00,
+			type: p.type ?? "expense",
+			tag_id: p.tag_id ?? "tag1",
+			from_account_id: p.from_account_id,
+			to_account_id: p.to_account_id ?? null,
+			fee_centavos: null,
+			interval: p.interval ?? "monthly",
+			first_occurrence_date: "2026-01-15",
+			next_occurrence_at: "2026-05-15T00:00:00Z",
+			remaining_occurrences: p.remaining_occurrences ?? null,
+			is_paused: p.is_paused ?? false,
+			is_completed: p.is_completed ?? false,
+			completed_at: p.completed_at ?? null,
+			created_at: ts,
+			updated_at: ts,
+		};
+	}
+
+	const card = mkAccount({
+		name: "Card",
+		type: "credit",
+		balance_centavos: 250_00,
+		credit_limit_centavos: 1000_00,
+		installment_limit_centavos: 500_00,
+	});
+
+	it("returns null for non-credit accounts", () => {
+		expect(creditInstallmentMetrics(mkAccount({ name: "Cash", type: "cash" }), [])).toBeNull();
+	});
+
+	it("returns null when installment_limit is not set", () => {
+		const noPool = mkAccount({
+			name: "C",
+			type: "credit",
+			balance_centavos: 100_00,
+			credit_limit_centavos: 500_00,
+		});
+		expect(creditInstallmentMetrics(noPool, [])).toBeNull();
+	});
+
+	it("sums remaining_occurrences × amount across this card's installment recurrings", () => {
+		const recurrings: Recurring[] = [
+			mkRecurring({
+				id: "r1",
+				from_account_id: card.id,
+				amount_centavos: 50_00,
+				remaining_occurrences: 3,
+			}),
+			mkRecurring({
+				id: "r2",
+				from_account_id: card.id,
+				amount_centavos: 25_00,
+				remaining_occurrences: 6,
+			}),
+		];
+		const m = creditInstallmentMetrics(card, recurrings);
+		expect(m).not.toBeNull();
+		// 50*3 + 25*6 = 150 + 150 = 300 pesos
+		expect(m?.committedCentavos).toBe(300_00);
+		expect(m?.limitCentavos).toBe(500_00);
+		expect(m?.availableCentavos).toBe(200_00);
+		expect(m?.utilizationPct).toBeCloseTo(0.6, 5);
+	});
+
+	it("excludes recurrings with NULL remaining_occurrences (open-ended subscriptions)", () => {
+		const recurrings: Recurring[] = [
+			mkRecurring({
+				id: "sub",
+				from_account_id: card.id,
+				amount_centavos: 99_00,
+				remaining_occurrences: null,
+			}),
+		];
+		const m = creditInstallmentMetrics(card, recurrings);
+		expect(m?.committedCentavos).toBe(0);
+	});
+
+	it("ignores recurrings paying TO the card (not installments on it)", () => {
+		const recurrings: Recurring[] = [
+			mkRecurring({
+				id: "auto-pay",
+				from_account_id: "other-bank",
+				to_account_id: card.id,
+				type: "transfer",
+				amount_centavos: 1000_00,
+				remaining_occurrences: 12,
+			}),
+		];
+		const m = creditInstallmentMetrics(card, recurrings);
+		expect(m?.committedCentavos).toBe(0);
+	});
+
+	it("clamps available to 0 when committed exceeds limit", () => {
+		const recurrings: Recurring[] = [
+			mkRecurring({
+				id: "huge",
+				from_account_id: card.id,
+				amount_centavos: 1000_00,
+				remaining_occurrences: 12,
+			}),
+		];
+		const m = creditInstallmentMetrics(card, recurrings);
+		expect(m?.committedCentavos).toBe(12_000_00);
+		expect(m?.availableCentavos).toBe(0);
+		expect(m?.utilizationPct).toBeGreaterThan(1);
 	});
 });
 
