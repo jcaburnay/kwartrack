@@ -5,7 +5,7 @@ const SECTIONS: { slug: string; label: string; enabled: boolean }[] = [
 	{ slug: "profile", label: "Profile", enabled: false },
 	{ slug: "appearance", label: "Appearance", enabled: false },
 	{ slug: "tags", label: "Tags", enabled: true },
-	{ slug: "contacts", label: "Contacts", enabled: false },
+	{ slug: "contacts", label: "Contacts", enabled: true },
 	{ slug: "groups", label: "Groups", enabled: true },
 	{ slug: "export", label: "Data export", enabled: false },
 	{ slug: "about", label: "Help & about", enabled: false },
