@@ -63,28 +63,34 @@ export function useTags() {
 
 	const deleteTag = useCallback(
 		async (id: string): Promise<{ error: string | null }> => {
-			// Check transaction + recurring usage before attempting delete.
-			// Allocations are intentionally excluded: budget_allocation.tag_id has
-			// ON DELETE CASCADE, so deleting a tag silently removes its allocations.
-			// TODO: When split and debt tables are added in later slices, extend
-			// this count to include those tables too.
-			const [txRes, recRes] = await Promise.all([
+			// Pre-check transaction + recurring + split + debt references for a
+			// friendly count. budget_allocation is intentionally excluded:
+			// ON DELETE CASCADE on tag_id silently drops allocations.
+			const [txRes, recRes, splitRes, debtRes] = await Promise.all([
 				supabase.from("transaction").select("id", { count: "exact", head: true }).eq("tag_id", id),
 				supabase.from("recurring").select("id", { count: "exact", head: true }).eq("tag_id", id),
+				supabase
+					.from("split_event")
+					.select("id", { count: "exact", head: true })
+					.eq("tag_id", id),
+				supabase.from("debt").select("id", { count: "exact", head: true }).eq("tag_id", id),
 			]);
 			if (txRes.error) return { error: txRes.error.message };
 			if (recRes.error) return { error: recRes.error.message };
-			const txCount = txRes.count ?? 0;
-			const recCount = recRes.count ?? 0;
-			if (txCount > 0) {
-				return {
-					error: `This tag is used by ${txCount} transaction${txCount === 1 ? "" : "s"} and cannot be deleted.`,
-				};
-			}
-			if (recCount > 0) {
-				return {
-					error: `This tag is used by ${recCount} recurring${recCount === 1 ? "" : "s"} and cannot be deleted.`,
-				};
+			if (splitRes.error) return { error: splitRes.error.message };
+			if (debtRes.error) return { error: debtRes.error.message };
+			const counts = [
+				{ n: txRes.count ?? 0, label: "transaction" },
+				{ n: recRes.count ?? 0, label: "recurring" },
+				{ n: splitRes.count ?? 0, label: "split" },
+				{ n: debtRes.count ?? 0, label: "debt" },
+			];
+			for (const c of counts) {
+				if (c.n > 0) {
+					return {
+						error: `This tag is used by ${c.n} ${c.label}${c.n === 1 ? "" : "s"} and cannot be deleted.`,
+					};
+				}
 			}
 			const { error } = await supabase.from("tag").delete().eq("id", id);
 			if (error) return { error: error.message };
