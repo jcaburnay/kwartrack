@@ -5,7 +5,7 @@ import type { Account } from "../../utils/accountBalances";
 import { centavosToPesos } from "../../utils/currency";
 import type { SplitMethod } from "../../utils/splitMath";
 import type { SplitInput } from "../../utils/splitValidation";
-import { type SplitFormDefaults, SplitForm } from "./SplitForm";
+import { SplitForm, type SplitFormDefaults } from "./SplitForm";
 import type { ParticipantRow } from "./SplitParticipantList";
 
 type Props = {
@@ -78,12 +78,7 @@ export function EditSplitModal({
 					onCancel={onCancel}
 				/>
 			</div>
-			<button
-				type="button"
-				className="modal-backdrop"
-				onClick={onCancel}
-				aria-label="Dismiss"
-			/>
+			<button type="button" className="modal-backdrop" onClick={onCancel} aria-label="Dismiss" />
 		</div>
 	);
 }

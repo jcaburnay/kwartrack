@@ -25,7 +25,7 @@ export function PersonPicker({ persons, value, onChange, onCreate }: Props) {
 	const exact = matches.some((p) => p.name.toLowerCase() === query.trim().toLowerCase());
 
 	return (
-		<label className="form-control">
+		<div className="form-control">
 			<div className="label">
 				<span className="label-text">Counter-party</span>
 			</div>
@@ -97,6 +97,6 @@ export function PersonPicker({ persons, value, onChange, onCreate }: Props) {
 					onCancel={() => setShowCreate(false)}
 				/>
 			)}
-		</label>
+		</div>
 	);
 }

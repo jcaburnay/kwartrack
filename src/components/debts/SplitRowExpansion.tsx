@@ -35,14 +35,8 @@ export function SplitRowExpansion({
 		};
 	}, [split.id, loadParticipants]);
 
-	const pending = parts.reduce(
-		(a, p) => a + Math.max(0, p.shareCentavos - p.settledCentavos),
-		0,
-	);
-	const settled = parts.reduce(
-		(a, p) => a + Math.min(p.settledCentavos, p.shareCentavos),
-		0,
-	);
+	const pending = parts.reduce((a, p) => a + Math.max(0, p.shareCentavos - p.settledCentavos), 0);
+	const settled = parts.reduce((a, p) => a + Math.min(p.settledCentavos, p.shareCentavos), 0);
 
 	return (
 		<div className="bg-base-200 p-3 rounded-md">

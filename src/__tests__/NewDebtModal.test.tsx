@@ -39,9 +39,7 @@ describe("NewDebtModal", () => {
 			target: { value: "ali" },
 		});
 		fireEvent.click(screen.getByText("Alice"));
-		const amountInput = document.querySelector(
-			"input[type='number']",
-		) as HTMLInputElement;
+		const amountInput = document.querySelector("input[type='number']") as HTMLInputElement;
 		fireEvent.change(amountInput, { target: { value: "100" } });
 		fireEvent.click(screen.getByRole("button", { name: /Create Debt/i }));
 		await waitFor(() => expect(create).toHaveBeenCalled());

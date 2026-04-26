@@ -69,10 +69,7 @@ export function useTags() {
 			const [txRes, recRes, splitRes, debtRes] = await Promise.all([
 				supabase.from("transaction").select("id", { count: "exact", head: true }).eq("tag_id", id),
 				supabase.from("recurring").select("id", { count: "exact", head: true }).eq("tag_id", id),
-				supabase
-					.from("split_event")
-					.select("id", { count: "exact", head: true })
-					.eq("tag_id", id),
+				supabase.from("split_event").select("id", { count: "exact", head: true }).eq("tag_id", id),
 				supabase.from("debt").select("id", { count: "exact", head: true }).eq("tag_id", id),
 			]);
 			if (txRes.error) return { error: txRes.error.message };

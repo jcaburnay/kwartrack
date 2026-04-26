@@ -11,10 +11,7 @@ export type ActualRow = {
 	date: string;
 };
 
-export function computeActualsByTag(
-	rows: readonly ActualRow[],
-	monthYYYYMM: string,
-): ActualsByTag {
+export function computeActualsByTag(rows: readonly ActualRow[], monthYYYYMM: string): ActualsByTag {
 	const actuals: ActualsByTag = new Map();
 	for (const r of rows) {
 		if (!r.tagId) continue;

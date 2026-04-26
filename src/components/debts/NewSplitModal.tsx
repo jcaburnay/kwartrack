@@ -54,12 +54,7 @@ export function NewSplitModal({
 					onCancel={onCancel}
 				/>
 			</div>
-			<button
-				type="button"
-				className="modal-backdrop"
-				onClick={onCancel}
-				aria-label="Dismiss"
-			/>
+			<button type="button" className="modal-backdrop" onClick={onCancel} aria-label="Dismiss" />
 		</div>
 	);
 }

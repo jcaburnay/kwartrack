@@ -6,8 +6,8 @@ import { DebtsTable } from "../components/debts/DebtsTable";
 import { EditSplitModal } from "../components/debts/EditSplitModal";
 import { NewDebtModal } from "../components/debts/NewDebtModal";
 import { NewSplitModal } from "../components/debts/NewSplitModal";
-import type { ParticipantRow } from "../components/debts/SplitParticipantList";
 import { SettleModal } from "../components/debts/SettleModal";
+import type { ParticipantRow } from "../components/debts/SplitParticipantList";
 import { SplitsFilterBar } from "../components/debts/SplitsFilterBar";
 import { SplitsTable } from "../components/debts/SplitsTable";
 import { Fab } from "../components/Fab";
@@ -72,10 +72,7 @@ export function DebtsAndSplitsPage() {
 		}
 	}, [params, setParams]);
 
-	const tagsByIdMap = useMemo(
-		() => new Map(tags.map((t) => [t.id, t.name] as const)),
-		[tags],
-	);
+	const tagsByIdMap = useMemo(() => new Map(tags.map((t) => [t.id, t.name] as const)), [tags]);
 	// Standalone debts have no split_id; they're the only ones the user can delete
 	// directly. The DebtRow filter type doesn't carry split_id, so we infer:
 	// any debt whose tagId resolves to its own column (not via the split's tag) is
@@ -91,9 +88,7 @@ export function DebtsAndSplitsPage() {
 		[splits, splitFilters],
 	);
 
-	const settlingDebt = settlingDebtId
-		? (debts.find((d) => d.id === settlingDebtId) ?? null)
-		: null;
+	const settlingDebt = settlingDebtId ? (debts.find((d) => d.id === settlingDebtId) ?? null) : null;
 
 	function setExpandedSplit(id: string | null) {
 		const next = new URLSearchParams(params);
@@ -146,10 +141,7 @@ export function DebtsAndSplitsPage() {
 				<h1 className="text-2xl font-semibold">Debts &amp; Splits</h1>
 				{error && <div className="alert alert-error text-sm">{error}</div>}
 
-				<BalanceStrip
-					owedCentavos={balance.owedCentavos}
-					oweCentavos={balance.oweCentavos}
-				/>
+				<BalanceStrip owedCentavos={balance.owedCentavos} oweCentavos={balance.oweCentavos} />
 
 				<section className="flex flex-col gap-2">
 					<h2 className="text-lg font-semibold">Debts</h2>
@@ -176,20 +168,14 @@ export function DebtsAndSplitsPage() {
 
 				<section className="flex flex-col gap-2">
 					<h2 className="text-lg font-semibold">Splits</h2>
-					<SplitsFilterBar
-						filters={splitFilters}
-						onChange={setSplitFilters}
-						tags={tags}
-					/>
+					<SplitsFilterBar filters={splitFilters} onChange={setSplitFilters} tags={tags} />
 					{isLoading ? null : (
 						<SplitsTable
 							splits={visibleSplits}
 							tags={tags}
 							accounts={accounts}
 							expandedSplitId={expandedSplitId}
-							onToggleExpand={(id) =>
-								setExpandedSplit(id === expandedSplitId ? null : id)
-							}
+							onToggleExpand={(id) => setExpandedSplit(id === expandedSplitId ? null : id)}
 							loadParticipants={splitParticipants}
 							onSettleParticipant={(debtId) => setSettlingDebtId(debtId)}
 							onEditSplit={setEditingSplitId}
@@ -309,16 +295,12 @@ function EditSplitModalLoader(props: {
 		(async () => {
 			const { data: s } = await supabase
 				.from("split_event")
-				.select(
-					"id, description, total_centavos, date, paid_from_account_id, tag_id, method",
-				)
+				.select("id, description, total_centavos, date, paid_from_account_id, tag_id, method")
 				.eq("id", props.splitId)
 				.single();
 			const { data: parts } = await supabase
 				.from("split_participant")
-				.select(
-					"person_id, share_centavos, share_input_value, person:person!person_id(name)",
-				)
+				.select("person_id, share_centavos, share_input_value, person:person!person_id(name)")
 				.eq("split_id", props.splitId);
 			if (cancelled || !s) return;
 			const rows: ParticipantRow[] = (parts ?? []).map((p) => ({

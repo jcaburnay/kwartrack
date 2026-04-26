@@ -191,12 +191,7 @@ export function NewDebtModal({
 					</div>
 				</form>
 			</div>
-			<button
-				type="button"
-				className="modal-backdrop"
-				onClick={onCancel}
-				aria-label="Dismiss"
-			/>
+			<button type="button" className="modal-backdrop" onClick={onCancel} aria-label="Dismiss" />
 		</div>
 	);
 }

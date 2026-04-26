@@ -37,10 +37,13 @@ export function Header() {
 							<span className="relative">
 								{n.label}
 								{n.indicator === "loaned" && hasUnsettledLoaned && (
-									<span
-										className="absolute -top-1 -right-2 w-2 h-2 rounded-full bg-error"
-										aria-label="Unsettled debts"
-									/>
+									<>
+										<span
+											className="absolute -top-1 -right-2 w-2 h-2 rounded-full bg-error"
+											aria-hidden="true"
+										/>
+										<span className="sr-only">(unsettled debts)</span>
+									</>
 								)}
 							</span>
 						</NavLink>

@@ -31,11 +31,7 @@ export function SplitRow({
 		<>
 			<tr className="cursor-pointer hover:bg-base-200" onClick={onToggle}>
 				<td className="w-6">
-					{expanded ? (
-						<ChevronDown className="w-4 h-4" />
-					) : (
-						<ChevronRight className="w-4 h-4" />
-					)}
+					{expanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
 				</td>
 				<td>{split.description}</td>
 				<td className="font-mono">{formatCentavos(split.totalCentavos)}</td>

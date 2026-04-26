@@ -37,9 +37,7 @@ export function SplitsFilterBar({ filters, onChange, tags }: Props) {
 			<select
 				className="select select-sm select-bordered"
 				value={filters.method ?? ""}
-				onChange={(e) =>
-					patch("method", (e.target.value || null) as SplitFilters["method"])
-				}
+				onChange={(e) => patch("method", (e.target.value || null) as SplitFilters["method"])}
 			>
 				<option value="">All methods</option>
 				<option value="equal">Equal</option>

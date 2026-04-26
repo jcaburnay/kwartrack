@@ -25,9 +25,7 @@ export function DebtsFilterBar({ filters, onChange, persons, tags }: Props) {
 			<select
 				className="select select-sm select-bordered"
 				value={filters.direction ?? ""}
-				onChange={(e) =>
-					patch("direction", (e.target.value || null) as DebtFilters["direction"])
-				}
+				onChange={(e) => patch("direction", (e.target.value || null) as DebtFilters["direction"])}
 			>
 				<option value="">All directions</option>
 				<option value="loaned">Loaned (owe me)</option>

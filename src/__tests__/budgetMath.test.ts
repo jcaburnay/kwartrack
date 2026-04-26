@@ -21,9 +21,7 @@ describe("computeActualsByTag", () => {
 
 	it("uses the user-share for split-linked rows (caller passes user_share_centavos)", () => {
 		// Auto-expense from a ₱4,800 split where the user's share is ₱960.
-		const rows: ActualRow[] = [
-			{ tagId: "dates", effectiveCentavos: 960_00, date: "2026-04-14" },
-		];
+		const rows: ActualRow[] = [{ tagId: "dates", effectiveCentavos: 960_00, date: "2026-04-14" }];
 		expect(computeActualsByTag(rows, "2026-04").get("dates")).toBe(960_00);
 	});
 
@@ -36,9 +34,7 @@ describe("computeActualsByTag", () => {
 	});
 
 	it("skips rows with null tag_id", () => {
-		const rows: ActualRow[] = [
-			{ tagId: null, effectiveCentavos: 100_00, date: "2026-04-02" },
-		];
+		const rows: ActualRow[] = [{ tagId: null, effectiveCentavos: 100_00, date: "2026-04-02" }];
 		expect(computeActualsByTag(rows, "2026-04").size).toBe(0);
 	});
 });

@@ -197,13 +197,9 @@ export function SplitForm({
 						{ personId: p.id, personName: p.name, input: null, shareCentavos: 0 },
 					])
 				}
-				onRemove={(personId) =>
-					setRows((prev) => prev.filter((r) => r.personId !== personId))
-				}
+				onRemove={(personId) => setRows((prev) => prev.filter((r) => r.personId !== personId))}
 				onInputChange={(personId, input) =>
-					setRows((prev) =>
-						prev.map((r) => (r.personId === personId ? { ...r, input } : r)),
-					)
+					setRows((prev) => prev.map((r) => (r.personId === personId ? { ...r, input } : r)))
 				}
 			/>
 
@@ -214,11 +210,7 @@ export function SplitForm({
 					Cancel
 				</button>
 				<button type="submit" className="btn btn-primary" disabled={isSubmitting}>
-					{isSubmitting ? (
-						<span className="loading loading-spinner loading-sm" />
-					) : (
-						submitLabel
-					)}
+					{isSubmitting ? <span className="loading loading-spinner loading-sm" /> : submitLabel}
 				</button>
 			</div>
 		</form>

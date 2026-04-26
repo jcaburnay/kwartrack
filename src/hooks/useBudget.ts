@@ -47,9 +47,7 @@ export function useBudget(month: string) {
 			supabase.from("budget_allocation").select("*").eq("month", month),
 			supabase
 				.from("transaction")
-				.select(
-					"tag_id, amount_centavos, date, split:split_event!split_id(user_share_centavos)",
-				)
+				.select("tag_id, amount_centavos, date, split:split_event!split_id(user_share_centavos)")
 				.eq("type", "expense")
 				.gte("date", startISO)
 				.lt("date", endExclusiveISO),
@@ -59,8 +57,8 @@ export function useBudget(month: string) {
 		const monthExpenses: ActualRow[] = (txRes.data ?? []).map((t) => ({
 			tagId: t.tag_id,
 			effectiveCentavos:
-				(t.split as unknown as { user_share_centavos: number } | null)
-					?.user_share_centavos ?? t.amount_centavos,
+				(t.split as unknown as { user_share_centavos: number } | null)?.user_share_centavos ??
+				t.amount_centavos,
 			date: t.date,
 		}));
 		setState({

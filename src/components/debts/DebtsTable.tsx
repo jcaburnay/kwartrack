@@ -9,13 +9,7 @@ type Props = {
 	onDelete: (id: string) => void;
 };
 
-export function DebtsTable({
-	debts,
-	tagsById,
-	standaloneDebtIds,
-	onSettle,
-	onDelete,
-}: Props) {
+export function DebtsTable({ debts, tagsById, standaloneDebtIds, onSettle, onDelete }: Props) {
 	const standalone = standaloneDebtIds ?? new Set<string>();
 	const byPerson = new Map<string, { name: string; rows: DebtRowType[] }>();
 	for (const d of debts) {

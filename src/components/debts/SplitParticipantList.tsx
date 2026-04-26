@@ -36,13 +36,7 @@ export function SplitParticipantList({
 	const userShare = totalCentavos - summed;
 	const showInput = method !== "equal";
 	const inputLabel =
-		method === "exact"
-			? "₱"
-			: method === "percentage"
-				? "%"
-				: method === "shares"
-					? "shares"
-					: "";
+		method === "exact" ? "₱" : method === "percentage" ? "%" : method === "shares" ? "shares" : "";
 
 	return (
 		<div className="form-control">
@@ -72,9 +66,7 @@ export function SplitParticipantList({
 								}}
 							/>
 						)}
-						<span className="ml-auto font-mono text-xs">
-							{formatCentavos(r.shareCentavos)}
-						</span>
+						<span className="ml-auto font-mono text-xs">{formatCentavos(r.shareCentavos)}</span>
 						<button
 							type="button"
 							className="btn btn-ghost btn-xs"
