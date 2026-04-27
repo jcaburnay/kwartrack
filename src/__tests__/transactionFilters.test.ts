@@ -21,6 +21,7 @@ function tx(p: Partial<Transaction> & Pick<Transaction, "id" | "type" | "date">)
 		user_id: "u1",
 		debt_id: null,
 		split_id: null,
+		is_installment_portion: false,
 		...p,
 	};
 }

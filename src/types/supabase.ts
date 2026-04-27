@@ -524,6 +524,7 @@ export type Database = {
 					fee_centavos: number | null;
 					from_account_id: string | null;
 					id: string;
+					is_installment_portion: boolean;
 					parent_transaction_id: string | null;
 					recurring_id: string | null;
 					split_id: string | null;
@@ -542,6 +543,7 @@ export type Database = {
 					fee_centavos?: number | null;
 					from_account_id?: string | null;
 					id?: string;
+					is_installment_portion?: boolean;
 					parent_transaction_id?: string | null;
 					recurring_id?: string | null;
 					split_id?: string | null;
@@ -560,6 +562,7 @@ export type Database = {
 					fee_centavos?: number | null;
 					from_account_id?: string | null;
 					id?: string;
+					is_installment_portion?: boolean;
 					parent_transaction_id?: string | null;
 					recurring_id?: string | null;
 					split_id?: string | null;

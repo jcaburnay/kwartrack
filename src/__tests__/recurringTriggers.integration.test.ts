@@ -556,4 +556,57 @@ runOrSkip("recurring_fire_due", () => {
 		expect(txs![0].type).toBe("income");
 		expect(txs![0].amount_centavos).toBe(50_000_00);
 	});
+
+	it("snapshots is_installment_portion at fire time (true for installments, false for subscriptions)", async () => {
+		// Subscription: remaining_occurrences = NULL → is_installment_portion=false
+		const { data: subRec } = await admin
+			.from("recurring")
+			.insert({
+				user_id: userId,
+				service: "subscription",
+				amount_centavos: 99_00,
+				type: "expense",
+				tag_id: foodsTagId,
+				from_account_id: cashId,
+				interval: "monthly",
+				first_occurrence_date: todayInTZ(),
+				next_occurrence_at: new Date().toISOString(),
+			})
+			.select("id")
+			.single();
+		await setNextAtPast(subRec!.id);
+
+		// Installment: remaining_occurrences = 6 → is_installment_portion=true
+		const { data: instRec } = await admin
+			.from("recurring")
+			.insert({
+				user_id: userId,
+				service: "installment",
+				amount_centavos: 1_000_00,
+				type: "expense",
+				tag_id: foodsTagId,
+				from_account_id: cashId,
+				interval: "monthly",
+				first_occurrence_date: todayInTZ(),
+				next_occurrence_at: new Date().toISOString(),
+				remaining_occurrences: 6,
+			})
+			.select("id")
+			.single();
+		await setNextAtPast(instRec!.id);
+
+		await fireDue();
+
+		const { data: subTxs } = await admin
+			.from("transaction")
+			.select("is_installment_portion")
+			.eq("recurring_id", subRec!.id);
+		expect(subTxs![0].is_installment_portion).toBe(false);
+
+		const { data: instTxs } = await admin
+			.from("transaction")
+			.select("is_installment_portion")
+			.eq("recurring_id", instRec!.id);
+		expect(instTxs![0].is_installment_portion).toBe(true);
+	});
 });
