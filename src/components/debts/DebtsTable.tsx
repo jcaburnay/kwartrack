@@ -20,7 +20,11 @@ export function DebtsTable({ debts, tagsById, standaloneDebtIds, onSettle, onDel
 	const groups = Array.from(byPerson.entries());
 
 	if (groups.length === 0) {
-		return <p className="text-sm text-base-content/60 italic">No debts yet.</p>;
+		return (
+			<p className="text-sm text-base-content/60 italic">
+				No debts or splits tracked yet. Split a bill with friends or record an IOU via the + button.
+			</p>
+		);
 	}
 
 	return (

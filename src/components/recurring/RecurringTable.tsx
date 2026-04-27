@@ -63,7 +63,7 @@ export function RecurringTable({
 	if (recurrings.length === 0) {
 		return (
 			<div className="bg-base-100 rounded-box border border-base-300 p-8 text-center text-base-content/60 text-sm italic">
-				No recurrings yet. Create one from the + button.
+				No recurring transactions yet. Add subscriptions, installments, or salary via the + button.
 			</div>
 		);
 	}

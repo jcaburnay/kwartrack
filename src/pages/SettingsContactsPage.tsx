@@ -41,7 +41,9 @@ export function SettingsContactsPage() {
 					<span className="loading loading-spinner text-primary" />
 				</div>
 			) : persons.length === 0 ? (
-				<p className="text-sm text-base-content/60 italic">No contacts yet.</p>
+				<p className="text-sm text-base-content/60 italic">
+					No contacts yet. Add people when you create your first split or debt.
+				</p>
 			) : (
 				<ul className="divide-y divide-base-300 rounded-box border border-base-300">
 					{persons.map((p) => (

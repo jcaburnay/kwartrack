@@ -72,7 +72,7 @@ describe("RecurringTable", () => {
 				onDelete={noop}
 			/>,
 		);
-		expect(screen.getByText(/No recurrings yet/)).toBeInTheDocument();
+		expect(screen.getByText(/No recurring transactions yet/)).toBeInTheDocument();
 	});
 
 	it("renders an active row without status icon", () => {

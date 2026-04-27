@@ -28,7 +28,11 @@ export function SplitsTable({
 	onDeleteSplit,
 }: Props) {
 	if (splits.length === 0) {
-		return <p className="text-sm text-base-content/60 italic">No splits yet.</p>;
+		return (
+			<p className="text-sm text-base-content/60 italic">
+				No debts or splits tracked yet. Split a bill with friends or record an IOU via the + button.
+			</p>
+		);
 	}
 	const tagsById = new Map(tags.map((t) => [t.id, t.name] as const));
 	const accountsById = new Map(accounts.map((a) => [a.id, a.name] as const));
