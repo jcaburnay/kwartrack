@@ -5,6 +5,7 @@ import { BudgetPage } from "./pages/BudgetPage";
 import { DebtsAndSplitsPage } from "./pages/DebtsAndSplitsPage";
 import { OverviewPage } from "./pages/OverviewPage";
 import { RecurringPage } from "./pages/RecurringPage";
+import { SettingsAboutPage } from "./pages/SettingsAboutPage";
 import { SettingsContactsPage } from "./pages/SettingsContactsPage";
 import { SettingsGroupsPage } from "./pages/SettingsGroupsPage";
 import { SettingsPage } from "./pages/SettingsPage";
@@ -65,6 +66,7 @@ const router = createBrowserRouter([
 			{ path: "tags", element: <SettingsTagsPage /> },
 			{ path: "contacts", element: <SettingsContactsPage /> },
 			{ path: "groups", element: <SettingsGroupsPage /> },
+			{ path: "about", element: <SettingsAboutPage /> },
 		],
 	},
 	{ path: "/signin", element: <SignInPage /> },

@@ -8,7 +8,7 @@ const SECTIONS: { slug: string; label: string; enabled: boolean }[] = [
 	{ slug: "contacts", label: "Contacts", enabled: true },
 	{ slug: "groups", label: "Groups", enabled: true },
 	{ slug: "export", label: "Data export", enabled: false },
-	{ slug: "about", label: "Help & about", enabled: false },
+	{ slug: "about", label: "Help & about", enabled: true },
 ];
 
 export function SettingsPage() {
