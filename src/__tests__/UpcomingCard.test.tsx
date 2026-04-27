@@ -34,7 +34,7 @@ describe("UpcomingCard", () => {
 			},
 		]);
 		expect(screen.getByText(/Spotify/)).toBeInTheDocument();
-		expect(screen.getByRole("link")).toHaveAttribute("href", "/recurring");
+		expect(screen.getByRole("link")).toHaveAttribute("href", "/recurring?id=r1");
 	});
 
 	it("renders a loaned-debt item with route to /debts-and-splits", () => {
@@ -49,7 +49,7 @@ describe("UpcomingCard", () => {
 			},
 		]);
 		expect(screen.getByText(/Alice/)).toBeInTheDocument();
-		expect(screen.getByRole("link")).toHaveAttribute("href", "/debts-and-splits");
+		expect(screen.getByRole("link")).toHaveAttribute("href", "/debts-and-splits?debt=d1");
 	});
 
 	it("renders a budget-warning item with route to /budget", () => {
@@ -64,7 +64,7 @@ describe("UpcomingCard", () => {
 		]);
 		expect(screen.getByText(/foods/)).toBeInTheDocument();
 		expect(screen.getByText(/87%/)).toBeInTheDocument();
-		expect(screen.getByRole("link")).toHaveAttribute("href", "/budget");
+		expect(screen.getByRole("link")).toHaveAttribute("href", "/budget?tag=t1");
 	});
 
 	it("preserves the order of items (caller controls ordering)", () => {

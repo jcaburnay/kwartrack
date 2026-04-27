@@ -83,7 +83,7 @@ export function BudgetProgressCondensed({
 						{topTags.map((row) => (
 							<Link
 								key={row.tagId}
-								to="/budget"
+								to={`/budget?tag=${row.tagId}`}
 								data-testid="budget-progress-row"
 								className="block hover:opacity-80"
 							>

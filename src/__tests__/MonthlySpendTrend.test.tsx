@@ -1,4 +1,5 @@
 import { render, screen } from "@testing-library/react";
+import { MemoryRouter } from "react-router";
 import { describe, expect, it } from "vitest";
 import { MonthlySpendTrend } from "../components/overview/MonthlySpendTrend";
 import type { SpendTrendPoint } from "../utils/overviewAggregation";
@@ -22,12 +23,20 @@ function mkPoints(): SpendTrendPoint[] {
 
 describe("MonthlySpendTrend", () => {
 	it("renders a section with a title", () => {
-		render(<MonthlySpendTrend data={mkPoints()} isLoading={false} />);
+		render(
+			<MemoryRouter>
+				<MonthlySpendTrend data={mkPoints()} isLoading={false} />
+			</MemoryRouter>,
+		);
 		expect(screen.getByText(/Monthly Spend/i)).toBeInTheDocument();
 	});
 
 	it("renders a skeleton when loading", () => {
-		const { container } = render(<MonthlySpendTrend data={[]} isLoading={true} />);
+		const { container } = render(
+			<MemoryRouter>
+				<MonthlySpendTrend data={[]} isLoading={true} />
+			</MemoryRouter>,
+		);
 		expect(container.querySelector(".skeleton")).toBeInTheDocument();
 	});
 
@@ -37,7 +46,11 @@ describe("MonthlySpendTrend", () => {
 			monthLabel: `Month ${i + 1}`,
 			totalCentavos: 0,
 		}));
-		render(<MonthlySpendTrend data={flat} isLoading={false} />);
+		render(
+			<MemoryRouter>
+				<MonthlySpendTrend data={flat} isLoading={false} />
+			</MemoryRouter>,
+		);
 		expect(screen.getByText(/Monthly Spend/i)).toBeInTheDocument();
 	});
 });

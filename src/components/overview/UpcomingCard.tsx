@@ -18,7 +18,7 @@ function ItemRow({ item }: { item: UpcomingItem }) {
 						? "in 1 day"
 						: `in ${item.daysAway} days`;
 			return (
-				<Link to="/recurring" className="flex items-center gap-3 hover:opacity-80">
+				<Link to={`/recurring?id=${item.id}`} className="flex items-center gap-3 hover:opacity-80">
 					<Repeat className="size-4 text-base-content/60" aria-hidden="true" />
 					<span className="flex-1 text-sm">
 						<span className="font-medium">{item.service}</span>
@@ -32,7 +32,10 @@ function ItemRow({ item }: { item: UpcomingItem }) {
 		}
 		case "loaned-debt": {
 			return (
-				<Link to="/debts-and-splits" className="flex items-center gap-3 hover:opacity-80">
+				<Link
+					to={`/debts-and-splits?debt=${item.id}`}
+					className="flex items-center gap-3 hover:opacity-80"
+				>
 					<HandCoins className="size-4 text-base-content/60" aria-hidden="true" />
 					<span className="flex-1 text-sm">
 						<span className="font-medium">{item.personName}</span>
@@ -47,7 +50,7 @@ function ItemRow({ item }: { item: UpcomingItem }) {
 		case "budget-warning": {
 			const pctRounded = Math.round(item.pct * 100);
 			return (
-				<Link to="/budget" className="flex items-center gap-3 hover:opacity-80">
+				<Link to={`/budget?tag=${item.tagId}`} className="flex items-center gap-3 hover:opacity-80">
 					<AlertTriangle className="size-4 text-warning" aria-hidden="true" />
 					<span className="flex-1 text-sm">
 						<span className="font-medium font-mono">{item.tagName}</span>
