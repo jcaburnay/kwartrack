@@ -8,6 +8,7 @@ import { formatCentavos } from "../../utils/currency";
 
 type Props = {
 	account: Account;
+	onWithdrawMatured?: () => void;
 };
 
 function formatRate(bps: number): string {
@@ -31,7 +32,7 @@ function formatInterval(i: Account["interest_posting_interval"]): string {
 	}
 }
 
-export function TimeDepositStrip({ account }: Props) {
+export function TimeDepositStrip({ account, onWithdrawMatured }: Props) {
 	if (account.type !== "time-deposit") return null;
 	const accrued = interestAccrued(account) ?? 0;
 	const days = daysToMaturity(account) ?? 0;
@@ -50,9 +51,16 @@ export function TimeDepositStrip({ account }: Props) {
 						</p>
 						<p className="text-2xl font-semibold">{formatCentavos(account.balance_centavos)}</p>
 					</div>
-					<div className="text-sm text-base-content/70 text-right">
-						<span className="text-success">+{formatCentavos(accrued)}</span>
-						<span className="block text-xs">accrued</span>
+					<div className="flex items-center gap-3">
+						{account.is_matured && onWithdrawMatured && (
+							<button type="button" className="btn btn-sm btn-primary" onClick={onWithdrawMatured}>
+								Withdraw matured balance
+							</button>
+						)}
+						<div className="text-sm text-base-content/70 text-right">
+							<span className="text-success">+{formatCentavos(accrued)}</span>
+							<span className="block text-xs">accrued</span>
+						</div>
 					</div>
 				</header>
 

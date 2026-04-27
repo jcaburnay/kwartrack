@@ -52,10 +52,34 @@ export function AccountRowActions({ account, onEdit, onChanged }: Props) {
 
 	async function toggleArchive() {
 		setOpen(false);
-		await supabase
+		const nextArchived = !account.is_archived;
+		const accRes = await supabase
 			.from("account")
-			.update({ is_archived: !account.is_archived })
+			.update({ is_archived: nextArchived })
 			.eq("id", account.id);
+		if (accRes.error) {
+			window.alert(`Archive failed: ${accRes.error.message}`);
+			return;
+		}
+		// For TDs with a linked interest-posting recurring, mirror the archive
+		// state on the recurring's pause state — archived TDs shouldn't keep
+		// firing interest into themselves (spec §188). Two updates rather than
+		// an atomic RPC: if the recurring pause fails, the account is already
+		// archived but the recurring keeps firing. Surface the partial-failure
+		// to the user so they can manually pause/unarchive to recover.
+		if (account.interest_recurring_id) {
+			const recRes = await supabase
+				.from("recurring")
+				.update({ is_paused: nextArchived })
+				.eq("id", account.interest_recurring_id);
+			if (recRes.error) {
+				window.alert(
+					`Account ${nextArchived ? "archived" : "unarchived"}, but couldn't ${
+						nextArchived ? "pause" : "resume"
+					} the linked interest recurring: ${recRes.error.message}. Try toggling archive again, or pause/resume the recurring manually.`,
+				);
+			}
+		}
 		await onChanged();
 	}
 

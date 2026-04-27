@@ -1,11 +1,17 @@
 import type { Account } from "../../utils/accountBalances";
-import { creditInstallmentMetrics, creditUtilization } from "../../utils/accountBalances";
+import {
+	creditInstallmentLinkedBalance,
+	creditInstallmentMetrics,
+	creditUtilization,
+} from "../../utils/accountBalances";
 import { formatCentavos } from "../../utils/currency";
 import type { Recurring } from "../../utils/recurringFilters";
+import type { Transaction } from "../../utils/transactionFilters";
 
 type Props = {
 	account: Account;
 	recurrings: readonly Recurring[];
+	transactions: readonly Transaction[];
 	onPayThisCard: () => void;
 };
 
@@ -15,16 +21,15 @@ function pctClass(pct: number): string {
 	return "progress-success";
 }
 
-export function CreditAccountStrip({ account, recurrings, onPayThisCard }: Props) {
+export function CreditAccountStrip({ account, recurrings, transactions, onPayThisCard }: Props) {
 	const utilization = creditUtilization(account);
 	if (!utilization) return null;
 	const { utilizedCentavos, limitCentavos, utilizationPct } = utilization;
 	// Spec §"Credit accounts" defines `availableCredit = creditLimit − (balance − installment-linked
-	// portion)`. We don't track which posted transactions are installment-linked, so the
-	// "installment-linked portion of balance" is treated as 0 here — already-posted installments
-	// reduce regular available; the separate installment pool reflects only future commitments.
-	// Refine if/when individual installment transactions become tagged.
-	const available = Math.max(0, limitCentavos - utilizedCentavos);
+	// portion)`. The installment-linked portion is the sum of posted installment expenses on this
+	// card, clamped to balance — see `creditInstallmentLinkedBalance` for the attribution rule.
+	const installmentLinked = creditInstallmentLinkedBalance(account, transactions);
+	const available = Math.max(0, limitCentavos - (utilizedCentavos - installmentLinked));
 	const utilPctText = Math.round(utilizationPct * 100);
 	const utilPctBar = Math.min(100, utilPctText);
 

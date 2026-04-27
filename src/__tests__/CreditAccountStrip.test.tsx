@@ -56,7 +56,14 @@ function mkRecurring(over: Partial<Recurring> & { id: string }): Recurring {
 
 describe("CreditAccountStrip", () => {
 	it("renders only the regular utilization bar when installment_limit is null", () => {
-		render(<CreditAccountStrip account={mkCard()} recurrings={[]} onPayThisCard={() => {}} />);
+		render(
+			<CreditAccountStrip
+				account={mkCard()}
+				recurrings={[]}
+				transactions={[]}
+				onPayThisCard={() => {}}
+			/>,
+		);
 		const bars = screen.getAllByRole("progressbar");
 		expect(bars).toHaveLength(1);
 		expect(screen.queryByText(/installment/i)).not.toBeInTheDocument();
@@ -68,7 +75,14 @@ describe("CreditAccountStrip", () => {
 			mkRecurring({ id: "r1", amount_centavos: 50_00, remaining_occurrences: 4 }), // 200
 			mkRecurring({ id: "r2", amount_centavos: 25_00, remaining_occurrences: 4 }), // 100
 		];
-		render(<CreditAccountStrip account={card} recurrings={recurrings} onPayThisCard={() => {}} />);
+		render(
+			<CreditAccountStrip
+				account={card}
+				recurrings={recurrings}
+				transactions={[]}
+				onPayThisCard={() => {}}
+			/>,
+		);
 		const bars = screen.getAllByRole("progressbar");
 		expect(bars).toHaveLength(2);
 		// committed = 200 + 100 = 300 of 500 → 60%
@@ -86,7 +100,14 @@ describe("CreditAccountStrip", () => {
 		const recurrings = [
 			mkRecurring({ id: "huge", amount_centavos: 200_00, remaining_occurrences: 4 }), // 800
 		];
-		render(<CreditAccountStrip account={card} recurrings={recurrings} onPayThisCard={() => {}} />);
+		render(
+			<CreditAccountStrip
+				account={card}
+				recurrings={recurrings}
+				transactions={[]}
+				onPayThisCard={() => {}}
+			/>,
+		);
 		// 800 / 500 = 160%
 		expect(screen.getByText(/160%/)).toBeInTheDocument();
 		expect(screen.getByText(/₱800\.00 \/ ₱500\.00/)).toBeInTheDocument();
@@ -95,7 +116,14 @@ describe("CreditAccountStrip", () => {
 	it("Pay this card button fires the callback", async () => {
 		const onPayThisCard = vi.fn();
 		const user = (await import("@testing-library/user-event")).default;
-		render(<CreditAccountStrip account={mkCard()} recurrings={[]} onPayThisCard={onPayThisCard} />);
+		render(
+			<CreditAccountStrip
+				account={mkCard()}
+				recurrings={[]}
+				transactions={[]}
+				onPayThisCard={onPayThisCard}
+			/>,
+		);
 		await user.click(screen.getByRole("button", { name: /pay this card/i }));
 		expect(onPayThisCard).toHaveBeenCalledTimes(1);
 	});

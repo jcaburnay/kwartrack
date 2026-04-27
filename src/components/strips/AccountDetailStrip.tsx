@@ -12,6 +12,7 @@ type Props = {
 	timezone: string;
 	onClear: () => void;
 	onPayThisCard: () => void;
+	onWithdrawMatured: () => void;
 };
 
 export function AccountDetailStrip({
@@ -21,6 +22,7 @@ export function AccountDetailStrip({
 	timezone,
 	onClear,
 	onPayThisCard,
+	onWithdrawMatured,
 }: Props) {
 	return (
 		<div className="flex flex-col gap-3">
@@ -36,10 +38,13 @@ export function AccountDetailStrip({
 				<CreditAccountStrip
 					account={account}
 					recurrings={recurrings}
+					transactions={transactions}
 					onPayThisCard={onPayThisCard}
 				/>
 			)}
-			{account.type === "time-deposit" && <TimeDepositStrip account={account} />}
+			{account.type === "time-deposit" && (
+				<TimeDepositStrip account={account} onWithdrawMatured={onWithdrawMatured} />
+			)}
 			{(account.type === "cash" || account.type === "e-wallet" || account.type === "savings") && (
 				<SimpleAccountStrip account={account} transactions={transactions} timezone={timezone} />
 			)}
