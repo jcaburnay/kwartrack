@@ -16,6 +16,7 @@ import { useAccounts } from "../hooks/useAccounts";
 import { useDebtsAndSplits } from "../hooks/useDebtsAndSplits";
 import type { Person } from "../hooks/usePersons";
 import { usePersons } from "../hooks/usePersons";
+import { useScrollAndFlash } from "../hooks/useScrollAndFlash";
 import type { Tag } from "../hooks/useTags";
 import { useTags } from "../hooks/useTags";
 import { supabase } from "../lib/supabase";
@@ -89,6 +90,8 @@ export function DebtsAndSplitsPage() {
 	);
 
 	const settlingDebt = settlingDebtId ? (debts.find((d) => d.id === settlingDebtId) ?? null) : null;
+
+	useScrollAndFlash(params.get("debt"), !isLoading && debts.length > 0);
 
 	function setExpandedSplit(id: string | null) {
 		const next = new URLSearchParams(params);

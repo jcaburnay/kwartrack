@@ -1,2 +1,15 @@
 @import "tailwindcss";
 @plugin "daisyui";
+
+@keyframes row-flash {
+	0% {
+		background-color: var(--color-warning, oklch(85% 0.15 95));
+	}
+	100% {
+		background-color: transparent;
+	}
+}
+
+.row-flash {
+	animation: row-flash 1.5s ease-out;
+}

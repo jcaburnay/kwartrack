@@ -91,7 +91,11 @@ export function RecurringTable({
 						const isCompleted = r.is_completed;
 						const isPaused = r.is_paused;
 						return (
-							<tr key={r.id} className={isCompleted || isPaused ? "opacity-60" : undefined}>
+							<tr
+								key={r.id}
+								data-row-id={r.id}
+								className={isCompleted || isPaused ? "opacity-60" : undefined}
+							>
 								<td>{statusIcon(r)}</td>
 								<td className="font-medium">{r.service}</td>
 								<td className="text-right">{formatCentavos(r.amount_centavos)}</td>

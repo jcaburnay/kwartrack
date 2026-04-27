@@ -199,7 +199,7 @@ export function AllocationTable({
 							const isEditing = editingTagId === a.tag_id;
 							const saving = savingTagId === a.tag_id;
 							return (
-								<tr key={a.tag_id}>
+								<tr key={a.tag_id} data-row-id={a.tag_id}>
 									<td className="font-medium">{tag?.name ?? "—"}</td>
 									<td className="text-right">
 										{isEditing ? (

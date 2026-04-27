@@ -1,11 +1,12 @@
 import { useMemo, useState } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate, useSearchParams } from "react-router";
 import { AllocationTable } from "../components/budget/AllocationTable";
 import { MonthPicker } from "../components/budget/MonthPicker";
 import { OverallHero } from "../components/budget/OverallHero";
 import { Fab } from "../components/Fab";
 import { Header } from "../components/Header";
 import { useBudget } from "../hooks/useBudget";
+import { useScrollAndFlash } from "../hooks/useScrollAndFlash";
 import { useTags } from "../hooks/useTags";
 import { useAuth } from "../providers/AuthProvider";
 import { monthBounds } from "../utils/dateRange";
@@ -19,6 +20,7 @@ export function BudgetPage() {
 	const [copying, setCopying] = useState(false);
 	const [fabOpen, setFabOpen] = useState(false);
 	const navigate = useNavigate();
+	const [params] = useSearchParams();
 
 	const { tags } = useTags();
 	const {
@@ -37,6 +39,8 @@ export function BudgetPage() {
 
 	const allocatedSum = allocations.reduce((s, a) => s + a.amount_centavos, 0);
 	const overall = config?.overall_centavos ?? 0;
+
+	useScrollAndFlash(params.get("tag"), !isLoading && allocations.length > 0);
 
 	async function handleCopy() {
 		setCopyError(null);

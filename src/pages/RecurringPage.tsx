@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate, useSearchParams } from "react-router";
 import { Fab } from "../components/Fab";
 import { Header } from "../components/Header";
 import { EditRecurringModal } from "../components/recurring/EditRecurringModal";
@@ -8,6 +8,7 @@ import { RecurringFilterBar } from "../components/recurring/RecurringFilterBar";
 import { RecurringTable } from "../components/recurring/RecurringTable";
 import { useAccounts } from "../hooks/useAccounts";
 import { useRecurrings } from "../hooks/useRecurrings";
+import { useScrollAndFlash } from "../hooks/useScrollAndFlash";
 import { useTags } from "../hooks/useTags";
 import {
 	DEFAULT_RECURRING_FILTERS,
@@ -34,11 +35,14 @@ export function RecurringPage() {
 	const [editing, setEditing] = useState<Recurring | null>(null);
 	const [fabOpen, setFabOpen] = useState(false);
 	const navigate = useNavigate();
+	const [params] = useSearchParams();
 
 	const visible = useMemo(
 		() => recurrings.filter((r) => matchesRecurringFilters(r, filters)),
 		[recurrings, filters],
 	);
+
+	useScrollAndFlash(params.get("id"), !isLoading && recurrings.length > 0);
 
 	return (
 		<div className="min-h-dvh bg-base-200 flex flex-col">
