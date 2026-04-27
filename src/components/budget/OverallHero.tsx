@@ -63,15 +63,23 @@ export function OverallHero({
 		setEditing(false);
 	}
 
-	if (overallCentavos == null && !editing) {
+	// Spec §832 empty state: "No allocations for this month." Fires when the
+	// month has no overall cap AND no allocations. The signup trigger
+	// pre-creates a config row with overall_centavos=0 in the user's signup
+	// month, so we must also treat overall=0 as "not yet set" here, otherwise
+	// the empty card never renders for fresh users (per Slice 5 gotcha).
+	const isUnsetOverall = overallCentavos == null || overallCentavos === 0;
+	if (isUnsetOverall && allocatedSumCentavos === 0 && !editing) {
 		return (
 			<div className="bg-base-100 rounded-box border border-base-300 p-5 flex items-center justify-between gap-4 flex-wrap">
 				<div>
 					<h2 className="text-base font-semibold">Overall</h2>
-					<p className="text-sm text-base-content/60">No budget set for this month.</p>
+					<p className="text-sm text-base-content/60">
+						No allocations for this month. Start by setting an Overall cap, then allocate per tag.
+					</p>
 				</div>
 				<button type="button" className="btn btn-primary btn-sm" onClick={startEdit}>
-					Set monthly budget
+					+ Set Budget
 				</button>
 			</div>
 		);
