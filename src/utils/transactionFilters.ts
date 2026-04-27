@@ -14,6 +14,8 @@ export type TransactionFilters = {
 	groupId: string | null;
 	dateFrom: string | null;
 	dateTo: string | null; // inclusive
+	splitId: string | null; // deep-link only (no dropdown)
+	debtId: string | null; // deep-link only (no dropdown)
 };
 
 export const EMPTY_FILTERS: TransactionFilters = {
@@ -23,6 +25,8 @@ export const EMPTY_FILTERS: TransactionFilters = {
 	groupId: null,
 	dateFrom: null,
 	dateTo: null,
+	splitId: null,
+	debtId: null,
 };
 
 export type AccountLookup = {
@@ -54,5 +58,7 @@ export function matchesFilters(
 
 	if (filters.dateFrom != null && tx.date < filters.dateFrom) return false;
 	if (filters.dateTo != null && tx.date > filters.dateTo) return false;
+	if (filters.splitId != null && tx.split_id !== filters.splitId) return false;
+	if (filters.debtId != null && tx.debt_id !== filters.debtId) return false;
 	return true;
 }

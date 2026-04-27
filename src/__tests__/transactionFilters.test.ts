@@ -98,4 +98,30 @@ describe("matchesFilters", () => {
 		expect(matchesFilters(tagged, { ...EMPTY_FILTERS, tagId: "foods" }, accounts)).toBe(true);
 		expect(matchesFilters(tagged, { ...EMPTY_FILTERS, tagId: "bills" }, accounts)).toBe(false);
 	});
+
+	it("split filter", () => {
+		const linked = tx({
+			id: "s",
+			type: "expense",
+			date: "2026-04-10",
+			from_account_id: "cash",
+			split_id: "split-1",
+		});
+		expect(matchesFilters(linked, { ...EMPTY_FILTERS, splitId: "split-1" }, accounts)).toBe(true);
+		expect(matchesFilters(linked, { ...EMPTY_FILTERS, splitId: "split-2" }, accounts)).toBe(false);
+		expect(matchesFilters(base, { ...EMPTY_FILTERS, splitId: "split-1" }, accounts)).toBe(false);
+	});
+
+	it("debt filter", () => {
+		const linked = tx({
+			id: "d",
+			type: "income",
+			date: "2026-04-10",
+			to_account_id: "cash",
+			debt_id: "debt-1",
+		});
+		expect(matchesFilters(linked, { ...EMPTY_FILTERS, debtId: "debt-1" }, accounts)).toBe(true);
+		expect(matchesFilters(linked, { ...EMPTY_FILTERS, debtId: "debt-2" }, accounts)).toBe(false);
+		expect(matchesFilters(base, { ...EMPTY_FILTERS, debtId: "debt-1" }, accounts)).toBe(false);
+	});
 });
