@@ -2,8 +2,17 @@ import { useCallback, useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
 import type { Transaction } from "../utils/transactionFilters";
 
+/**
+ * Transaction with the source recurring's `service` joined in. Used by
+ * TransactionsTable to render the back-link tooltip on the auto-gen-tx
+ * repeat icon. The join is nullable — most rows have no recurring source.
+ */
+export type TransactionWithRecurring = Transaction & {
+	recurring: { service: string } | null;
+};
+
 type State = {
-	transactions: Transaction[];
+	transactions: TransactionWithRecurring[];
 	isLoading: boolean;
 	error: string | null;
 };
@@ -23,7 +32,7 @@ export function useTransactions() {
 	const refetch = useCallback(async () => {
 		const { data, error } = await supabase
 			.from("transaction")
-			.select("*")
+			.select("*, recurring:recurring!recurring_id(service)")
 			.is("parent_transaction_id", null)
 			.order("date", { ascending: false })
 			.order("created_at", { ascending: false });
@@ -31,7 +40,11 @@ export function useTransactions() {
 			setState((s) => ({ ...s, isLoading: false, error: error.message }));
 			return;
 		}
-		setState({ transactions: data ?? [], isLoading: false, error: null });
+		setState({
+			transactions: (data ?? []) as TransactionWithRecurring[],
+			isLoading: false,
+			error: null,
+		});
 	}, []);
 
 	useEffect(() => {

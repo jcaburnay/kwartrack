@@ -1,6 +1,8 @@
 import { Repeat } from "lucide-react";
 import { useMemo, useState } from "react";
+import { Link } from "react-router";
 import type { Tag } from "../../hooks/useTags";
+import type { TransactionWithRecurring } from "../../hooks/useTransactions";
 import type { Account, AccountGroup } from "../../utils/accountBalances";
 import { formatCentavos } from "../../utils/currency";
 import type { Transaction } from "../../utils/transactionFilters";
@@ -10,7 +12,7 @@ type SortKey = "date" | "amount" | "type" | "tag" | "from" | "to";
 type SortDir = "asc" | "desc";
 
 type Props = {
-	transactions: readonly Transaction[];
+	transactions: readonly TransactionWithRecurring[];
 	accounts: readonly Account[];
 	groups: readonly AccountGroup[];
 	tags: readonly Tag[];
@@ -165,10 +167,23 @@ export function TransactionsTable({
 								<td className="text-base-content/70 max-w-[16rem] truncate">
 									<span className="inline-flex items-center gap-1.5">
 										{tx.recurring_id != null && (
-											<Repeat
-												className="w-3.5 h-3.5 text-base-content/50 shrink-0"
-												aria-label="Auto-generated from a recurring"
-											/>
+											<span
+												className="tooltip tooltip-right shrink-0"
+												data-tip={
+													tx.recurring?.service
+														? `From recurring: ${tx.recurring.service}`
+														: "Auto-generated from a recurring"
+												}
+											>
+												<Link
+													to={`/recurring?id=${tx.recurring_id}`}
+													className="inline-flex items-center hover:text-primary"
+													onClick={(e) => e.stopPropagation()}
+													aria-label="View source recurring"
+												>
+													<Repeat className="w-3.5 h-3.5 text-base-content/50" />
+												</Link>
+											</span>
 										)}
 										<span className="truncate">{tx.description ?? ""}</span>
 									</span>

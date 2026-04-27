@@ -1,8 +1,10 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { MemoryRouter } from "react-router";
 import { describe, expect, it } from "vitest";
 import { TransactionsTable } from "../components/transactions/TransactionsTable";
 import type { Tag } from "../hooks/useTags";
+import type { TransactionWithRecurring } from "../hooks/useTransactions";
 import type { Account } from "../utils/accountBalances";
 import type { Transaction } from "../utils/transactionFilters";
 
@@ -27,8 +29,9 @@ const acc = (p: Partial<Account> & Pick<Account, "id" | "name" | "type">): Accou
 });
 
 const tx = (
-	p: Partial<Transaction> & Pick<Transaction, "id" | "type" | "date" | "amount_centavos">,
-): Transaction => ({
+	p: Partial<TransactionWithRecurring> &
+		Pick<Transaction, "id" | "type" | "date" | "amount_centavos">,
+): TransactionWithRecurring => ({
 	user_id: "u1",
 	created_at: ts,
 	updated_at: ts,
@@ -41,6 +44,8 @@ const tx = (
 	to_account_id: null,
 	debt_id: null,
 	split_id: null,
+	is_installment_portion: false,
+	recurring: null,
 	...p,
 });
 
@@ -69,7 +74,7 @@ describe("TransactionsTable", () => {
 	});
 
 	it("renders rows sorted by date desc by default", () => {
-		const rows: Transaction[] = [
+		const rows: TransactionWithRecurring[] = [
 			tx({
 				id: "a",
 				type: "expense",
@@ -105,7 +110,7 @@ describe("TransactionsTable", () => {
 
 	it("clicking amount header toggles sort direction", async () => {
 		const user = userEvent.setup();
-		const rows: Transaction[] = [
+		const rows: TransactionWithRecurring[] = [
 			tx({
 				id: "a",
 				type: "expense",
@@ -144,7 +149,7 @@ describe("TransactionsTable", () => {
 	});
 
 	it("shows the repeat icon on auto-generated rows and not on manual rows", () => {
-		const rows: Transaction[] = [
+		const rows: TransactionWithRecurring[] = [
 			tx({
 				id: "auto",
 				type: "expense",
@@ -154,6 +159,7 @@ describe("TransactionsTable", () => {
 				tag_id: "foods",
 				recurring_id: "rec-1",
 				description: "Spotify",
+				recurring: { service: "Spotify Family" },
 			}),
 			tx({
 				id: "manual",
@@ -166,22 +172,25 @@ describe("TransactionsTable", () => {
 			}),
 		];
 		render(
-			<TransactionsTable
-				transactions={rows}
-				accounts={accounts}
-				groups={[]}
-				tags={tags}
-				onEdit={() => {}}
-				onChanged={() => {}}
-				emptyCopy="empty"
-			/>,
+			<MemoryRouter>
+				<TransactionsTable
+					transactions={rows}
+					accounts={accounts}
+					groups={[]}
+					tags={tags}
+					onEdit={() => {}}
+					onChanged={() => {}}
+					emptyCopy="empty"
+				/>
+			</MemoryRouter>,
 		);
-		const icons = screen.getAllByLabelText("Auto-generated from a recurring");
-		expect(icons.length).toBe(1);
+		const links = screen.getAllByLabelText("View source recurring");
+		expect(links.length).toBe(1);
+		expect(links[0]).toHaveAttribute("href", "/recurring?id=rec-1");
 	});
 
 	it("shows fee for transfer rows, em-dash otherwise", () => {
-		const rows: Transaction[] = [
+		const rows: TransactionWithRecurring[] = [
 			tx({
 				id: "x",
 				type: "transfer",
