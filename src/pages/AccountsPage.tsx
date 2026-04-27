@@ -1,4 +1,5 @@
-import { useMemo, useState } from "react";
+import { X } from "lucide-react";
+import { useCallback, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
 import { AccountsTable } from "../components/accounts/AccountsTable";
 import { EditAccountModal } from "../components/accounts/EditAccountModal";
@@ -15,6 +16,7 @@ import type { TransactionFormValues } from "../components/transactions/Transacti
 import { TransactionsTable } from "../components/transactions/TransactionsTable";
 import { useAccountGroups } from "../hooks/useAccountGroups";
 import { useAccounts } from "../hooks/useAccounts";
+import { useDebtsAndSplits } from "../hooks/useDebtsAndSplits";
 import { useRecurrings } from "../hooks/useRecurrings";
 import { useSelectedAccount } from "../hooks/useSelectedAccount";
 import { useTags } from "../hooks/useTags";
@@ -25,11 +27,11 @@ import { computeNetWorth } from "../utils/accountBalances";
 import { formatCentavos } from "../utils/currency";
 import {
 	type AccountLookup,
-	EMPTY_FILTERS,
 	matchesFilters,
 	type Transaction,
 	type TransactionFilters,
 } from "../utils/transactionFilters";
+import type { TransactionType } from "../utils/transactionValidation";
 
 export function AccountsPage() {
 	const { profile } = useAuth();
@@ -44,16 +46,16 @@ export function AccountsPage() {
 	const [editingAccount, setEditingAccount] = useState<Account | null>(null);
 	const [showArchived, setShowArchived] = useState(false);
 
-	const [filters, setFilters] = useState<TransactionFilters>(EMPTY_FILTERS);
 	const [showNewTx, setShowNewTx] = useState(false);
 	const [newTxPrefill, setNewTxPrefill] = useState<Partial<TransactionFormValues>>({});
 	const [editingTx, setEditingTx] = useState<Transaction | null>(null);
 
 	const { recurrings, createRecurring } = useRecurrings();
+	const { debts, splits } = useDebtsAndSplits();
 	const [showNewRecurring, setShowNewRecurring] = useState(false);
 	const [newRecurringPrefill, setNewRecurringPrefill] = useState<Partial<RecurringFormValues>>({});
 	const navigate = useNavigate();
-	const [params] = useSearchParams();
+	const [params, setParams] = useSearchParams();
 	const typeFilterRaw = params.get("type");
 	const typeFilter =
 		typeFilterRaw === "cash" ||
@@ -63,6 +65,50 @@ export function AccountsPage() {
 		typeFilterRaw === "time-deposit"
 			? typeFilterRaw
 			: null;
+
+	// Filter state lives in the URL so other surfaces (Budget tag rows, Debts/Splits drill-ins,
+	// Overview spend-chart points, Upcoming items) can deep-link to a filtered transactions view.
+	// `accountId` and `groupId` come from the selection mechanism (?account / ?group) — we only
+	// drive the remaining axes from URL here. Param names: txType (avoids collision with ?type
+	// for AccountsTable), tagId, date_start, date_end, split, debt.
+	const filters: TransactionFilters = useMemo(() => {
+		const raw = params.get("txType");
+		const type: TransactionType | null =
+			raw === "expense" || raw === "income" || raw === "transfer" ? raw : null;
+		return {
+			type,
+			tagId: params.get("tagId"),
+			accountId: null,
+			groupId: null,
+			dateFrom: params.get("date_start"),
+			dateTo: params.get("date_end"),
+			splitId: params.get("split"),
+			debtId: params.get("debt"),
+		};
+	}, [params]);
+
+	const setFilters = useCallback(
+		(next: TransactionFilters) => {
+			setParams(
+				(prev) => {
+					const p = new URLSearchParams(prev);
+					const writeOrDelete = (key: string, value: string | null) => {
+						if (value) p.set(key, value);
+						else p.delete(key);
+					};
+					writeOrDelete("txType", next.type);
+					writeOrDelete("tagId", next.tagId);
+					writeOrDelete("date_start", next.dateFrom);
+					writeOrDelete("date_end", next.dateTo);
+					writeOrDelete("split", next.splitId);
+					writeOrDelete("debt", next.debtId);
+					return p;
+				},
+				{ replace: true },
+			);
+		},
+		[setParams],
+	);
 
 	const net = computeNetWorth(accounts);
 	const timezone = profile?.timezone ?? "Asia/Manila";
@@ -125,6 +171,14 @@ export function AccountsPage() {
 			type: "transfer",
 			toAccountId: accountId,
 			fromAccountId: null,
+		});
+	}
+
+	function openWithdrawMatured(accountId: string) {
+		openNewTransaction({
+			type: "transfer",
+			fromAccountId: accountId,
+			toAccountId: null,
 		});
 	}
 
@@ -193,13 +247,42 @@ export function AccountsPage() {
 						timezone={timezone}
 						onClear={clear}
 						onPayThisCard={() => openPayThisCard(selection.account.id)}
+						onWithdrawMatured={() => openWithdrawMatured(selection.account.id)}
 					/>
 				)}
 
 				{accounts.length > 0 && (
 					<>
 						<section className="flex flex-col gap-2">
-							<h2 className="text-lg font-semibold">Transactions</h2>
+							<div className="flex items-center justify-between gap-2 flex-wrap">
+								<h2 className="text-lg font-semibold">Transactions</h2>
+								{filters.splitId &&
+									(() => {
+										const s = splits.find((x) => x.id === filters.splitId);
+										const label = s
+											? `Filtered to split: ${s.description}`
+											: "Filtered to a deleted split";
+										return (
+											<DeepLinkChip
+												label={label}
+												onClear={() => setFilters({ ...filters, splitId: null })}
+											/>
+										);
+									})()}
+								{filters.debtId &&
+									(() => {
+										const d = debts.find((x) => x.id === filters.debtId);
+										const label = d
+											? `Filtered to debt: ${d.personName} · ${formatCentavos(d.amountCentavos)}`
+											: "Filtered to a deleted debt";
+										return (
+											<DeepLinkChip
+												label={label}
+												onClear={() => setFilters({ ...filters, debtId: null })}
+											/>
+										);
+									})()}
+							</div>
 							<TransactionFilterBar
 								filters={filters}
 								onChange={setFilters}
@@ -218,7 +301,7 @@ export function AccountsPage() {
 							emptyCopy={
 								selection.kind === "account"
 									? "No transactions in this account yet."
-									: "No transactions yet. Create one from the + button."
+									: "No transactions yet. Create one from the + button, or start by creating an account."
 							}
 						/>
 					</>
@@ -333,5 +416,16 @@ export function AccountsPage() {
 				/>
 			)}
 		</div>
+	);
+}
+
+function DeepLinkChip({ label, onClear }: { label: string; onClear: () => void }) {
+	return (
+		<span className="badge badge-primary badge-outline gap-1">
+			<span className="text-xs">{label}</span>
+			<button type="button" className="cursor-pointer" onClick={onClear} aria-label="Clear filter">
+				<X className="size-3" />
+			</button>
+		</span>
 	);
 }
