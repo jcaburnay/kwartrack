@@ -1,4 +1,5 @@
 import { render, screen } from "@testing-library/react";
+import { MemoryRouter } from "react-router";
 import { describe, expect, it } from "vitest";
 import { DebtsTable } from "../components/debts/DebtsTable";
 import type { DebtRow } from "../utils/debtFilters";
@@ -33,12 +34,14 @@ const debts: DebtRow[] = [
 describe("DebtsTable", () => {
 	it("groups rows by person and shows the per-person net total", () => {
 		render(
-			<DebtsTable
-				debts={debts}
-				tagsById={new Map([["t1", "foods"]])}
-				onSettle={() => {}}
-				onDelete={() => {}}
-			/>,
+			<MemoryRouter>
+				<DebtsTable
+					debts={debts}
+					tagsById={new Map([["t1", "foods"]])}
+					onSettle={() => {}}
+					onDelete={() => {}}
+				/>
+			</MemoryRouter>,
 		);
 		expect(screen.getByText(/Alice/)).toBeInTheDocument();
 		// Net owed: 50000 - 0 = 50000, plus 400000 - 400000 = 0 -> 500.00 net owed.
