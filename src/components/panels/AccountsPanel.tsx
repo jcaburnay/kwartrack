@@ -1,5 +1,5 @@
-import { ChevronDown, ChevronUp } from "lucide-react";
-import { useCallback, useMemo, useState } from "react";
+import { ChevronDown, ChevronUp, X } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useAccountGroups } from "../../hooks/useAccountGroups";
 import { useAccounts } from "../../hooks/useAccounts";
 import { useRecurrings } from "../../hooks/useRecurrings";
@@ -16,10 +16,12 @@ import {
 	type Transaction,
 	type TransactionFilters,
 } from "../../utils/transactionFilters";
+import { matchesTransactionSearch } from "../../utils/transactionSearch";
+import { summariseNetFlowThisMonth } from "../../utils/transactionSummary";
+import { AccountsRightPane } from "../accounts/AccountsRightPane";
 import { AccountsTable } from "../accounts/AccountsTable";
 import { EditAccountModal } from "../accounts/EditAccountModal";
 import { NewAccountModal } from "../accounts/NewAccountModal";
-import { AccountDetailStrip } from "../strips/AccountDetailStrip";
 import type { DateRangeValue } from "../transactions/DateRangePicker";
 import { EditTransactionModal } from "../transactions/EditTransactionModal";
 import { NewTransactionModal } from "../transactions/NewTransactionModal";
@@ -27,7 +29,20 @@ import { TransactionFilterBar } from "../transactions/TransactionFilterBar";
 import type { TransactionFormValues } from "../transactions/TransactionForm";
 import { TransactionsTable } from "../transactions/TransactionsTable";
 
-export function AccountsPanel() {
+const DEFAULT_DATE_RANGE: DateRangeValue = {
+	preset: "all-time",
+	customFrom: null,
+	customTo: null,
+};
+
+type PendingModal = "new-transaction" | "new-account" | null;
+
+type Props = {
+	pendingModal?: PendingModal;
+	onPendingModalConsumed?: () => void;
+};
+
+export function AccountsPanel({ pendingModal, onPendingModalConsumed }: Props = {}) {
 	const { profile } = useAuth();
 	const { accounts, isLoading: aLoading, refetch: refetchAccounts } = useAccounts();
 	const { groups, refetch: refetchGroups } = useAccountGroups();
@@ -46,15 +61,33 @@ export function AccountsPanel() {
 	const [newTxPrefill, setNewTxPrefill] = useState<Partial<TransactionFormValues>>({});
 	const [editingTx, setEditingTx] = useState<Transaction | null>(null);
 	const [filters, setFilters] = useState<TransactionFilters>(EMPTY_FILTERS);
+	const [dateRange, setDateRange] = useState<DateRangeValue>(DEFAULT_DATE_RANGE);
+	const [search, setSearch] = useState("");
 
 	const timezone = profile?.timezone ?? "Asia/Manila";
 	const net = useMemo(() => computeNetWorth(accounts), [accounts]);
+	const netFlow = useMemo(
+		() => summariseNetFlowThisMonth(transactions, timezone),
+		[transactions, timezone],
+	);
 
 	const accountsById = useMemo(() => {
 		const m = new Map<string, { id: string; groupId: string | null }>();
 		for (const a of accounts) m.set(a.id, { id: a.id, groupId: a.group_id });
 		return m;
 	}, [accounts]);
+
+	const accountNameById = useMemo(() => {
+		const m = new Map<string, string>();
+		for (const a of accounts) m.set(a.id, a.name);
+		return m;
+	}, [accounts]);
+
+	const tagNameById = useMemo(() => {
+		const m = new Map<string, string>();
+		for (const t of tags) m.set(t.id, t.name);
+		return m;
+	}, [tags]);
 
 	const effectiveFilters: TransactionFilters = useMemo(() => {
 		if (selection.kind === "account")
@@ -65,16 +98,14 @@ export function AccountsPanel() {
 	}, [selection, filters]);
 
 	const filteredTransactions = useMemo(
-		() => transactions.filter((t) => matchesFilters(t, effectiveFilters, accountsById)),
-		[transactions, effectiveFilters, accountsById],
+		() =>
+			transactions.filter(
+				(t) =>
+					matchesFilters(t, effectiveFilters, accountsById) &&
+					matchesTransactionSearch(t, search, accountNameById, tagNameById),
+			),
+		[transactions, effectiveFilters, accountsById, search, accountNameById, tagNameById],
 	);
-
-	const [dateRange, setDateRange] = useState<DateRangeValue>({
-		preset: "all-time",
-		customFrom: null,
-		customTo: null,
-	});
-	const [search, setSearch] = useState("");
 
 	const handleSetFilters = useCallback((next: TransactionFilters) => setFilters(next), []);
 	const handleSetDateRange = useCallback((next: DateRangeValue) => setDateRange(next), []);
@@ -88,6 +119,32 @@ export function AccountsPanel() {
 		setNewTxPrefill(prefill);
 		setShowNewTx(true);
 	}
+
+	const selectionRef = useRef(selection);
+	selectionRef.current = selection;
+
+	useEffect(() => {
+		if (!pendingModal) return;
+		if (pendingModal === "new-transaction") {
+			const sel = selectionRef.current;
+			setNewTxPrefill(
+				sel.kind === "account" ? { type: "expense", fromAccountId: sel.account.id } : {},
+			);
+			setShowNewTx(true);
+		} else if (pendingModal === "new-account") {
+			setShowNewAccount(true);
+		}
+		onPendingModalConsumed?.();
+	}, [pendingModal, onPendingModalConsumed]);
+
+	const visibleAccountsCount = accounts.filter((a) => !a.is_archived).length;
+
+	const crossFilterChip =
+		selection.kind === "account"
+			? { label: selection.account.name }
+			: selection.kind === "group"
+				? { label: selection.group.name }
+				: null;
 
 	return (
 		<div className="card bg-base-100 h-full flex flex-col overflow-hidden">
@@ -104,14 +161,32 @@ export function AccountsPanel() {
 						Accounts
 					</span>
 					<span className="text-xs text-base-content/30">·</span>
-					<span className="text-xs text-base-content/60">
-						{accounts.filter((a) => !a.is_archived).length} account
-						{accounts.filter((a) => !a.is_archived).length !== 1 ? "s" : ""}
-					</span>
-					<span className="text-xs text-base-content/30">·</span>
-					<span className="text-xs tabular-nums text-base-content/70">
-						Net {formatCentavos(net.netWorthCentavos)}
-					</span>
+					{crossFilterChip ? (
+						<>
+							<span className="text-xs text-base-content/70">{crossFilterChip.label} selected</span>
+							<button
+								type="button"
+								aria-label="Clear selection"
+								className="btn btn-ghost btn-xs btn-circle"
+								onClick={(e) => {
+									e.stopPropagation();
+									clear();
+								}}
+							>
+								<X className="size-3" />
+							</button>
+						</>
+					) : (
+						<>
+							<span className="text-xs text-base-content/60">
+								{visibleAccountsCount} account{visibleAccountsCount !== 1 ? "s" : ""}
+							</span>
+							<span className="text-xs text-base-content/30">·</span>
+							<span className="text-xs tabular-nums text-base-content/70">
+								Net {formatCentavos(net.netWorthCentavos)}
+							</span>
+						</>
+					)}
 				</button>
 			) : (
 				<>
@@ -146,51 +221,79 @@ export function AccountsPanel() {
 							</button>
 						</div>
 					</div>
-					<div className="flex-[1_1_35%] overflow-y-auto overflow-x-auto">
-						{aLoading ? (
-							<div className="flex justify-center py-4">
-								<span className="loading loading-spinner loading-sm text-primary" />
-							</div>
-						) : (
-							<AccountsTable
+					<div className="flex-[1_1_35%] flex min-h-0 overflow-hidden">
+						<div className="flex-1 overflow-y-auto overflow-x-auto md:basis-1/2 md:flex-none border-r border-base-300">
+							{aLoading ? (
+								<div className="flex justify-center py-4">
+									<span className="loading loading-spinner loading-sm text-primary" />
+								</div>
+							) : (
+								<AccountsTable
+									accounts={accounts}
+									groups={groups}
+									recurrings={recurrings}
+									selectedAccountId={selection.kind === "account" ? selection.account.id : null}
+									selectedGroupId={selection.kind === "group" ? selection.group.id : null}
+									onSelectAccount={selectAccount}
+									onSelectGroup={selectGroup}
+									onEdit={(a) => setEditingAccount(a)}
+									onChanged={refetchAccounts}
+									showArchived={showArchived}
+								/>
+							)}
+						</div>
+						<div className="hidden md:block md:basis-1/2 md:flex-none overflow-y-auto">
+							<AccountsRightPane
+								selection={selection}
 								accounts={accounts}
-								groups={groups}
+								transactions={transactions}
 								recurrings={recurrings}
-								selectedAccountId={selection.kind === "account" ? selection.account.id : null}
-								selectedGroupId={selection.kind === "group" ? selection.group.id : null}
-								onSelectAccount={selectAccount}
-								onSelectGroup={selectGroup}
-								onEdit={(a) => setEditingAccount(a)}
-								onChanged={refetchAccounts}
-								showArchived={showArchived}
+								timezone={timezone}
+								onClear={clear}
+								onPayThisCard={() =>
+									openNewTransaction({
+										type: "transfer",
+										toAccountId: selection.kind === "account" ? selection.account.id : null,
+										fromAccountId: null,
+									})
+								}
+								onWithdrawMatured={() =>
+									openNewTransaction({
+										type: "transfer",
+										fromAccountId: selection.kind === "account" ? selection.account.id : null,
+										toAccountId: null,
+									})
+								}
 							/>
-						)}
+						</div>
 					</div>
+					{selection.kind !== "none" && (
+						<div className="md:hidden border-t border-base-300">
+							<AccountsRightPane
+								selection={selection}
+								accounts={accounts}
+								transactions={transactions}
+								recurrings={recurrings}
+								timezone={timezone}
+								onClear={clear}
+								onPayThisCard={() =>
+									openNewTransaction({
+										type: "transfer",
+										toAccountId: selection.kind === "account" ? selection.account.id : null,
+										fromAccountId: null,
+									})
+								}
+								onWithdrawMatured={() =>
+									openNewTransaction({
+										type: "transfer",
+										fromAccountId: selection.kind === "account" ? selection.account.id : null,
+										toAccountId: null,
+									})
+								}
+							/>
+						</div>
+					)}
 				</>
-			)}
-
-			{selection.kind === "account" && (
-				<AccountDetailStrip
-					account={selection.account}
-					transactions={transactions}
-					recurrings={recurrings}
-					timezone={timezone}
-					onClear={clear}
-					onPayThisCard={() =>
-						openNewTransaction({
-							type: "transfer",
-							toAccountId: selection.account.id,
-							fromAccountId: null,
-						})
-					}
-					onWithdrawMatured={() =>
-						openNewTransaction({
-							type: "transfer",
-							fromAccountId: selection.account.id,
-							toAccountId: null,
-						})
-					}
-				/>
 			)}
 
 			{!txFolded && <div className="border-t border-base-300 flex-shrink-0" />}
@@ -209,15 +312,42 @@ export function AccountsPanel() {
 					</span>
 					<span className="text-xs text-base-content/30">·</span>
 					<span className="text-xs text-base-content/60">
-						{filteredTransactions.length} transaction{filteredTransactions.length !== 1 ? "s" : ""}
+						{filteredTransactions.length} transaction
+						{filteredTransactions.length !== 1 ? "s" : ""}
+					</span>
+					<span className="text-xs text-base-content/30">·</span>
+					<span className="text-xs tabular-nums text-base-content/70">
+						Net flow this month: {netFlow.netCentavos >= 0 ? "+" : ""}
+						{formatCentavos(netFlow.netCentavos)}
 					</span>
 				</button>
 			) : (
 				<div className="flex-[1_1_65%] flex flex-col overflow-hidden min-h-0">
 					<div className="h-9 flex items-center justify-between px-4 flex-shrink-0 border-b border-base-300">
-						<span className="text-xs font-semibold uppercase tracking-wide text-base-content/50">
-							Transactions
-						</span>
+						<div className="flex items-center gap-2 min-w-0">
+							<span className="text-xs font-semibold uppercase tracking-wide text-base-content/50">
+								Transactions
+							</span>
+							<span className="text-xs text-base-content/30">·</span>
+							<span className="text-xs text-base-content/60">{filteredTransactions.length}</span>
+							{crossFilterChip && (
+								<>
+									<span className="text-xs text-base-content/30">·</span>
+									<span className="text-xs text-base-content/60">filtered to</span>
+									<span className="badge badge-sm badge-ghost gap-1 truncate max-w-[16ch]">
+										{crossFilterChip.label}
+										<button
+											type="button"
+											aria-label="Clear selection"
+											className="hover:text-error"
+											onClick={clear}
+										>
+											<X className="size-3" />
+										</button>
+									</span>
+								</>
+							)}
+						</div>
 						<div className="flex items-center gap-1.5">
 							<button
 								type="button"
@@ -258,7 +388,7 @@ export function AccountsPanel() {
 							emptyCopy={
 								selection.kind === "account"
 									? "No transactions in this account yet."
-									: "No transactions yet. Use the + button to add one."
+									: "No transactions match these filters."
 							}
 						/>
 					</div>

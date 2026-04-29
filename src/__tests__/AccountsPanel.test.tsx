@@ -100,4 +100,9 @@ describe("AccountsPanel", () => {
 		await user.click(screen.getByRole("button", { name: /expand transactions/i }));
 		expect(screen.getByRole("button", { name: /fold transactions/i })).toBeInTheDocument();
 	});
+
+	it("shows placeholder text in right pane when nothing is selected", () => {
+		renderPanel();
+		expect(screen.getByText(/select an account or group/i)).toBeInTheDocument();
+	});
 });
