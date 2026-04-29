@@ -1,6 +1,5 @@
 import type { Tag } from "../../hooks/useTags";
 import { useAuth } from "../../providers/AuthProvider";
-import type { Account, AccountGroup } from "../../utils/accountBalances";
 import { resolveDateRangePreset } from "../../utils/transactionDateRange";
 import { EMPTY_FILTERS, type TransactionFilters } from "../../utils/transactionFilters";
 import type { TransactionType } from "../../utils/transactionValidation";
@@ -13,8 +12,6 @@ type Props = {
 	onChange: (next: TransactionFilters) => void;
 	onDateRangeChange: (next: DateRangeValue) => void;
 	onSearchChange: (next: string) => void;
-	accounts: readonly Account[];
-	groups: readonly AccountGroup[];
 	tags: readonly Tag[];
 };
 

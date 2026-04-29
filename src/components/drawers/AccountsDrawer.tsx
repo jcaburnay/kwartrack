@@ -204,8 +204,6 @@ export function AccountsDrawer({ pendingModal, onClose }: Props) {
 									onChange={handleSetFilters}
 									onDateRangeChange={handleSetDateRange}
 									onSearchChange={handleSetSearch}
-									accounts={accounts}
-									groups={groups}
 									tags={tags}
 								/>
 								<TransactionsTable

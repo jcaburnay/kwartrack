@@ -244,8 +244,6 @@ export function AccountsPanel() {
 							onChange={handleSetFilters}
 							onDateRangeChange={handleSetDateRange}
 							onSearchChange={handleSetSearch}
-							accounts={accounts}
-							groups={groups}
 							tags={tags}
 						/>
 					</div>
