@@ -54,16 +54,7 @@ export function BudgetComparisonView({
 	return (
 		<ul
 			ref={scrollRef}
-			className="flex-1 overflow-y-auto min-h-0 flex flex-col gap-3 px-4 py-3"
-			style={
-				showFade
-					? {
-							maskImage: "linear-gradient(to bottom, black calc(100% - 2.5rem), transparent 100%)",
-							WebkitMaskImage:
-								"linear-gradient(to bottom, black calc(100% - 2.5rem), transparent 100%)",
-						}
-					: undefined
-			}
+			className={`flex-1 overflow-y-auto min-h-0 flex flex-col gap-3 px-4 py-3 ${showFade ? "scroll-fade-bottom" : ""}`}
 		>
 			{sorted.map((row) => {
 				const bucket = projectedBucket(row.actual, row.allocated, today, timezone, month);

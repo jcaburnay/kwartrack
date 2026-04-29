@@ -76,17 +76,7 @@ export function BudgetTableView({
 		<div className="flex flex-col min-h-0 flex-1 overflow-hidden">
 			<div
 				ref={scrollRef}
-				className="flex-1 overflow-y-auto overflow-x-auto min-h-0"
-				style={
-					showFade
-						? {
-								maskImage:
-									"linear-gradient(to bottom, black calc(100% - 2.5rem), transparent 100%)",
-								WebkitMaskImage:
-									"linear-gradient(to bottom, black calc(100% - 2.5rem), transparent 100%)",
-							}
-						: undefined
-				}
+				className={`flex-1 overflow-y-auto overflow-x-auto min-h-0 ${showFade ? "scroll-fade-bottom" : ""}`}
 			>
 				<table className="table table-sm">
 					<thead className="sticky top-0 bg-base-100 z-10">

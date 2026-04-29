@@ -18,6 +18,11 @@
 	animation: row-flash 1.5s ease-out;
 }
 
+.scroll-fade-bottom {
+	mask-image: linear-gradient(to bottom, black calc(100% - 2.5rem), transparent 100%);
+	-webkit-mask-image: linear-gradient(to bottom, black calc(100% - 2.5rem), transparent 100%);
+}
+
 @media (min-width: 640px) {
 	.jigsaw-grid {
 		display: grid;
