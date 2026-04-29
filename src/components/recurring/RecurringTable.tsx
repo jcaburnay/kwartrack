@@ -1,4 +1,5 @@
 import { Check, Pause } from "lucide-react";
+import type { ReactNode } from "react";
 import type { Tag } from "../../hooks/useTags";
 import type { Account } from "../../utils/accountBalances";
 import { formatCentavos } from "../../utils/currency";
@@ -16,37 +17,63 @@ type Props = {
 };
 
 const INTERVAL_LABEL: Record<Recurring["interval"], string> = {
-	weekly: "Weekly",
-	monthly: "Monthly",
-	quarterly: "Quarterly",
-	semi_annual: "Semi-annual",
-	annual: "Annual",
+	weekly: "weekly",
+	monthly: "monthly",
+	quarterly: "quarterly",
+	semi_annual: "semi-annual",
+	annual: "annual",
 };
 
-const TYPE_BADGE_CLASS: Record<Recurring["type"], string> = {
-	expense: "badge-error",
-	income: "badge-success",
-	transfer: "badge-info",
-};
-
-function statusIcon(r: Recurring) {
+function statusGlyph(r: Recurring) {
 	const status = statusOf(r);
 	if (status === "paused") {
-		return <Pause className="w-3.5 h-3.5 text-base-content/60" aria-label="Paused" />;
+		return <Pause className="w-3.5 h-3.5 text-base-content/50" aria-label="Paused" />;
 	}
 	if (status === "completed") {
-		return <Check className="w-3.5 h-3.5 text-success" aria-label="Completed" />;
+		return <Check className="w-3.5 h-3.5 text-base-content/50" aria-label="Completed" />;
 	}
 	return null;
 }
 
-function formatScheduleLocal(iso: string): string {
-	const d = new Date(iso);
-	return new Intl.DateTimeFormat("en-CA", {
-		year: "numeric",
-		month: "2-digit",
-		day: "2-digit",
-	}).format(d);
+function formatScheduleDate(iso: string): string {
+	const target = new Date(iso);
+	const today = new Date();
+	const sameYear = target.getFullYear() === today.getFullYear();
+	const dayDiff = Math.round(
+		(new Date(target.toDateString()).getTime() - new Date(today.toDateString()).getTime()) /
+			86_400_000,
+	);
+	if (dayDiff === 0) return "Today";
+	if (dayDiff === -1) return "Yesterday";
+	const opts: Intl.DateTimeFormatOptions = sameYear
+		? { month: "short", day: "numeric" }
+		: { month: "short", day: "numeric", year: "numeric" };
+	return new Intl.DateTimeFormat("en-US", opts).format(target);
+}
+
+function signedAmount(r: Recurring): string {
+	const formatted = formatCentavos(r.amount_centavos);
+	if (r.type === "income") return `+${formatted}`;
+	return `-${formatted}`;
+}
+
+function renderAccount(r: Recurring, accountById: Map<string, Account>): ReactNode {
+	const fromName = r.from_account_id ? accountById.get(r.from_account_id)?.name : null;
+	const toName = r.to_account_id ? accountById.get(r.to_account_id)?.name : null;
+	if (r.type === "expense") return fromName ?? "—";
+	if (r.type === "income") return toName ?? "—";
+	if (fromName && toName) return `${fromName} → ${toName}`;
+	return "—";
+}
+
+function scheduleSubLine(r: Recurring): string {
+	const status = statusOf(r);
+	if (status === "completed") return "Completed";
+	const interval = INTERVAL_LABEL[r.interval];
+	if (r.remaining_occurrences != null && r.remaining_occurrences > 0) {
+		return `${interval} · ${r.remaining_occurrences} left`;
+	}
+	return interval;
 }
 
 export function RecurringTable({
@@ -62,59 +89,60 @@ export function RecurringTable({
 
 	if (recurrings.length === 0) {
 		return (
-			<div className="bg-base-100 rounded-box border border-base-300 p-8 text-center text-base-content/60 text-sm italic">
-				No recurring transactions yet. Add subscriptions, installments, or salary via the + button.
+			<div className="border border-dashed border-base-300 p-8 text-center text-base-content/60 text-sm">
+				No recurrings yet. Use + New to add a subscription, installment, or salary.
 			</div>
 		);
 	}
 
 	return (
-		<div className="overflow-x-auto bg-base-100 rounded-box border border-base-300">
+		<div className="overflow-x-auto">
 			<table className="table table-sm">
 				<thead>
-					<tr>
-						<th></th>
+					<tr className="text-xs uppercase tracking-wide text-base-content/50">
 						<th>Service</th>
 						<th className="text-right">Amount</th>
-						<th>Type</th>
-						<th>Tag</th>
-						<th>From</th>
-						<th>To</th>
+						<th className="hidden md:table-cell">Tag</th>
+						<th className="hidden md:table-cell">Account</th>
 						<th>Schedule</th>
-						<th>Interval</th>
-						<th className="text-right">Remaining</th>
 						<th></th>
 					</tr>
 				</thead>
 				<tbody>
 					{recurrings.map((r) => {
-						const isCompleted = r.is_completed;
-						const isPaused = r.is_paused;
+						const dimmed = r.is_paused || r.is_completed;
+						const subLine = scheduleSubLine(r);
 						return (
-							<tr
-								key={r.id}
-								data-row-id={r.id}
-								className={isCompleted || isPaused ? "opacity-60" : undefined}
-							>
-								<td>{statusIcon(r)}</td>
-								<td className="font-medium">{r.service}</td>
-								<td className="text-right">{formatCentavos(r.amount_centavos)}</td>
+							<tr key={r.id} data-row-id={r.id} className={dimmed ? "opacity-60" : undefined}>
 								<td>
-									<span className={`badge badge-sm ${TYPE_BADGE_CLASS[r.type]}`}>{r.type}</span>
+									<div className="flex items-center gap-1.5">
+										{statusGlyph(r)}
+										<span className="font-medium">{r.service}</span>
+									</div>
 								</td>
-								<td className="text-sm text-base-content/70">
-									{r.tag_id ? (tagById.get(r.tag_id)?.name ?? "—") : "—"}
+								<td className="text-right tabular-nums">
+									<div className={r.type === "income" ? "text-success" : undefined}>
+										{signedAmount(r)}
+									</div>
+									{r.fee_centavos != null && (
+										<div className="text-xs text-base-content/50">
+											+{formatCentavos(r.fee_centavos)} fee
+										</div>
+									)}
 								</td>
-								<td className="text-sm text-base-content/70">
-									{r.from_account_id ? (accountById.get(r.from_account_id)?.name ?? "—") : "—"}
+								<td className="hidden md:table-cell text-sm">
+									<span className="block max-w-[16ch] truncate">
+										{r.tag_id ? (tagById.get(r.tag_id)?.name ?? "—") : "—"}
+									</span>
 								</td>
-								<td className="text-sm text-base-content/70">
-									{r.to_account_id ? (accountById.get(r.to_account_id)?.name ?? "—") : "—"}
+								<td className="hidden md:table-cell text-sm">
+									<span className="block max-w-[20ch] truncate">
+										{renderAccount(r, accountById)}
+									</span>
 								</td>
-								<td className="text-sm">{formatScheduleLocal(r.next_occurrence_at)}</td>
-								<td className="text-sm">{INTERVAL_LABEL[r.interval]}</td>
-								<td className="text-right text-sm">
-									{r.remaining_occurrences == null ? "—" : r.remaining_occurrences}
+								<td className="text-sm">
+									<div className="tabular-nums">{formatScheduleDate(r.next_occurrence_at)}</div>
+									<div className="text-xs text-base-content/50">{subLine}</div>
 								</td>
 								<td className="text-right">
 									<RecurringRowActions
