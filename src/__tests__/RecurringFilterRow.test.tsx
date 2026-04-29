@@ -20,7 +20,7 @@ function setup(overrides?: Partial<RecurringFilters>) {
 describe("RecurringFilterRow", () => {
 	it("renders type pills, tag/cadence dropdowns, search, and show-completed toggle", () => {
 		setup();
-		expect(screen.getByRole("button", { name: "All types" })).toBeInTheDocument();
+		expect(screen.getByRole("button", { name: "All" })).toBeInTheDocument();
 		expect(screen.getByRole("button", { name: "Expenses" })).toBeInTheDocument();
 		expect(screen.getByRole("button", { name: "Income" })).toBeInTheDocument();
 		expect(screen.getByRole("button", { name: "Transfers" })).toBeInTheDocument();
@@ -46,9 +46,9 @@ describe("RecurringFilterRow", () => {
 		expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ type: "expense" }));
 	});
 
-	it("emits onChange resetting type to null when 'All types' is clicked while a type is active", () => {
+	it("emits onChange resetting type to null when 'All' is clicked while a type is active", () => {
 		const { onChange } = setup({ type: "expense" });
-		fireEvent.click(screen.getByRole("button", { name: "All types" }));
+		fireEvent.click(screen.getByRole("button", { name: "All" }));
 		expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ type: null }));
 	});
 

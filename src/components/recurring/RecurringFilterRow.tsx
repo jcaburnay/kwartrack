@@ -16,7 +16,7 @@ type Props = {
 };
 
 const TYPE_PILLS: { value: TransactionType | null; label: string }[] = [
-	{ value: null, label: "All types" },
+	{ value: null, label: "All" },
 	{ value: "expense", label: "Expenses" },
 	{ value: "income", label: "Income" },
 	{ value: "transfer", label: "Transfers" },
