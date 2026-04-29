@@ -46,3 +46,27 @@ export function monthBounds(timezone: string, today: Date = new Date()): MonthBo
 	}).format(new Date(`${startISO}T12:00:00Z`));
 	return { startISO, endExclusiveISO, monthLabel };
 }
+
+/**
+ * Build a YYYY-MM-DD ISO string in the given IANA timezone.
+ * Convenience wrapper around `Intl.DateTimeFormat("en-CA")`.
+ */
+export function ymdISO(date: Date, timezone: string): string {
+	return new Intl.DateTimeFormat("en-CA", {
+		timeZone: timezone,
+		year: "numeric",
+		month: "2-digit",
+		day: "2-digit",
+	}).format(date);
+}
+
+/**
+ * Shift a YYYY-MM-DD ISO date string by a delta of calendar days. Operates in
+ * UTC to be DST-safe — safe to use on DATE columns where the time-of-day is
+ * meaningless.
+ */
+export function shiftDaysISO(iso: string, delta: number): string {
+	const d = new Date(`${iso}T12:00:00Z`);
+	d.setUTCDate(d.getUTCDate() + delta);
+	return d.toISOString().slice(0, 10);
+}

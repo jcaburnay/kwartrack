@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { type DateRangePreset, resolveDateRangePreset } from "../utils/transactionDateRange";
+import { DATE_RANGE_PRESETS, resolveDateRangePreset } from "../utils/transactionDateRange";
 
 const TZ = "Asia/Manila";
 const today = new Date("2026-04-15T03:00:00Z"); // 11:00 AM Manila
@@ -42,14 +42,9 @@ describe("resolveDateRangePreset", () => {
 		});
 	});
 
-	it("preset list is exhaustive", () => {
-		const all: DateRangePreset[] = [
-			"this-month",
-			"last-30-days",
-			"last-month",
-			"custom",
-			"all-time",
-		];
-		expect(all.length).toBe(5);
+	it("resolves every preset in DATE_RANGE_PRESETS without throwing", () => {
+		for (const p of DATE_RANGE_PRESETS) {
+			expect(() => resolveDateRangePreset(p.value, TZ, today)).not.toThrow();
+		}
 	});
 });

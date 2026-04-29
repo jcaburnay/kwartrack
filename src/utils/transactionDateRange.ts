@@ -1,4 +1,4 @@
-import { monthBounds } from "./dateRange";
+import { monthBounds, shiftDaysISO, ymdISO } from "./dateRange";
 
 export type DateRangePreset = "this-month" | "last-30-days" | "last-month" | "custom" | "all-time";
 
@@ -15,25 +15,6 @@ export const DATE_RANGE_PRESETS: { value: DateRangePreset; label: string }[] = [
 	{ value: "custom", label: "Custom…" },
 ];
 
-function pad(n: number): string {
-	return n < 10 ? `0${n}` : String(n);
-}
-
-function todayISO(timezone: string, today: Date): string {
-	return new Intl.DateTimeFormat("en-CA", {
-		timeZone: timezone,
-		year: "numeric",
-		month: "2-digit",
-		day: "2-digit",
-	}).format(today);
-}
-
-function shiftDaysISO(iso: string, delta: number): string {
-	const d = new Date(`${iso}T12:00:00Z`);
-	d.setUTCDate(d.getUTCDate() + delta);
-	return d.toISOString().slice(0, 10);
-}
-
 export function resolveDateRangePreset(
 	preset: DateRangePreset,
 	timezone: string,
@@ -41,7 +22,7 @@ export function resolveDateRangePreset(
 ): ResolvedRange {
 	if (preset === "custom" || preset === "all-time") return { from: null, to: null };
 
-	const todayStr = todayISO(timezone, today);
+	const todayStr = ymdISO(today, timezone);
 
 	if (preset === "this-month") {
 		const { startISO } = monthBounds(timezone, today);
@@ -52,13 +33,10 @@ export function resolveDateRangePreset(
 		return { from: shiftDaysISO(todayStr, -29), to: todayStr };
 	}
 
-	// last-month
-	const [y, m] = todayStr.split("-").map(Number);
-	const prevYear = m === 1 ? y - 1 : y;
-	const prevMonth = m === 1 ? 12 : m - 1;
-	const from = `${prevYear}-${pad(prevMonth)}-01`;
-	// last day of previous month = day 0 of current month
-	const lastDay = new Date(Date.UTC(y, m - 1, 0)).getUTCDate();
-	const to = `${prevYear}-${pad(prevMonth)}-${pad(lastDay)}`;
+	// last-month — derive bounds via monthBounds + day arithmetic for consistency
+	// with the rest of the codebase's calendar math.
+	const thisMonthStart = monthBounds(timezone, today).startISO;
+	const to = shiftDaysISO(thisMonthStart, -1);
+	const from = monthBounds(timezone, new Date(`${to}T12:00:00Z`)).startISO;
 	return { from, to };
 }
