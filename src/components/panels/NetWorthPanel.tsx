@@ -20,6 +20,7 @@ import {
 	rangeToMonthCount,
 } from "../overview/ChartRangeToggle";
 import { NetWorthTrend } from "../overview/NetWorthTrend";
+import { DropdownSelect } from "../ui/DropdownSelect";
 
 type ChartView = "netWorth" | "cashFlow" | "assetMix" | "accountBalances";
 
@@ -114,18 +115,13 @@ export function NetWorthPanel() {
 						</dl>
 
 						<div className="flex items-center justify-between gap-2">
-							<select
-								aria-label="Chart view"
-								className="select select-sm select-ghost text-xs px-2 -mx-2 max-w-[10rem] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+							<DropdownSelect
+								ariaLabel="Chart view"
 								value={chart}
-								onChange={(e) => setChart(e.target.value as ChartView)}
-							>
-								{CHART_OPTIONS.map((opt) => (
-									<option key={opt.value} value={opt.value}>
-										{opt.label}
-									</option>
-								))}
-							</select>
+								options={CHART_OPTIONS}
+								onChange={setChart}
+								variant="ghost"
+							/>
 							{isTimeAxis && <ChartRangeToggle value={range} onChange={setRange} />}
 						</div>
 

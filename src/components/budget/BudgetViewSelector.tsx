@@ -1,3 +1,5 @@
+import { DropdownSelect } from "../ui/DropdownSelect";
+
 export type BudgetView = "table" | "comparison" | "history";
 
 const OPTIONS: { value: BudgetView; label: string }[] = [
@@ -13,18 +15,13 @@ type Props = {
 
 export function BudgetViewSelector({ value, onChange }: Props) {
 	return (
-		<select
-			aria-label="Budget view"
-			className="select select-sm select-ghost text-xs px-2 -mx-2 max-w-[10rem] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+		<DropdownSelect
+			ariaLabel="Budget view"
 			value={value}
-			onChange={(e) => onChange(e.target.value as BudgetView)}
-		>
-			{OPTIONS.map((opt) => (
-				<option key={opt.value} value={opt.value}>
-					{opt.label}
-				</option>
-			))}
-		</select>
+			options={OPTIONS}
+			onChange={onChange}
+			variant="ghost"
+		/>
 	);
 }
 
