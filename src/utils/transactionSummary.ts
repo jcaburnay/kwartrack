@@ -38,3 +38,30 @@ export function summariseThisMonth(
 	}
 	return { inflowCentavos: inflow, outflowCentavos: outflow };
 }
+
+export type NetFlowSummary = {
+	inflowCentavos: number;
+	outflowCentavos: number;
+	netCentavos: number;
+};
+
+/**
+ * Sum income inflows minus expense outflows for the current calendar month
+ * (in user's timezone). Transfers are excluded — they move money between
+ * the user's own accounts and net to zero from a "money in vs out" view.
+ */
+export function summariseNetFlowThisMonth(
+	transactions: readonly Transaction[],
+	timezone: string,
+	today: Date = new Date(),
+): NetFlowSummary {
+	const { startISO, endExclusiveISO } = monthBounds(timezone, today);
+	let inflow = 0;
+	let outflow = 0;
+	for (const tx of transactions) {
+		if (tx.date < startISO || tx.date >= endExclusiveISO) continue;
+		if (tx.type === "income") inflow += tx.amount_centavos;
+		else if (tx.type === "expense") outflow += tx.amount_centavos;
+	}
+	return { inflowCentavos: inflow, outflowCentavos: outflow, netCentavos: inflow - outflow };
+}
