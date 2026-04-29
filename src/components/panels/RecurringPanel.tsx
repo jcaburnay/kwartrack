@@ -1,13 +1,18 @@
 import { ChevronDown, ChevronUp, Plus } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useAccounts } from "../../hooks/useAccounts";
 import { useRecurrings } from "../../hooks/useRecurrings";
 import { useTags } from "../../hooks/useTags";
 import { formatCentavos } from "../../utils/currency";
-import type { Recurring } from "../../utils/recurringFilters";
+import {
+	DEFAULT_RECURRING_FILTERS,
+	matchesRecurringFilters,
+	type Recurring,
+} from "../../utils/recurringFilters";
 import { summariseRecurrings } from "../../utils/recurringSummary";
 import { EditRecurringModal } from "../recurring/EditRecurringModal";
 import { NewRecurringModal } from "../recurring/NewRecurringModal";
+import { RecurringFilterRow } from "../recurring/RecurringFilterRow";
 import { RecurringTable } from "../recurring/RecurringTable";
 
 function formatNextDueDate(iso: string): string {
@@ -43,6 +48,12 @@ export function RecurringPanel() {
 	const [folded, setFolded] = useState(false);
 	const [creating, setCreating] = useState(false);
 	const [editing, setEditing] = useState<Recurring | null>(null);
+	const [filters, setFilters] = useState(DEFAULT_RECURRING_FILTERS);
+
+	const visible = useMemo(
+		() => recurrings.filter((r) => matchesRecurringFilters(r, filters)),
+		[recurrings, filters],
+	);
 
 	const summary = summariseRecurrings(recurrings);
 
@@ -97,14 +108,23 @@ export function RecurringPanel() {
 							<span className="loading loading-spinner text-primary" />
 						</div>
 					) : (
-						<RecurringTable
-							recurrings={recurrings}
-							accounts={accounts}
-							tags={tags}
-							onEdit={setEditing}
-							onTogglePaused={togglePaused}
-							onDelete={deleteRecurring}
-						/>
+						<>
+							<RecurringFilterRow filters={filters} onChange={setFilters} tags={tags} />
+							{visible.length === 0 && recurrings.length > 0 ? (
+								<div className="border border-dashed border-base-300 p-8 text-center text-base-content/60 text-sm">
+									No recurrings match these filters.
+								</div>
+							) : (
+								<RecurringTable
+									recurrings={visible}
+									accounts={accounts}
+									tags={tags}
+									onEdit={setEditing}
+									onTogglePaused={togglePaused}
+									onDelete={deleteRecurring}
+								/>
+							)}
+						</>
 					)}
 				</div>
 			)}
