@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router";
 import { AccountsDrawer } from "../components/drawers/AccountsDrawer";
-import { BudgetDrawer } from "../components/drawers/BudgetDrawer";
 import { DebtsDrawer } from "../components/drawers/DebtsDrawer";
 import { RecurringDrawer } from "../components/drawers/RecurringDrawer";
 import { Header } from "../components/Header";
@@ -11,7 +10,7 @@ import { DebtsPanel } from "../components/panels/DebtsPanel";
 import { NetWorthPanel } from "../components/panels/NetWorthPanel";
 import { RecurringPanel } from "../components/panels/RecurringPanel";
 
-type DrawerName = "accounts" | "budget" | "recurring" | "debts";
+type DrawerName = "accounts" | "recurring" | "debts";
 
 const MODAL_TO_DRAWER: Record<string, DrawerName> = {
 	"new-transaction": "accounts",
@@ -33,7 +32,7 @@ export function JigsawPage() {
 		if (modal && MODAL_TO_DRAWER[modal]) {
 			setActiveDrawer(MODAL_TO_DRAWER[modal]);
 			setDrawerModal(modal);
-		} else if (focus && ["accounts", "budget", "recurring", "debts"].includes(focus)) {
+		} else if (focus && ["accounts", "recurring", "debts"].includes(focus)) {
 			const el = document.getElementById(`panel-${focus}`);
 			el?.scrollIntoView({ behavior: "smooth" });
 		}
@@ -82,7 +81,7 @@ export function JigsawPage() {
 							<RecurringPanel onSeeAll={() => openDrawer("recurring")} />
 						</div>
 						<div id="panel-budget" className="jigsaw-budget">
-							<BudgetPanel onSeeAll={() => openDrawer("budget")} />
+							<BudgetPanel />
 						</div>
 						<div id="panel-debts" className="jigsaw-debts">
 							<DebtsPanel onSeeAll={() => openDrawer("debts")} />
@@ -96,9 +95,6 @@ export function JigsawPage() {
 				<div className="bg-base-100 min-h-full w-full sm:w-[700px] flex flex-col shadow-xl">
 					{activeDrawer === "accounts" && (
 						<AccountsDrawer pendingModal={drawerModal} onClose={closeDrawer} />
-					)}
-					{activeDrawer === "budget" && (
-						<BudgetDrawer pendingModal={drawerModal} onClose={closeDrawer} />
 					)}
 					{activeDrawer === "recurring" && (
 						<RecurringDrawer pendingModal={drawerModal} onClose={closeDrawer} />
