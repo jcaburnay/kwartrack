@@ -25,7 +25,7 @@ export function MonthPicker({ month, onChange }: Props) {
 		<div className="flex items-center gap-2">
 			<button
 				type="button"
-				className="btn btn-sm btn-ghost"
+				className="btn btn-sm btn-ghost rounded-sm"
 				aria-label="Previous month"
 				onClick={() => onChange(shiftMonth(month, -1))}
 			>
@@ -33,13 +33,13 @@ export function MonthPicker({ month, onChange }: Props) {
 			</button>
 			<input
 				type="month"
-				className="input input-bordered input-sm"
+				className="input input-bordered input-sm rounded-sm border-base-content/40"
 				value={month}
 				onChange={(e) => e.target.value && onChange(e.target.value)}
 			/>
 			<button
 				type="button"
-				className="btn btn-sm btn-ghost"
+				className="btn btn-sm btn-ghost rounded-sm"
 				aria-label="Next month"
 				onClick={() => onChange(shiftMonth(month, 1))}
 			>
