@@ -13,23 +13,29 @@ import { RecurringPanel } from "../components/panels/RecurringPanel";
 type DrawerName = "accounts" | "recurring" | "debts";
 
 const MODAL_TO_DRAWER: Record<string, DrawerName> = {
-	"new-transaction": "accounts",
-	"new-account": "accounts",
 	"new-recurring": "recurring",
 	"new-split": "debts",
 	"new-debt": "debts",
 };
 
+type AccountsPendingModal = "new-transaction" | "new-account" | null;
+
+const ACCOUNTS_DEEP_LINK_MODALS: ReadonlySet<string> = new Set(["new-transaction", "new-account"]);
+
 export function JigsawPage() {
 	const [activeDrawer, setActiveDrawer] = useState<DrawerName | null>(null);
 	const [drawerModal, setDrawerModal] = useState<string | null>(null);
+	const [accountsPending, setAccountsPending] = useState<AccountsPendingModal>(null);
 	const [params, setParams] = useSearchParams();
 
 	useEffect(() => {
 		const modal = params.get("modal");
 		const focus = params.get("focus") as DrawerName | null;
 
-		if (modal && MODAL_TO_DRAWER[modal]) {
+		if (modal && ACCOUNTS_DEEP_LINK_MODALS.has(modal)) {
+			setAccountsPending(modal as AccountsPendingModal);
+			document.getElementById("panel-accounts")?.scrollIntoView({ behavior: "smooth" });
+		} else if (modal && MODAL_TO_DRAWER[modal]) {
 			setActiveDrawer(MODAL_TO_DRAWER[modal]);
 			setDrawerModal(modal);
 		} else if (focus && ["accounts", "recurring", "debts"].includes(focus)) {
@@ -75,7 +81,10 @@ export function JigsawPage() {
 							<NetWorthPanel />
 						</div>
 						<div id="panel-accounts" className="jigsaw-txns">
-							<AccountsPanel />
+							<AccountsPanel
+								pendingModal={accountsPending}
+								onPendingModalConsumed={() => setAccountsPending(null)}
+							/>
 						</div>
 						<div id="panel-recurring" className="jigsaw-recurring">
 							<RecurringPanel onSeeAll={() => openDrawer("recurring")} />
