@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router";
-import { AccountsDrawer } from "../components/drawers/AccountsDrawer";
 import { DebtsDrawer } from "../components/drawers/DebtsDrawer";
 import { RecurringDrawer } from "../components/drawers/RecurringDrawer";
 import { Header } from "../components/Header";
@@ -10,7 +9,7 @@ import { DebtsPanel } from "../components/panels/DebtsPanel";
 import { NetWorthPanel } from "../components/panels/NetWorthPanel";
 import { RecurringPanel } from "../components/panels/RecurringPanel";
 
-type DrawerName = "accounts" | "recurring" | "debts";
+type DrawerName = "recurring" | "debts";
 
 const MODAL_TO_DRAWER: Record<string, DrawerName> = {
 	"new-recurring": "recurring",
@@ -30,7 +29,7 @@ export function JigsawPage() {
 
 	useEffect(() => {
 		const modal = params.get("modal");
-		const focus = params.get("focus") as DrawerName | null;
+		const focus = params.get("focus");
 
 		if (modal && ACCOUNTS_DEEP_LINK_MODALS.has(modal)) {
 			setAccountsPending(modal as AccountsPendingModal);
@@ -102,9 +101,6 @@ export function JigsawPage() {
 			<div className="drawer-side z-50">
 				<label htmlFor="jigsaw-drawer" aria-label="Close drawer" className="drawer-overlay" />
 				<div className="bg-base-100 min-h-full w-full sm:w-[700px] flex flex-col shadow-xl">
-					{activeDrawer === "accounts" && (
-						<AccountsDrawer pendingModal={drawerModal} onClose={closeDrawer} />
-					)}
 					{activeDrawer === "recurring" && (
 						<RecurringDrawer pendingModal={drawerModal} onClose={closeDrawer} />
 					)}
