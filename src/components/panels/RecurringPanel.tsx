@@ -27,7 +27,7 @@ export function RecurringPanel({ onSeeAll }: Props) {
 	}, [recurrings]);
 
 	return (
-		<div className="bg-base-100 h-full flex flex-col">
+		<div className="bg-base-100 border border-base-300 h-full flex flex-col">
 			<div className="card-body gap-4 flex-1">
 				<div className="flex items-center justify-between">
 					<h2 className="text-sm font-semibold tracking-wide text-base-content/60 uppercase">
