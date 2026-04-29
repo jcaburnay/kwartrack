@@ -21,8 +21,8 @@
 @media (min-width: 640px) {
 	.jigsaw-grid {
 		display: grid;
-		grid-template-columns: 1fr 2.2fr 1fr;
-		grid-template-rows: 1fr 1fr;
+		grid-template-columns: minmax(0, 1fr) minmax(0, 2.2fr) minmax(0, 1fr);
+		grid-template-rows: minmax(0, 1fr) minmax(0, 1fr);
 		grid-template-areas:
 			"networth txns recurring"
 			"budget   txns debts";
