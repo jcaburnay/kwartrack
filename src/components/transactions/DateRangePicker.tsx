@@ -23,7 +23,7 @@ export function DateRangePicker({ preset, customFrom, customTo, onChange }: Prop
 		<div className="flex items-center gap-2">
 			<select
 				aria-label="Date range"
-				className="select select-bordered select-sm min-w-0 w-auto"
+				className="select select-bordered select-sm min-w-0 w-auto focus:outline-none focus-visible:outline focus-visible:outline-1 focus-visible:outline-base-content/40"
 				value={preset}
 				onChange={(e) => pick(e.target.value as DateRangePreset)}
 			>
