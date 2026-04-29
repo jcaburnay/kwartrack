@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest";
-import type { ActualRow } from "../utils/budgetMath";
 import {
 	type AllocationRow,
 	listMonths,
 	mergeBudgetHistory,
 	shortMonthYearLabel,
 } from "../utils/budgetHistory";
+import type { ActualRow } from "../utils/budgetMath";
 
 describe("listMonths", () => {
 	it("returns N months ending at currentMonth, oldest first", () => {

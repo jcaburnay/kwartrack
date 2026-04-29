@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { BudgetViewSelector, type BudgetView } from "../components/budget/BudgetViewSelector";
+import { type BudgetView, BudgetViewSelector } from "../components/budget/BudgetViewSelector";
 
 describe("BudgetViewSelector", () => {
 	beforeEach(() => {
