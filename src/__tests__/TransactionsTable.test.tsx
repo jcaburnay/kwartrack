@@ -197,7 +197,7 @@ describe("TransactionsTable", () => {
 		);
 		const links = screen.getAllByLabelText("View source recurring");
 		expect(links.length).toBe(1);
-		expect(links[0]).toHaveAttribute("href", "/recurring?id=rec-1");
+		expect(links[0]).toHaveAttribute("href", "/?modal=edit-recurring&id=rec-1");
 	});
 
 	it("renders fee sub-line on the amount cell when transfer has a fee", () => {
