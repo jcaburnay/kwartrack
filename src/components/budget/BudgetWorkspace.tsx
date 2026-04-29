@@ -67,13 +67,13 @@ export function BudgetWorkspace() {
 
 	return (
 		<div className="card bg-base-100 h-full flex flex-col min-w-0 overflow-hidden">
-			<div className="h-9 flex items-center px-4 flex-shrink-0 border-b border-base-300">
+			<div className="h-9 flex items-center px-4 flex-shrink-0">
 				<span className="text-xs font-semibold uppercase tracking-wide text-base-content/50">
 					Budget
 				</span>
 			</div>
 
-			<div className="px-4 py-3 flex-shrink-0 flex items-center gap-2 flex-wrap border-b border-base-300">
+			<div className="px-4 pb-3 flex-shrink-0 flex items-center gap-2 flex-wrap">
 				<BudgetViewSelector value={view} onChange={setView} />
 				<MonthPicker month={month} onChange={setMonth} />
 				{view === "history" && <ChartRangeToggle value={range} onChange={setRange} />}
