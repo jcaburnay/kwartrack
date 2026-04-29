@@ -14,9 +14,10 @@ const OPTIONS: { value: RangeOption; label: string }[] = [
 
 /**
  * Compact 4-segment range toggle for time-axis charts. Renders as a DaisyUI
- * button group with `btn-active` on the selected value. Uses `aria-pressed`
- * on each button (toggle pattern) so screen readers announce selection
- * without requiring native radio semantics.
+ * button group; the active segment fills with `btn-primary` to match the
+ * Transactions filter-bar type-pill pattern. Uses `aria-pressed` on each
+ * button (toggle pattern) so screen readers announce selection without
+ * requiring native radio semantics.
  */
 export function ChartRangeToggle({ value, onChange }: Props) {
 	return (
@@ -26,7 +27,7 @@ export function ChartRangeToggle({ value, onChange }: Props) {
 					key={opt.value}
 					type="button"
 					aria-pressed={value === opt.value}
-					className={`btn btn-sm btn-ghost join-item rounded-none [&:first-child]:rounded-l-sm [&:last-child]:rounded-r-sm border border-base-content/40 [&:not(:first-child)]:-ml-px focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${value === opt.value ? "btn-active" : ""}`}
+					className={`btn btn-sm join-item rounded-none [&:first-child]:rounded-l-sm [&:last-child]:rounded-r-sm border border-base-content/40 [&:not(:first-child)]:-ml-px ${value === opt.value ? "btn-primary" : "btn-ghost"}`}
 					onClick={() => onChange(opt.value)}
 				>
 					{opt.label}
