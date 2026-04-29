@@ -59,7 +59,7 @@ export function DateRangePicker({ preset, customFrom, customTo, onChange }: Prop
 						<input
 							aria-label="From"
 							type="date"
-							className="input input-bordered input-xs"
+							className="input input-bordered input-sm"
 							value={customFrom ?? ""}
 							onChange={(e) =>
 								onChange({ preset: "custom", customFrom: e.target.value || null, customTo })
@@ -72,7 +72,7 @@ export function DateRangePicker({ preset, customFrom, customTo, onChange }: Prop
 						<input
 							aria-label="To"
 							type="date"
-							className="input input-bordered input-xs"
+							className="input input-bordered input-sm"
 							value={customTo ?? ""}
 							onChange={(e) =>
 								onChange({ preset: "custom", customFrom, customTo: e.target.value || null })
