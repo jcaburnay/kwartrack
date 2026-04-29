@@ -41,7 +41,7 @@ describe("NewDebtModal", () => {
 		fireEvent.click(screen.getByText("Alice"));
 		const amountInput = document.querySelector("input[type='number']") as HTMLInputElement;
 		fireEvent.change(amountInput, { target: { value: "100" } });
-		fireEvent.click(screen.getByRole("button", { name: /Create Debt/i }));
+		fireEvent.click(screen.getByRole("button", { name: /^Create$/ }));
 		await waitFor(() => expect(create).toHaveBeenCalled());
 		const input = create.mock.calls[0][0];
 		expect(input.personId).toBe("p1");

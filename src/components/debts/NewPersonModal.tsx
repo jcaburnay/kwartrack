@@ -33,9 +33,16 @@ export function NewPersonModal({ initialName, create, onCreated, onCancel }: Pro
 	// modal's <form> (e.g. NewSplitModal opens this via PersonPicker). Slice 2
 	// memory note "modal-inside-form" — same fix.
 	return createPortal(
-		<div className="modal modal-open" role="dialog" aria-modal="true">
+		<div
+			className="modal modal-open"
+			role="dialog"
+			aria-modal="true"
+			aria-labelledby="new-person-title"
+		>
 			<div className="modal-box max-w-sm">
-				<h3 className="font-semibold text-lg mb-3">New person</h3>
+				<h3 id="new-person-title" className="font-semibold text-lg mb-3">
+					New person
+				</h3>
 				<form onSubmit={handleSubmit} className="flex flex-col gap-3">
 					<label className="form-control">
 						<div className="label">

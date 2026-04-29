@@ -35,7 +35,12 @@ export function CreateTagModal({ create, onCreated, onCancel }: Props) {
 	};
 
 	return createPortal(
-		<div className="modal modal-open" role="dialog" aria-modal="true">
+		<div
+			className="modal modal-open"
+			role="dialog"
+			aria-modal="true"
+			aria-labelledby="create-tag-title"
+		>
 			<div className="modal-box max-w-sm">
 				<form
 					onSubmit={(e) => {
@@ -45,7 +50,9 @@ export function CreateTagModal({ create, onCreated, onCancel }: Props) {
 					noValidate
 					className="flex flex-col gap-3"
 				>
-					<h3 className="font-semibold text-lg">New tag</h3>
+					<h3 id="create-tag-title" className="font-semibold text-lg">
+						New tag
+					</h3>
 					<label className="form-control">
 						<div className="label">
 							<span className="label-text">Name</span>

@@ -24,13 +24,20 @@ export function Header() {
 
 				<div className="flex-none">
 					<div className="dropdown dropdown-end">
-						<button type="button" tabIndex={0} className="avatar avatar-placeholder cursor-pointer">
+						<button
+							type="button"
+							tabIndex={0}
+							aria-label="Open account menu"
+							aria-haspopup="menu"
+							className="avatar avatar-placeholder cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary rounded-full"
+						>
 							<div className="bg-primary text-primary-content w-9 rounded-full">
 								<span className="text-sm">{initialsFrom(displayName)}</span>
 							</div>
 						</button>
 						<ul
 							tabIndex={0}
+							aria-label="Account menu"
 							className="dropdown-content menu bg-base-100 rounded-box shadow-md z-50 w-52 p-2 mt-2"
 						>
 							<li className="menu-title text-xs font-normal text-base-content/60 px-3 py-1">
@@ -38,7 +45,10 @@ export function Header() {
 							</li>
 							<li className="divider my-1" />
 							<li>
-								<span className="text-xs font-medium text-base-content/50 uppercase tracking-wide px-3 py-1 cursor-default pointer-events-none">
+								<span
+									className="text-xs font-medium text-base-content/50 uppercase tracking-wide px-3 py-1 cursor-default pointer-events-none"
+									aria-hidden="true"
+								>
 									Theme
 								</span>
 							</li>
@@ -46,17 +56,22 @@ export function Header() {
 								<li key={t}>
 									<button
 										type="button"
-										className={`justify-between ${theme === t ? "active" : ""}`}
+										aria-pressed={theme === t}
+										className={`flex w-full items-center justify-between rounded-md px-3 py-1.5 text-sm capitalize hover:bg-base-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${theme === t ? "active font-medium" : ""}`}
 										onClick={() => setTheme(t)}
 									>
-										<span className="capitalize">{t}</span>
-										{theme === t && <span className="text-xs opacity-60">✓</span>}
+										<span>{t}</span>
+										{theme === t && (
+											<span className="text-xs opacity-60" aria-hidden="true">
+												✓
+											</span>
+										)}
 									</button>
 								</li>
 							))}
 							<li className="divider my-1" />
 							<li>
-								<NavLink to="/settings/tags">Settings</NavLink>
+								<NavLink to="/settings">Settings</NavLink>
 							</li>
 							<li>
 								<button type="button" onClick={() => signOut()}>

@@ -100,7 +100,12 @@ export function AccountsDrawer({ pendingModal, onClose }: Props) {
 		<div className="flex flex-col h-full">
 			<div className="flex items-center justify-between p-4 border-b border-base-200">
 				<h2 className="text-lg font-semibold">Accounts</h2>
-				<button type="button" className="btn btn-ghost btn-sm btn-circle" onClick={onClose}>
+				<button
+					type="button"
+					aria-label="Close accounts drawer"
+					className="btn btn-ghost btn-sm btn-circle"
+					onClick={onClose}
+				>
 					<X className="size-4" />
 				</button>
 			</div>

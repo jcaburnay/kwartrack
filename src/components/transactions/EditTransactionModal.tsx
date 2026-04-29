@@ -53,9 +53,16 @@ export function EditTransactionModal({
 	}
 
 	return (
-		<div className="modal modal-open" role="dialog" aria-modal="true">
+		<div
+			className="modal modal-open"
+			role="dialog"
+			aria-modal="true"
+			aria-labelledby="edit-transaction-title"
+		>
 			<div className="modal-box max-w-md">
-				<h3 className="font-semibold text-lg mb-3">Edit transaction</h3>
+				<h3 id="edit-transaction-title" className="font-semibold text-lg mb-3">
+					Edit transaction
+				</h3>
 				<TransactionForm
 					mode="edit"
 					accounts={accounts}

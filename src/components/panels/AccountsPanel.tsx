@@ -85,7 +85,8 @@ export function AccountsPanel() {
 				<button
 					type="button"
 					aria-label="Expand accounts"
-					className="h-9 flex items-center gap-2 px-4 bg-base-200 border-b border-base-300 flex-shrink-0 hover:bg-base-300 transition-colors cursor-pointer text-left"
+					aria-expanded="false"
+					className="h-9 flex items-center gap-2 px-4 bg-base-200 border-b border-base-300 flex-shrink-0 hover:bg-base-300 transition-colors cursor-pointer text-left focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary"
 					onClick={() => setAccountsFolded(false)}
 				>
 					<ChevronDown className="size-3.5 text-base-content/40" />
@@ -188,7 +189,8 @@ export function AccountsPanel() {
 				<button
 					type="button"
 					aria-label="Expand transactions"
-					className="h-9 flex items-center gap-2 px-4 bg-base-200 border-t border-base-300 flex-shrink-0 hover:bg-base-300 transition-colors cursor-pointer text-left"
+					aria-expanded="false"
+					className="h-9 flex items-center gap-2 px-4 bg-base-200 border-t border-base-300 flex-shrink-0 hover:bg-base-300 transition-colors cursor-pointer text-left focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary"
 					onClick={() => setTxFolded(false)}
 				>
 					<ChevronDown className="size-3.5 text-base-content/40" />

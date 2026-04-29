@@ -126,6 +126,11 @@ export function DebtsDrawer({ pendingModal, onClose }: Props) {
 	const [editingSplitId, setEditingSplitId] = useState<string | null>(null);
 	const [settlingDebtId, setSettlingDebtId] = useState<string | null>(null);
 	const [expandedSplitId, setExpandedSplitId] = useState<string | null>(null);
+	const [pendingDelete, setPendingDelete] = useState<{ kind: "debt" | "split"; id: string } | null>(
+		null,
+	);
+	const [deleteError, setDeleteError] = useState<string | null>(null);
+	const [isDeleting, setIsDeleting] = useState(false);
 
 	useEffect(() => {
 		if (pendingModal === "new-split") setShowNewSplit(true);
@@ -161,16 +166,33 @@ export function DebtsDrawer({ pendingModal, onClose }: Props) {
 		return { error: null };
 	}
 
-	async function handleDeleteDebt(debtId: string) {
-		if (!window.confirm("Delete this debt?")) return;
-		const result = await deleteDebt(debtId);
-		if (result.error) alert(result.error);
+	function handleDeleteDebt(debtId: string) {
+		setDeleteError(null);
+		setPendingDelete({ kind: "debt", id: debtId });
 	}
 
-	async function handleDeleteSplit(splitId: string) {
-		const result = await deleteSplit(splitId);
-		if (result.error) alert(result.error);
-		else if (expandedSplitId === splitId) setExpandedSplitId(null);
+	function handleDeleteSplit(splitId: string) {
+		setDeleteError(null);
+		setPendingDelete({ kind: "split", id: splitId });
+	}
+
+	async function confirmPendingDelete() {
+		if (!pendingDelete) return;
+		setIsDeleting(true);
+		const { kind, id } = pendingDelete;
+		const result = kind === "debt" ? await deleteDebt(id) : await deleteSplit(id);
+		setIsDeleting(false);
+		if (result.error) {
+			setDeleteError(result.error);
+			return;
+		}
+		if (kind === "split" && expandedSplitId === id) setExpandedSplitId(null);
+		setPendingDelete(null);
+	}
+
+	function cancelPendingDelete() {
+		if (isDeleting) return;
+		setPendingDelete(null);
 	}
 
 	return (
@@ -192,7 +214,12 @@ export function DebtsDrawer({ pendingModal, onClose }: Props) {
 					>
 						New Split
 					</button>
-					<button type="button" className="btn btn-ghost btn-sm btn-circle" onClick={onClose}>
+					<button
+						type="button"
+						aria-label="Close debts drawer"
+						className="btn btn-ghost btn-sm btn-circle"
+						onClick={onClose}
+					>
 						<X className="size-4" />
 					</button>
 				</div>
@@ -200,6 +227,18 @@ export function DebtsDrawer({ pendingModal, onClose }: Props) {
 
 			<div className="flex-1 overflow-y-auto p-4 sm:p-6 flex flex-col gap-5">
 				{error && <div className="alert alert-error text-sm">{error}</div>}
+				{deleteError && !pendingDelete && (
+					<div className="alert alert-error text-sm">
+						<span>{deleteError}</span>
+						<button
+							type="button"
+							className="btn btn-ghost btn-xs"
+							onClick={() => setDeleteError(null)}
+						>
+							Dismiss
+						</button>
+					</div>
+				)}
 				<BalanceStrip owedCentavos={balance.owedCentavos} oweCentavos={balance.oweCentavos} />
 
 				<section className="flex flex-col gap-2">
@@ -301,6 +340,62 @@ export function DebtsDrawer({ pendingModal, onClose }: Props) {
 					}}
 					onCancel={() => setEditingSplitId(null)}
 				/>
+			)}
+
+			{pendingDelete && (
+				<div
+					className="modal modal-open"
+					role="dialog"
+					aria-modal="true"
+					aria-labelledby="confirm-delete-title"
+				>
+					<div className="modal-box max-w-sm">
+						<h3 id="confirm-delete-title" className="text-lg font-semibold">
+							{pendingDelete.kind === "debt" ? "Delete this debt?" : "Delete this split?"}
+						</h3>
+						<p className="mt-2 text-sm text-base-content/70">
+							{pendingDelete.kind === "debt"
+								? "This removes the debt and any settlement history attached to it. You can't undo this."
+								: "This removes the split and all participants. You can't undo this."}
+						</p>
+						{deleteError && (
+							<div className="alert alert-error text-sm mt-3">
+								<span>{deleteError}</span>
+							</div>
+						)}
+						<div className="modal-action">
+							<button
+								type="button"
+								className="btn btn-ghost btn-sm"
+								onClick={cancelPendingDelete}
+								disabled={isDeleting}
+							>
+								Cancel
+							</button>
+							<button
+								type="button"
+								className="btn btn-error btn-sm"
+								onClick={confirmPendingDelete}
+								disabled={isDeleting}
+							>
+								{isDeleting ? (
+									<>
+										<span className="loading loading-spinner loading-xs" />
+										Deleting…
+									</>
+								) : (
+									"Delete"
+								)}
+							</button>
+						</div>
+					</div>
+					<button
+						type="button"
+						aria-label="Close dialog"
+						className="modal-backdrop"
+						onClick={cancelPendingDelete}
+					/>
+				</div>
 			)}
 		</div>
 	);

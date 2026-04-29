@@ -54,7 +54,7 @@ describe("SignInPage", () => {
 		await userEvent.type(screen.getByLabelText(/email/i), "jane@test.dev");
 		await userEvent.type(screen.getByLabelText(/password/i), "wrongpass");
 		await userEvent.click(screen.getByRole("button", { name: /^sign in$/i }));
-		expect(await screen.findByText(/invalid login credentials/i)).toBeInTheDocument();
+		expect(await screen.findByText(/email or password is incorrect/i)).toBeInTheDocument();
 		expect(setSessionOptimistically).not.toHaveBeenCalled();
 	});
 

@@ -65,9 +65,16 @@ export function NewDebtModal({
 	}
 
 	return (
-		<div className="modal modal-open" role="dialog" aria-modal="true">
+		<div
+			className="modal modal-open"
+			role="dialog"
+			aria-modal="true"
+			aria-labelledby="new-debt-title"
+		>
 			<div className="modal-box max-w-md">
-				<h3 className="font-semibold text-lg mb-3">New debt</h3>
+				<h3 id="new-debt-title" className="font-semibold text-lg mb-3">
+					New debt
+				</h3>
 				<form onSubmit={handleSubmit} className="flex flex-col gap-3">
 					<PersonPicker
 						persons={persons}
@@ -182,11 +189,7 @@ export function NewDebtModal({
 							Cancel
 						</button>
 						<button type="submit" className="btn btn-primary" disabled={isSubmitting}>
-							{isSubmitting ? (
-								<span className="loading loading-spinner loading-sm" />
-							) : (
-								"Create Debt"
-							)}
+							{isSubmitting ? <span className="loading loading-spinner loading-sm" /> : "Create"}
 						</button>
 					</div>
 				</form>

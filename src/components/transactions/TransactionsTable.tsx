@@ -126,12 +126,15 @@ export function TransactionsTable({
 					<thead>
 						<tr className="text-base-content/60">
 							<th
-								className="cursor-pointer select-none text-right"
+								className="cursor-pointer select-none text-right whitespace-nowrap"
 								onClick={() => onHeaderClick("amount")}
 							>
 								Amount{headerArrow("amount")}
 							</th>
-							<th className="cursor-pointer select-none" onClick={() => onHeaderClick("type")}>
+							<th
+								className="cursor-pointer select-none whitespace-nowrap"
+								onClick={() => onHeaderClick("type")}
+							>
 								Type{headerArrow("type")}
 							</th>
 							<th className="cursor-pointer select-none" onClick={() => onHeaderClick("tag")}>
@@ -143,9 +146,12 @@ export function TransactionsTable({
 							<th className="cursor-pointer select-none" onClick={() => onHeaderClick("to")}>
 								To{headerArrow("to")}
 							</th>
-							<th className="text-right">Fee</th>
-							<th>Description</th>
-							<th className="cursor-pointer select-none" onClick={() => onHeaderClick("date")}>
+							<th className="text-right whitespace-nowrap hidden md:table-cell">Fee</th>
+							<th className="hidden md:table-cell">Description</th>
+							<th
+								className="cursor-pointer select-none whitespace-nowrap"
+								onClick={() => onHeaderClick("date")}
+							>
 								Date{headerArrow("date")}
 							</th>
 							<th className="w-12" />
@@ -154,17 +160,23 @@ export function TransactionsTable({
 					<tbody>
 						{sorted.map((tx) => (
 							<tr key={tx.id} className="hover:bg-base-200">
-								<td className="text-right font-mono">{formatCentavos(tx.amount_centavos)}</td>
-								<td>{typeBadge(tx.type)}</td>
-								<td className="text-base-content/80">
+								<td className="text-right font-mono whitespace-nowrap">
+									{formatCentavos(tx.amount_centavos)}
+								</td>
+								<td className="whitespace-nowrap">{typeBadge(tx.type)}</td>
+								<td className="text-base-content/80 truncate max-w-[14ch]">
 									{tx.tag_id ? (tagName.get(tx.tag_id) ?? "—") : "—"}
 								</td>
-								<td>{tx.from_account_id ? (accountName.get(tx.from_account_id) ?? "—") : "—"}</td>
-								<td>{tx.to_account_id ? (accountName.get(tx.to_account_id) ?? "—") : "—"}</td>
-								<td className="text-right font-mono text-base-content/60">
+								<td className="truncate max-w-[18ch]">
+									{tx.from_account_id ? (accountName.get(tx.from_account_id) ?? "—") : "—"}
+								</td>
+								<td className="truncate max-w-[18ch]">
+									{tx.to_account_id ? (accountName.get(tx.to_account_id) ?? "—") : "—"}
+								</td>
+								<td className="text-right font-mono text-base-content/60 whitespace-nowrap hidden md:table-cell">
 									{tx.fee_centavos != null ? formatCentavos(tx.fee_centavos) : "—"}
 								</td>
-								<td className="text-base-content/70 max-w-[16rem] truncate">
+								<td className="text-base-content/70 max-w-[16rem] truncate hidden md:table-cell">
 									<span className="inline-flex items-center gap-1.5">
 										{tx.recurring_id != null && (
 											<span

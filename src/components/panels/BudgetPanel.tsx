@@ -42,7 +42,12 @@ export function BudgetPanel({ onSeeAll }: Props) {
 					<h2 className="text-sm font-semibold tracking-wide text-base-content/60 uppercase">
 						Budget
 					</h2>
-					<button type="button" className="text-xs text-primary hover:underline" onClick={onSeeAll}>
+					<button
+						type="button"
+						aria-label="View full budget"
+						className="text-xs text-primary hover:underline rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+						onClick={onSeeAll}
+					>
 						See all →
 					</button>
 				</div>
@@ -52,7 +57,9 @@ export function BudgetPanel({ onSeeAll }: Props) {
 						<span className="loading loading-spinner loading-sm text-primary" />
 					</div>
 				) : overall === 0 ? (
-					<p className="text-sm text-base-content/50">No budget set for this month</p>
+					<p className="text-sm text-base-content/60">
+						No budget yet. Set caps to track spending against limits.
+					</p>
 				) : (
 					<>
 						<div>

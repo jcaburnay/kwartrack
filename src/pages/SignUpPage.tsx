@@ -18,6 +18,23 @@ function detectTimezone(): string {
 	}
 }
 
+function mapAuthError(message: string): string {
+	const m = message.toLowerCase();
+	if (m.includes("already registered") || m.includes("user already")) {
+		return "An account already exists for this email. Try signing in instead.";
+	}
+	if (m.includes("password") && (m.includes("weak") || m.includes("short"))) {
+		return "That password is too weak. Use at least 6 characters.";
+	}
+	if (m.includes("rate limit") || m.includes("too many")) {
+		return "Too many attempts. Wait a moment and try again.";
+	}
+	if (m.includes("fetch") || m.includes("network") || m.includes("failed to fetch")) {
+		return "Couldn't reach the server. Check your connection and try again.";
+	}
+	return "Something went wrong. Try again.";
+}
+
 export function SignUpPage() {
 	const { session, isLoading, setSessionOptimistically } = useAuth();
 	const navigate = useNavigate();
@@ -27,6 +44,7 @@ export function SignUpPage() {
 	const {
 		register,
 		handleSubmit,
+		reset,
 		formState: { errors, isSubmitting },
 	} = useForm<SignUpForm>({
 		defaultValues: { displayName: "", email: "", password: "" },
@@ -48,7 +66,9 @@ export function SignUpPage() {
 		});
 
 		if (error) {
-			setSubmitError(error.message);
+			// biome-ignore lint/suspicious/noConsole: keep raw Supabase message for debugging while showing a friendly mapped error to the user.
+			console.warn("supabase signUp:", error.message);
+			setSubmitError(mapAuthError(error.message));
 			return;
 		}
 
@@ -72,9 +92,22 @@ export function SignUpPage() {
 						<p className="text-base-content/70">
 							We sent a confirmation link. Click it to finish signing up.
 						</p>
-						<Link to="/signin" className="btn btn-ghost btn-sm mt-2">
-							Back to sign in
-						</Link>
+						<div className="flex items-center gap-2 mt-2">
+							<button
+								type="button"
+								className="btn btn-ghost btn-sm"
+								onClick={() => {
+									reset();
+									setSubmitError(null);
+									setCheckEmail(false);
+								}}
+							>
+								Use a different email
+							</button>
+							<Link to="/signin" className="btn btn-ghost btn-sm">
+								Back to sign in
+							</Link>
+						</div>
 					</div>
 				</div>
 			</main>

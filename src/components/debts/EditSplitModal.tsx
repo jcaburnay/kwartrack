@@ -62,9 +62,16 @@ export function EditSplitModal({
 	}
 
 	return (
-		<div className="modal modal-open" role="dialog" aria-modal="true">
+		<div
+			className="modal modal-open"
+			role="dialog"
+			aria-modal="true"
+			aria-labelledby="edit-split-title"
+		>
 			<div className="modal-box max-w-lg">
-				<h3 className="font-semibold text-lg mb-3">Edit split</h3>
+				<h3 id="edit-split-title" className="font-semibold text-lg mb-3">
+					Edit split
+				</h3>
 				<SplitForm
 					defaults={defaults}
 					persons={persons}

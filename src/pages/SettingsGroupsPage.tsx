@@ -61,8 +61,8 @@ export function SettingsGroupsPage() {
 					<span className="loading loading-spinner text-primary" />
 				</div>
 			) : membersByGroup.length === 0 ? (
-				<p className="text-sm text-base-content/60 italic">
-					No groups yet. Create one when assigning accounts.
+				<p className="text-sm text-base-content/60">
+					No groups yet. Bucket accounts to summarise totals together.
 				</p>
 			) : (
 				<ul className="divide-y divide-base-300 rounded-box border border-base-300">

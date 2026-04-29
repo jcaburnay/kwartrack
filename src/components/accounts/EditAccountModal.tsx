@@ -14,9 +14,16 @@ type Props = {
 
 export function EditAccountModal({ account, groups, onRefetchGroups, onSaved, onCancel }: Props) {
 	return (
-		<div className="modal modal-open" role="dialog" aria-modal="true">
+		<div
+			className="modal modal-open"
+			role="dialog"
+			aria-modal="true"
+			aria-labelledby="edit-account-title"
+		>
 			<div className="modal-box max-w-md">
-				<h3 className="font-semibold text-lg mb-1">Edit account</h3>
+				<h3 id="edit-account-title" className="font-semibold text-lg mb-1">
+					Edit account
+				</h3>
 				<p className="text-xs text-base-content/60 mb-4">
 					Type: {ACCOUNT_TYPE_LABEL[account.type]} (not editable)
 				</p>

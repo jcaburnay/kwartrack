@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { type SubmitHandler, useForm } from "react-hook-form";
 import type { Tag, TagScope } from "../../hooks/useTags";
 import type { Account } from "../../utils/accountBalances";
-import { centavosToPesos, pesosToCentavos } from "../../utils/currency";
+import { centavosToPesos, PHP, pesosToCentavos } from "../../utils/currency";
 import {
 	type TransactionInput,
 	type TransactionType,
@@ -247,9 +247,9 @@ export function TransactionForm({
 					{watch("feePesos") != null && (watch("feePesos") as number) > 0 && fromAccountId && (
 						<div className="label">
 							<span className="label-text-alt text-base-content/60">
-								A paired <code className="font-mono">transfer-fees</code> expense of ₱
-								{(watch("feePesos") as number).toFixed(2)} will be recorded from{" "}
-								{accounts.find((a) => a.id === fromAccountId)?.name ?? "source"}.
+								A paired <code className="font-mono">transfer-fees</code> expense of{" "}
+								<span className="tabular-nums">{PHP.format(watch("feePesos") as number)}</span> will
+								be recorded from {accounts.find((a) => a.id === fromAccountId)?.name ?? "source"}.
 							</span>
 						</div>
 					)}

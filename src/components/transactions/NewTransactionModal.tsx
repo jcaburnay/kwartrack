@@ -57,9 +57,16 @@ export function NewTransactionModal({
 	}
 
 	return (
-		<div className="modal modal-open" role="dialog" aria-modal="true">
+		<div
+			className="modal modal-open"
+			role="dialog"
+			aria-modal="true"
+			aria-labelledby="new-transaction-title"
+		>
 			<div className="modal-box max-w-md">
-				<h3 className="font-semibold text-lg mb-3">New transaction</h3>
+				<h3 id="new-transaction-title" className="font-semibold text-lg mb-3">
+					New transaction
+				</h3>
 				<TransactionForm
 					mode="create"
 					accounts={accounts}

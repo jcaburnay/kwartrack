@@ -24,9 +24,14 @@ export function NewAccountModal({ groups, onRefetchGroups, onSaved, onCancel }: 
 	const [type, setType] = useState<AccountType | null>(null);
 
 	return (
-		<div className="modal modal-open" role="dialog" aria-modal="true">
+		<div
+			className="modal modal-open"
+			role="dialog"
+			aria-modal="true"
+			aria-labelledby="new-account-title"
+		>
 			<div className="modal-box max-w-md">
-				<h3 className="font-semibold text-lg mb-3">
+				<h3 id="new-account-title" className="font-semibold text-lg mb-3">
 					{type ? `New ${ACCOUNT_TYPE_LABEL[type].toLowerCase()}` : "New account"}
 				</h3>
 

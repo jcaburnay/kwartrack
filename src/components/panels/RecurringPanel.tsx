@@ -33,7 +33,12 @@ export function RecurringPanel({ onSeeAll }: Props) {
 					<h2 className="text-sm font-semibold tracking-wide text-base-content/60 uppercase">
 						Recurring
 					</h2>
-					<button type="button" className="text-xs text-primary hover:underline" onClick={onSeeAll}>
+					<button
+						type="button"
+						aria-label="View all recurring"
+						className="text-xs text-primary hover:underline rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+						onClick={onSeeAll}
+					>
 						See all →
 					</button>
 				</div>
@@ -43,7 +48,9 @@ export function RecurringPanel({ onSeeAll }: Props) {
 						<span className="loading loading-spinner loading-sm text-primary" />
 					</div>
 				) : upcoming.length === 0 ? (
-					<p className="text-sm text-base-content/50">No upcoming recurrings</p>
+					<p className="text-sm text-base-content/60">
+						Nothing scheduled. Add a recurring entry to track repeat payments.
+					</p>
 				) : (
 					<div className="space-y-2">
 						{upcoming.map((r) => {

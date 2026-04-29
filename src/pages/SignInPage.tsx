@@ -9,6 +9,23 @@ type SignInForm = {
 	password: string;
 };
 
+function mapAuthError(message: string): string {
+	const m = message.toLowerCase();
+	if (m.includes("invalid login") || m.includes("invalid credentials")) {
+		return "Email or password is incorrect.";
+	}
+	if (m.includes("email not confirmed")) {
+		return "Confirm your email before signing in. Check your inbox for the link.";
+	}
+	if (m.includes("rate limit") || m.includes("too many")) {
+		return "Too many attempts. Wait a moment and try again.";
+	}
+	if (m.includes("fetch") || m.includes("network") || m.includes("failed to fetch")) {
+		return "Couldn't reach the server. Check your connection and try again.";
+	}
+	return "Something went wrong. Try again.";
+}
+
 export function SignInPage() {
 	const { session, isLoading, setSessionOptimistically } = useAuth();
 	const navigate = useNavigate();
@@ -32,7 +49,9 @@ export function SignInPage() {
 		});
 
 		if (error) {
-			setSubmitError(error.message);
+			// biome-ignore lint/suspicious/noConsole: keep raw Supabase message for debugging while showing a friendly mapped error to the user.
+			console.warn("supabase signInWithPassword:", error.message);
+			setSubmitError(mapAuthError(error.message));
 			return;
 		}
 

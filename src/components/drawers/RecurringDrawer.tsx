@@ -57,7 +57,12 @@ export function RecurringDrawer({ pendingModal, onClose }: Props) {
 					>
 						New Recurring
 					</button>
-					<button type="button" className="btn btn-ghost btn-sm btn-circle" onClick={onClose}>
+					<button
+						type="button"
+						aria-label="Close recurring drawer"
+						className="btn btn-ghost btn-sm btn-circle"
+						onClick={onClose}
+					>
 						<X className="size-4" />
 					</button>
 				</div>

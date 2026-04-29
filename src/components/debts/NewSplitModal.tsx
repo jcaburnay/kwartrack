@@ -38,16 +38,23 @@ export function NewSplitModal({
 	}
 
 	return (
-		<div className="modal modal-open" role="dialog" aria-modal="true">
+		<div
+			className="modal modal-open"
+			role="dialog"
+			aria-modal="true"
+			aria-labelledby="new-split-title"
+		>
 			<div className="modal-box max-w-lg">
-				<h3 className="font-semibold text-lg mb-3">New split</h3>
+				<h3 id="new-split-title" className="font-semibold text-lg mb-3">
+					New split
+				</h3>
 				<SplitForm
 					defaults={defaultSplitFormValues(today)}
 					persons={persons}
 					accounts={accounts}
 					tags={tags}
 					createPerson={createPerson}
-					submitLabel="Create Split"
+					submitLabel="Create"
 					submitError={submitError}
 					isSubmitting={isSubmitting}
 					onSubmit={handleSubmit}

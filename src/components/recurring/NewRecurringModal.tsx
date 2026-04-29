@@ -45,9 +45,16 @@ export function NewRecurringModal({
 	}
 
 	return (
-		<div className="modal modal-open" role="dialog" aria-modal="true">
+		<div
+			className="modal modal-open"
+			role="dialog"
+			aria-modal="true"
+			aria-labelledby="new-recurring-title"
+		>
 			<div className="modal-box max-w-md">
-				<h3 className="font-semibold text-lg mb-3">New recurring</h3>
+				<h3 id="new-recurring-title" className="font-semibold text-lg mb-3">
+					New recurring
+				</h3>
 				<RecurringForm
 					mode="create"
 					accounts={accounts}

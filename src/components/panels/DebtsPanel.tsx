@@ -21,7 +21,12 @@ export function DebtsPanel({ onSeeAll }: Props) {
 					<h2 className="text-sm font-semibold tracking-wide text-base-content/60 uppercase">
 						Debts & Splits
 					</h2>
-					<button type="button" className="text-xs text-primary hover:underline" onClick={onSeeAll}>
+					<button
+						type="button"
+						aria-label="View all debts and splits"
+						className="text-xs text-primary hover:underline rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+						onClick={onSeeAll}
+					>
 						See all →
 					</button>
 				</div>
@@ -72,7 +77,9 @@ export function DebtsPanel({ onSeeAll }: Props) {
 								</div>
 							))}
 							{unsettled.length === 0 && !hasBalance && (
-								<p className="text-sm text-base-content/50">No open debts</p>
+								<p className="text-sm text-base-content/60">
+									No open debts. Splits and IOUs you create will appear here.
+								</p>
 							)}
 						</div>
 					</>

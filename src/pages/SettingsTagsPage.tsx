@@ -60,7 +60,9 @@ export function SettingsTagsPage() {
 					<span className="loading loading-spinner text-primary" />
 				</div>
 			) : buckets.length === 0 ? (
-				<p className="text-sm text-base-content/60 italic">No tags yet.</p>
+				<p className="text-sm text-base-content/60">
+					No tags yet. Create one to categorize transactions.
+				</p>
 			) : (
 				<div className="flex flex-col gap-4">
 					{buckets.map((bucket) => (

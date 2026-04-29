@@ -55,9 +55,16 @@ export function SettleModal({
 	const pickable = accounts.filter((a) => !a.is_archived);
 
 	return (
-		<div className="modal modal-open" role="dialog" aria-modal="true">
+		<div
+			className="modal modal-open"
+			role="dialog"
+			aria-modal="true"
+			aria-labelledby="settle-debt-title"
+		>
 			<div className="modal-box max-w-md">
-				<h3 className="font-semibold text-lg mb-3">Settle debt</h3>
+				<h3 id="settle-debt-title" className="font-semibold text-lg mb-3">
+					Settle debt
+				</h3>
 				<p className="text-sm text-base-content/70 mb-3">
 					{personName} {verb} {formatCentavos(amountCentavos)} · {formatCentavos(settledCentavos)}{" "}
 					already settled · {formatCentavos(remaining)} left

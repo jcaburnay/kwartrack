@@ -69,9 +69,16 @@ export function EditRecurringModal({
 	}
 
 	return (
-		<div className="modal modal-open" role="dialog" aria-modal="true">
+		<div
+			className="modal modal-open"
+			role="dialog"
+			aria-modal="true"
+			aria-labelledby="edit-recurring-title"
+		>
 			<div className="modal-box max-w-md">
-				<h3 className="font-semibold text-lg mb-3">Edit recurring</h3>
+				<h3 id="edit-recurring-title" className="font-semibold text-lg mb-3">
+					Edit recurring
+				</h3>
 				<RecurringForm
 					mode="edit"
 					accounts={accounts}

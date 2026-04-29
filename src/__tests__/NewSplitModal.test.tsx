@@ -57,7 +57,7 @@ describe("NewSplitModal", () => {
 		});
 		fireEvent.click(screen.getByText("Bob"));
 
-		fireEvent.click(screen.getByRole("button", { name: /Create Split/i }));
+		fireEvent.click(screen.getByRole("button", { name: /^Create$/ }));
 		await waitFor(() => expect(create).toHaveBeenCalled());
 		const arg = create.mock.calls[0][0];
 		expect(arg.totalCentavos).toBe(10000);
