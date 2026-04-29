@@ -26,7 +26,7 @@
 		grid-template-areas:
 			"networth txns recurring"
 			"budget   txns debts";
-		min-height: calc(100dvh - 56px - 5rem);
+		height: 100%;
 	}
 
 	.jigsaw-networth {
