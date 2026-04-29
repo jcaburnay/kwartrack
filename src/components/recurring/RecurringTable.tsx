@@ -99,7 +99,7 @@ export function RecurringTable({
 		<div className="overflow-x-auto">
 			<table className="table table-sm text-xs">
 				<thead>
-					<tr className="text-xs uppercase tracking-wide text-base-content/50">
+					<tr className="text-base-content/60">
 						<th className="sticky left-0 z-10 bg-base-100 whitespace-nowrap">Service</th>
 						<th className="text-right whitespace-nowrap">Amount</th>
 						<th className="hidden md:table-cell">Tag</th>
