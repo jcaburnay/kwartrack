@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router";
 import { DebtsDrawer } from "../components/drawers/DebtsDrawer";
-import { RecurringDrawer } from "../components/drawers/RecurringDrawer";
 import { Header } from "../components/Header";
 import { AccountsPanel } from "../components/panels/AccountsPanel";
 import { BudgetPanel } from "../components/panels/BudgetPanel";
@@ -9,7 +8,7 @@ import { DebtsPanel } from "../components/panels/DebtsPanel";
 import { NetWorthPanel } from "../components/panels/NetWorthPanel";
 import { RecurringPanel, type RecurringPending } from "../components/panels/RecurringPanel";
 
-type DrawerName = "recurring" | "debts";
+type DrawerName = "debts";
 
 const MODAL_TO_DRAWER: Record<string, DrawerName> = {
 	"new-split": "debts",
@@ -118,9 +117,6 @@ export function JigsawPage() {
 			<div className="drawer-side z-50">
 				<label htmlFor="jigsaw-drawer" aria-label="Close drawer" className="drawer-overlay" />
 				<div className="bg-base-100 min-h-full w-full sm:w-[700px] flex flex-col shadow-xl">
-					{activeDrawer === "recurring" && (
-						<RecurringDrawer pendingModal={drawerModal} onClose={closeDrawer} />
-					)}
 					{activeDrawer === "debts" && (
 						<DebtsDrawer pendingModal={drawerModal} onClose={closeDrawer} />
 					)}
