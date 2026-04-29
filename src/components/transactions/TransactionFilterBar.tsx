@@ -3,6 +3,7 @@ import { useAuth } from "../../providers/AuthProvider";
 import { resolveDateRangePreset } from "../../utils/transactionDateRange";
 import { EMPTY_FILTERS, type TransactionFilters } from "../../utils/transactionFilters";
 import type { TransactionType } from "../../utils/transactionValidation";
+import { PillToggle } from "../ui/PillToggle";
 import { DateRangePicker, type DateRangeValue } from "./DateRangePicker";
 
 type Props = {
@@ -66,18 +67,12 @@ export function TransactionFilterBar({
 
 	return (
 		<div className="flex flex-wrap items-center gap-2 px-4 py-2 border-b border-base-300">
-			<div className="join">
-				{TYPE_PILLS.map((p) => (
-					<button
-						key={p.label}
-						type="button"
-						className={`btn btn-sm join-item rounded-none [&:first-child]:rounded-l-sm [&:last-child]:rounded-r-sm border border-base-content/40 [&:not(:first-child)]:-ml-px ${filters.type === p.value ? "btn-primary" : "btn-ghost"}`}
-						onClick={() => pickType(p.value)}
-					>
-						{p.label}
-					</button>
-				))}
-			</div>
+			<PillToggle
+				ariaLabel="Filter by type"
+				value={filters.type}
+				options={TYPE_PILLS}
+				onChange={pickType}
+			/>
 
 			<select
 				aria-label="Tag filter"

@@ -7,6 +7,7 @@ import {
 import type { RecurringInterval } from "../../utils/recurringValidation";
 import type { TransactionType } from "../../utils/transactionValidation";
 import { DropdownSelect } from "../ui/DropdownSelect";
+import { PillToggle } from "../ui/PillToggle";
 
 type Props = {
 	filters: RecurringFilters;
@@ -64,21 +65,12 @@ export function RecurringFilterRow({ filters, onChange, tags }: Props) {
 
 	return (
 		<div className="flex flex-wrap items-center gap-2 py-1">
-			<div className="join">
-				{TYPE_PILLS.map((p) => {
-					const active = filters.type === p.value;
-					return (
-						<button
-							key={p.label}
-							type="button"
-							className={`btn btn-sm join-item ${active ? "btn-primary" : "btn-ghost"} border-base-content/40 [&:not(:first-child)]:-ml-px [&:first-child]:rounded-l-sm [&:last-child]:rounded-r-sm`}
-							onClick={() => onChange({ ...filters, type: p.value })}
-						>
-							{p.label}
-						</button>
-					);
-				})}
-			</div>
+			<PillToggle
+				ariaLabel="Filter by type"
+				value={filters.type}
+				options={TYPE_PILLS}
+				onChange={(next) => onChange({ ...filters, type: next })}
+			/>
 
 			<DropdownSelect
 				ariaLabel="Filter by tag"
