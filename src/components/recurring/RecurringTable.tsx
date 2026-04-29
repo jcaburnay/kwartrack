@@ -100,7 +100,7 @@ export function RecurringTable({
 			<table className="table table-sm text-xs">
 				<thead>
 					<tr className="text-xs uppercase tracking-wide text-base-content/50">
-						<th className="whitespace-nowrap">Service</th>
+						<th className="sticky left-0 z-10 bg-base-100 whitespace-nowrap">Service</th>
 						<th className="text-right whitespace-nowrap">Amount</th>
 						<th className="hidden md:table-cell">Tag</th>
 						<th className="hidden md:table-cell">Account</th>
@@ -114,7 +114,7 @@ export function RecurringTable({
 						const subLine = scheduleSubLine(r);
 						return (
 							<tr key={r.id} data-row-id={r.id} className={dimmed ? "opacity-60" : undefined}>
-								<td className="whitespace-nowrap">
+								<td className="sticky left-0 z-10 bg-base-100 whitespace-nowrap">
 									<div className="flex items-center gap-1.5">
 										{statusGlyph(r)}
 										<span className="font-medium">{r.service}</span>
