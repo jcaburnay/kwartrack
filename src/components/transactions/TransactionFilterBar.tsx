@@ -81,7 +81,7 @@ export function TransactionFilterBar({
 
 			<select
 				aria-label="Tag filter"
-				className="select select-bordered select-sm min-w-0 w-auto focus:outline-none focus-within:outline-none focus:shadow-none focus-within:shadow-none"
+				className="select select-bordered select-sm min-w-0 w-auto"
 				value={filters.tagId ?? ""}
 				onChange={(e) => onChange({ ...filters, tagId: e.target.value || null })}
 			>
