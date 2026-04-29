@@ -97,7 +97,7 @@ export function RecurringTable({
 
 	return (
 		<div className="overflow-x-auto">
-			<table className="table table-sm">
+			<table className="table table-sm text-xs">
 				<thead>
 					<tr className="text-xs uppercase tracking-wide text-base-content/50">
 						<th className="whitespace-nowrap">Service</th>
@@ -125,24 +125,24 @@ export function RecurringTable({
 										{signedAmount(r)}
 									</div>
 									{r.fee_centavos != null && (
-										<div className="text-xs text-base-content/50">
+										<div className="text-base-content/50">
 											+{formatCentavos(r.fee_centavos)} fee
 										</div>
 									)}
 								</td>
-								<td className="hidden md:table-cell text-sm">
+								<td className="hidden md:table-cell">
 									<span className="block max-w-[16ch] truncate">
 										{r.tag_id ? (tagById.get(r.tag_id)?.name ?? "—") : "—"}
 									</span>
 								</td>
-								<td className="hidden md:table-cell text-sm">
+								<td className="hidden md:table-cell">
 									<span className="block max-w-[20ch] truncate">
 										{renderAccount(r, accountById)}
 									</span>
 								</td>
-								<td className="text-sm">
+								<td>
 									<div className="tabular-nums">{formatScheduleDate(r.next_occurrence_at)}</div>
-									<div className="text-xs text-base-content/50">{subLine}</div>
+									<div className="text-base-content/50">{subLine}</div>
 								</td>
 								<td className="text-right">
 									<RecurringRowActions
