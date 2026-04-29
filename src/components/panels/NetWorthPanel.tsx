@@ -120,7 +120,6 @@ export function NetWorthPanel() {
 								value={chart}
 								options={CHART_OPTIONS}
 								onChange={setChart}
-								variant="ghost"
 							/>
 							{isTimeAxis && <ChartRangeToggle value={range} onChange={setRange} />}
 						</div>

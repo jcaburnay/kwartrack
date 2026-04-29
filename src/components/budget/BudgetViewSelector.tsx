@@ -15,13 +15,7 @@ type Props = {
 
 export function BudgetViewSelector({ value, onChange }: Props) {
 	return (
-		<DropdownSelect
-			ariaLabel="Budget view"
-			value={value}
-			options={OPTIONS}
-			onChange={onChange}
-			variant="ghost"
-		/>
+		<DropdownSelect ariaLabel="Budget view" value={value} options={OPTIONS} onChange={onChange} />
 	);
 }
 
