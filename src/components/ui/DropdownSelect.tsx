@@ -37,7 +37,7 @@ export function DropdownSelect<T extends string>({
 	return (
 		<select
 			aria-label={ariaLabel}
-			className={`select select-sm ${variantClass} rounded-none min-w-0 w-auto ${className}`.trim()}
+			className={`select select-sm ${variantClass} rounded-sm min-w-0 w-auto ${className}`.trim()}
 			value={value}
 			onChange={(e) => onChange(e.target.value as T)}
 		>

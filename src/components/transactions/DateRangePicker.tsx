@@ -23,7 +23,7 @@ export function DateRangePicker({ preset, customFrom, customTo, onChange }: Prop
 		<div className="flex items-center gap-2">
 			<select
 				aria-label="Date range"
-				className="select select-bordered select-sm rounded-none min-w-0 w-auto"
+				className="select select-bordered select-sm rounded-sm min-w-0 w-auto"
 				value={preset}
 				onChange={(e) => pick(e.target.value as DateRangePreset)}
 			>
@@ -40,7 +40,7 @@ export function DateRangePicker({ preset, customFrom, customTo, onChange }: Prop
 						<input
 							aria-label="From"
 							type="date"
-							className="input input-bordered input-sm rounded-none"
+							className="input input-bordered input-sm rounded-sm"
 							value={customFrom ?? ""}
 							onChange={(e) =>
 								onChange({ preset: "custom", customFrom: e.target.value || null, customTo })
@@ -53,7 +53,7 @@ export function DateRangePicker({ preset, customFrom, customTo, onChange }: Prop
 						<input
 							aria-label="To"
 							type="date"
-							className="input input-bordered input-sm rounded-none"
+							className="input input-bordered input-sm rounded-sm"
 							value={customTo ?? ""}
 							onChange={(e) =>
 								onChange({ preset: "custom", customFrom, customTo: e.target.value || null })
