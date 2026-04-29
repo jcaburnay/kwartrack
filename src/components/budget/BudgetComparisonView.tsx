@@ -1,4 +1,6 @@
+import { useRef } from "react";
 import type { BudgetAllocation } from "../../hooks/useBudget";
+import { useShouldShowBottomFade } from "../../hooks/useScrollFadeMask";
 import type { Tag } from "../../hooks/useTags";
 import { type ActualsByTag, projectedBucket } from "../../utils/budgetMath";
 import { type SortableRow, sortByOvershootRisk } from "../../utils/budgetSorting";
@@ -30,6 +32,9 @@ export function BudgetComparisonView({
 	timezone,
 	onTagClick,
 }: Props) {
+	const scrollRef = useRef<HTMLUListElement>(null);
+	const showFade = useShouldShowBottomFade(scrollRef);
+
 	if (allocations.length === 0) {
 		return (
 			<p className="text-sm text-base-content/60 px-4 py-3">
@@ -48,11 +53,17 @@ export function BudgetComparisonView({
 
 	return (
 		<ul
+			ref={scrollRef}
 			className="flex-1 overflow-y-auto min-h-0 flex flex-col gap-3 px-4 py-3"
-			style={{
-				maskImage: "linear-gradient(to bottom, black calc(100% - 2.5rem), transparent 100%)",
-				WebkitMaskImage: "linear-gradient(to bottom, black calc(100% - 2.5rem), transparent 100%)",
-			}}
+			style={
+				showFade
+					? {
+							maskImage: "linear-gradient(to bottom, black calc(100% - 2.5rem), transparent 100%)",
+							WebkitMaskImage:
+								"linear-gradient(to bottom, black calc(100% - 2.5rem), transparent 100%)",
+						}
+					: undefined
+			}
 		>
 			{sorted.map((row) => {
 				const bucket = projectedBucket(row.actual, row.allocated, today, timezone, month);

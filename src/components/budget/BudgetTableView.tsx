@@ -1,7 +1,8 @@
 import { Pencil } from "lucide-react";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import type { BudgetAllocation } from "../../hooks/useBudget";
 import { useScrollAndFlash } from "../../hooks/useScrollAndFlash";
+import { useShouldShowBottomFade } from "../../hooks/useScrollFadeMask";
 import type { Tag } from "../../hooks/useTags";
 import { type ActualsByTag, projectedBucket } from "../../utils/budgetMath";
 import { type SortableRow, sortByOvershootRisk } from "../../utils/budgetSorting";
@@ -47,6 +48,8 @@ export function BudgetTableView({
 }: Props) {
 	const [editingAllocation, setEditingAllocation] = useState<BudgetAllocation | null>(null);
 	const [showAdd, setShowAdd] = useState(false);
+	const scrollRef = useRef<HTMLDivElement>(null);
+	const showFade = useShouldShowBottomFade(scrollRef);
 
 	useScrollAndFlash(focusTagId, allocations.length > 0);
 
@@ -72,12 +75,18 @@ export function BudgetTableView({
 	return (
 		<div className="flex flex-col min-h-0 flex-1 overflow-hidden">
 			<div
+				ref={scrollRef}
 				className="flex-1 overflow-y-auto overflow-x-auto min-h-0"
-				style={{
-					maskImage: "linear-gradient(to bottom, black calc(100% - 2.5rem), transparent 100%)",
-					WebkitMaskImage:
-						"linear-gradient(to bottom, black calc(100% - 2.5rem), transparent 100%)",
-				}}
+				style={
+					showFade
+						? {
+								maskImage:
+									"linear-gradient(to bottom, black calc(100% - 2.5rem), transparent 100%)",
+								WebkitMaskImage:
+									"linear-gradient(to bottom, black calc(100% - 2.5rem), transparent 100%)",
+							}
+						: undefined
+				}
 			>
 				<table className="table table-sm">
 					<thead className="sticky top-0 bg-base-100 z-10">
