@@ -71,7 +71,14 @@ export function BudgetTableView({
 
 	return (
 		<div className="flex flex-col min-h-0 flex-1 overflow-hidden">
-			<div className="flex-1 overflow-y-auto overflow-x-auto min-h-0">
+			<div
+				className="flex-1 overflow-y-auto overflow-x-auto min-h-0"
+				style={{
+					maskImage: "linear-gradient(to bottom, black calc(100% - 1.25rem), transparent 100%)",
+					WebkitMaskImage:
+						"linear-gradient(to bottom, black calc(100% - 1.25rem), transparent 100%)",
+				}}
+			>
 				<table className="table table-sm">
 					<thead className="sticky top-0 bg-base-100 z-10">
 						<tr>

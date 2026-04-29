@@ -47,7 +47,13 @@ export function BudgetComparisonView({
 	const sorted = sortByOvershootRisk(rows, today, timezone, month);
 
 	return (
-		<ul className="flex-1 overflow-y-auto min-h-0 flex flex-col gap-3 px-4 py-3">
+		<ul
+			className="flex-1 overflow-y-auto min-h-0 flex flex-col gap-3 px-4 py-3"
+			style={{
+				maskImage: "linear-gradient(to bottom, black calc(100% - 1.25rem), transparent 100%)",
+				WebkitMaskImage: "linear-gradient(to bottom, black calc(100% - 1.25rem), transparent 100%)",
+			}}
+		>
 			{sorted.map((row) => {
 				const bucket = projectedBucket(row.actual, row.allocated, today, timezone, month);
 				const pct =
