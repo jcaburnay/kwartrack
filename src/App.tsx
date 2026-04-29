@@ -1,4 +1,4 @@
-import { createBrowserRouter, Navigate, RouterProvider } from "react-router";
+import { createBrowserRouter, Navigate, RouterProvider, useSearchParams } from "react-router";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { JigsawPage } from "./pages/JigsawPage";
 import { SettingsAboutPage } from "./pages/SettingsAboutPage";
@@ -8,6 +8,13 @@ import { SettingsPage } from "./pages/SettingsPage";
 import { SettingsTagsPage } from "./pages/SettingsTagsPage";
 import { SignInPage } from "./pages/SignInPage";
 import { SignUpPage } from "./pages/SignUpPage";
+
+function RecurringRedirect() {
+	const [params] = useSearchParams();
+	const id = params.get("id");
+	if (id) return <Navigate to={`/?modal=edit-recurring&id=${id}`} replace />;
+	return <Navigate to="/?focus=recurring" replace />;
+}
 
 const router = createBrowserRouter([
 	{
@@ -21,7 +28,7 @@ const router = createBrowserRouter([
 	// Legacy per-feature routes redirect to the jigsaw
 	{ path: "/accounts", element: <Navigate to="/" replace /> },
 	{ path: "/budget", element: <Navigate to="/" replace /> },
-	{ path: "/recurring", element: <Navigate to="/" replace /> },
+	{ path: "/recurring", element: <RecurringRedirect /> },
 	{ path: "/debts-and-splits", element: <Navigate to="/" replace /> },
 	{
 		path: "/settings",
