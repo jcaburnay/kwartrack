@@ -25,11 +25,11 @@ export function SimpleAccountStrip({ account, transactions, timezone }: Props) {
 			<dl className="flex flex-col gap-1.5 text-sm">
 				<div className="flex items-center justify-between gap-3">
 					<dt className="text-base-content/60">This-month in</dt>
-					<dd className="font-mono tabular-nums text-success">+{formatCentavos(inflowCentavos)}</dd>
+					<dd className="tabular-nums text-success">+{formatCentavos(inflowCentavos)}</dd>
 				</div>
 				<div className="flex items-center justify-between gap-3">
 					<dt className="text-base-content/60">This-month out</dt>
-					<dd className="font-mono tabular-nums">−{formatCentavos(outflowCentavos)}</dd>
+					<dd className="tabular-nums">−{formatCentavos(outflowCentavos)}</dd>
 				</div>
 			</dl>
 		</div>

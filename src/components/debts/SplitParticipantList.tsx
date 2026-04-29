@@ -49,7 +49,7 @@ export function SplitParticipantList({
 			<ul className="flex flex-col gap-2">
 				<li className="flex items-center gap-2 px-2 py-1 rounded bg-base-200 text-sm">
 					<span className="badge badge-ghost">You</span>
-					<span className="ml-auto font-mono text-xs">{formatCentavos(userShare)}</span>
+					<span className="ml-auto tabular-nums text-xs">{formatCentavos(userShare)}</span>
 				</li>
 				{rows.map((r) => (
 					<li key={r.personId} className="flex items-center gap-2">
@@ -66,7 +66,7 @@ export function SplitParticipantList({
 								}}
 							/>
 						)}
-						<span className="ml-auto font-mono text-xs">{formatCentavos(r.shareCentavos)}</span>
+						<span className="ml-auto tabular-nums text-xs">{formatCentavos(r.shareCentavos)}</span>
 						<button
 							type="button"
 							className="btn btn-ghost btn-xs"

@@ -50,9 +50,7 @@ export function TimeDepositStrip({ account, onWithdrawMatured }: Props) {
 			<dl className="grid grid-cols-2 gap-x-3 gap-y-1.5 text-sm">
 				<div className="flex items-center justify-between gap-3">
 					<dt className="text-base-content/60">Principal</dt>
-					<dd className="font-mono tabular-nums">
-						{formatCentavos(account.principal_centavos ?? 0)}
-					</dd>
+					<dd className="tabular-nums">{formatCentavos(account.principal_centavos ?? 0)}</dd>
 				</div>
 				<div className="flex items-center justify-between gap-3">
 					<dt className="text-base-content/60">Rate</dt>
@@ -73,9 +71,7 @@ export function TimeDepositStrip({ account, onWithdrawMatured }: Props) {
 				{estimate != null && (
 					<div className="flex items-center justify-between gap-3 col-span-2">
 						<dt className="text-base-content/60">Estimated</dt>
-						<dd className="font-mono tabular-nums text-base-content/80">
-							{formatCentavos(estimate)}
-						</dd>
+						<dd className="tabular-nums text-base-content/80">{formatCentavos(estimate)}</dd>
 					</div>
 				)}
 			</dl>

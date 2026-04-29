@@ -25,7 +25,7 @@ export function TransactionAmountCell({ type, amountCentavos, feeCentavos }: Pro
 	const showFee = feeCentavos != null && feeCentavos !== 0;
 
 	return (
-		<div className={`text-right font-mono whitespace-nowrap ${colorClass}`.trim()}>
+		<div className={`text-right tabular-nums whitespace-nowrap ${colorClass}`.trim()}>
 			<div>{signed}</div>
 			{showFee && (
 				<div className="text-xs text-base-content/50">+{formatCentavos(feeCentavos)} fee</div>

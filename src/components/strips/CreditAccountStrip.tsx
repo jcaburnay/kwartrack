@@ -47,14 +47,12 @@ export function CreditAccountStrip({ account, recurrings, transactions, onPayThi
 			<dl className="flex flex-col gap-1.5 text-sm">
 				<div className="flex items-center justify-between gap-3">
 					<dt className="text-base-content/60">Available</dt>
-					<dd className="font-mono tabular-nums">{formatCentavos(available)}</dd>
+					<dd className="tabular-nums">{formatCentavos(available)}</dd>
 				</div>
 				{installment && (
 					<div className="flex items-center justify-between gap-3">
 						<dt className="text-base-content/60">Installment</dt>
-						<dd className="font-mono tabular-nums">
-							{formatCentavos(installment.availableCentavos)}
-						</dd>
+						<dd className="tabular-nums">{formatCentavos(installment.availableCentavos)}</dd>
 					</div>
 				)}
 			</dl>

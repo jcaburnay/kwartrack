@@ -17,7 +17,7 @@ export function DebtRow({ debt, tagName, onSettle, onDelete, canDelete }: Props)
 	return (
 		<tr data-row-id={debt.id}>
 			<td>{debt.date}</td>
-			<td className="font-mono">{formatCentavos(debt.amountCentavos)}</td>
+			<td className="tabular-nums">{formatCentavos(debt.amountCentavos)}</td>
 			<td>{debt.direction}</td>
 			<td>{tagName ?? "—"}</td>
 			<td className="text-sm text-base-content/70">{debt.description ?? ""}</td>

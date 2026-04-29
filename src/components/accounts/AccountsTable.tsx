@@ -174,7 +174,7 @@ export function AccountsTable({
 									</div>
 								</td>
 								<td
-									className={`text-right font-mono ${isLiability(row.account) ? "text-error" : ""}`}
+									className={`text-right tabular-nums ${isLiability(row.account) ? "text-error" : ""}`}
 								>
 									<div>{formatCentavos(row.account.balance_centavos)}</div>
 									{row.account.type === "credit" && (

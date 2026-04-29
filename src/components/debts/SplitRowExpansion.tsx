@@ -80,7 +80,7 @@ export function SplitRowExpansion({
 						))}
 						<tr className="bg-base-300">
 							<td>You</td>
-							<td className="font-mono">{formatCentavos(split.userShareCentavos)}</td>
+							<td className="tabular-nums">{formatCentavos(split.userShareCentavos)}</td>
 							<td className="text-right text-xs text-base-content/60">your share</td>
 						</tr>
 					</tbody>

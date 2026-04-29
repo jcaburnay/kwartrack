@@ -13,7 +13,7 @@ export function SplitParticipantRow({ participant, onSettle }: Props) {
 	return (
 		<tr>
 			<td>{participant.personName}</td>
-			<td className="font-mono">{formatCentavos(participant.shareCentavos)}</td>
+			<td className="tabular-nums">{formatCentavos(participant.shareCentavos)}</td>
 			<td className="text-right">
 				{fullySettled ? (
 					<span className="badge badge-success">✓ Settled</span>

@@ -48,7 +48,7 @@ export function GroupSummaryCard({ group, accounts, onClear }: Props) {
 						<li key={a.id} className="flex items-center justify-between gap-3">
 							<span className="text-base-content/80 truncate">{a.name}</span>
 							<span
-								className={`tabular-nums font-mono ${isLiability(a) ? "text-error" : "text-base-content/80"}`}
+								className={`tabular-nums ${isLiability(a) ? "text-error" : "text-base-content/80"}`}
 							>
 								{formatCentavos(a.balance_centavos)}
 							</span>

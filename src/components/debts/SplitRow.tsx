@@ -34,8 +34,8 @@ export function SplitRow({
 					{expanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
 				</td>
 				<td>{split.description}</td>
-				<td className="font-mono">{formatCentavos(split.totalCentavos)}</td>
-				<td className="font-mono">{formatCentavos(split.userShareCentavos)}</td>
+				<td className="tabular-nums">{formatCentavos(split.totalCentavos)}</td>
+				<td className="tabular-nums">{formatCentavos(split.userShareCentavos)}</td>
 				<td>{accountName}</td>
 				<td>{tagName}</td>
 				<td>{split.date}</td>
