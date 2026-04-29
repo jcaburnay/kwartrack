@@ -10,25 +10,30 @@ type Props = {
 const ARROW = "→"; // U+2192
 const DASH = "—"; // U+2014
 
-function name(id: string | null, lookup: ReadonlyMap<string, string>): string | null {
+function lookupAccountName(id: string | null, lookup: ReadonlyMap<string, string>): string | null {
 	if (!id) return null;
 	return lookup.get(id) ?? null;
 }
 
+function MissingName() {
+	return <span className="text-base-content/40">{DASH}</span>;
+}
+
 export function TransactionAccountCell({ type, fromAccountId, toAccountId, accountsById }: Props) {
 	if (type === "transfer") {
-		const from = name(fromAccountId, accountsById);
-		const to = name(toAccountId, accountsById);
-		if (!from && !to) return <span className="text-base-content/40">{DASH}</span>;
+		const from = lookupAccountName(fromAccountId, accountsById);
+		const to = lookupAccountName(toAccountId, accountsById);
+		if (!from && !to) return <MissingName />;
 		return (
 			<span className="truncate inline-block max-w-full">
-				{from ?? DASH} {ARROW} {to ?? DASH}
+				{from ?? <span className="text-base-content/40">{DASH}</span>} {ARROW}{" "}
+				{to ?? <span className="text-base-content/40">{DASH}</span>}
 			</span>
 		);
 	}
 
 	const id = type === "expense" ? fromAccountId : toAccountId;
-	const display = name(id, accountsById);
-	if (!display) return <span className="text-base-content/40">{DASH}</span>;
+	const display = lookupAccountName(id, accountsById);
+	if (!display) return <MissingName />;
 	return <span className="truncate inline-block max-w-full">{display}</span>;
 }
