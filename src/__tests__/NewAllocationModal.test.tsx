@@ -4,7 +4,14 @@ import { NewAllocationModal } from "../components/budget/NewAllocationModal";
 import type { Tag } from "../hooks/useTags";
 
 const tags: Tag[] = [
-	{ id: "t-foods", user_id: "u", name: "foods", type: "expense", is_system: false, created_at: "" } as unknown as Tag,
+	{
+		id: "t-foods",
+		user_id: "u",
+		name: "foods",
+		type: "expense",
+		is_system: false,
+		created_at: "",
+	} as unknown as Tag,
 ];
 
 describe("NewAllocationModal", () => {
@@ -41,9 +48,7 @@ describe("NewAllocationModal", () => {
 		fireEvent.change(screen.getByLabelText(/Amount/i), { target: { value: "6000" } });
 		fireEvent.click(screen.getByRole("button", { name: /^Add$/i }));
 		expect(onUpsert).not.toHaveBeenCalled();
-		expect(
-			await screen.findByText(/Tag allocations total .* but Overall is/i),
-		).toBeInTheDocument();
+		expect(await screen.findByText(/Tag allocations total .* but Overall is/i)).toBeInTheDocument();
 	});
 
 	it("calls onUpsert and onSaved on successful add", async () => {

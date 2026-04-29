@@ -23,7 +23,9 @@ export function EditAllocationModal({
 	onSaved,
 	onCancel,
 }: Props) {
-	const [draftPesos, setDraftPesos] = useState(centavosToPesos(allocation.amount_centavos).toString());
+	const [draftPesos, setDraftPesos] = useState(
+		centavosToPesos(allocation.amount_centavos).toString(),
+	);
 	const [error, setError] = useState<string | null>(null);
 	const [saving, setSaving] = useState(false);
 	const [deleting, setDeleting] = useState(false);

@@ -66,34 +66,36 @@ export function BudgetWorkspace() {
 	}
 
 	return (
-		<div className="card bg-base-100 h-full flex flex-col min-w-0">
-			<div className="card-body gap-3 flex-1 min-w-0 flex flex-col">
-				<div className="flex items-center justify-between gap-2 flex-wrap">
-					<div className="flex items-center gap-2">
+		<div className="card bg-base-100 h-full flex flex-col min-w-0 overflow-hidden">
+			<div className="card-body gap-3 flex-1 min-w-0 min-h-0 flex flex-col">
+				<div className="flex flex-col gap-2 flex-shrink-0">
+					<div className="flex items-center justify-between gap-2 flex-wrap">
 						<h2 className="text-sm font-semibold tracking-wide text-base-content/60 uppercase">
 							Budget
 						</h2>
-						<MonthPicker month={month} onChange={setMonth} />
+						<div className="flex items-center gap-2 min-w-0">
+							<BudgetViewSelector value={view} onChange={setView} />
+							{view === "history" && <ChartRangeToggle value={range} onChange={setRange} />}
+						</div>
 					</div>
-					<div className="flex items-center gap-2">
-						<BudgetViewSelector value={view} onChange={setView} />
-						{view === "history" && <ChartRangeToggle value={range} onChange={setRange} />}
-					</div>
+					<MonthPicker month={month} onChange={setMonth} />
 				</div>
 
-				{error && <div className="alert alert-error text-sm">{error}</div>}
+				{error && <div className="alert alert-error text-sm flex-shrink-0">{error}</div>}
 
-				<BudgetAnchor
-					month={month}
-					overallCentavos={config ? overall : null}
-					actualCentavos={overallActualCentavos}
-					allocatedSumCentavos={allocatedSum}
-					today={today}
-					timezone={tz}
-					onSetOverall={setOverall}
-					onCopyFromPrevious={copyFromPrevious}
-					canCopy={config == null}
-				/>
+				<div className="flex-shrink-0">
+					<BudgetAnchor
+						month={month}
+						overallCentavos={config ? overall : null}
+						actualCentavos={overallActualCentavos}
+						allocatedSumCentavos={allocatedSum}
+						today={today}
+						timezone={tz}
+						onSetOverall={setOverall}
+						onCopyFromPrevious={copyFromPrevious}
+						canCopy={config == null}
+					/>
+				</div>
 
 				<div className="flex-1 min-h-0 flex flex-col">
 					{isLoading ? (

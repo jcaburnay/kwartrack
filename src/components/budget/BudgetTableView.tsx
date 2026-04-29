@@ -144,11 +144,7 @@ export function BudgetTableView({
 					Allocated total: {formatCentavos(allocatedSum)}
 				</span>
 				{!disabled && candidateTags.length > 0 && (
-					<button
-						type="button"
-						className="btn btn-xs btn-ghost"
-						onClick={() => setShowAdd(true)}
-					>
+					<button type="button" className="btn btn-xs btn-ghost" onClick={() => setShowAdd(true)}>
 						+ Add allocation
 					</button>
 				)}

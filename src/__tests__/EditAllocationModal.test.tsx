@@ -110,8 +110,6 @@ describe("EditAllocationModal", () => {
 		fireEvent.change(screen.getByLabelText(/Amount/i), { target: { value: "16000" } });
 		fireEvent.click(screen.getByRole("button", { name: /^Save$/i }));
 		expect(onUpsert).not.toHaveBeenCalled();
-		expect(
-			await screen.findByText(/Tag allocations total .* but Overall is/i),
-		).toBeInTheDocument();
+		expect(await screen.findByText(/Tag allocations total .* but Overall is/i)).toBeInTheDocument();
 	});
 });
