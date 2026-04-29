@@ -26,7 +26,7 @@ export function ChartRangeToggle({ value, onChange }: Props) {
 					key={opt.value}
 					type="button"
 					aria-pressed={value === opt.value}
-					className={`btn btn-sm btn-outline join-item rounded-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${value === opt.value ? "btn-active" : ""}`}
+					className={`btn btn-sm btn-ghost join-item rounded-none border border-base-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${value === opt.value ? "btn-active" : ""}`}
 					onClick={() => onChange(opt.value)}
 				>
 					{opt.label}
