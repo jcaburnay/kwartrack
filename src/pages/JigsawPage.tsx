@@ -86,7 +86,7 @@ export function JigsawPage() {
 							/>
 						</div>
 						<div id="panel-recurring" className="jigsaw-recurring">
-							<RecurringPanel onSeeAll={() => openDrawer("recurring")} />
+							<RecurringPanel />
 						</div>
 						<div id="panel-budget" className="jigsaw-budget">
 							<BudgetPanel />
