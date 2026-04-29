@@ -17,3 +17,31 @@
 .row-flash {
 	animation: row-flash 1.5s ease-out;
 }
+
+@media (min-width: 640px) {
+	.jigsaw-grid {
+		display: grid;
+		grid-template-columns: 1fr 2.2fr 1fr;
+		grid-template-rows: 1fr 1fr;
+		grid-template-areas:
+			"networth txns recurring"
+			"budget   txns debts";
+		min-height: calc(100dvh - 56px - 5rem);
+	}
+
+	.jigsaw-networth {
+		grid-area: networth;
+	}
+	.jigsaw-txns {
+		grid-area: txns;
+	}
+	.jigsaw-recurring {
+		grid-area: recurring;
+	}
+	.jigsaw-budget {
+		grid-area: budget;
+	}
+	.jigsaw-debts {
+		grid-area: debts;
+	}
+}

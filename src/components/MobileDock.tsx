@@ -9,8 +9,8 @@ type Indicator = "budget" | "loaned";
 const ITEMS: { panelId: string; label: string; Icon: IconType; indicator?: Indicator }[] = [
 	{ panelId: "panel-networth", label: "Overview", Icon: Home },
 	{ panelId: "panel-accounts", label: "Accounts", Icon: Wallet },
-	{ panelId: "panel-budget", label: "Budget", Icon: PieChart, indicator: "budget" },
 	{ panelId: "panel-recurring", label: "Recurring", Icon: Repeat2 },
+	{ panelId: "panel-budget", label: "Budget", Icon: PieChart, indicator: "budget" },
 	{ panelId: "panel-debts", label: "Debts", Icon: Handshake, indicator: "loaned" },
 ];
 

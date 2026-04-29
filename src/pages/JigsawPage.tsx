@@ -70,25 +70,22 @@ export function JigsawPage() {
 			<div className="drawer-content min-h-dvh bg-base-200 flex flex-col">
 				<Header />
 				<main className="flex-1 p-4 pb-20 sm:p-6">
-					{/* Bento grid — 6-column base, mobile stacks */}
-					<div
-						className="grid grid-cols-1 sm:grid-cols-6 gap-4"
-						style={{ gridTemplateRows: "repeat(3, minmax(260px, auto))" }}
-					>
-						<div id="panel-accounts" className="sm:col-span-4 sm:row-span-2">
+					{/* Jigsaw grid — named areas on desktop, stacked on mobile */}
+					<div className="jigsaw-grid grid grid-cols-1 gap-4">
+						<div id="panel-networth" className="jigsaw-networth">
+							<NetWorthPanel />
+						</div>
+						<div id="panel-accounts" className="jigsaw-txns">
 							<AccountsPanel onSeeAll={() => openDrawer("accounts")} />
 						</div>
-						<div id="panel-budget" className="sm:col-span-2">
-							<BudgetPanel onSeeAll={() => openDrawer("budget")} />
-						</div>
-						<div id="panel-recurring" className="sm:col-span-2">
+						<div id="panel-recurring" className="jigsaw-recurring">
 							<RecurringPanel onSeeAll={() => openDrawer("recurring")} />
 						</div>
-						<div id="panel-debts" className="sm:col-span-2">
-							<DebtsPanel onSeeAll={() => openDrawer("debts")} />
+						<div id="panel-budget" className="jigsaw-budget">
+							<BudgetPanel onSeeAll={() => openDrawer("budget")} />
 						</div>
-						<div id="panel-networth" className="sm:col-span-4">
-							<NetWorthPanel />
+						<div id="panel-debts" className="jigsaw-debts">
+							<DebtsPanel onSeeAll={() => openDrawer("debts")} />
 						</div>
 					</div>
 				</main>
