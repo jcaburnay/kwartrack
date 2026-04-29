@@ -20,6 +20,7 @@ import { AccountsTable } from "../accounts/AccountsTable";
 import { EditAccountModal } from "../accounts/EditAccountModal";
 import { NewAccountModal } from "../accounts/NewAccountModal";
 import { AccountDetailStrip } from "../strips/AccountDetailStrip";
+import type { DateRangeValue } from "../transactions/DateRangePicker";
 import { EditTransactionModal } from "../transactions/EditTransactionModal";
 import { NewTransactionModal } from "../transactions/NewTransactionModal";
 import { TransactionFilterBar } from "../transactions/TransactionFilterBar";
@@ -85,7 +86,16 @@ export function AccountsDrawer({ pendingModal, onClose }: Props) {
 		[transactions, effectiveFilters, accountsById],
 	);
 
+	const [dateRange, setDateRange] = useState<DateRangeValue>({
+		preset: "all-time",
+		customFrom: null,
+		customTo: null,
+	});
+	const [search, setSearch] = useState("");
+
 	const handleSetFilters = useCallback((next: TransactionFilters) => setFilters(next), []);
+	const handleSetDateRange = useCallback((next: DateRangeValue) => setDateRange(next), []);
+	const handleSetSearch = useCallback((next: string) => setSearch(next), []);
 
 	async function onTxChanged() {
 		await Promise.all([refetchTransactions(), refetchAccounts()]);
@@ -189,7 +199,11 @@ export function AccountsDrawer({ pendingModal, onClose }: Props) {
 								</div>
 								<TransactionFilterBar
 									filters={filters}
+									dateRange={dateRange}
+									search={search}
 									onChange={handleSetFilters}
+									onDateRangeChange={handleSetDateRange}
+									onSearchChange={handleSetSearch}
 									accounts={accounts}
 									groups={groups}
 									tags={tags}

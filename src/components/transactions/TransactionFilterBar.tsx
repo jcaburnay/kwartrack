@@ -1,133 +1,118 @@
 import type { Tag } from "../../hooks/useTags";
+import { useAuth } from "../../providers/AuthProvider";
 import type { Account, AccountGroup } from "../../utils/accountBalances";
+import { resolveDateRangePreset } from "../../utils/transactionDateRange";
 import { EMPTY_FILTERS, type TransactionFilters } from "../../utils/transactionFilters";
 import type { TransactionType } from "../../utils/transactionValidation";
+import { DateRangePicker, type DateRangeValue } from "./DateRangePicker";
 
 type Props = {
 	filters: TransactionFilters;
+	dateRange: DateRangeValue;
+	search: string;
 	onChange: (next: TransactionFilters) => void;
+	onDateRangeChange: (next: DateRangeValue) => void;
+	onSearchChange: (next: string) => void;
 	accounts: readonly Account[];
 	groups: readonly AccountGroup[];
 	tags: readonly Tag[];
 };
 
-const TYPES: { value: TransactionType; label: string }[] = [
-	{ value: "expense", label: "Expense" },
+const TYPE_PILLS: { value: TransactionType | null; label: string }[] = [
+	{ value: null, label: "All" },
+	{ value: "expense", label: "Expenses" },
 	{ value: "income", label: "Income" },
-	{ value: "transfer", label: "Transfer" },
+	{ value: "transfer", label: "Transfers" },
 ];
 
-export function TransactionFilterBar({ filters, onChange, accounts, groups, tags }: Props) {
-	const visibleAccounts = accounts.filter((a) => !a.is_archived);
+export function TransactionFilterBar({
+	filters,
+	dateRange,
+	search,
+	onChange,
+	onDateRangeChange,
+	onSearchChange,
+	tags,
+}: Props) {
+	const { profile } = useAuth();
+	const timezone = profile?.timezone ?? "Asia/Manila";
 	const userTags = tags.filter((t) => !t.is_system);
-	const isEmpty = JSON.stringify(filters) === JSON.stringify(EMPTY_FILTERS);
+
+	const isFiltered =
+		filters.type != null ||
+		filters.tagId != null ||
+		dateRange.preset !== "all-time" ||
+		search.trim().length > 0;
+
+	function pickType(value: TransactionType | null) {
+		onChange({ ...filters, type: value });
+	}
+
+	function pickDateRange(next: DateRangeValue) {
+		onDateRangeChange(next);
+		const resolved =
+			next.preset === "custom"
+				? { from: next.customFrom, to: next.customTo }
+				: resolveDateRangePreset(next.preset, timezone);
+		onChange({ ...filters, dateFrom: resolved.from, dateTo: resolved.to });
+	}
+
+	function clearAll() {
+		onChange({
+			...EMPTY_FILTERS,
+			splitId: filters.splitId,
+			debtId: filters.debtId,
+		});
+		onDateRangeChange({ preset: "all-time", customFrom: null, customTo: null });
+		onSearchChange("");
+	}
 
 	return (
-		<div className="flex flex-wrap items-end gap-2 py-1">
-			<label className="form-control">
-				<div className="label py-0">
-					<span className="label-text-alt">Type</span>
-				</div>
-				<select
-					className="select select-bordered select-sm"
-					value={filters.type ?? ""}
-					onChange={(e) =>
-						onChange({ ...filters, type: (e.target.value || null) as TransactionType | null })
-					}
-				>
-					<option value="">All</option>
-					{TYPES.map((t) => (
-						<option key={t.value} value={t.value}>
-							{t.label}
-						</option>
-					))}
-				</select>
-			</label>
+		<div className="flex flex-wrap items-center gap-2 px-4 py-2 border-b border-base-300">
+			<div className="join">
+				{TYPE_PILLS.map((p) => (
+					<button
+						key={p.label}
+						type="button"
+						className={`btn btn-xs join-item ${filters.type === p.value ? "btn-primary" : "btn-ghost"}`}
+						onClick={() => pickType(p.value)}
+					>
+						{p.label}
+					</button>
+				))}
+			</div>
 
-			<label className="form-control">
-				<div className="label py-0">
-					<span className="label-text-alt">Tag</span>
-				</div>
-				<select
-					className="select select-bordered select-sm"
-					value={filters.tagId ?? ""}
-					onChange={(e) => onChange({ ...filters, tagId: e.target.value || null })}
-				>
-					<option value="">All</option>
-					{userTags.map((t) => (
-						<option key={t.id} value={t.id}>
-							{t.name}
-						</option>
-					))}
-				</select>
-			</label>
+			<select
+				aria-label="Tag filter"
+				className="select select-bordered select-xs"
+				value={filters.tagId ?? ""}
+				onChange={(e) => onChange({ ...filters, tagId: e.target.value || null })}
+			>
+				<option value="">All tags</option>
+				{userTags.map((t) => (
+					<option key={t.id} value={t.id}>
+						{t.name}
+					</option>
+				))}
+			</select>
 
-			<label className="form-control">
-				<div className="label py-0">
-					<span className="label-text-alt">Group</span>
-				</div>
-				<select
-					className="select select-bordered select-sm"
-					value={filters.groupId ?? ""}
-					onChange={(e) => onChange({ ...filters, groupId: e.target.value || null })}
-				>
-					<option value="">All</option>
-					{groups.map((g) => (
-						<option key={g.id} value={g.id}>
-							{g.name}
-						</option>
-					))}
-				</select>
-			</label>
+			<DateRangePicker
+				preset={dateRange.preset}
+				customFrom={dateRange.customFrom}
+				customTo={dateRange.customTo}
+				onChange={pickDateRange}
+			/>
 
-			<label className="form-control">
-				<div className="label py-0">
-					<span className="label-text-alt">Account</span>
-				</div>
-				<select
-					className="select select-bordered select-sm"
-					value={filters.accountId ?? ""}
-					onChange={(e) => onChange({ ...filters, accountId: e.target.value || null })}
-				>
-					<option value="">All</option>
-					{visibleAccounts.map((a) => (
-						<option key={a.id} value={a.id}>
-							{a.name}
-						</option>
-					))}
-				</select>
-			</label>
+			<input
+				type="search"
+				className="input input-bordered input-xs flex-1 min-w-[12ch] max-w-[24ch]"
+				placeholder="Search description, tag, account…"
+				value={search}
+				onChange={(e) => onSearchChange(e.target.value)}
+			/>
 
-			<label className="form-control">
-				<div className="label py-0">
-					<span className="label-text-alt">From date</span>
-				</div>
-				<input
-					type="date"
-					className="input input-bordered input-sm"
-					value={filters.dateFrom ?? ""}
-					onChange={(e) => onChange({ ...filters, dateFrom: e.target.value || null })}
-				/>
-			</label>
-
-			<label className="form-control">
-				<div className="label py-0">
-					<span className="label-text-alt">To date</span>
-				</div>
-				<input
-					type="date"
-					className="input input-bordered input-sm"
-					value={filters.dateTo ?? ""}
-					onChange={(e) => onChange({ ...filters, dateTo: e.target.value || null })}
-				/>
-			</label>
-
-			{!isEmpty && (
-				<button
-					type="button"
-					className="btn btn-ghost btn-sm"
-					onClick={() => onChange(EMPTY_FILTERS)}
-				>
+			{isFiltered && (
+				<button type="button" className="btn btn-ghost btn-xs" onClick={clearAll}>
 					Clear
 				</button>
 			)}
