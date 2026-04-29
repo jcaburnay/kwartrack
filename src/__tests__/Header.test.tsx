@@ -54,19 +54,16 @@ describe("Header", () => {
 		expect(signOut).toHaveBeenCalledTimes(1);
 	});
 
-	it("shows nav links for overview, accounts, budget, recurring, and debts (desktop nav + mobile dock)", () => {
+	it("has no top-level feature nav links (jigsaw is the single page)", () => {
 		renderHeader();
-		// Each nav target appears twice: once in the desktop top nav, once in the mobile dock.
-		expect(screen.getAllByRole("link", { name: /overview/i })).toHaveLength(2);
-		expect(screen.getAllByRole("link", { name: /accounts/i })).toHaveLength(2);
-		expect(screen.getAllByRole("link", { name: /budget/i })).toHaveLength(2);
-		expect(screen.getAllByRole("link", { name: /recurring/i })).toHaveLength(2);
-		// Desktop nav uses "Debts & Splits"; mobile dock uses just "Debts".
-		expect(screen.getByRole("link", { name: /debts & splits/i })).toBeInTheDocument();
-		expect(screen.getByRole("link", { name: /^debts$/i })).toBeInTheDocument();
+		// Header no longer has per-feature nav links — the jigsaw page shows everything.
+		// Mobile dock uses scroll buttons (not NavLinks), so no feature links at all in header.
+		expect(screen.queryByRole("link", { name: /^overview$/i })).not.toBeInTheDocument();
+		expect(screen.queryByRole("link", { name: /^accounts$/i })).not.toBeInTheDocument();
+		expect(screen.queryByRole("link", { name: /^budget$/i })).not.toBeInTheDocument();
 	});
 
-	it("places Settings inside the avatar dropdown, not in the top nav", () => {
+	it("places Settings inside the avatar dropdown", () => {
 		renderHeader();
 		expect(screen.getByRole("link", { name: /settings/i })).toBeInTheDocument();
 	});

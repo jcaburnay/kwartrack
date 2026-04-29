@@ -1,23 +1,25 @@
+import { X } from "lucide-react";
 import { useMemo, useState } from "react";
-import { useSearchParams } from "react-router";
-import { AllocationTable } from "../components/budget/AllocationTable";
-import { MonthPicker } from "../components/budget/MonthPicker";
-import { OverallHero } from "../components/budget/OverallHero";
-import { Header } from "../components/Header";
-import { useBudget } from "../hooks/useBudget";
-import { useScrollAndFlash } from "../hooks/useScrollAndFlash";
-import { useTags } from "../hooks/useTags";
-import { useAuth } from "../providers/AuthProvider";
-import { monthBounds } from "../utils/dateRange";
+import { useBudget } from "../../hooks/useBudget";
+import { useTags } from "../../hooks/useTags";
+import { useAuth } from "../../providers/AuthProvider";
+import { monthBounds } from "../../utils/dateRange";
+import { AllocationTable } from "../budget/AllocationTable";
+import { MonthPicker } from "../budget/MonthPicker";
+import { OverallHero } from "../budget/OverallHero";
 
-export function BudgetPage() {
+type Props = {
+	pendingModal: string | null;
+	onClose: () => void;
+};
+
+export function BudgetDrawer({ onClose }: Props) {
 	const { profile } = useAuth();
 	const tz = profile?.timezone ?? "Asia/Manila";
 	const initialMonth = useMemo(() => monthBounds(tz).startISO.slice(0, 7), [tz]);
 	const [month, setMonth] = useState(initialMonth);
 	const [copyError, setCopyError] = useState<string | null>(null);
 	const [copying, setCopying] = useState(false);
-	const [params] = useSearchParams();
 
 	const { tags } = useTags();
 	const {
@@ -37,8 +39,6 @@ export function BudgetPage() {
 	const allocatedSum = allocations.reduce((s, a) => s + a.amount_centavos, 0);
 	const overall = config?.overall_centavos ?? 0;
 
-	useScrollAndFlash(params.get("tag"), !isLoading && allocations.length > 0);
-
 	async function handleCopy() {
 		setCopyError(null);
 		setCopying(true);
@@ -48,20 +48,18 @@ export function BudgetPage() {
 	}
 
 	return (
-		<div className="min-h-dvh bg-base-200 flex flex-col">
-			<Header />
-			<main className="flex-1 p-4 pb-20 sm:p-6 max-w-6xl w-full mx-auto flex flex-col gap-5">
+		<div className="flex flex-col h-full">
+			<div className="flex items-center justify-between p-4 border-b border-base-200">
+				<h2 className="text-lg font-semibold">Budget</h2>
+				<button type="button" className="btn btn-ghost btn-sm btn-circle" onClick={onClose}>
+					<X className="size-4" />
+				</button>
+			</div>
+
+			<div className="flex-1 overflow-y-auto p-4 sm:p-6 flex flex-col gap-5">
 				<div className="flex items-end justify-between gap-4 flex-wrap">
-					<h1 className="text-2xl font-semibold">Budget</h1>
 					<MonthPicker month={month} onChange={setMonth} />
-				</div>
-
-				{(error || copyError) && (
-					<div className="alert alert-error text-sm">{error ?? copyError}</div>
-				)}
-
-				{config == null && !isLoading && (
-					<div className="flex justify-end">
+					{config == null && !isLoading && (
 						<button
 							type="button"
 							className="btn btn-sm btn-ghost"
@@ -74,7 +72,11 @@ export function BudgetPage() {
 								"Copy from previous month"
 							)}
 						</button>
-					</div>
+					)}
+				</div>
+
+				{(error || copyError) && (
+					<div className="alert alert-error text-sm">{error ?? copyError}</div>
 				)}
 
 				<OverallHero
@@ -94,7 +96,7 @@ export function BudgetPage() {
 					onDelete={deleteAllocation}
 					disabled={config == null}
 				/>
-			</main>
+			</div>
 		</div>
 	);
 }

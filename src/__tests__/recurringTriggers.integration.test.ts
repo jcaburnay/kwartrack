@@ -375,7 +375,7 @@ runOrSkip("recurring_fire_due", () => {
 		// Push next_at well into the past so catchup loop fires both.
 		await admin
 			.from("recurring")
-			.update({ next_occurrence_at: shiftDays(todayInTZ(), -65) + "T00:00:00+08:00" })
+			.update({ next_occurrence_at: `${shiftDays(todayInTZ(), -65)}T00:00:00+08:00` })
 			.eq("id", rec!.id);
 
 		await fireDue();

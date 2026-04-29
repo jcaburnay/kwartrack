@@ -1,10 +1,6 @@
 import { createBrowserRouter, Navigate, RouterProvider } from "react-router";
 import { ProtectedRoute } from "./components/ProtectedRoute";
-import { AccountsPage } from "./pages/AccountsPage";
-import { BudgetPage } from "./pages/BudgetPage";
-import { DebtsAndSplitsPage } from "./pages/DebtsAndSplitsPage";
-import { OverviewPage } from "./pages/OverviewPage";
-import { RecurringPage } from "./pages/RecurringPage";
+import { JigsawPage } from "./pages/JigsawPage";
 import { SettingsAboutPage } from "./pages/SettingsAboutPage";
 import { SettingsContactsPage } from "./pages/SettingsContactsPage";
 import { SettingsGroupsPage } from "./pages/SettingsGroupsPage";
@@ -18,42 +14,15 @@ const router = createBrowserRouter([
 		path: "/",
 		element: (
 			<ProtectedRoute>
-				<OverviewPage />
+				<JigsawPage />
 			</ProtectedRoute>
 		),
 	},
-	{
-		path: "/accounts",
-		element: (
-			<ProtectedRoute>
-				<AccountsPage />
-			</ProtectedRoute>
-		),
-	},
-	{
-		path: "/budget",
-		element: (
-			<ProtectedRoute>
-				<BudgetPage />
-			</ProtectedRoute>
-		),
-	},
-	{
-		path: "/recurring",
-		element: (
-			<ProtectedRoute>
-				<RecurringPage />
-			</ProtectedRoute>
-		),
-	},
-	{
-		path: "/debts-and-splits",
-		element: (
-			<ProtectedRoute>
-				<DebtsAndSplitsPage />
-			</ProtectedRoute>
-		),
-	},
+	// Legacy per-feature routes redirect to the jigsaw
+	{ path: "/accounts", element: <Navigate to="/" replace /> },
+	{ path: "/budget", element: <Navigate to="/" replace /> },
+	{ path: "/recurring", element: <Navigate to="/" replace /> },
+	{ path: "/debts-and-splits", element: <Navigate to="/" replace /> },
 	{
 		path: "/settings",
 		element: (

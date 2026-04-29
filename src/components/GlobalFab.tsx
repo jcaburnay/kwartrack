@@ -6,24 +6,24 @@ const ACTIONS = [
 	{
 		label: "New Transaction",
 		description: "Expense, income, or transfer.",
-		to: "/accounts?modal=new-transaction",
+		to: "/?modal=new-transaction",
 	},
 	{
 		label: "New Account",
 		description: "Cash, e-wallet, savings, credit, or time deposit.",
-		to: "/accounts?modal=new-account",
+		to: "/?modal=new-account",
 	},
 	{
 		label: "New Recurring",
 		description: "Subscription, installment, or recurring income.",
-		to: "/recurring?modal=new-recurring",
+		to: "/?modal=new-recurring",
 	},
 	{
 		label: "New Split",
 		description: "Splitwise-style group expense.",
-		to: "/debts-and-splits?modal=new-split",
+		to: "/?modal=new-split",
 	},
-	{ label: "New Debt", description: "Standalone IOU.", to: "/debts-and-splits?modal=new-debt" },
+	{ label: "New Debt", description: "Standalone IOU.", to: "/?modal=new-debt" },
 ] as const;
 
 export function GlobalFab() {
