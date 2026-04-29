@@ -76,7 +76,7 @@ export function JigsawPage() {
 							<NetWorthPanel />
 						</div>
 						<div id="panel-accounts" className="jigsaw-txns">
-							<AccountsPanel onSeeAll={() => openDrawer("accounts")} />
+							<AccountsPanel />
 						</div>
 						<div id="panel-recurring" className="jigsaw-recurring">
 							<RecurringPanel onSeeAll={() => openDrawer("recurring")} />
