@@ -71,7 +71,7 @@ export function TransactionFilterBar({
 					<button
 						key={p.label}
 						type="button"
-						className={`btn btn-sm join-item ${filters.type === p.value ? "btn-primary" : "btn-ghost"}`}
+						className={`btn btn-sm join-item rounded-none [&:first-child]:rounded-l-sm [&:last-child]:rounded-r-sm border border-base-content/40 [&:not(:first-child)]:-ml-px ${filters.type === p.value ? "btn-primary" : "btn-ghost"}`}
 						onClick={() => pickType(p.value)}
 					>
 						{p.label}
