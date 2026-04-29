@@ -59,7 +59,7 @@ describe("BudgetTableView", () => {
 		expect(rows).toEqual(["t-pets", "t-foods"]);
 	});
 
-	it("opens the add-allocation composer", () => {
+	it("opens the New Allocation modal when '+ Add allocation' is clicked", () => {
 		render(
 			<BudgetTableView
 				tags={tags}
@@ -76,33 +76,38 @@ describe("BudgetTableView", () => {
 				focusTagId={null}
 			/>,
 		);
+		expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
 		fireEvent.click(screen.getByRole("button", { name: /\+ Add allocation/i }));
+		const dialog = screen.getByRole("dialog");
+		expect(dialog).toBeInTheDocument();
 		expect(screen.getByLabelText(/Tag/i)).toBeInTheDocument();
 		expect(screen.getByLabelText(/Amount/i)).toBeInTheDocument();
 	});
 
-	it("rejects add when amount is zero", async () => {
-		const onUpsert = vi.fn(async () => null);
+	it("opens the Edit Allocation modal when a row's pencil button is clicked", () => {
+		const actuals = new Map([
+			["t-foods", 4_000_00],
+			["t-pets", 4_000_00],
+		]);
 		render(
 			<BudgetTableView
 				tags={tags}
-				allocations={[]}
-				actualsByTag={new Map()}
+				allocations={allocations}
+				actualsByTag={actuals}
 				othersCentavos={0}
 				overallCentavos={20_000_00}
 				month="2026-04"
 				today={today}
 				timezone={TZ}
-				onUpsert={onUpsert}
+				onUpsert={vi.fn(async () => null)}
 				onDelete={vi.fn(async () => null)}
 				disabled={false}
 				focusTagId={null}
 			/>,
 		);
-		fireEvent.click(screen.getByRole("button", { name: /\+ Add allocation/i }));
-		fireEvent.change(screen.getByLabelText(/Amount/i), { target: { value: "0" } });
-		fireEvent.click(screen.getByRole("button", { name: /^Add$/i }));
-		expect(onUpsert).not.toHaveBeenCalled();
-		expect(await screen.findByText(/Enter an amount greater than 0/i)).toBeInTheDocument();
+		expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+		fireEvent.click(screen.getByRole("button", { name: /Edit foods/i }));
+		expect(screen.getByRole("dialog")).toBeInTheDocument();
+		expect(screen.getByText(/Edit allocation/i)).toBeInTheDocument();
 	});
 });
