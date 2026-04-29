@@ -107,14 +107,14 @@ export function AccountsTable({
 
 	if (rows.length === 0) {
 		return (
-			<div className="rounded-box border border-dashed border-base-300 p-6 text-center text-base-content/60">
+			<div className="border border-dashed border-base-300 p-6 text-center text-base-content/60">
 				No accounts yet. Tap the <strong>+</strong> button to create your first one.
 			</div>
 		);
 	}
 
 	return (
-		<div className="overflow-x-auto rounded-box border border-base-300">
+		<div className="overflow-x-auto border border-base-300">
 			<table className="table table-pin-rows">
 				<thead>
 					<tr className="text-base-content/60">

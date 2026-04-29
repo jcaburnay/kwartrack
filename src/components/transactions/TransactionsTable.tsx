@@ -98,7 +98,7 @@ export function TransactionsTable({
 
 	if (sorted.length === 0) {
 		return (
-			<div className="rounded-box border border-dashed border-base-300 p-6 text-center text-base-content/60">
+			<div className="border border-dashed border-base-300 p-6 text-center text-base-content/60">
 				{emptyCopy}
 			</div>
 		);
@@ -112,7 +112,7 @@ export function TransactionsTable({
 	const today = new Date();
 
 	return (
-		<div className="rounded-box border border-base-300">
+		<div className="border border-base-300">
 			<div className="overflow-x-auto">
 				<table className="table table-sm">
 					<thead>
