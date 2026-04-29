@@ -175,7 +175,7 @@ export function TransactionsTable({
 												}
 											>
 												<Link
-													to={`/recurring?id=${tx.recurring_id}`}
+													to={`/?modal=edit-recurring&id=${tx.recurring_id}`}
 													className="inline-flex items-center hover:text-primary"
 													onClick={(e) => e.stopPropagation()}
 													aria-label="View source recurring"
