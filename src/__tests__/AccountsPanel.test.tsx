@@ -83,4 +83,21 @@ describe("AccountsPanel", () => {
 		await user.click(screen.getByRole("button", { name: /expand accounts/i }));
 		expect(screen.getByRole("button", { name: /fold accounts/i })).toBeInTheDocument();
 	});
+
+	it("folds transactions section to a strip when chevron clicked", async () => {
+		const user = userEvent.setup();
+		renderPanel();
+		const foldBtn = screen.getByRole("button", { name: /fold transactions/i });
+		await user.click(foldBtn);
+		expect(screen.getByText(/0 transactions/i)).toBeInTheDocument();
+		expect(screen.queryByRole("button", { name: /fold transactions/i })).not.toBeInTheDocument();
+	});
+
+	it("expands transactions section when strip is clicked", async () => {
+		const user = userEvent.setup();
+		renderPanel();
+		await user.click(screen.getByRole("button", { name: /fold transactions/i }));
+		await user.click(screen.getByRole("button", { name: /expand transactions/i }));
+		expect(screen.getByRole("button", { name: /fold transactions/i })).toBeInTheDocument();
+	});
 });

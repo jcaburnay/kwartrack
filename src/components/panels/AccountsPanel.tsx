@@ -182,7 +182,7 @@ export function AccountsPanel() {
 				/>
 			)}
 
-			<div className="border-t border-base-300 flex-shrink-0" />
+			{!txFolded && <div className="border-t border-base-300 flex-shrink-0" />}
 
 			{txFolded ? (
 				<button
