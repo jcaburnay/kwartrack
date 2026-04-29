@@ -1,3 +1,4 @@
+import { X } from "lucide-react";
 import type { Account } from "../../utils/accountBalances";
 import type { Recurring } from "../../utils/recurringFilters";
 import type { Transaction } from "../../utils/transactionFilters";
@@ -24,14 +25,24 @@ export function AccountDetailStrip({
 	onPayThisCard,
 	onWithdrawMatured,
 }: Props) {
+	const showMatured = account.type === "time-deposit" && account.is_matured;
+
 	return (
-		<div className="flex flex-col gap-3">
-			<div className="flex items-center justify-between">
-				<span className="text-sm text-base-content/60">
-					Selected: <strong className="text-base-content">{account.name}</strong>
-				</span>
-				<button type="button" className="btn btn-ghost btn-xs" onClick={onClear}>
-					Clear selection
+		<div className="flex flex-col gap-3 p-4">
+			<div className="flex items-center justify-between gap-2">
+				<div className="flex items-center gap-2 min-w-0">
+					<span className="text-xs font-semibold uppercase tracking-wide text-base-content/60 truncate">
+						{account.name}
+					</span>
+					{showMatured && <span className="badge badge-success badge-sm shrink-0">Matured</span>}
+				</div>
+				<button
+					type="button"
+					aria-label="Clear selection"
+					className="btn btn-ghost btn-xs btn-circle"
+					onClick={onClear}
+				>
+					<X className="size-3.5" />
 				</button>
 			</div>
 			{account.type === "credit" && (

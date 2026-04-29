@@ -39,60 +39,54 @@ export function TimeDepositStrip({ account, onWithdrawMatured }: Props) {
 	const estimate = estimatedTimeDepositValue(account);
 
 	return (
-		<section className="card bg-base-100 shadow-sm">
-			<div className="card-body flex-col gap-4 p-5 sm:p-6">
-				<header className="flex items-baseline justify-between gap-4 flex-wrap">
-					<div>
-						<p className="text-xs uppercase tracking-wide text-base-content/60">
-							{account.name}
-							{account.is_matured && (
-								<span className="badge badge-success badge-sm ml-2">Matured</span>
-							)}
-						</p>
-						<p className="text-2xl font-semibold">{formatCentavos(account.balance_centavos)}</p>
-					</div>
-					<div className="flex items-center gap-3">
-						{account.is_matured && onWithdrawMatured && (
-							<button type="button" className="btn btn-sm btn-primary" onClick={onWithdrawMatured}>
-								Withdraw matured balance
-							</button>
-						)}
-						<div className="text-sm text-base-content/70 text-right">
-							<span className="text-success">+{formatCentavos(accrued)}</span>
-							<span className="block text-xs">accrued</span>
-						</div>
-					</div>
-				</header>
-
-				<dl className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
-					<div>
-						<dt className="text-xs text-base-content/60">Principal</dt>
-						<dd>{formatCentavos(account.principal_centavos ?? 0)}</dd>
-					</div>
-					<div>
-						<dt className="text-xs text-base-content/60">Rate</dt>
-						<dd>{formatRate(account.interest_rate_bps ?? 0)}</dd>
-					</div>
-					<div>
-						<dt className="text-xs text-base-content/60">Cadence</dt>
-						<dd>{formatInterval(account.interest_posting_interval)}</dd>
-					</div>
-					<div>
-						<dt className="text-xs text-base-content/60">Days to maturity</dt>
-						<dd>{days > 0 ? days : "—"}</dd>
-					</div>
-					<div className="col-span-2 sm:col-span-2">
-						<dt className="text-xs text-base-content/60">Maturity date</dt>
-						<dd>{account.maturity_date ?? "—"}</dd>
-					</div>
-					{estimate != null && (
-						<div className="col-span-2 sm:col-span-2">
-							<dt className="text-xs text-base-content/60">Estimated at maturity</dt>
-							<dd className="text-base-content/80">{formatCentavos(estimate)}</dd>
-						</div>
-					)}
-				</dl>
+		<div className="flex flex-col gap-3">
+			<div>
+				<p className="text-3xl font-semibold tabular-nums">
+					{formatCentavos(account.balance_centavos)}
+				</p>
+				<p className="text-xs text-success mt-0.5">+{formatCentavos(accrued)} accrued</p>
 			</div>
-		</section>
+
+			<dl className="grid grid-cols-2 gap-x-3 gap-y-1.5 text-sm">
+				<div className="flex items-center justify-between gap-3">
+					<dt className="text-base-content/60">Principal</dt>
+					<dd className="font-mono tabular-nums">
+						{formatCentavos(account.principal_centavos ?? 0)}
+					</dd>
+				</div>
+				<div className="flex items-center justify-between gap-3">
+					<dt className="text-base-content/60">Rate</dt>
+					<dd className="tabular-nums">{formatRate(account.interest_rate_bps ?? 0)}</dd>
+				</div>
+				<div className="flex items-center justify-between gap-3">
+					<dt className="text-base-content/60">Cadence</dt>
+					<dd>{formatInterval(account.interest_posting_interval)}</dd>
+				</div>
+				<div className="flex items-center justify-between gap-3">
+					<dt className="text-base-content/60">Days to mat.</dt>
+					<dd className="tabular-nums">{days > 0 ? days : "—"}</dd>
+				</div>
+				<div className="flex items-center justify-between gap-3 col-span-2">
+					<dt className="text-base-content/60">Maturity</dt>
+					<dd className="tabular-nums">{account.maturity_date ?? "—"}</dd>
+				</div>
+				{estimate != null && (
+					<div className="flex items-center justify-between gap-3 col-span-2">
+						<dt className="text-base-content/60">Estimated</dt>
+						<dd className="font-mono tabular-nums text-base-content/80">
+							{formatCentavos(estimate)}
+						</dd>
+					</div>
+				)}
+			</dl>
+
+			{account.is_matured && onWithdrawMatured && (
+				<div className="flex justify-end">
+					<button type="button" className="btn btn-sm btn-primary" onClick={onWithdrawMatured}>
+						Withdraw matured balance
+					</button>
+				</div>
+			)}
+		</div>
 	);
 }
