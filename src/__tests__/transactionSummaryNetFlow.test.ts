@@ -21,8 +21,14 @@ const baseTx: Omit<Transaction, "id" | "type" | "date" | "amount_centavos"> = {
 	is_installment_portion: false,
 };
 
-function tx(overrides: Partial<Transaction> & Pick<Transaction, "type" | "date" | "amount_centavos">): Transaction {
-	return { id: `${overrides.date}-${overrides.type}-${overrides.amount_centavos}`, ...baseTx, ...overrides };
+function tx(
+	overrides: Partial<Transaction> & Pick<Transaction, "type" | "date" | "amount_centavos">,
+): Transaction {
+	return {
+		id: `${overrides.date}-${overrides.type}-${overrides.amount_centavos}`,
+		...baseTx,
+		...overrides,
+	};
 }
 
 describe("summariseNetFlowThisMonth", () => {
@@ -31,7 +37,13 @@ describe("summariseNetFlowThisMonth", () => {
 			tx({ type: "income", date: "2026-04-01", amount_centavos: 50_000_00, to_account_id: "a1" }),
 			tx({ type: "expense", date: "2026-04-05", amount_centavos: 1_250_00, from_account_id: "a1" }),
 			tx({ type: "expense", date: "2026-04-10", amount_centavos: 2_400_00, from_account_id: "a1" }),
-			tx({ type: "transfer", date: "2026-04-12", amount_centavos: 5_000_00, from_account_id: "a1", to_account_id: "a2" }),
+			tx({
+				type: "transfer",
+				date: "2026-04-12",
+				amount_centavos: 5_000_00,
+				from_account_id: "a1",
+				to_account_id: "a2",
+			}),
 		];
 		const result = summariseNetFlowThisMonth(txs, TZ, today);
 		expect(result.inflowCentavos).toBe(50_000_00);
@@ -42,7 +54,12 @@ describe("summariseNetFlowThisMonth", () => {
 	it("excludes transactions outside the current month", () => {
 		const txs: Transaction[] = [
 			tx({ type: "income", date: "2026-03-31", amount_centavos: 99_999_00, to_account_id: "a1" }),
-			tx({ type: "expense", date: "2026-05-01", amount_centavos: 88_888_00, from_account_id: "a1" }),
+			tx({
+				type: "expense",
+				date: "2026-05-01",
+				amount_centavos: 88_888_00,
+				from_account_id: "a1",
+			}),
 			tx({ type: "income", date: "2026-04-15", amount_centavos: 1_000_00, to_account_id: "a1" }),
 		];
 		const result = summariseNetFlowThisMonth(txs, TZ, today);

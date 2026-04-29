@@ -47,8 +47,10 @@ export type NetFlowSummary = {
 
 /**
  * Sum income inflows minus expense outflows for the current calendar month
- * (in user's timezone). Transfers are excluded — they move money between
- * the user's own accounts and net to zero from a "money in vs out" view.
+ * (in user's timezone). Transfers themselves are excluded — they move money
+ * between the user's own accounts and net to zero from a "money in vs out"
+ * view. Note: paired transfer-fee child rows (stored as `expense` type) ARE
+ * counted as outflow, because the bank actually took the fee.
  */
 export function summariseNetFlowThisMonth(
 	transactions: readonly Transaction[],
