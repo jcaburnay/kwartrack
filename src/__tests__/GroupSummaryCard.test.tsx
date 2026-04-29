@@ -75,4 +75,17 @@ describe("GroupSummaryCard", () => {
 		const rollup = container.querySelector('[data-testid="group-rollup"]');
 		expect(rollup?.className).toMatch(/text-error/);
 	});
+
+	it("colors liability member balances with text-error and assets with default", () => {
+		const accounts: Account[] = [
+			mk({ id: "a1", name: "BPI Card", type: "credit", balance_centavos: 7_200_00 }),
+			mk({ id: "a2", name: "Cash", type: "cash", balance_centavos: 1_000_00 }),
+		];
+		const { container } = render(
+			<GroupSummaryCard group={group} accounts={accounts} onClear={() => {}} />,
+		);
+		const items = container.querySelectorAll("li span:last-child");
+		expect(items[0]?.className).toMatch(/text-error/);
+		expect(items[1]?.className).not.toMatch(/text-error/);
+	});
 });
