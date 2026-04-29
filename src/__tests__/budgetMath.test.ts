@@ -103,3 +103,42 @@ describe("progressBucket", () => {
 		expect(progressBucket(500, 100)).toBe("red");
 	});
 });
+
+import { projectedBucket } from "../utils/budgetMath";
+
+describe("projectedBucket", () => {
+	const TZ = "Asia/Manila";
+	const earlyDay = new Date("2026-04-02T01:00:00Z"); // day 2
+	const midDay = new Date("2026-04-15T01:00:00Z"); // day 15 of 30
+
+	it("returns 'empty' when allocated is 0", () => {
+		expect(projectedBucket(0, 0, midDay, TZ, "2026-04")).toBe("empty");
+	});
+
+	it("returns 'red' when actual already exceeds allocated", () => {
+		expect(projectedBucket(11_000_00, 10_000_00, midDay, TZ, "2026-04")).toBe("red");
+	});
+
+	it("falls back to threshold-based bucket on early-month days", () => {
+		// 79% on day 2 → green via threshold
+		expect(projectedBucket(7_900_00, 10_000_00, earlyDay, TZ, "2026-04")).toBe("green");
+		// 80% on day 2 → orange via threshold
+		expect(projectedBucket(8_000_00, 10_000_00, earlyDay, TZ, "2026-04")).toBe("orange");
+	});
+
+	it("returns 'orange' when projected end-of-month exceeds allocated but actual hasn't yet", () => {
+		// Day 15 of 30, actual 6000 → projected 12000 > 10000 → orange
+		expect(projectedBucket(6_000_00, 10_000_00, midDay, TZ, "2026-04")).toBe("orange");
+	});
+
+	it("returns 'green' when on or below pace", () => {
+		// Day 15 of 30, actual 5000 → projected 10000 == 10000 → green
+		expect(projectedBucket(5_000_00, 10_000_00, midDay, TZ, "2026-04")).toBe("green");
+		expect(projectedBucket(2_000_00, 10_000_00, midDay, TZ, "2026-04")).toBe("green");
+	});
+
+	it("respects past months: actual ≤ allocated stays green even without pacing data", () => {
+		// Past month, day-of-month doesn't matter; under allocated → green
+		expect(projectedBucket(4_000_00, 10_000_00, midDay, TZ, "2026-03")).toBe("green");
+	});
+});

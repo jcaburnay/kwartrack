@@ -1,3 +1,5 @@
+import { isEarlyMonth, projectedEndOfMonth } from "./pacingMath";
+
 export type ActualsByTag = Map<string, number>;
 
 /**
@@ -45,5 +47,28 @@ export function progressBucket(actual: number, budget: number): ProgressBucket {
 	const pct = (actual / budget) * 100;
 	if (pct > 100) return "red";
 	if (pct >= 80) return "orange";
+	return "green";
+}
+
+/**
+ * Pace-aware variant of progressBucket. Uses linear pacing to flag tags
+ * trending over their cap before they actually breach it. On days 1–2 of the
+ * active month, falls back to the threshold-based progressBucket because
+ * pacing math is too noisy that early to trust.
+ */
+export function projectedBucket(
+	actualCentavos: number,
+	allocatedCentavos: number,
+	today: Date,
+	timezone: string,
+	monthYYYYMM: string,
+): ProgressBucket {
+	if (allocatedCentavos <= 0) return "empty";
+	if (actualCentavos > allocatedCentavos) return "red";
+	if (isEarlyMonth(today, timezone, monthYYYYMM)) {
+		return progressBucket(actualCentavos, allocatedCentavos);
+	}
+	const projected = projectedEndOfMonth(actualCentavos, today, timezone, monthYYYYMM);
+	if (projected > allocatedCentavos) return "orange";
 	return "green";
 }
