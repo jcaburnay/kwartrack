@@ -10,7 +10,6 @@ import { SettleModal } from "../components/debts/SettleModal";
 import type { ParticipantRow } from "../components/debts/SplitParticipantList";
 import { SplitsFilterBar } from "../components/debts/SplitsFilterBar";
 import { SplitsTable } from "../components/debts/SplitsTable";
-import { Fab } from "../components/Fab";
 import { Header } from "../components/Header";
 import { useAccounts } from "../hooks/useAccounts";
 import { useDebtsAndSplits } from "../hooks/useDebtsAndSplits";
@@ -59,9 +58,7 @@ export function DebtsAndSplitsPage() {
 	const [showNewSplit, setShowNewSplit] = useState(false);
 	const [editingSplitId, setEditingSplitId] = useState<string | null>(null);
 	const [settlingDebtId, setSettlingDebtId] = useState<string | null>(null);
-	const [fabOpen, setFabOpen] = useState(false);
-
-	// Allow other pages' FAB to deep-link into our New* modals via `?modal=`.
+	// Allow global FAB to deep-link into our New* modals via `?modal=`.
 	useEffect(() => {
 		const m = params.get("modal");
 		if (m === "new-split") setShowNewSplit(true);
@@ -140,7 +137,7 @@ export function DebtsAndSplitsPage() {
 	return (
 		<div className="min-h-dvh bg-base-200 flex flex-col">
 			<Header />
-			<main className="flex-1 p-4 sm:p-6 max-w-6xl w-full mx-auto flex flex-col gap-5">
+			<main className="flex-1 p-4 pb-20 sm:p-6 max-w-6xl w-full mx-auto flex flex-col gap-5">
 				<h1 className="text-2xl font-semibold">Debts &amp; Splits</h1>
 				{error && <div className="alert alert-error text-sm">{error}</div>}
 
@@ -187,24 +184,6 @@ export function DebtsAndSplitsPage() {
 					)}
 				</section>
 			</main>
-
-			<Fab
-				isOpen={fabOpen}
-				onToggle={() => setFabOpen((v) => !v)}
-				onDismiss={() => setFabOpen(false)}
-				actions={[
-					{
-						label: "New Split",
-						description: "Splitwise-style group expense.",
-						onClick: () => setShowNewSplit(true),
-					},
-					{
-						label: "New Debt",
-						description: "Standalone IOU.",
-						onClick: () => setShowNewDebt(true),
-					},
-				]}
-			/>
 
 			{showNewSplit && (
 				<NewSplitModal

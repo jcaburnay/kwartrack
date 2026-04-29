@@ -25,6 +25,10 @@ vi.mock("../hooks/useDebtsAndSplits", () => ({
 	}),
 }));
 
+vi.mock("../hooks/useBudgetOverage", () => ({
+	useBudgetOverage: () => false,
+}));
+
 function renderHeader() {
 	return render(
 		<MemoryRouter>
@@ -50,13 +54,20 @@ describe("Header", () => {
 		expect(signOut).toHaveBeenCalledTimes(1);
 	});
 
-	it("shows nav links for overview, accounts, budget, recurring, debts & splits, settings", () => {
+	it("shows nav links for overview, accounts, budget, recurring, and debts (desktop nav + mobile dock)", () => {
 		renderHeader();
-		expect(screen.getByRole("link", { name: /overview/i })).toBeInTheDocument();
-		expect(screen.getByRole("link", { name: /accounts/i })).toBeInTheDocument();
-		expect(screen.getByRole("link", { name: /budget/i })).toBeInTheDocument();
-		expect(screen.getByRole("link", { name: /recurring/i })).toBeInTheDocument();
+		// Each nav target appears twice: once in the desktop top nav, once in the mobile dock.
+		expect(screen.getAllByRole("link", { name: /overview/i })).toHaveLength(2);
+		expect(screen.getAllByRole("link", { name: /accounts/i })).toHaveLength(2);
+		expect(screen.getAllByRole("link", { name: /budget/i })).toHaveLength(2);
+		expect(screen.getAllByRole("link", { name: /recurring/i })).toHaveLength(2);
+		// Desktop nav uses "Debts & Splits"; mobile dock uses just "Debts".
 		expect(screen.getByRole("link", { name: /debts & splits/i })).toBeInTheDocument();
+		expect(screen.getByRole("link", { name: /^debts$/i })).toBeInTheDocument();
+	});
+
+	it("places Settings inside the avatar dropdown, not in the top nav", () => {
+		renderHeader();
 		expect(screen.getByRole("link", { name: /settings/i })).toBeInTheDocument();
 	});
 });

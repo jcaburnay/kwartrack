@@ -50,7 +50,7 @@ export function OverviewPage() {
 	return (
 		<div className="min-h-dvh bg-base-200 flex flex-col">
 			<Header />
-			<main className="flex-1 p-6 grid gap-6 max-w-5xl w-full mx-auto">
+			<main className="flex-1 p-4 pb-20 sm:p-6 max-w-6xl w-full mx-auto grid gap-6">
 				{noAccounts && <WelcomeCard onCreateAccount={() => setShowNewAccount(true)} />}
 				<OverviewHero accounts={accounts} isLoading={aLoading} />
 				{!noAccounts && (

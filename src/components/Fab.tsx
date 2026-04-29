@@ -27,13 +27,13 @@ export function Fab({ actions, isOpen, onToggle, onDismiss }: Props) {
 				/>
 			)}
 
-			<div className="fixed bottom-4 right-4 z-40 flex flex-col items-end gap-2">
+			<div className="fixed bottom-20 sm:bottom-4 right-4 z-40 flex flex-col items-end gap-2">
 				{isOpen &&
 					actions.map((a) => (
 						<button
 							key={a.label}
 							type="button"
-							className="btn btn-primary shadow-md"
+							className="btn btn-primary"
 							onClick={() => {
 								a.onClick();
 								onDismiss();
@@ -44,7 +44,7 @@ export function Fab({ actions, isOpen, onToggle, onDismiss }: Props) {
 					))}
 				<button
 					type="button"
-					className="btn btn-circle btn-primary shadow-lg text-xl"
+					className="btn btn-circle btn-primary shadow-md text-xl transition-colors duration-150"
 					aria-label={isOpen ? "Close action menu" : "Open action menu"}
 					aria-expanded={isOpen}
 					onClick={onToggle}

@@ -1,9 +1,8 @@
 import { useMemo, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router";
+import { useSearchParams } from "react-router";
 import { AllocationTable } from "../components/budget/AllocationTable";
 import { MonthPicker } from "../components/budget/MonthPicker";
 import { OverallHero } from "../components/budget/OverallHero";
-import { Fab } from "../components/Fab";
 import { Header } from "../components/Header";
 import { useBudget } from "../hooks/useBudget";
 import { useScrollAndFlash } from "../hooks/useScrollAndFlash";
@@ -18,8 +17,6 @@ export function BudgetPage() {
 	const [month, setMonth] = useState(initialMonth);
 	const [copyError, setCopyError] = useState<string | null>(null);
 	const [copying, setCopying] = useState(false);
-	const [fabOpen, setFabOpen] = useState(false);
-	const navigate = useNavigate();
 	const [params] = useSearchParams();
 
 	const { tags } = useTags();
@@ -53,7 +50,7 @@ export function BudgetPage() {
 	return (
 		<div className="min-h-dvh bg-base-200 flex flex-col">
 			<Header />
-			<main className="flex-1 p-4 sm:p-6 max-w-4xl w-full mx-auto flex flex-col gap-5">
+			<main className="flex-1 p-4 pb-20 sm:p-6 max-w-6xl w-full mx-auto flex flex-col gap-5">
 				<div className="flex items-end justify-between gap-4 flex-wrap">
 					<h1 className="text-2xl font-semibold">Budget</h1>
 					<MonthPicker month={month} onChange={setMonth} />
@@ -98,24 +95,6 @@ export function BudgetPage() {
 					disabled={config == null}
 				/>
 			</main>
-
-			<Fab
-				isOpen={fabOpen}
-				onToggle={() => setFabOpen((v) => !v)}
-				onDismiss={() => setFabOpen(false)}
-				actions={[
-					{
-						label: "New Split",
-						description: "Splitwise-style group expense.",
-						onClick: () => navigate("/debts-and-splits?modal=new-split"),
-					},
-					{
-						label: "New Debt",
-						description: "Standalone IOU.",
-						onClick: () => navigate("/debts-and-splits?modal=new-debt"),
-					},
-				]}
-			/>
 		</div>
 	);
 }

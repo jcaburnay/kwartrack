@@ -1,13 +1,10 @@
 import { X } from "lucide-react";
-import { useCallback, useMemo, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useSearchParams } from "react-router";
 import { AccountsTable } from "../components/accounts/AccountsTable";
 import { EditAccountModal } from "../components/accounts/EditAccountModal";
 import { NewAccountModal } from "../components/accounts/NewAccountModal";
-import { Fab } from "../components/Fab";
 import { Header } from "../components/Header";
-import { NewRecurringModal } from "../components/recurring/NewRecurringModal";
-import type { RecurringFormValues } from "../components/recurring/RecurringForm";
 import { AccountDetailStrip } from "../components/strips/AccountDetailStrip";
 import { EditTransactionModal } from "../components/transactions/EditTransactionModal";
 import { NewTransactionModal } from "../components/transactions/NewTransactionModal";
@@ -41,7 +38,6 @@ export function AccountsPage() {
 	const { tags, createInline } = useTags();
 	const { selection, selectAccount, selectGroup, clear } = useSelectedAccount(accounts, groups);
 
-	const [fabOpen, setFabOpen] = useState(false);
 	const [showNewAccount, setShowNewAccount] = useState(false);
 	const [editingAccount, setEditingAccount] = useState<Account | null>(null);
 	const [showArchived, setShowArchived] = useState(false);
@@ -50,11 +46,8 @@ export function AccountsPage() {
 	const [newTxPrefill, setNewTxPrefill] = useState<Partial<TransactionFormValues>>({});
 	const [editingTx, setEditingTx] = useState<Transaction | null>(null);
 
-	const { recurrings, createRecurring } = useRecurrings();
+	const { recurrings } = useRecurrings();
 	const { debts, splits } = useDebtsAndSplits();
-	const [showNewRecurring, setShowNewRecurring] = useState(false);
-	const [newRecurringPrefill, setNewRecurringPrefill] = useState<Partial<RecurringFormValues>>({});
-	const navigate = useNavigate();
 	const [params, setParams] = useSearchParams();
 	const typeFilterRaw = params.get("type");
 	const typeFilter =
@@ -141,30 +134,28 @@ export function AccountsPage() {
 		setShowNewTx(true);
 	}
 
-	function openNewTransactionFromFab() {
-		// Pre-fill based on current account/group selection.
-		if (selection.kind === "account") {
-			const type: "expense" | "income" | "transfer" = "expense";
-			openNewTransaction({
-				type,
-				fromAccountId: selection.account.id,
-			});
-		} else {
-			openNewTransaction({});
-		}
-	}
+	const selectionRef = useRef(selection);
+	selectionRef.current = selection;
 
-	function openNewRecurringFromFab() {
-		if (selection.kind === "account") {
-			setNewRecurringPrefill({
-				type: "expense",
-				fromAccountId: selection.account.id,
-			});
-		} else {
-			setNewRecurringPrefill({});
+	// Global FAB deep-link: ?modal=new-transaction or ?modal=new-account.
+	// Uses a ref for selection so the effect only fires on URL changes, not on
+	// every account-load re-render (which would re-open the modal mid-session).
+	useEffect(() => {
+		const m = params.get("modal");
+		if (m === "new-transaction") {
+			const sel = selectionRef.current;
+			const prefill =
+				sel.kind === "account" ? { type: "expense" as const, fromAccountId: sel.account.id } : {};
+			setNewTxPrefill(prefill);
+			setShowNewTx(true);
 		}
-		setShowNewRecurring(true);
-	}
+		if (m === "new-account") setShowNewAccount(true);
+		if (m) {
+			const next = new URLSearchParams(params);
+			next.delete("modal");
+			setParams(next, { replace: true });
+		}
+	}, [params, setParams]);
 
 	function openPayThisCard(accountId: string) {
 		openNewTransaction({
@@ -189,7 +180,7 @@ export function AccountsPage() {
 	return (
 		<div className="min-h-dvh bg-base-200 flex flex-col">
 			<Header />
-			<main className="flex-1 p-4 sm:p-6 max-w-6xl w-full mx-auto flex flex-col gap-5">
+			<main className="flex-1 p-4 pb-20 sm:p-6 max-w-6xl w-full mx-auto flex flex-col gap-5">
 				<section className="flex items-end justify-between gap-4 flex-wrap">
 					<div>
 						<h1 className="text-2xl font-semibold">Accounts</h1>
@@ -308,39 +299,6 @@ export function AccountsPage() {
 				)}
 			</main>
 
-			<Fab
-				isOpen={fabOpen}
-				onToggle={() => setFabOpen((v) => !v)}
-				onDismiss={() => setFabOpen(false)}
-				actions={[
-					{
-						label: "New Transaction",
-						description: "Expense, income, or transfer.",
-						onClick: openNewTransactionFromFab,
-					},
-					{
-						label: "New Split",
-						description: "Splitwise-style group expense.",
-						onClick: () => navigate("/debts-and-splits?modal=new-split"),
-					},
-					{
-						label: "New Debt",
-						description: "Standalone IOU.",
-						onClick: () => navigate("/debts-and-splits?modal=new-debt"),
-					},
-					{
-						label: "New Recurring",
-						description: "Subscription, installment, or recurring income.",
-						onClick: openNewRecurringFromFab,
-					},
-					{
-						label: "New Account",
-						description: "Cash, e-wallet, savings, credit, or time deposit.",
-						onClick: () => setShowNewAccount(true),
-					},
-				]}
-			/>
-
 			{showNewAccount && (
 				<NewAccountModal
 					groups={groups}
@@ -395,24 +353,6 @@ export function AccountsPage() {
 						await onTxChanged();
 					}}
 					onCancel={() => setEditingTx(null)}
-				/>
-			)}
-
-			{showNewRecurring && (
-				<NewRecurringModal
-					accounts={accounts}
-					tags={tags}
-					createTag={createInline}
-					createRecurring={createRecurring}
-					prefill={newRecurringPrefill}
-					onSaved={() => {
-						setShowNewRecurring(false);
-						setNewRecurringPrefill({});
-					}}
-					onCancel={() => {
-						setShowNewRecurring(false);
-						setNewRecurringPrefill({});
-					}}
 				/>
 			)}
 		</div>

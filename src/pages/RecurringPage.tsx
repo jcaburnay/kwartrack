@@ -1,6 +1,5 @@
-import { useMemo, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router";
-import { Fab } from "../components/Fab";
+import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router";
 import { Header } from "../components/Header";
 import { EditRecurringModal } from "../components/recurring/EditRecurringModal";
 import { NewRecurringModal } from "../components/recurring/NewRecurringModal";
@@ -33,9 +32,7 @@ export function RecurringPage() {
 	const [filters, setFilters] = useState(DEFAULT_RECURRING_FILTERS);
 	const [creating, setCreating] = useState(false);
 	const [editing, setEditing] = useState<Recurring | null>(null);
-	const [fabOpen, setFabOpen] = useState(false);
-	const navigate = useNavigate();
-	const [params] = useSearchParams();
+	const [params, setParams] = useSearchParams();
 
 	const visible = useMemo(
 		() => recurrings.filter((r) => matchesRecurringFilters(r, filters)),
@@ -44,10 +41,21 @@ export function RecurringPage() {
 
 	useScrollAndFlash(params.get("id"), !isLoading && recurrings.length > 0);
 
+	// Global FAB deep-link: ?modal=new-recurring
+	useEffect(() => {
+		const m = params.get("modal");
+		if (m === "new-recurring") setCreating(true);
+		if (m) {
+			const next = new URLSearchParams(params);
+			next.delete("modal");
+			setParams(next, { replace: true });
+		}
+	}, [params, setParams]);
+
 	return (
 		<div className="min-h-dvh bg-base-200 flex flex-col">
 			<Header />
-			<main className="flex-1 p-4 sm:p-6 max-w-6xl w-full mx-auto flex flex-col gap-5">
+			<main className="flex-1 p-4 pb-20 sm:p-6 max-w-6xl w-full mx-auto flex flex-col gap-5">
 				<div className="flex items-end justify-between gap-4 flex-wrap">
 					<h1 className="text-2xl font-semibold">Recurring</h1>
 				</div>
@@ -76,29 +84,6 @@ export function RecurringPage() {
 					/>
 				)}
 			</main>
-
-			<Fab
-				isOpen={fabOpen}
-				onToggle={() => setFabOpen((v) => !v)}
-				onDismiss={() => setFabOpen(false)}
-				actions={[
-					{
-						label: "New Recurring",
-						description: "Subscription, installment, or recurring income.",
-						onClick: () => setCreating(true),
-					},
-					{
-						label: "New Split",
-						description: "Splitwise-style group expense.",
-						onClick: () => navigate("/debts-and-splits?modal=new-split"),
-					},
-					{
-						label: "New Debt",
-						description: "Standalone IOU.",
-						onClick: () => navigate("/debts-and-splits?modal=new-debt"),
-					},
-				]}
-			/>
 
 			{creating && (
 				<NewRecurringModal

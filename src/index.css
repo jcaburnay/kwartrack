@@ -1,5 +1,9 @@
 @import "tailwindcss";
-@plugin "daisyui";
+@plugin "daisyui" {
+	themes:
+		silk --default,
+		dim --prefersdark;
+}
 
 @keyframes row-flash {
 	0% {
