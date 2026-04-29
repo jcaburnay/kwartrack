@@ -96,7 +96,7 @@ export function RecurringPanel({ pendingModal, onPendingModalConsumed }: Props) 
 
 	return (
 		<div className="bg-base-100 border border-base-300 h-full flex flex-col">
-			<div className="h-9 flex items-center justify-between px-3 border-b border-base-300">
+			<div className="h-9 flex items-center justify-between px-4 border-b border-base-300">
 				<div className="flex items-center gap-2 text-xs uppercase tracking-wide font-semibold text-base-content/50">
 					<span>Recurring</span>
 					<span className="text-base-content/40 normal-case tracking-normal">
@@ -113,18 +113,18 @@ export function RecurringPanel({ pendingModal, onPendingModalConsumed }: Props) 
 			</div>
 
 			<div className="flex-1 overflow-y-auto flex flex-col">
-				{error && <div className="alert alert-error text-sm mx-3 mt-3">{error}</div>}
+				{error && <div className="alert alert-error text-sm mx-4 mt-3">{error}</div>}
 				{isLoading ? (
 					<div className="flex justify-center py-8">
 						<span className="loading loading-spinner text-primary" />
 					</div>
 				) : (
 					<>
-						<div className="px-3 py-2 border-b border-base-300">
+						<div className="px-4 py-2 border-b border-base-300">
 							<RecurringFilterRow filters={filters} onChange={setFilters} tags={tags} />
 						</div>
 						{visible.length === 0 && recurrings.length > 0 ? (
-							<div className="m-3 border border-dashed border-base-300 p-8 text-center text-base-content/60 text-sm">
+							<div className="m-4 border border-dashed border-base-300 p-8 text-center text-base-content/60 text-sm">
 								No recurrings match these filters.
 							</div>
 						) : (
