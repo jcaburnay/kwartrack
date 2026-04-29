@@ -3,24 +3,44 @@ import { describe, expect, it, vi } from "vitest";
 import { DateRangePicker } from "../components/transactions/DateRangePicker";
 
 describe("DateRangePicker", () => {
-	it("shows the active preset label", () => {
+	it("reflects the active preset on the select", () => {
 		render(
 			<DateRangePicker preset="this-month" customFrom={null} customTo={null} onChange={() => {}} />,
 		);
-		expect(screen.getByRole("button")).toHaveTextContent(/this month/i);
+		const select = screen.getByLabelText(/date range/i) as HTMLSelectElement;
+		expect(select.value).toBe("this-month");
 	});
 
-	it("emits onChange with selected preset and clears custom", () => {
+	it("emits onChange with selected preset and clears custom on a non-custom pick", () => {
 		const onChange = vi.fn();
 		render(
 			<DateRangePicker preset="this-month" customFrom={null} customTo={null} onChange={onChange} />,
 		);
-		fireEvent.click(screen.getByRole("button"));
-		fireEvent.click(screen.getByText(/last 30 days/i));
+		const select = screen.getByLabelText(/date range/i);
+		fireEvent.change(select, { target: { value: "last-30-days" } });
 		expect(onChange).toHaveBeenCalledWith({
 			preset: "last-30-days",
 			customFrom: null,
 			customTo: null,
+		});
+	});
+
+	it("preserves custom dates when picking the custom preset", () => {
+		const onChange = vi.fn();
+		render(
+			<DateRangePicker
+				preset="this-month"
+				customFrom="2026-04-01"
+				customTo="2026-04-15"
+				onChange={onChange}
+			/>,
+		);
+		const select = screen.getByLabelText(/date range/i);
+		fireEvent.change(select, { target: { value: "custom" } });
+		expect(onChange).toHaveBeenCalledWith({
+			preset: "custom",
+			customFrom: "2026-04-01",
+			customTo: "2026-04-15",
 		});
 	});
 
@@ -34,8 +54,8 @@ describe("DateRangePicker", () => {
 				onChange={onChange}
 			/>,
 		);
-		const fromInput = screen.getByLabelText(/from/i) as HTMLInputElement;
-		const toInput = screen.getByLabelText(/to/i) as HTMLInputElement;
+		const fromInput = screen.getByLabelText(/^from$/i) as HTMLInputElement;
+		const toInput = screen.getByLabelText(/^to$/i) as HTMLInputElement;
 		expect(fromInput.value).toBe("2026-04-01");
 		expect(toInput.value).toBe("2026-04-15");
 
@@ -51,7 +71,7 @@ describe("DateRangePicker", () => {
 		render(
 			<DateRangePicker preset="this-month" customFrom={null} customTo={null} onChange={() => {}} />,
 		);
-		expect(screen.queryByLabelText(/from/i)).not.toBeInTheDocument();
-		expect(screen.queryByLabelText(/to/i)).not.toBeInTheDocument();
+		expect(screen.queryByLabelText(/^from$/i)).not.toBeInTheDocument();
+		expect(screen.queryByLabelText(/^to$/i)).not.toBeInTheDocument();
 	});
 });
