@@ -81,7 +81,7 @@ export function TransactionFilterBar({
 
 			<select
 				aria-label="Tag filter"
-				className="select select-bordered select-sm min-w-0 w-auto"
+				className="select select-bordered select-sm rounded-none min-w-0 w-auto"
 				value={filters.tagId ?? ""}
 				onChange={(e) => onChange({ ...filters, tagId: e.target.value || null })}
 			>
@@ -102,7 +102,7 @@ export function TransactionFilterBar({
 
 			<input
 				type="search"
-				className="input input-bordered input-sm flex-1 min-w-[12ch] max-w-[24ch]"
+				className="input input-bordered input-sm rounded-none flex-1 min-w-[12ch] max-w-[24ch]"
 				placeholder="Search description, tag, account…"
 				value={search}
 				onChange={(e) => onSearchChange(e.target.value)}
