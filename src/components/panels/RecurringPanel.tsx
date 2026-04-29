@@ -1,4 +1,4 @@
-import { ChevronDown, ChevronUp, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useAccounts } from "../../hooks/useAccounts";
 import { useRecurrings } from "../../hooks/useRecurrings";
@@ -52,7 +52,6 @@ export function RecurringPanel({ pendingModal, onPendingModalConsumed }: Props) 
 	const { accounts } = useAccounts();
 	const { tags, createInline } = useTags();
 
-	const [folded, setFolded] = useState(false);
 	const [creating, setCreating] = useState(false);
 	const [editing, setEditing] = useState<Recurring | null>(null);
 	const [filters, setFilters] = useState(DEFAULT_RECURRING_FILTERS);
@@ -104,53 +103,41 @@ export function RecurringPanel({ pendingModal, onPendingModalConsumed }: Props) 
 						· {summaryTokens.join(" · ")}
 					</span>
 				</div>
-				<div className="flex items-center gap-1">
-					<button
-						type="button"
-						className="btn btn-primary btn-sm rounded-sm"
-						onClick={() => setCreating(true)}
-					>
-						<Plus className="w-3.5 h-3.5" /> New
-					</button>
-					<button
-						type="button"
-						aria-label={folded ? "Expand recurring" : "Collapse recurring"}
-						className="btn btn-ghost btn-sm rounded-sm"
-						onClick={() => setFolded((f) => !f)}
-					>
-						{folded ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
-					</button>
-				</div>
+				<button
+					type="button"
+					className="btn btn-primary btn-sm rounded-sm"
+					onClick={() => setCreating(true)}
+				>
+					<Plus className="w-3.5 h-3.5" /> New
+				</button>
 			</div>
 
-			{!folded && (
-				<div className="flex-1 overflow-y-auto p-3 flex flex-col gap-3">
-					{error && <div className="alert alert-error text-sm">{error}</div>}
-					{isLoading ? (
-						<div className="flex justify-center py-8">
-							<span className="loading loading-spinner text-primary" />
-						</div>
-					) : (
-						<>
-							<RecurringFilterRow filters={filters} onChange={setFilters} tags={tags} />
-							{visible.length === 0 && recurrings.length > 0 ? (
-								<div className="border border-dashed border-base-300 p-8 text-center text-base-content/60 text-sm">
-									No recurrings match these filters.
-								</div>
-							) : (
-								<RecurringTable
-									recurrings={visible}
-									accounts={accounts}
-									tags={tags}
-									onEdit={setEditing}
-									onTogglePaused={togglePaused}
-									onDelete={deleteRecurring}
-								/>
-							)}
-						</>
-					)}
-				</div>
-			)}
+			<div className="flex-1 overflow-y-auto p-3 flex flex-col gap-3">
+				{error && <div className="alert alert-error text-sm">{error}</div>}
+				{isLoading ? (
+					<div className="flex justify-center py-8">
+						<span className="loading loading-spinner text-primary" />
+					</div>
+				) : (
+					<>
+						<RecurringFilterRow filters={filters} onChange={setFilters} tags={tags} />
+						{visible.length === 0 && recurrings.length > 0 ? (
+							<div className="border border-dashed border-base-300 p-8 text-center text-base-content/60 text-sm">
+								No recurrings match these filters.
+							</div>
+						) : (
+							<RecurringTable
+								recurrings={visible}
+								accounts={accounts}
+								tags={tags}
+								onEdit={setEditing}
+								onTogglePaused={togglePaused}
+								onDelete={deleteRecurring}
+							/>
+						)}
+					</>
+				)}
+			</div>
 
 			{creating && (
 				<NewRecurringModal
