@@ -112,7 +112,7 @@ export function TransactionsTable({
 	const today = new Date();
 
 	return (
-		<div className="border border-base-300">
+		<div>
 			<div className="overflow-x-auto">
 				<table className="table table-sm">
 					<thead>

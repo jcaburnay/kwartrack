@@ -114,7 +114,7 @@ export function AccountsTable({
 	}
 
 	return (
-		<div className="overflow-x-auto border border-base-300">
+		<div className="overflow-x-auto">
 			<table className="table table-pin-rows">
 				<thead>
 					<tr className="text-base-content/60">
