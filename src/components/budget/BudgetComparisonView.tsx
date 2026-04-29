@@ -50,8 +50,8 @@ export function BudgetComparisonView({
 		<ul
 			className="flex-1 overflow-y-auto min-h-0 flex flex-col gap-3 px-4 py-3"
 			style={{
-				maskImage: "linear-gradient(to bottom, black calc(100% - 1.25rem), transparent 100%)",
-				WebkitMaskImage: "linear-gradient(to bottom, black calc(100% - 1.25rem), transparent 100%)",
+				maskImage: "linear-gradient(to bottom, black calc(100% - 2.5rem), transparent 100%)",
+				WebkitMaskImage: "linear-gradient(to bottom, black calc(100% - 2.5rem), transparent 100%)",
 			}}
 		>
 			{sorted.map((row) => {

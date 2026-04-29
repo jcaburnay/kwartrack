@@ -74,9 +74,9 @@ export function BudgetTableView({
 			<div
 				className="flex-1 overflow-y-auto overflow-x-auto min-h-0"
 				style={{
-					maskImage: "linear-gradient(to bottom, black calc(100% - 1.25rem), transparent 100%)",
+					maskImage: "linear-gradient(to bottom, black calc(100% - 2.5rem), transparent 100%)",
 					WebkitMaskImage:
-						"linear-gradient(to bottom, black calc(100% - 1.25rem), transparent 100%)",
+						"linear-gradient(to bottom, black calc(100% - 2.5rem), transparent 100%)",
 				}}
 			>
 				<table className="table table-sm">
