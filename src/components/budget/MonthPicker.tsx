@@ -33,7 +33,7 @@ export function MonthPicker({ month, onChange }: Props) {
 			</button>
 			<input
 				type="month"
-				className="input input-bordered input-sm rounded-sm border-base-content/40"
+				className="input input-bordered input-sm rounded-sm border-base-content/40 w-36"
 				value={month}
 				onChange={(e) => e.target.value && onChange(e.target.value)}
 			/>
