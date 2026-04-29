@@ -17,6 +17,8 @@ const baseTx: Omit<Transaction, "id" | "type" | "date" | "amount_centavos"> = {
 	recurring_id: null,
 	split_id: null,
 	debt_id: null,
+	parent_transaction_id: null,
+	is_installment_portion: false,
 };
 
 function tx(overrides: Partial<Transaction> & Pick<Transaction, "type" | "date" | "amount_centavos">): Transaction {
