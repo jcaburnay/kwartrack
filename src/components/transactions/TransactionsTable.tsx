@@ -3,12 +3,15 @@ import { useMemo, useState } from "react";
 import { Link } from "react-router";
 import type { Tag } from "../../hooks/useTags";
 import type { TransactionWithRecurring } from "../../hooks/useTransactions";
+import { useAuth } from "../../providers/AuthProvider";
 import type { Account, AccountGroup } from "../../utils/accountBalances";
-import { formatCentavos } from "../../utils/currency";
+import { formatTransactionDate } from "../../utils/transactionDateFormat";
 import type { Transaction } from "../../utils/transactionFilters";
+import { TransactionAccountCell } from "./TransactionAccountCell";
+import { TransactionAmountCell } from "./TransactionAmountCell";
 import { TransactionRowActions } from "./TransactionRowActions";
 
-type SortKey = "date" | "amount" | "type" | "tag" | "from" | "to";
+type SortKey = "date" | "amount" | "tag" | "account";
 type SortDir = "asc" | "desc";
 
 type Props = {
@@ -29,18 +32,13 @@ function cmp(a: string | number | null, b: string | number | null): number {
 	return String(a).localeCompare(String(b));
 }
 
-function typeBadge(type: Transaction["type"]) {
-	if (type === "expense") return <span className="badge badge-sm badge-error">Expense</span>;
-	if (type === "income") return <span className="badge badge-sm badge-success">Income</span>;
-	return <span className="badge badge-sm badge-info">Transfer</span>;
-}
-
-function formatDate(iso: string): string {
-	return new Intl.DateTimeFormat("en-US", {
-		month: "long",
-		day: "numeric",
-		year: "numeric",
-	}).format(new Date(`${iso}T12:00:00Z`));
+function accountSortKey(tx: Transaction, lookup: ReadonlyMap<string, string>): string {
+	if (tx.type === "expense")
+		return tx.from_account_id ? (lookup.get(tx.from_account_id) ?? "") : "";
+	if (tx.type === "income") return tx.to_account_id ? (lookup.get(tx.to_account_id) ?? "") : "";
+	const from = tx.from_account_id ? (lookup.get(tx.from_account_id) ?? "") : "";
+	const to = tx.to_account_id ? (lookup.get(tx.to_account_id) ?? "") : "";
+	return `${from} → ${to}`;
 }
 
 export function TransactionsTable({
@@ -51,6 +49,8 @@ export function TransactionsTable({
 	onChanged,
 	emptyCopy,
 }: Props) {
+	const { profile } = useAuth();
+	const timezone = profile?.timezone ?? "Asia/Manila";
 	const [sortKey, setSortKey] = useState<SortKey>("date");
 	const [sortDir, setSortDir] = useState<SortDir>("desc");
 
@@ -75,23 +75,13 @@ export function TransactionsTable({
 				if (result === 0) result = cmp(a.created_at, b.created_at);
 			} else if (sortKey === "amount") {
 				result = cmp(a.amount_centavos, b.amount_centavos);
-			} else if (sortKey === "type") {
-				result = cmp(a.type, b.type);
 			} else if (sortKey === "tag") {
 				result = cmp(
 					a.tag_id ? (tagName.get(a.tag_id) ?? "") : "",
 					b.tag_id ? (tagName.get(b.tag_id) ?? "") : "",
 				);
-			} else if (sortKey === "from") {
-				result = cmp(
-					a.from_account_id ? (accountName.get(a.from_account_id) ?? "") : "",
-					b.from_account_id ? (accountName.get(b.from_account_id) ?? "") : "",
-				);
-			} else if (sortKey === "to") {
-				result = cmp(
-					a.to_account_id ? (accountName.get(a.to_account_id) ?? "") : "",
-					b.to_account_id ? (accountName.get(b.to_account_id) ?? "") : "",
-				);
+			} else if (sortKey === "account") {
+				result = cmp(accountSortKey(a, accountName), accountSortKey(b, accountName));
 			}
 			return sortDir === "asc" ? result : -result;
 		});
@@ -119,6 +109,8 @@ export function TransactionsTable({
 		return sortDir === "asc" ? " ▲" : " ▼";
 	}
 
+	const today = new Date();
+
 	return (
 		<div className="rounded-box border border-base-300">
 			<div className="overflow-x-auto">
@@ -126,55 +118,50 @@ export function TransactionsTable({
 					<thead>
 						<tr className="text-base-content/60">
 							<th
-								className="cursor-pointer select-none text-right whitespace-nowrap"
-								onClick={() => onHeaderClick("amount")}
-							>
-								Amount{headerArrow("amount")}
-							</th>
-							<th
-								className="cursor-pointer select-none whitespace-nowrap"
-								onClick={() => onHeaderClick("type")}
-							>
-								Type{headerArrow("type")}
-							</th>
-							<th className="cursor-pointer select-none" onClick={() => onHeaderClick("tag")}>
-								Tag{headerArrow("tag")}
-							</th>
-							<th className="cursor-pointer select-none" onClick={() => onHeaderClick("from")}>
-								From{headerArrow("from")}
-							</th>
-							<th className="cursor-pointer select-none" onClick={() => onHeaderClick("to")}>
-								To{headerArrow("to")}
-							</th>
-							<th className="text-right whitespace-nowrap hidden md:table-cell">Fee</th>
-							<th className="hidden md:table-cell">Description</th>
-							<th
 								className="cursor-pointer select-none whitespace-nowrap"
 								onClick={() => onHeaderClick("date")}
 							>
 								Date{headerArrow("date")}
 							</th>
+							<th className="cursor-pointer select-none" onClick={() => onHeaderClick("tag")}>
+								Tag{headerArrow("tag")}
+							</th>
+							<th
+								className="cursor-pointer select-none text-right whitespace-nowrap"
+								onClick={() => onHeaderClick("amount")}
+							>
+								Amount{headerArrow("amount")}
+							</th>
+							<th className="cursor-pointer select-none" onClick={() => onHeaderClick("account")}>
+								Account{headerArrow("account")}
+							</th>
+							<th className="hidden md:table-cell">Description</th>
 							<th className="w-12" />
 						</tr>
 					</thead>
 					<tbody>
 						{sorted.map((tx) => (
 							<tr key={tx.id} className="hover:bg-base-200">
-								<td className="text-right font-mono whitespace-nowrap">
-									{formatCentavos(tx.amount_centavos)}
+								<td className="whitespace-nowrap tabular-nums text-base-content/80">
+									{formatTransactionDate(tx.date, today, timezone)}
 								</td>
-								<td className="whitespace-nowrap">{typeBadge(tx.type)}</td>
 								<td className="text-base-content/80 truncate max-w-[14ch]">
 									{tx.tag_id ? (tagName.get(tx.tag_id) ?? "—") : "—"}
 								</td>
-								<td className="truncate max-w-[18ch]">
-									{tx.from_account_id ? (accountName.get(tx.from_account_id) ?? "—") : "—"}
+								<td className="text-right whitespace-nowrap">
+									<TransactionAmountCell
+										type={tx.type}
+										amountCentavos={tx.amount_centavos}
+										feeCentavos={tx.fee_centavos}
+									/>
 								</td>
-								<td className="truncate max-w-[18ch]">
-									{tx.to_account_id ? (accountName.get(tx.to_account_id) ?? "—") : "—"}
-								</td>
-								<td className="text-right font-mono text-base-content/60 whitespace-nowrap hidden md:table-cell">
-									{tx.fee_centavos != null ? formatCentavos(tx.fee_centavos) : "—"}
+								<td className="truncate max-w-[28ch]">
+									<TransactionAccountCell
+										type={tx.type}
+										fromAccountId={tx.from_account_id}
+										toAccountId={tx.to_account_id}
+										accountsById={accountName}
+									/>
 								</td>
 								<td className="text-base-content/70 max-w-[16rem] truncate hidden md:table-cell">
 									<span className="inline-flex items-center gap-1.5">
@@ -200,7 +187,6 @@ export function TransactionsTable({
 										<span className="truncate">{tx.description ?? ""}</span>
 									</span>
 								</td>
-								<td className="whitespace-nowrap">{formatDate(tx.date)}</td>
 								{/* biome-ignore lint/a11y/useKeyWithClickEvents: stopPropagation wrapper for the row-actions kebab. */}
 								<td onClick={(e) => e.stopPropagation()}>
 									<TransactionRowActions transaction={tx} onEdit={onEdit} onChanged={onChanged} />

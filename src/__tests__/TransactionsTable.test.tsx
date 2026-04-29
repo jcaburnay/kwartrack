@@ -1,12 +1,16 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { TransactionsTable } from "../components/transactions/TransactionsTable";
 import type { Tag } from "../hooks/useTags";
 import type { TransactionWithRecurring } from "../hooks/useTransactions";
 import type { Account } from "../utils/accountBalances";
 import type { Transaction } from "../utils/transactionFilters";
+
+vi.mock("../providers/AuthProvider", () => ({
+	useAuth: () => ({ profile: { timezone: "Asia/Manila" } }),
+}));
 
 const ts = "2026-04-24T00:00:00Z";
 const acc = (p: Partial<Account> & Pick<Account, "id" | "name" | "type">): Account => ({
@@ -58,6 +62,10 @@ const tags: Tag[] = [
 ];
 
 describe("TransactionsTable", () => {
+	afterEach(() => {
+		vi.useRealTimers();
+	});
+
 	it("renders empty state when empty", () => {
 		render(
 			<TransactionsTable
@@ -74,6 +82,9 @@ describe("TransactionsTable", () => {
 	});
 
 	it("renders rows sorted by date desc by default", () => {
+		vi.useFakeTimers();
+		vi.setSystemTime(new Date("2026-04-20T00:00:00Z"));
+
 		const rows: TransactionWithRecurring[] = [
 			tx({
 				id: "a",
@@ -104,8 +115,8 @@ describe("TransactionsTable", () => {
 			/>,
 		);
 		const bodyRows = screen.getAllByRole("row").slice(1); // skip header
-		expect(bodyRows[0]).toHaveTextContent("April 10");
-		expect(bodyRows[1]).toHaveTextContent("April 1");
+		expect(bodyRows[0]).toHaveTextContent("Apr 10");
+		expect(bodyRows[1]).toHaveTextContent("Apr 1");
 	});
 
 	it("clicking amount header toggles sort direction", async () => {
@@ -189,7 +200,7 @@ describe("TransactionsTable", () => {
 		expect(links[0]).toHaveAttribute("href", "/recurring?id=rec-1");
 	});
 
-	it("shows fee for transfer rows, em-dash otherwise", () => {
+	it("renders fee sub-line on the amount cell when transfer has a fee", () => {
 		const rows: TransactionWithRecurring[] = [
 			tx({
 				id: "x",
