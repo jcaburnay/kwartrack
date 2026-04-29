@@ -76,8 +76,7 @@ export function BudgetTableView({
 					<thead className="sticky top-0 bg-base-100 z-10">
 						<tr>
 							<th>Tag</th>
-							<th className="text-right">₱actual / ₱budget</th>
-							<th className="text-right">Remaining</th>
+							<th className="text-right whitespace-nowrap">₱actual / ₱budget</th>
 							<th>Progress</th>
 							<th></th>
 						</tr>
@@ -94,23 +93,25 @@ export function BudgetTableView({
 							return (
 								<tr key={row.tagId} data-row-id={row.tagId}>
 									<td className="font-medium">{row.tagName}</td>
-									<td className="text-right tabular-nums">
-										<div className="flex flex-col">
-											<span>{formatCentavos(actual)}</span>
-											<span className="text-xs text-base-content/50">
-												/ {formatCentavos(row.allocated)}
-											</span>
-										</div>
-									</td>
-									<td className={`text-right tabular-nums ${remaining < 0 ? "text-error" : ""}`}>
-										{remaining < 0 ? `-${formatCentavos(-remaining)}` : formatCentavos(remaining)}
+									<td className="text-right tabular-nums whitespace-nowrap">
+										<span>{formatCentavos(actual)}</span>
+										<span className="text-base-content/50"> / {formatCentavos(row.allocated)}</span>
 									</td>
 									<td>
-										<div className="w-32 h-2 bg-base-200 rounded-full overflow-hidden">
-											<div
-												className={`h-full ${BUCKET_BAR_CLASS[bucket]}`}
-												style={{ width: `${barWidth}%` }}
-											/>
+										<div className="flex flex-col gap-1 w-32">
+											<div className="h-2 bg-base-200 rounded-full overflow-hidden">
+												<div
+													className={`h-full ${BUCKET_BAR_CLASS[bucket]}`}
+													style={{ width: `${barWidth}%` }}
+												/>
+											</div>
+											<span
+												className={`text-xs tabular-nums whitespace-nowrap ${remaining < 0 ? "text-error" : "text-base-content/50"}`}
+											>
+												{remaining < 0
+													? `${formatCentavos(-remaining)} over`
+													: `${formatCentavos(remaining)} left`}
+											</span>
 										</div>
 									</td>
 									<td className="text-right">
@@ -130,8 +131,9 @@ export function BudgetTableView({
 						})}
 						<tr className="text-base-content/70">
 							<td className="italic">Others (unbudgeted)</td>
-							<td className="text-right tabular-nums">{formatCentavos(othersCentavos)}</td>
-							<td className="text-right">—</td>
+							<td className="text-right tabular-nums whitespace-nowrap">
+								{formatCentavos(othersCentavos)}
+							</td>
 							<td>—</td>
 							<td></td>
 						</tr>
