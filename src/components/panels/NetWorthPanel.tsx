@@ -63,7 +63,7 @@ export function NetWorthPanel() {
 	const isSignificantDrop = deltaCentavos < 0 && percentOfCurrent < -SIGNIFICANT_DROP_RATIO;
 
 	return (
-		<div className="card bg-base-100 h-full flex flex-col min-w-0">
+		<div className="bg-base-100 h-full flex flex-col min-w-0">
 			<div className="card-body gap-4 flex-1 min-w-0">
 				<h2 className="text-sm font-semibold tracking-wide text-base-content/60 uppercase">
 					Net Worth

@@ -15,7 +15,7 @@ export function DebtsPanel({ onSeeAll }: Props) {
 	const hasBalance = balance.owedCentavos > 0 || balance.oweCentavos > 0;
 
 	return (
-		<div className="card bg-base-100 h-full flex flex-col">
+		<div className="bg-base-100 h-full flex flex-col">
 			<div className="card-body gap-4 flex-1">
 				<div className="flex items-center justify-between">
 					<h2 className="text-sm font-semibold tracking-wide text-base-content/60 uppercase">

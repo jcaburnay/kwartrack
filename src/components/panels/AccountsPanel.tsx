@@ -168,7 +168,7 @@ export function AccountsPanel({ pendingModal, onPendingModalConsumed }: Props = 
 	};
 
 	return (
-		<div className="card bg-base-100 h-full flex flex-col overflow-hidden">
+		<div className="bg-base-100 h-full flex flex-col overflow-hidden">
 			{accountsFolded ? (
 				// biome-ignore lint/a11y/useSemanticElements: hosts a nested clear button — using <button> would nest interactive content and break HTML5 validity.
 				<div
