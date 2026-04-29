@@ -70,7 +70,7 @@ export function BudgetTableView({
 	const sorted = sortByOvershootRisk(sortableRows, today, timezone, month);
 
 	return (
-		<div className="flex flex-col gap-2 min-h-0 flex-1">
+		<div className="flex flex-col min-h-0 flex-1 overflow-hidden">
 			<div className="flex-1 overflow-y-auto overflow-x-auto min-h-0">
 				<table className="table table-sm">
 					<thead className="sticky top-0 bg-base-100 z-10">
@@ -139,7 +139,7 @@ export function BudgetTableView({
 				</table>
 			</div>
 
-			<div className="flex items-center justify-between gap-2 pt-1">
+			<div className="flex items-center justify-between gap-2 px-4 py-2 border-t border-base-200 flex-shrink-0">
 				<span className="text-xs text-base-content/50">
 					Allocated total: {formatCentavos(allocatedSum)}
 				</span>

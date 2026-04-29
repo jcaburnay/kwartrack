@@ -67,74 +67,77 @@ export function BudgetWorkspace() {
 
 	return (
 		<div className="card bg-base-100 h-full flex flex-col min-w-0 overflow-hidden">
-			<div className="card-body gap-3 flex-1 min-w-0 min-h-0 flex flex-col">
-				<div className="flex flex-col gap-2 flex-shrink-0 min-w-0">
-					<h2 className="text-sm font-semibold tracking-wide text-base-content/60 uppercase">
-						Budget
-					</h2>
-					<div className="flex items-center gap-2 flex-wrap min-w-0">
-						<BudgetViewSelector value={view} onChange={setView} />
-						<MonthPicker month={month} onChange={setMonth} />
-						{view === "history" && <ChartRangeToggle value={range} onChange={setRange} />}
-					</div>
+			<div className="h-9 flex items-center px-4 flex-shrink-0 border-b border-base-300">
+				<span className="text-xs font-semibold uppercase tracking-wide text-base-content/50">
+					Budget
+				</span>
+			</div>
+
+			<div className="px-4 py-3 flex-shrink-0 flex items-center gap-2 flex-wrap border-b border-base-300">
+				<BudgetViewSelector value={view} onChange={setView} />
+				<MonthPicker month={month} onChange={setMonth} />
+				{view === "history" && <ChartRangeToggle value={range} onChange={setRange} />}
+			</div>
+
+			{error && (
+				<div className="px-4 pt-3 flex-shrink-0">
+					<div className="alert alert-error text-sm">{error}</div>
 				</div>
+			)}
 
-				{error && <div className="alert alert-error text-sm flex-shrink-0">{error}</div>}
+			<div className="px-4 py-3 flex-shrink-0 border-b border-base-200">
+				<BudgetAnchor
+					month={month}
+					overallCentavos={config ? overall : null}
+					actualCentavos={overallActualCentavos}
+					allocatedSumCentavos={allocatedSum}
+					today={today}
+					timezone={tz}
+					onSetOverall={setOverall}
+					onCopyFromPrevious={copyFromPrevious}
+					canCopy={config == null}
+				/>
+			</div>
 
-				<div className="flex-shrink-0">
-					<BudgetAnchor
+			<div className="flex-1 min-h-0 flex flex-col overflow-hidden">
+				{isLoading ? (
+					<div className="flex justify-center py-4">
+						<span className="loading loading-spinner loading-sm text-primary" />
+					</div>
+				) : config == null ? null : view === "table" ? (
+					<BudgetTableView
+						tags={tags}
+						allocations={allocations}
+						actualsByTag={actualsByTag}
+						othersCentavos={othersCentavos}
+						overallCentavos={overall}
 						month={month}
-						overallCentavos={config ? overall : null}
-						actualCentavos={overallActualCentavos}
-						allocatedSumCentavos={allocatedSum}
 						today={today}
 						timezone={tz}
-						onSetOverall={setOverall}
-						onCopyFromPrevious={copyFromPrevious}
-						canCopy={config == null}
+						onUpsert={upsertAllocation}
+						onDelete={deleteAllocation}
+						disabled={config == null}
+						focusTagId={focusTagId}
 					/>
-				</div>
-
-				<div className="flex-1 min-h-0 flex flex-col">
-					{isLoading ? (
-						<div className="flex justify-center py-4">
-							<span className="loading loading-spinner loading-sm text-primary" />
-						</div>
-					) : config == null ? null : view === "table" ? (
-						<BudgetTableView
-							tags={tags}
-							allocations={allocations}
-							actualsByTag={actualsByTag}
-							othersCentavos={othersCentavos}
-							overallCentavos={overall}
-							month={month}
-							today={today}
-							timezone={tz}
-							onUpsert={upsertAllocation}
-							onDelete={deleteAllocation}
-							disabled={config == null}
-							focusTagId={focusTagId}
-						/>
-					) : view === "comparison" ? (
-						<BudgetComparisonView
-							tags={tags}
-							allocations={allocations}
-							actualsByTag={actualsByTag}
-							month={month}
-							today={today}
-							timezone={tz}
-							onTagClick={handleComparisonClick}
-						/>
-					) : (
-						<BudgetTagHistoryView
-							tags={tags}
-							history={history}
-							selectedTagId={historyTagId}
-							onSelectTag={setHistoryTagId}
-							isLoading={historyLoading}
-						/>
-					)}
-				</div>
+				) : view === "comparison" ? (
+					<BudgetComparisonView
+						tags={tags}
+						allocations={allocations}
+						actualsByTag={actualsByTag}
+						month={month}
+						today={today}
+						timezone={tz}
+						onTagClick={handleComparisonClick}
+					/>
+				) : (
+					<BudgetTagHistoryView
+						tags={tags}
+						history={history}
+						selectedTagId={historyTagId}
+						onSelectTag={setHistoryTagId}
+						isLoading={historyLoading}
+					/>
+				)}
 			</div>
 		</div>
 	);

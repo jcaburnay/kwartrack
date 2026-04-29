@@ -32,7 +32,7 @@ export function BudgetComparisonView({
 }: Props) {
 	if (allocations.length === 0) {
 		return (
-			<p className="text-sm text-base-content/60">
+			<p className="text-sm text-base-content/60 px-4 py-3">
 				No tag caps yet — add one to track per-tag spending.
 			</p>
 		);
@@ -47,7 +47,7 @@ export function BudgetComparisonView({
 	const sorted = sortByOvershootRisk(rows, today, timezone, month);
 
 	return (
-		<ul className="flex-1 overflow-y-auto min-h-0 flex flex-col gap-3 pr-1">
+		<ul className="flex-1 overflow-y-auto min-h-0 flex flex-col gap-3 px-4 py-3">
 			{sorted.map((row) => {
 				const bucket = projectedBucket(row.actual, row.allocated, today, timezone, month);
 				const pct =

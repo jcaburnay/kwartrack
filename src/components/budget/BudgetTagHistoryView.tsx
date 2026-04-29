@@ -45,7 +45,7 @@ export function BudgetTagHistoryView({
 	const hasAnyData = data.some((d) => d.budget > 0 || d.actual > 0);
 
 	return (
-		<div className="flex flex-col gap-2 flex-1 min-h-0">
+		<div className="flex flex-col gap-2 flex-1 min-h-0 px-4 py-3">
 			<label className="form-control">
 				<span className="label-text text-xs sr-only">Tag</span>
 				<select
