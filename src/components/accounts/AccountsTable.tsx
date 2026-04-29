@@ -149,13 +149,15 @@ export function AccountsTable({
 							<tr
 								key={row.account.id}
 								className={`cursor-pointer hover:bg-base-200 ${
-									selectedAccountId === row.account.id ? "bg-base-200" : ""
+									selectedAccountId === row.account.id
+										? "border-l-2 border-primary"
+										: "border-l-2 border-transparent"
 								} ${row.account.is_archived ? "opacity-60" : ""}`}
 								onClick={() =>
 									onSelectAccount(selectedAccountId === row.account.id ? null : row.account.id)
 								}
 							>
-								<td>
+								<td className="pl-8">
 									<div className="flex flex-col">
 										<span>
 											{row.account.name}
