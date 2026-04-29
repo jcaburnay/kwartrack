@@ -146,15 +146,44 @@ export function AccountsPanel({ pendingModal, onPendingModalConsumed }: Props = 
 				? { label: selection.group.name }
 				: null;
 
+	const rightPaneProps = {
+		selection,
+		accounts,
+		transactions,
+		recurrings,
+		timezone,
+		onClear: clear,
+		onPayThisCard: () =>
+			openNewTransaction({
+				type: "transfer",
+				toAccountId: selection.kind === "account" ? selection.account.id : null,
+				fromAccountId: null,
+			}),
+		onWithdrawMatured: () =>
+			openNewTransaction({
+				type: "transfer",
+				fromAccountId: selection.kind === "account" ? selection.account.id : null,
+				toAccountId: null,
+			}),
+	};
+
 	return (
 		<div className="card bg-base-100 h-full flex flex-col overflow-hidden">
 			{accountsFolded ? (
-				<button
-					type="button"
+				// biome-ignore lint/a11y/useSemanticElements: hosts a nested clear button — using <button> would nest interactive content and break HTML5 validity.
+				<div
+					role="button"
+					tabIndex={0}
 					aria-label="Expand accounts"
 					aria-expanded="false"
 					className="h-9 flex items-center gap-2 px-4 bg-base-200 border-b border-base-300 flex-shrink-0 hover:bg-base-300 transition-colors cursor-pointer text-left focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary"
 					onClick={() => setAccountsFolded(false)}
+					onKeyDown={(e) => {
+						if (e.key === "Enter" || e.key === " ") {
+							e.preventDefault();
+							setAccountsFolded(false);
+						}
+					}}
 				>
 					<ChevronDown className="size-3.5 text-base-content/40" />
 					<span className="text-xs font-semibold uppercase tracking-wide text-base-content/50">
@@ -187,7 +216,7 @@ export function AccountsPanel({ pendingModal, onPendingModalConsumed }: Props = 
 							</span>
 						</>
 					)}
-				</button>
+				</div>
 			) : (
 				<>
 					<div className="h-9 flex items-center justify-between px-4 flex-shrink-0 border-b border-base-300">
@@ -243,54 +272,12 @@ export function AccountsPanel({ pendingModal, onPendingModalConsumed }: Props = 
 							)}
 						</div>
 						<div className="hidden md:block md:basis-1/2 md:flex-none overflow-y-auto">
-							<AccountsRightPane
-								selection={selection}
-								accounts={accounts}
-								transactions={transactions}
-								recurrings={recurrings}
-								timezone={timezone}
-								onClear={clear}
-								onPayThisCard={() =>
-									openNewTransaction({
-										type: "transfer",
-										toAccountId: selection.kind === "account" ? selection.account.id : null,
-										fromAccountId: null,
-									})
-								}
-								onWithdrawMatured={() =>
-									openNewTransaction({
-										type: "transfer",
-										fromAccountId: selection.kind === "account" ? selection.account.id : null,
-										toAccountId: null,
-									})
-								}
-							/>
+							<AccountsRightPane {...rightPaneProps} />
 						</div>
 					</div>
 					{selection.kind !== "none" && (
 						<div className="md:hidden border-t border-base-300">
-							<AccountsRightPane
-								selection={selection}
-								accounts={accounts}
-								transactions={transactions}
-								recurrings={recurrings}
-								timezone={timezone}
-								onClear={clear}
-								onPayThisCard={() =>
-									openNewTransaction({
-										type: "transfer",
-										toAccountId: selection.kind === "account" ? selection.account.id : null,
-										fromAccountId: null,
-									})
-								}
-								onWithdrawMatured={() =>
-									openNewTransaction({
-										type: "transfer",
-										fromAccountId: selection.kind === "account" ? selection.account.id : null,
-										toAccountId: null,
-									})
-								}
-							/>
+							<AccountsRightPane {...rightPaneProps} />
 						</div>
 					)}
 				</>
