@@ -1,5 +1,5 @@
 import { ChevronDown, ChevronUp, Plus } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useAccounts } from "../../hooks/useAccounts";
 import { useRecurrings } from "../../hooks/useRecurrings";
 import { useTags } from "../../hooks/useTags";
@@ -31,7 +31,14 @@ function formatNextDueDate(iso: string): string {
 	return new Intl.DateTimeFormat("en-US", opts).format(target);
 }
 
-export function RecurringPanel() {
+export type RecurringPending = { kind: "new" } | { kind: "edit"; id: string } | null;
+
+type Props = {
+	pendingModal: RecurringPending;
+	onPendingModalConsumed: () => void;
+};
+
+export function RecurringPanel({ pendingModal, onPendingModalConsumed }: Props) {
 	const {
 		recurrings,
 		isLoading,
@@ -54,6 +61,22 @@ export function RecurringPanel() {
 		() => recurrings.filter((r) => matchesRecurringFilters(r, filters)),
 		[recurrings, filters],
 	);
+
+	useEffect(() => {
+		if (!pendingModal) return;
+		if (pendingModal.kind === "new") {
+			setCreating(true);
+			onPendingModalConsumed();
+			return;
+		}
+		// edit case — wait for recurrings to populate
+		if (isLoading) return;
+		const target = recurrings.find((r) => r.id === pendingModal.id);
+		if (target) {
+			setEditing(target);
+		}
+		onPendingModalConsumed();
+	}, [pendingModal, isLoading, recurrings, onPendingModalConsumed]);
 
 	const summary = summariseRecurrings(recurrings);
 

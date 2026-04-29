@@ -7,12 +7,11 @@ import { AccountsPanel } from "../components/panels/AccountsPanel";
 import { BudgetPanel } from "../components/panels/BudgetPanel";
 import { DebtsPanel } from "../components/panels/DebtsPanel";
 import { NetWorthPanel } from "../components/panels/NetWorthPanel";
-import { RecurringPanel } from "../components/panels/RecurringPanel";
+import { RecurringPanel, type RecurringPending } from "../components/panels/RecurringPanel";
 
 type DrawerName = "recurring" | "debts";
 
 const MODAL_TO_DRAWER: Record<string, DrawerName> = {
-	"new-recurring": "recurring",
 	"new-split": "debts",
 	"new-debt": "debts",
 };
@@ -21,10 +20,16 @@ type AccountsPendingModal = "new-transaction" | "new-account" | null;
 
 const ACCOUNTS_DEEP_LINK_MODALS: ReadonlySet<string> = new Set(["new-transaction", "new-account"]);
 
+const RECURRING_DEEP_LINK_MODALS: ReadonlySet<string> = new Set([
+	"new-recurring",
+	"edit-recurring",
+]);
+
 export function JigsawPage() {
 	const [activeDrawer, setActiveDrawer] = useState<DrawerName | null>(null);
 	const [drawerModal, setDrawerModal] = useState<string | null>(null);
 	const [accountsPending, setAccountsPending] = useState<AccountsPendingModal>(null);
+	const [recurringPending, setRecurringPending] = useState<RecurringPending>(null);
 	const [params, setParams] = useSearchParams();
 
 	useEffect(() => {
@@ -34,6 +39,14 @@ export function JigsawPage() {
 		if (modal && ACCOUNTS_DEEP_LINK_MODALS.has(modal)) {
 			setAccountsPending(modal as AccountsPendingModal);
 			document.getElementById("panel-accounts")?.scrollIntoView({ behavior: "smooth" });
+		} else if (modal && RECURRING_DEEP_LINK_MODALS.has(modal)) {
+			if (modal === "new-recurring") {
+				setRecurringPending({ kind: "new" });
+			} else {
+				const id = params.get("id");
+				if (id) setRecurringPending({ kind: "edit", id });
+			}
+			document.getElementById("panel-recurring")?.scrollIntoView({ behavior: "smooth" });
 		} else if (modal && MODAL_TO_DRAWER[modal]) {
 			setActiveDrawer(MODAL_TO_DRAWER[modal]);
 			setDrawerModal(modal);
@@ -46,6 +59,7 @@ export function JigsawPage() {
 			const next = new URLSearchParams(params);
 			next.delete("modal");
 			next.delete("focus");
+			next.delete("id");
 			setParams(next, { replace: true });
 		}
 	}, [params, setParams]);
@@ -86,7 +100,10 @@ export function JigsawPage() {
 							/>
 						</div>
 						<div id="panel-recurring" className="jigsaw-recurring">
-							<RecurringPanel />
+							<RecurringPanel
+								pendingModal={recurringPending}
+								onPendingModalConsumed={() => setRecurringPending(null)}
+							/>
 						</div>
 						<div id="panel-budget" className="jigsaw-budget">
 							<BudgetPanel />
