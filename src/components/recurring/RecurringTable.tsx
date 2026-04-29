@@ -100,8 +100,8 @@ export function RecurringTable({
 			<table className="table table-sm">
 				<thead>
 					<tr className="text-xs uppercase tracking-wide text-base-content/50">
-						<th>Service</th>
-						<th className="text-right">Amount</th>
+						<th className="whitespace-nowrap">Service</th>
+						<th className="text-right whitespace-nowrap">Amount</th>
 						<th className="hidden md:table-cell">Tag</th>
 						<th className="hidden md:table-cell">Account</th>
 						<th>Schedule</th>
@@ -114,13 +114,13 @@ export function RecurringTable({
 						const subLine = scheduleSubLine(r);
 						return (
 							<tr key={r.id} data-row-id={r.id} className={dimmed ? "opacity-60" : undefined}>
-								<td>
+								<td className="whitespace-nowrap">
 									<div className="flex items-center gap-1.5">
 										{statusGlyph(r)}
 										<span className="font-medium">{r.service}</span>
 									</div>
 								</td>
-								<td className="text-right tabular-nums">
+								<td className="text-right tabular-nums whitespace-nowrap">
 									<div className={r.type === "income" ? "text-success" : undefined}>
 										{signedAmount(r)}
 									</div>
