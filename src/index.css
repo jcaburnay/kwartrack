@@ -5,18 +5,18 @@
 		dim --prefersdark;
 }
 
-/* Sage success palette — pastel green for income amounts, "settled" badges,
-   and other positive monetary signals. Theme-aware: deeper sage on silk so
-   it reads against the near-white background, lighter sage on dim so it
-   reads against the dark surface. */
+/* Emerald success palette — green for income amounts, "settled" badges, and
+   other positive monetary signals. Theme-aware: emerald-600 on silk so it
+   reads against the near-white background, emerald-400 on dim so it reads
+   against the dark surface. */
 [data-theme="silk"] {
-	--color-success: #4d7c5f;
+	--color-success: #059669;
 	--color-success-content: #ffffff;
 }
 
 [data-theme="dim"] {
-	--color-success: #a3c4a6;
-	--color-success-content: #1a2520;
+	--color-success: #34d399;
+	--color-success-content: #052e1f;
 }
 
 @keyframes row-flash {
