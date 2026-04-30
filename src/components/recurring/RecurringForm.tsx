@@ -218,42 +218,88 @@ export function RecurringForm({
 				/>
 			</div>
 
-			{showFrom && (
-				<label className="floating-label">
-					<span>From account</span>
-					<select
-						className="select select-bordered w-full"
-						value={fromAccountId ?? ""}
-						onChange={(e) =>
-							setValue("fromAccountId", e.target.value || null, { shouldDirty: true })
-						}
-					>
-						<option value="">Select source…</option>
-						{pickableAccounts.map((a) => (
-							<option key={a.id} value={a.id}>
-								{a.name}
-							</option>
-						))}
-					</select>
-				</label>
-			)}
+			{showFrom && showTo ? (
+				<div className="flex items-center gap-2">
+					<label className="floating-label flex-1 min-w-0">
+						<span>From account</span>
+						<select
+							className="select select-bordered w-full"
+							value={fromAccountId ?? ""}
+							onChange={(e) =>
+								setValue("fromAccountId", e.target.value || null, { shouldDirty: true })
+							}
+						>
+							<option value="">Select source…</option>
+							{pickableAccounts.map((a) => (
+								<option key={a.id} value={a.id}>
+									{a.name}
+								</option>
+							))}
+						</select>
+					</label>
+					<span aria-hidden className="text-base-content/50 shrink-0 px-1 text-lg leading-none">
+						→
+					</span>
+					<label className="floating-label flex-1 min-w-0">
+						<span>To account</span>
+						<select
+							className="select select-bordered w-full"
+							value={toAccountId ?? ""}
+							onChange={(e) =>
+								setValue("toAccountId", e.target.value || null, { shouldDirty: true })
+							}
+						>
+							<option value="">Select destination…</option>
+							{pickableAccounts.map((a) => (
+								<option key={a.id} value={a.id}>
+									{a.name}
+								</option>
+							))}
+						</select>
+					</label>
+				</div>
+			) : (
+				<>
+					{showFrom && (
+						<label className="floating-label">
+							<span>From account</span>
+							<select
+								className="select select-bordered w-full"
+								value={fromAccountId ?? ""}
+								onChange={(e) =>
+									setValue("fromAccountId", e.target.value || null, { shouldDirty: true })
+								}
+							>
+								<option value="">Select source…</option>
+								{pickableAccounts.map((a) => (
+									<option key={a.id} value={a.id}>
+										{a.name}
+									</option>
+								))}
+							</select>
+						</label>
+					)}
 
-			{showTo && (
-				<label className="floating-label">
-					<span>To account</span>
-					<select
-						className="select select-bordered w-full"
-						value={toAccountId ?? ""}
-						onChange={(e) => setValue("toAccountId", e.target.value || null, { shouldDirty: true })}
-					>
-						<option value="">Select destination…</option>
-						{pickableAccounts.map((a) => (
-							<option key={a.id} value={a.id}>
-								{a.name}
-							</option>
-						))}
-					</select>
-				</label>
+					{showTo && (
+						<label className="floating-label">
+							<span>To account</span>
+							<select
+								className="select select-bordered w-full"
+								value={toAccountId ?? ""}
+								onChange={(e) =>
+									setValue("toAccountId", e.target.value || null, { shouldDirty: true })
+								}
+							>
+								<option value="">Select destination…</option>
+								{pickableAccounts.map((a) => (
+									<option key={a.id} value={a.id}>
+										{a.name}
+									</option>
+								))}
+							</select>
+						</label>
+					)}
+				</>
 			)}
 
 			{showFee && (
