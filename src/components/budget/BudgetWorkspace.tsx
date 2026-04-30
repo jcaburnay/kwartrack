@@ -73,19 +73,19 @@ export function BudgetWorkspace() {
 				</span>
 			</div>
 
-			<div className="px-4 pb-3 flex-shrink-0 flex items-center gap-2 flex-wrap">
+			<div className="px-4 py-2 flex-shrink-0 flex items-center gap-2 flex-wrap border-b border-base-300">
 				<BudgetViewSelector value={view} onChange={setView} />
 				<MonthPicker month={month} onChange={setMonth} />
 				{view === "history" && <ChartRangeToggle value={range} onChange={setRange} />}
 			</div>
 
 			{error && (
-				<div className="px-4 pt-3 flex-shrink-0">
+				<div className="mx-4 mt-3 flex-shrink-0">
 					<div className="alert alert-error text-sm">{error}</div>
 				</div>
 			)}
 
-			<div className="px-4 py-3 flex-shrink-0 border-b border-base-200">
+			<div className="px-4 py-3 flex-shrink-0 border-b border-base-300">
 				<BudgetAnchor
 					month={month}
 					overallCentavos={config ? overall : null}
