@@ -17,6 +17,8 @@ import { NewSplitModal } from "../debts/NewSplitModal";
 import { SettleModal } from "../debts/SettleModal";
 import type { ParticipantRow } from "../debts/SplitParticipantList";
 import { SplitsTable } from "../debts/SplitsTable";
+import { ConfirmModal } from "../ui/ConfirmModal";
+import { Modal } from "../ui/Modal";
 
 export type DebtsPending = "new-debt" | "new-split" | null;
 
@@ -77,13 +79,7 @@ function EditSplitModalLoader(props: {
 	}, [props.splitId]);
 
 	if (!data) {
-		return (
-			<div className="modal modal-open" role="dialog" aria-modal="true">
-				<div className="modal-box max-w-sm flex justify-center py-8">
-					<span className="loading loading-spinner loading-md" />
-				</div>
-			</div>
-		);
+		return <Modal.LoadingShell onClose={props.onCancel} />;
 	}
 	return (
 		<EditSplitModal
@@ -392,59 +388,20 @@ export function DebtsPanel({ pendingModal, onPendingModalConsumed, onCrossFilter
 			)}
 
 			{pendingDelete && (
-				<div
-					className="modal modal-open"
-					role="dialog"
-					aria-modal="true"
-					aria-labelledby="confirm-delete-title"
-				>
-					<div className="modal-box max-w-sm">
-						<h3 id="confirm-delete-title" className="text-lg font-semibold">
-							{pendingDelete.kind === "debt" ? "Delete this debt?" : "Delete this split?"}
-						</h3>
-						<p className="mt-2 text-sm text-base-content/70">
-							{pendingDelete.kind === "debt"
-								? "This removes the debt and any settlement history attached to it. You can't undo this."
-								: "This removes the split and all participants. You can't undo this."}
-						</p>
-						{deleteError && (
-							<div className="alert alert-error text-sm mt-3">
-								<span>{deleteError}</span>
-							</div>
-						)}
-						<div className="modal-action">
-							<button
-								type="button"
-								className="btn btn-ghost btn-sm"
-								onClick={cancelPendingDelete}
-								disabled={isDeleting}
-							>
-								Cancel
-							</button>
-							<button
-								type="button"
-								className="btn btn-error btn-sm"
-								onClick={confirmPendingDelete}
-								disabled={isDeleting}
-							>
-								{isDeleting ? (
-									<>
-										<span className="loading loading-spinner loading-xs" />
-										Deleting…
-									</>
-								) : (
-									"Delete"
-								)}
-							</button>
-						</div>
-					</div>
-					<button
-						type="button"
-						aria-label="Close dialog"
-						className="modal-backdrop"
-						onClick={cancelPendingDelete}
-					/>
-				</div>
+				<ConfirmModal
+					title={pendingDelete.kind === "debt" ? "Delete this debt?" : "Delete this split?"}
+					description={
+						pendingDelete.kind === "debt"
+							? "This removes the debt and any settlement history attached to it. You can't undo this."
+							: "This removes the split and all participants. You can't undo this."
+					}
+					confirmLabel="Delete"
+					destructive
+					pending={isDeleting}
+					error={deleteError}
+					onConfirm={confirmPendingDelete}
+					onClose={cancelPendingDelete}
+				/>
 			)}
 		</div>
 	);
