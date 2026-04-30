@@ -73,50 +73,44 @@ export function CashEWalletSavingsForm({
 
 	return (
 		<form onSubmit={handleSubmit(onSubmit)} noValidate className="flex flex-col gap-3">
-			<label className="form-control">
-				<div className="label">
-					<span className="label-text">Name</span>
-				</div>
-				<input
-					type="text"
-					className="input input-bordered"
-					autoFocus
-					{...register("name", {
-						required: "Name is required",
-						maxLength: { value: 50, message: "50 characters or fewer" },
-					})}
-				/>
-				{errors.name && (
-					<div className="label">
-						<span className="label-text-alt text-error">{errors.name.message}</span>
-					</div>
-				)}
-			</label>
+			<div>
+				<label className="floating-label">
+					<span>Name</span>
+					<input
+						type="text"
+						placeholder="e.g. Wallet"
+						className="input input-bordered w-full"
+						autoFocus
+						{...register("name", {
+							required: "Name is required",
+							maxLength: { value: 50, message: "50 characters or fewer" },
+						})}
+					/>
+				</label>
+				{errors.name && <p className="mt-1 text-xs text-error">{errors.name.message}</p>}
+			</div>
 
-			<label className="form-control">
-				<div className="label">
-					<span className="label-text">
-						Initial balance (₱){mode === "edit" ? " — not editable" : ""}
-					</span>
-				</div>
-				<input
-					type="number"
-					step="0.01"
-					min="0"
-					className="input input-bordered"
-					disabled={mode === "edit"}
-					{...register("initialBalancePesos", {
-						valueAsNumber: true,
-						required: "Initial balance is required",
-						min: { value: 0, message: "Must be 0 or more" },
-					})}
-				/>
+			<div>
+				<label className="floating-label">
+					<span>Initial balance (₱){mode === "edit" ? " — not editable" : ""}</span>
+					<input
+						type="number"
+						step="0.01"
+						min="0"
+						placeholder="0.00"
+						className="input input-bordered w-full"
+						disabled={mode === "edit"}
+						{...register("initialBalancePesos", {
+							valueAsNumber: true,
+							required: "Initial balance is required",
+							min: { value: 0, message: "Must be 0 or more" },
+						})}
+					/>
+				</label>
 				{errors.initialBalancePesos && (
-					<div className="label">
-						<span className="label-text-alt text-error">{errors.initialBalancePesos.message}</span>
-					</div>
+					<p className="mt-1 text-xs text-error">{errors.initialBalancePesos.message}</p>
 				)}
-			</label>
+			</div>
 
 			<GroupPickerField
 				groups={groups}

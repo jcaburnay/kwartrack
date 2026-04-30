@@ -40,38 +40,36 @@ export function TagPickerField({
 	const createScope: Exclude<TagScope, "any"> =
 		transactionType === "transfer" ? "transfer" : transactionType;
 
+	const labelText = `Tag${transactionType === "transfer" ? " (optional)" : ""}`;
+
 	return (
-		<label className="form-control">
-			<div className="label">
-				<span className="label-text">Tag{transactionType === "transfer" ? " (optional)" : ""}</span>
-			</div>
-			<select
-				className="select select-bordered"
-				value={value ?? ""}
-				onChange={(e) => {
-					const v = e.target.value;
-					if (v === CREATE_SENTINEL) {
-						setShowCreate(true);
-						return;
-					}
-					onChange(v === "" ? null : v);
-				}}
-			>
-				<option value="" disabled={required}>
-					{required ? "Select a tag…" : "None"}
-				</option>
-				{options.map((t) => (
-					<option key={t.id} value={t.id}>
-						{t.name}
+		<div>
+			<label className="floating-label">
+				<span>{labelText}</span>
+				<select
+					className="select select-bordered w-full"
+					value={value ?? ""}
+					onChange={(e) => {
+						const v = e.target.value;
+						if (v === CREATE_SENTINEL) {
+							setShowCreate(true);
+							return;
+						}
+						onChange(v === "" ? null : v);
+					}}
+				>
+					<option value="" disabled={required}>
+						{required ? "Select a tag…" : "None"}
 					</option>
-				))}
-				<option value={CREATE_SENTINEL}>+ Create new tag</option>
-			</select>
-			{errorMessage && (
-				<div className="label">
-					<span className="label-text-alt text-error">{errorMessage}</span>
-				</div>
-			)}
+					{options.map((t) => (
+						<option key={t.id} value={t.id}>
+							{t.name}
+						</option>
+					))}
+					<option value={CREATE_SENTINEL}>+ Create new tag</option>
+				</select>
+			</label>
+			{errorMessage && <p className="mt-1 text-xs text-error">{errorMessage}</p>}
 			{showCreate && (
 				<NewTagModal
 					scope={createScope}
@@ -83,6 +81,6 @@ export function TagPickerField({
 					onCancel={() => setShowCreate(false)}
 				/>
 			)}
-		</label>
+		</div>
 	);
 }

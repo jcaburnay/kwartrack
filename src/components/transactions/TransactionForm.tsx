@@ -158,28 +158,27 @@ export function TransactionForm({
 			</div>
 
 			<div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-				<label className="form-control">
-					<div className="label">
-						<span className="label-text">Amount (₱)</span>
-					</div>
-					<input
-						type="number"
-						step="0.01"
-						min="0"
-						className="input input-bordered"
-						autoFocus={mode === "create"}
-						{...register("amountPesos", {
-							valueAsNumber: true,
-							required: "Amount is required",
-							min: { value: 0.01, message: "Amount must be greater than 0" },
-						})}
-					/>
+				<div>
+					<label className="floating-label">
+						<span>Amount (₱)</span>
+						<input
+							type="number"
+							step="0.01"
+							min="0"
+							placeholder="0.00"
+							className="input input-bordered w-full"
+							autoFocus={mode === "create"}
+							{...register("amountPesos", {
+								valueAsNumber: true,
+								required: "Amount is required",
+								min: { value: 0.01, message: "Amount must be greater than 0" },
+							})}
+						/>
+					</label>
 					{errors.amountPesos && (
-						<div className="label">
-							<span className="label-text-alt text-error">{errors.amountPesos.message}</span>
-						</div>
+						<p className="mt-1 text-xs text-error">{errors.amountPesos.message}</p>
 					)}
-				</label>
+				</div>
 
 				<TagPickerField
 					tags={tags}
@@ -195,12 +194,10 @@ export function TransactionForm({
 			</div>
 
 			{showFrom && (
-				<label className="form-control">
-					<div className="label">
-						<span className="label-text">From account</span>
-					</div>
+				<label className="floating-label">
+					<span>From account</span>
 					<select
-						className="select select-bordered"
+						className="select select-bordered w-full"
 						value={fromAccountId ?? ""}
 						onChange={(e) =>
 							setValue("fromAccountId", e.target.value || null, { shouldDirty: true })
@@ -217,12 +214,10 @@ export function TransactionForm({
 			)}
 
 			{showTo && (
-				<label className="form-control">
-					<div className="label">
-						<span className="label-text">To account</span>
-					</div>
+				<label className="floating-label">
+					<span>To account</span>
 					<select
-						className="select select-bordered"
+						className="select select-bordered w-full"
 						value={toAccountId ?? ""}
 						onChange={(e) => setValue("toAccountId", e.target.value || null, { shouldDirty: true })}
 					>
@@ -236,72 +231,65 @@ export function TransactionForm({
 				</label>
 			)}
 
-			<label className="form-control">
-				<div className="label">
-					<span className="label-text">Description (optional)</span>
-				</div>
-				<input type="text" className="input input-bordered" {...register("description")} />
+			<label className="floating-label">
+				<span>Description (optional)</span>
+				<input
+					type="text"
+					placeholder="Description (optional)"
+					className="input input-bordered w-full"
+					{...register("description")}
+				/>
 			</label>
 
 			{showFee ? (
 				<div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-					<label className="form-control">
-						<div className="label">
-							<span className="label-text">Fee (₱, optional)</span>
-						</div>
-						<input
-							type="number"
-							step="0.01"
-							min="0"
-							className="input input-bordered"
-							{...register("feePesos", {
-								setValueAs: (v) => (v === "" || v == null ? null : Number(v)),
-							})}
-						/>
+					<div>
+						<label className="floating-label">
+							<span>Fee (₱, optional)</span>
+							<input
+								type="number"
+								step="0.01"
+								min="0"
+								placeholder="0.00"
+								className="input input-bordered w-full"
+								{...register("feePesos", {
+									setValueAs: (v) => (v === "" || v == null ? null : Number(v)),
+								})}
+							/>
+						</label>
 						{watch("feePesos") != null && (watch("feePesos") as number) > 0 && fromAccountId && (
-							<div className="label">
-								<span className="label-text-alt text-base-content/60">
-									A paired <code className="font-mono">transfer-fees</code> expense of{" "}
-									<span className="tabular-nums">{PHP.format(watch("feePesos") as number)}</span>{" "}
-									will be recorded from{" "}
-									{accounts.find((a) => a.id === fromAccountId)?.name ?? "source"}.
-								</span>
-							</div>
+							<p className="mt-1 text-xs text-base-content/60">
+								A paired <code className="font-mono">transfer-fees</code> expense of{" "}
+								<span className="tabular-nums">{PHP.format(watch("feePesos") as number)}</span> will
+								be recorded from {accounts.find((a) => a.id === fromAccountId)?.name ?? "source"}.
+							</p>
 						)}
-					</label>
+					</div>
 
-					<label className="form-control">
-						<div className="label">
-							<span className="label-text">Date</span>
-						</div>
-						<input
-							type="date"
-							className="input input-bordered"
-							{...register("date", { required: "Date is required" })}
-						/>
-						{errors.date && (
-							<div className="label">
-								<span className="label-text-alt text-error">{errors.date.message}</span>
-							</div>
-						)}
-					</label>
+					<div>
+						<label className="floating-label">
+							<span>Date</span>
+							<input
+								type="date"
+								className="input input-bordered w-full"
+								{...register("date", { required: "Date is required" })}
+							/>
+						</label>
+						{errors.date && <p className="mt-1 text-xs text-error">{errors.date.message}</p>}
+					</div>
 				</div>
 			) : (
-				<label className="form-control">
-					<div className="label">
-						<span className="label-text">Date</span>
-					</div>
-					<input
-						type="date"
-						className="input input-bordered"
-						{...register("date", { required: "Date is required" })}
-					/>
-					{errors.date && (
-						<div className="label">
-							<span className="label-text-alt text-error">{errors.date.message}</span>
-						</div>
-					)}
-				</label>
+				<div>
+					<label className="floating-label">
+						<span>Date</span>
+						<input
+							type="date"
+							className="input input-bordered w-full"
+							{...register("date", { required: "Date is required" })}
+						/>
+					</label>
+					{errors.date && <p className="mt-1 text-xs text-error">{errors.date.message}</p>}
+				</div>
 			)}
 
 			{submitError && <div className="alert alert-error text-sm">{submitError}</div>}

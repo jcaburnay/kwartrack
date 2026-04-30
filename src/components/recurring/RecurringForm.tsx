@@ -142,26 +142,23 @@ export function RecurringForm({
 			noValidate
 			className="flex flex-col gap-3"
 		>
-			<label className="form-control">
-				<div className="label">
-					<span className="label-text">Service</span>
-				</div>
-				<input
-					type="text"
-					className="input input-bordered"
-					autoFocus={mode === "create"}
-					{...register("service", {
-						required: "Service name is required",
-						maxLength: { value: 80, message: "80 characters or fewer" },
-						validate: (v) => v.trim().length > 0 || "Service name is required",
-					})}
-				/>
-				{errors.service && (
-					<div className="label">
-						<span className="label-text-alt text-error">{errors.service.message}</span>
-					</div>
-				)}
-			</label>
+			<div>
+				<label className="floating-label">
+					<span>Service</span>
+					<input
+						type="text"
+						placeholder="e.g. Netflix"
+						className="input input-bordered w-full"
+						autoFocus={mode === "create"}
+						{...register("service", {
+							required: "Service name is required",
+							maxLength: { value: 80, message: "80 characters or fewer" },
+							validate: (v) => v.trim().length > 0 || "Service name is required",
+						})}
+					/>
+				</label>
+				{errors.service && <p className="mt-1 text-xs text-error">{errors.service.message}</p>}
+			</div>
 
 			<div role="toolbar" aria-label="Type" className="join w-full">
 				{(
@@ -187,27 +184,26 @@ export function RecurringForm({
 			</div>
 
 			<div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-				<label className="form-control">
-					<div className="label">
-						<span className="label-text">Amount (₱)</span>
-					</div>
-					<input
-						type="number"
-						step="0.01"
-						min="0"
-						className="input input-bordered"
-						{...register("amountPesos", {
-							valueAsNumber: true,
-							required: "Amount is required",
-							min: { value: 0.01, message: "Amount must be greater than 0" },
-						})}
-					/>
+				<div>
+					<label className="floating-label">
+						<span>Amount (₱)</span>
+						<input
+							type="number"
+							step="0.01"
+							min="0"
+							placeholder="0.00"
+							className="input input-bordered w-full"
+							{...register("amountPesos", {
+								valueAsNumber: true,
+								required: "Amount is required",
+								min: { value: 0.01, message: "Amount must be greater than 0" },
+							})}
+						/>
+					</label>
 					{errors.amountPesos && (
-						<div className="label">
-							<span className="label-text-alt text-error">{errors.amountPesos.message}</span>
-						</div>
+						<p className="mt-1 text-xs text-error">{errors.amountPesos.message}</p>
 					)}
-				</label>
+				</div>
 
 				<TagPickerField
 					tags={tags}
@@ -223,12 +219,10 @@ export function RecurringForm({
 			</div>
 
 			{showFrom && (
-				<label className="form-control">
-					<div className="label">
-						<span className="label-text">From account</span>
-					</div>
+				<label className="floating-label">
+					<span>From account</span>
 					<select
-						className="select select-bordered"
+						className="select select-bordered w-full"
 						value={fromAccountId ?? ""}
 						onChange={(e) =>
 							setValue("fromAccountId", e.target.value || null, { shouldDirty: true })
@@ -245,12 +239,10 @@ export function RecurringForm({
 			)}
 
 			{showTo && (
-				<label className="form-control">
-					<div className="label">
-						<span className="label-text">To account</span>
-					</div>
+				<label className="floating-label">
+					<span>To account</span>
 					<select
-						className="select select-bordered"
+						className="select select-bordered w-full"
 						value={toAccountId ?? ""}
 						onChange={(e) => setValue("toAccountId", e.target.value || null, { shouldDirty: true })}
 					>
@@ -265,15 +257,14 @@ export function RecurringForm({
 			)}
 
 			{showFee && (
-				<label className="form-control">
-					<div className="label">
-						<span className="label-text">Fee (₱, optional)</span>
-					</div>
+				<label className="floating-label">
+					<span>Fee (₱, optional)</span>
 					<input
 						type="number"
 						step="0.01"
 						min="0"
-						className="input input-bordered"
+						placeholder="0.00"
+						className="input input-bordered w-full"
 						{...register("feePesos", {
 							setValueAs: (v) => (v === "" || v == null ? null : Number(v)),
 						})}
@@ -281,19 +272,23 @@ export function RecurringForm({
 				</label>
 			)}
 
-			<label className="form-control">
-				<div className="label">
-					<span className="label-text">Description (optional)</span>
-				</div>
-				<input type="text" className="input input-bordered" {...register("description")} />
+			<label className="floating-label">
+				<span>Description (optional)</span>
+				<input
+					type="text"
+					placeholder="Description (optional)"
+					className="input input-bordered w-full"
+					{...register("description")}
+				/>
 			</label>
 
 			<div className="grid grid-cols-2 gap-3">
-				<label className="form-control">
-					<div className="label">
-						<span className="label-text">Interval</span>
-					</div>
-					<select className="select select-bordered" {...register("interval", { required: true })}>
+				<label className="floating-label">
+					<span>Interval</span>
+					<select
+						className="select select-bordered w-full"
+						{...register("interval", { required: true })}
+					>
 						{INTERVALS.map((iv) => (
 							<option key={iv.value} value={iv.value}>
 								{iv.label}
@@ -302,44 +297,39 @@ export function RecurringForm({
 					</select>
 				</label>
 
-				<label className="form-control">
-					<div className="label">
-						<span className="label-text">Schedule</span>
-					</div>
-					<input
-						type="date"
-						className="input input-bordered"
-						{...register("firstOccurrenceDate", { required: "Schedule is required" })}
-					/>
+				<div>
+					<label className="floating-label">
+						<span>Schedule</span>
+						<input
+							type="date"
+							className="input input-bordered w-full"
+							{...register("firstOccurrenceDate", { required: "Schedule is required" })}
+						/>
+					</label>
 					{errors.firstOccurrenceDate && (
-						<div className="label">
-							<span className="label-text-alt text-error">
-								{errors.firstOccurrenceDate.message}
-							</span>
-						</div>
+						<p className="mt-1 text-xs text-error">{errors.firstOccurrenceDate.message}</p>
 					)}
-				</label>
+				</div>
 			</div>
 
-			<label className="form-control">
-				<div className="label">
-					<span className="label-text">Remaining occurrences (optional)</span>
-				</div>
-				<input
-					type="number"
-					min="1"
-					step="1"
-					className="input input-bordered"
-					{...register("remainingOccurrences", {
-						setValueAs: (v) => (v === "" || v == null ? null : Number(v)),
-					})}
-				/>
-				<div className="label">
-					<span className="label-text-alt text-base-content/60">
-						Leave empty for an open-ended subscription. Set for installments.
-					</span>
-				</div>
-			</label>
+			<div>
+				<label className="floating-label">
+					<span>Remaining occurrences (optional)</span>
+					<input
+						type="number"
+						min="1"
+						step="1"
+						placeholder="Leave empty for open-ended"
+						className="input input-bordered w-full"
+						{...register("remainingOccurrences", {
+							setValueAs: (v) => (v === "" || v == null ? null : Number(v)),
+						})}
+					/>
+				</label>
+				<p className="mt-1 text-xs text-base-content/60">
+					Leave empty for an open-ended subscription. Set for installments.
+				</p>
+			</div>
 
 			{submitError && <div className="alert alert-error text-sm">{submitError}</div>}
 

@@ -90,37 +90,31 @@ export function CreditForm({ mode, initial, groups, onRefetchGroups, onSaved, on
 
 	return (
 		<form onSubmit={handleSubmit(onSubmit)} noValidate className="flex flex-col gap-3">
-			<label className="form-control">
-				<div className="label">
-					<span className="label-text">Name</span>
-				</div>
-				<input
-					type="text"
-					className="input input-bordered"
-					autoFocus
-					{...register("name", {
-						required: "Name is required",
-						maxLength: { value: 50, message: "50 characters or fewer" },
-					})}
-				/>
-				{errors.name && (
-					<div className="label">
-						<span className="label-text-alt text-error">{errors.name.message}</span>
-					</div>
-				)}
-			</label>
+			<div>
+				<label className="floating-label">
+					<span>Name</span>
+					<input
+						type="text"
+						placeholder="e.g. BPI Mastercard"
+						className="input input-bordered w-full"
+						autoFocus
+						{...register("name", {
+							required: "Name is required",
+							maxLength: { value: 50, message: "50 characters or fewer" },
+						})}
+					/>
+				</label>
+				{errors.name && <p className="mt-1 text-xs text-error">{errors.name.message}</p>}
+			</div>
 
-			<label className="form-control">
-				<div className="label">
-					<span className="label-text">
-						Outstanding balance (₱){mode === "edit" ? " — not editable" : ""}
-					</span>
-				</div>
+			<label className="floating-label">
+				<span>Outstanding balance (₱){mode === "edit" ? " — not editable" : ""}</span>
 				<input
 					type="number"
 					step="0.01"
 					min="0"
-					className="input input-bordered"
+					placeholder="0.00"
+					className="input input-bordered w-full"
 					disabled={mode === "edit"}
 					{...register("initialBalancePesos", {
 						valueAsNumber: true,
@@ -130,29 +124,28 @@ export function CreditForm({ mode, initial, groups, onRefetchGroups, onSaved, on
 				/>
 			</label>
 
-			<label className="form-control">
-				<div className="label">
-					<span className="label-text">Credit limit (₱)</span>
-				</div>
-				<input
-					type="number"
-					step="0.01"
-					min="0.01"
-					className="input input-bordered"
-					{...register("creditLimitPesos", {
-						valueAsNumber: true,
-						required: "Credit limit is required",
-						min: { value: 0.01, message: "Must be greater than 0" },
-						validate: (v) =>
-							v >= (initialBalancePesos || 0) || "Initial balance can't exceed credit limit",
-					})}
-				/>
+			<div>
+				<label className="floating-label">
+					<span>Credit limit (₱)</span>
+					<input
+						type="number"
+						step="0.01"
+						min="0.01"
+						placeholder="0.00"
+						className="input input-bordered w-full"
+						{...register("creditLimitPesos", {
+							valueAsNumber: true,
+							required: "Credit limit is required",
+							min: { value: 0.01, message: "Must be greater than 0" },
+							validate: (v) =>
+								v >= (initialBalancePesos || 0) || "Initial balance can't exceed credit limit",
+						})}
+					/>
+				</label>
 				{errors.creditLimitPesos && (
-					<div className="label">
-						<span className="label-text-alt text-error">{errors.creditLimitPesos.message}</span>
-					</div>
+					<p className="mt-1 text-xs text-error">{errors.creditLimitPesos.message}</p>
 				)}
-			</label>
+			</div>
 
 			<label className="label cursor-pointer justify-start gap-2 py-0">
 				<input
@@ -164,33 +157,28 @@ export function CreditForm({ mode, initial, groups, onRefetchGroups, onSaved, on
 			</label>
 
 			{hasInstallmentLimit && (
-				<label className="form-control">
-					<div className="label">
-						<span className="label-text">Installment limit (₱)</span>
-					</div>
-					<input
-						type="number"
-						step="0.01"
-						min="0"
-						className="input input-bordered"
-						{...register("installmentLimitPesos", {
-							valueAsNumber: true,
-							min: { value: 0, message: "Must be 0 or more" },
-						})}
-					/>
+				<div>
+					<label className="floating-label">
+						<span>Installment limit (₱)</span>
+						<input
+							type="number"
+							step="0.01"
+							min="0"
+							placeholder="0.00"
+							className="input input-bordered w-full"
+							{...register("installmentLimitPesos", {
+								valueAsNumber: true,
+								min: { value: 0, message: "Must be 0 or more" },
+							})}
+						/>
+					</label>
 					{errors.installmentLimitPesos && (
-						<div className="label">
-							<span className="label-text-alt text-error">
-								{errors.installmentLimitPesos.message}
-							</span>
-						</div>
+						<p className="mt-1 text-xs text-error">{errors.installmentLimitPesos.message}</p>
 					)}
-					<div className="label">
-						<span className="label-text-alt text-base-content/60">
-							No enforced relation to credit limit — e.g. BPI Bonus Madness can exceed it.
-						</span>
-					</div>
-				</label>
+					<p className="mt-1 text-xs text-base-content/60">
+						No enforced relation to credit limit — e.g. BPI Bonus Madness can exceed it.
+					</p>
+				</div>
 			)}
 
 			<GroupPickerField

@@ -76,16 +76,15 @@ export function EditAllocationModal({
 		<Modal onClose={onCancel} size="md">
 			<Modal.Header title="Edit allocation" subtitle={tagName} />
 			<Modal.Body>
-				<label className="form-control">
-					<div className="label">
-						<span className="label-text">Amount (₱)</span>
-					</div>
+				<label className="floating-label">
+					<span>Amount (₱)</span>
 					<input
 						aria-label="Amount"
 						type="number"
 						min="0"
 						step="0.01"
-						className="input input-bordered"
+						placeholder="0.00"
+						className="input input-bordered w-full"
 						value={draftPesos}
 						onChange={(e) => setDraftPesos(e.target.value)}
 						autoFocus

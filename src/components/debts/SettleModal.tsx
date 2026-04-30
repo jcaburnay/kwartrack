@@ -62,44 +62,41 @@ export function SettleModal({
 			<Modal.Header title="Settle debt" subtitle={subtitle} />
 			<form onSubmit={handleSubmit} className="flex flex-col gap-3">
 				<div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-					<label className="form-control">
-						<div className="label flex items-center justify-between">
-							<span className="label-text">Amount (₱)</span>
-							<button
-								type="button"
-								className="btn btn-ghost btn-xs"
-								onClick={() => setAmountPesos(centavosToPesos(remaining))}
-							>
-								Pay in full
-							</button>
-						</div>
-						<input
-							type="number"
-							step="0.01"
-							min="0.01"
-							className="input input-bordered"
-							value={amountPesos}
-							onChange={(e) => setAmountPesos(Number(e.target.value))}
-						/>
-					</label>
-					<label className="form-control">
-						<div className="label">
-							<span className="label-text">Date</span>
-						</div>
+					<div>
+						<label className="floating-label">
+							<span>Amount (₱)</span>
+							<input
+								type="number"
+								step="0.01"
+								min="0.01"
+								placeholder="0.00"
+								className="input input-bordered w-full"
+								value={amountPesos}
+								onChange={(e) => setAmountPesos(Number(e.target.value))}
+							/>
+						</label>
+						<button
+							type="button"
+							className="mt-1 text-xs text-primary hover:underline"
+							onClick={() => setAmountPesos(centavosToPesos(remaining))}
+						>
+							Pay in full
+						</button>
+					</div>
+					<label className="floating-label">
+						<span>Date</span>
 						<input
 							type="date"
-							className="input input-bordered"
+							className="input input-bordered w-full"
 							value={date}
 							onChange={(e) => setDate(e.target.value)}
 						/>
 					</label>
 				</div>
-				<label className="form-control">
-					<div className="label">
-						<span className="label-text">{accountLabel}</span>
-					</div>
+				<label className="floating-label">
+					<span>{accountLabel}</span>
 					<select
-						className="select select-bordered"
+						className="select select-bordered w-full"
 						value={paidAccountId}
 						onChange={(e) => setPaidAccountId(e.target.value)}
 					>

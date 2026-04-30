@@ -108,41 +108,37 @@ export function SplitForm({
 
 	return (
 		<form onSubmit={handleSubmit} className="flex flex-col gap-3" noValidate>
-			<label className="form-control">
-				<div className="label">
-					<span className="label-text">Description</span>
-				</div>
+			<label className="floating-label">
+				<span>Description</span>
 				<input
 					autoFocus
 					type="text"
-					className="input input-bordered"
+					placeholder="e.g. Dinner at Mendokoro"
+					className="input input-bordered w-full"
 					value={description}
 					onChange={(e) => setDescription(e.target.value)}
 				/>
 			</label>
 
 			<div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-				<label className="form-control">
-					<div className="label">
-						<span className="label-text">Total (₱)</span>
-					</div>
+				<label className="floating-label">
+					<span>Total (₱)</span>
 					<input
 						type="number"
 						step="0.01"
 						min="0.01"
-						className="input input-bordered"
+						placeholder="0.00"
+						className="input input-bordered w-full"
 						value={totalPesos}
 						onChange={(e) => setTotalPesos(Number(e.target.value))}
 					/>
 				</label>
 
-				<label className="form-control">
-					<div className="label">
-						<span className="label-text">Date</span>
-					</div>
+				<label className="floating-label">
+					<span>Date</span>
 					<input
 						type="date"
-						className="input input-bordered"
+						className="input input-bordered w-full"
 						value={date}
 						onChange={(e) => setDate(e.target.value)}
 					/>
@@ -150,12 +146,10 @@ export function SplitForm({
 			</div>
 
 			<div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-				<label className="form-control">
-					<div className="label">
-						<span className="label-text">Paid from</span>
-					</div>
+				<label className="floating-label">
+					<span>Paid from</span>
 					<select
-						className="select select-bordered"
+						className="select select-bordered w-full"
 						value={paidFromAccountId ?? ""}
 						onChange={(e) => setPaidFromAccountId(e.target.value || null)}
 					>
@@ -168,12 +162,10 @@ export function SplitForm({
 					</select>
 				</label>
 
-				<label className="form-control">
-					<div className="label">
-						<span className="label-text">Tag</span>
-					</div>
+				<label className="floating-label">
+					<span>Tag</span>
 					<select
-						className="select select-bordered"
+						className="select select-bordered w-full"
 						value={tagId ?? ""}
 						onChange={(e) => setTagId(e.target.value || null)}
 					>

@@ -105,98 +105,87 @@ export function TimeDepositForm({
 
 	return (
 		<form onSubmit={handleSubmit(onSubmit)} noValidate className="flex flex-col gap-3">
-			<label className="form-control">
-				<div className="label">
-					<span className="label-text">Name</span>
-				</div>
-				<input
-					type="text"
-					className="input input-bordered"
-					autoFocus
-					{...register("name", {
-						required: "Name is required",
-						maxLength: { value: 50, message: "50 characters or fewer" },
-					})}
-				/>
-				{errors.name && (
-					<div className="label">
-						<span className="label-text-alt text-error">{errors.name.message}</span>
-					</div>
-				)}
-			</label>
+			<div>
+				<label className="floating-label">
+					<span>Name</span>
+					<input
+						type="text"
+						placeholder="e.g. BPI 6-month TD"
+						className="input input-bordered w-full"
+						autoFocus
+						{...register("name", {
+							required: "Name is required",
+							maxLength: { value: 50, message: "50 characters or fewer" },
+						})}
+					/>
+				</label>
+				{errors.name && <p className="mt-1 text-xs text-error">{errors.name.message}</p>}
+			</div>
 
-			<label className="form-control">
-				<div className="label">
-					<span className="label-text">
-						Principal (₱){mode === "edit" ? " — not editable" : ""}
-					</span>
-				</div>
-				<input
-					type="number"
-					step="0.01"
-					min="0.01"
-					className="input input-bordered"
-					disabled={mode === "edit"}
-					{...register("principalPesos", {
-						valueAsNumber: true,
-						required: "Principal is required",
-						min: { value: 0.01, message: "Must be greater than 0" },
-					})}
-				/>
+			<div>
+				<label className="floating-label">
+					<span>Principal (₱){mode === "edit" ? " — not editable" : ""}</span>
+					<input
+						type="number"
+						step="0.01"
+						min="0.01"
+						placeholder="0.00"
+						className="input input-bordered w-full"
+						disabled={mode === "edit"}
+						{...register("principalPesos", {
+							valueAsNumber: true,
+							required: "Principal is required",
+							min: { value: 0.01, message: "Must be greater than 0" },
+						})}
+					/>
+				</label>
 				{errors.principalPesos && (
-					<div className="label">
-						<span className="label-text-alt text-error">{errors.principalPesos.message}</span>
-					</div>
+					<p className="mt-1 text-xs text-error">{errors.principalPesos.message}</p>
 				)}
-			</label>
+			</div>
 
-			<label className="form-control">
-				<div className="label">
-					<span className="label-text">Interest rate (% per year)</span>
-				</div>
-				<input
-					type="number"
-					step="0.01"
-					min="0.01"
-					className="input input-bordered"
-					{...register("interestRatePercent", {
-						valueAsNumber: true,
-						required: "Interest rate is required",
-						min: { value: 0.01, message: "Must be greater than 0" },
-					})}
-				/>
+			<div>
+				<label className="floating-label">
+					<span>Interest rate (% per year)</span>
+					<input
+						type="number"
+						step="0.01"
+						min="0.01"
+						placeholder="0.00"
+						className="input input-bordered w-full"
+						{...register("interestRatePercent", {
+							valueAsNumber: true,
+							required: "Interest rate is required",
+							min: { value: 0.01, message: "Must be greater than 0" },
+						})}
+					/>
+				</label>
 				{errors.interestRatePercent && (
-					<div className="label">
-						<span className="label-text-alt text-error">{errors.interestRatePercent.message}</span>
-					</div>
+					<p className="mt-1 text-xs text-error">{errors.interestRatePercent.message}</p>
 				)}
-			</label>
+			</div>
 
-			<label className="form-control">
-				<div className="label">
-					<span className="label-text">Maturity date</span>
-				</div>
-				<input
-					type="date"
-					className="input input-bordered"
-					min={today}
-					{...register("maturityDate", {
-						required: "Maturity date is required",
-						validate: (v) => v > today || "Must be in the future",
-					})}
-				/>
+			<div>
+				<label className="floating-label">
+					<span>Maturity date</span>
+					<input
+						type="date"
+						className="input input-bordered w-full"
+						min={today}
+						{...register("maturityDate", {
+							required: "Maturity date is required",
+							validate: (v) => v > today || "Must be in the future",
+						})}
+					/>
+				</label>
 				{errors.maturityDate && (
-					<div className="label">
-						<span className="label-text-alt text-error">{errors.maturityDate.message}</span>
-					</div>
+					<p className="mt-1 text-xs text-error">{errors.maturityDate.message}</p>
 				)}
-			</label>
+			</div>
 
-			<label className="form-control">
-				<div className="label">
-					<span className="label-text">Interest posts</span>
-				</div>
-				<select className="select select-bordered" {...register("interestPostingInterval")}>
+			<label className="floating-label">
+				<span>Interest posts</span>
+				<select className="select select-bordered w-full" {...register("interestPostingInterval")}>
 					{INTERVALS.map((i) => (
 						<option key={i.value} value={i.value}>
 							{i.label}

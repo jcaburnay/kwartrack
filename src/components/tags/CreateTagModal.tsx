@@ -45,31 +45,29 @@ export function CreateTagModal({ create, onCreated, onCancel }: Props) {
 				noValidate
 				className="flex flex-col gap-3"
 			>
-				<label className="form-control">
-					<div className="label">
-						<span className="label-text">Name</span>
-					</div>
-					<input
-						type="text"
-						className="input input-bordered"
-						autoFocus
-						{...register("name", {
-							required: "Name is required",
-							maxLength: { value: 50, message: "50 characters or fewer" },
-							validate: (v) => v.trim().length > 0 || "Name is required",
-						})}
-					/>
-					{errors.name && (
-						<div className="label">
-							<span className="label-text-alt text-error">{errors.name.message}</span>
-						</div>
-					)}
-				</label>
-				<label className="form-control">
-					<div className="label">
-						<span className="label-text">Type</span>
-					</div>
-					<select className="select select-bordered" {...register("type", { required: true })}>
+				<div>
+					<label className="floating-label">
+						<span>Name</span>
+						<input
+							type="text"
+							placeholder="e.g. rent"
+							className="input input-bordered w-full"
+							autoFocus
+							{...register("name", {
+								required: "Name is required",
+								maxLength: { value: 50, message: "50 characters or fewer" },
+								validate: (v) => v.trim().length > 0 || "Name is required",
+							})}
+						/>
+					</label>
+					{errors.name && <p className="mt-1 text-xs text-error">{errors.name.message}</p>}
+				</div>
+				<label className="floating-label">
+					<span>Type</span>
+					<select
+						className="select select-bordered w-full"
+						{...register("type", { required: true })}
+					>
 						<option value="expense">Expense</option>
 						<option value="income">Income</option>
 						<option value="transfer">Transfer</option>

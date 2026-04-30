@@ -101,39 +101,34 @@ export function NewDebtModal({
 				</div>
 
 				<div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-					<label className="form-control">
-						<div className="label">
-							<span className="label-text">Amount (₱)</span>
-						</div>
+					<label className="floating-label">
+						<span>Amount (₱)</span>
 						<input
 							type="number"
 							step="0.01"
 							min="0.01"
-							className="input input-bordered"
+							placeholder="0.00"
+							className="input input-bordered w-full"
 							value={amountPesos}
 							onChange={(e) => setAmountPesos(Number(e.target.value))}
 						/>
 					</label>
 
-					<label className="form-control">
-						<div className="label">
-							<span className="label-text">Date</span>
-						</div>
+					<label className="floating-label">
+						<span>Date</span>
 						<input
 							type="date"
-							className="input input-bordered"
+							className="input input-bordered w-full"
 							value={date}
 							onChange={(e) => setDate(e.target.value)}
 						/>
 					</label>
 				</div>
 
-				<label className="form-control">
-					<div className="label">
-						<span className="label-text">{accountLabel}</span>
-					</div>
+				<label className="floating-label">
+					<span>{accountLabel}</span>
 					<select
-						className="select select-bordered"
+						className="select select-bordered w-full"
 						value={paidAccountId ?? ""}
 						onChange={(e) => setPaidAccountId(e.target.value || null)}
 					>
@@ -147,12 +142,10 @@ export function NewDebtModal({
 				</label>
 
 				{paidAccountId && (
-					<label className="form-control">
-						<div className="label">
-							<span className="label-text">Tag (required)</span>
-						</div>
+					<label className="floating-label">
+						<span>Tag (required)</span>
 						<select
-							className="select select-bordered"
+							className="select select-bordered w-full"
 							value={tagId ?? ""}
 							onChange={(e) => setTagId(e.target.value || null)}
 						>
@@ -166,13 +159,12 @@ export function NewDebtModal({
 					</label>
 				)}
 
-				<label className="form-control">
-					<div className="label">
-						<span className="label-text">Description (optional)</span>
-					</div>
+				<label className="floating-label">
+					<span>Description (optional)</span>
 					<input
 						type="text"
-						className="input input-bordered"
+						placeholder="Description (optional)"
+						className="input input-bordered w-full"
 						value={description}
 						onChange={(e) => setDescription(e.target.value)}
 					/>

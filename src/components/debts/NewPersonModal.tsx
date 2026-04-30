@@ -33,14 +33,13 @@ export function NewPersonModal({ initialName, create, onCreated, onCancel }: Pro
 		<Modal onClose={onCancel} size="sm">
 			<Modal.Header title="New person" />
 			<form onSubmit={handleSubmit} className="flex flex-col gap-3">
-				<label className="form-control">
-					<div className="label">
-						<span className="label-text">Name</span>
-					</div>
+				<label className="floating-label">
+					<span>Name</span>
 					<input
 						autoFocus
 						type="text"
-						className="input input-bordered"
+						placeholder="e.g. Maria"
+						className="input input-bordered w-full"
 						value={name}
 						onChange={(e) => setName(e.target.value)}
 					/>

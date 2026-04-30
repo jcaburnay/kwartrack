@@ -58,13 +58,11 @@ export function NewAllocationModal({
 			<Modal.Header title="New allocation" />
 			<Modal.Body>
 				<div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-					<label className="form-control">
-						<div className="label">
-							<span className="label-text">Tag</span>
-						</div>
+					<label className="floating-label">
+						<span>Tag</span>
 						<select
 							aria-label="Tag"
-							className="select select-bordered"
+							className="select select-bordered w-full"
 							value={tagId}
 							onChange={(e) => setTagId(e.target.value)}
 						>
@@ -76,16 +74,15 @@ export function NewAllocationModal({
 							))}
 						</select>
 					</label>
-					<label className="form-control">
-						<div className="label">
-							<span className="label-text">Amount (₱)</span>
-						</div>
+					<label className="floating-label">
+						<span>Amount (₱)</span>
 						<input
 							aria-label="Amount"
 							type="number"
 							min="0"
 							step="0.01"
-							className="input input-bordered"
+							placeholder="0.00"
+							className="input input-bordered w-full"
 							value={draftPesos}
 							onChange={(e) => setDraftPesos(e.target.value)}
 							autoFocus

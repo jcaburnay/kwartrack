@@ -41,26 +41,23 @@ export function NewTagModal({ scope, create, onCreated, onCancel }: Props) {
 				noValidate
 				className="flex flex-col gap-3"
 			>
-				<label className="form-control">
-					<div className="label">
-						<span className="label-text">Name</span>
-					</div>
-					<input
-						type="text"
-						className="input input-bordered"
-						autoFocus
-						{...register("name", {
-							required: "Name is required",
-							maxLength: { value: 50, message: "50 characters or fewer" },
-							validate: (v) => v.trim().length > 0 || "Name is required",
-						})}
-					/>
-					{errors.name && (
-						<div className="label">
-							<span className="label-text-alt text-error">{errors.name.message}</span>
-						</div>
-					)}
-				</label>
+				<div>
+					<label className="floating-label">
+						<span>Name</span>
+						<input
+							type="text"
+							placeholder="e.g. groceries"
+							className="input input-bordered w-full"
+							autoFocus
+							{...register("name", {
+								required: "Name is required",
+								maxLength: { value: 50, message: "50 characters or fewer" },
+								validate: (v) => v.trim().length > 0 || "Name is required",
+							})}
+						/>
+					</label>
+					{errors.name && <p className="mt-1 text-xs text-error">{errors.name.message}</p>}
+				</div>
 				{submitError && <div className="alert alert-error text-sm">{submitError}</div>}
 				<div className="-mx-4 px-4 py-3 mt-4 border-t border-base-300 flex items-center justify-end gap-2">
 					<button type="button" className="btn btn-ghost" onClick={onCancel}>
