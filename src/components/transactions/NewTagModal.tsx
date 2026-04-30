@@ -62,7 +62,7 @@ export function NewTagModal({ scope, create, onCreated, onCancel }: Props) {
 					)}
 				</label>
 				{submitError && <div className="alert alert-error text-sm">{submitError}</div>}
-				<div className="flex items-center justify-end gap-2 pt-2 mt-3">
+				<div className="-mx-4 px-4 py-3 mt-4 border-t border-base-300 flex items-center justify-end gap-2">
 					<button type="button" className="btn btn-ghost" onClick={onCancel}>
 						Cancel
 					</button>
