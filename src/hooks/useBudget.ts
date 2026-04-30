@@ -7,6 +7,7 @@ import {
 	computeOthersCentavos,
 	computeOverallActualCentavos,
 } from "../utils/budgetMath";
+import { useTransactionVersion } from "./useTransactionVersion";
 
 export type BudgetConfig = Database["public"]["Tables"]["budget_config"]["Row"];
 export type BudgetAllocation = Database["public"]["Tables"]["budget_allocation"]["Row"];
@@ -70,9 +71,11 @@ export function useBudget(month: string) {
 		});
 	}, [month]);
 
+	const txVersion = useTransactionVersion();
+	// biome-ignore lint/correctness/useExhaustiveDependencies: txVersion is a tripwire that re-runs the fetch when transactions are mutated elsewhere.
 	useEffect(() => {
 		refetch();
-	}, [refetch]);
+	}, [refetch, txVersion]);
 
 	const actualsByTag = useMemo(
 		() => computeActualsByTag(state.monthExpenses, month),

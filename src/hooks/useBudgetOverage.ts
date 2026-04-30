@@ -3,6 +3,7 @@ import { supabase } from "../lib/supabase";
 import { useAuth } from "../providers/AuthProvider";
 import { type ActualRow, computeActualsByTag } from "../utils/budgetMath";
 import { monthBounds } from "../utils/dateRange";
+import { useTransactionVersion } from "./useTransactionVersion";
 
 type Snapshot = {
 	overallCentavos: number;
@@ -24,7 +25,9 @@ export function useBudgetOverage(): boolean {
 	const month = useMemo(() => monthBounds(tz).startISO.slice(0, 7), [tz]);
 
 	const [snapshot, setSnapshot] = useState<Snapshot | null>(null);
+	const txVersion = useTransactionVersion();
 
+	// biome-ignore lint/correctness/useExhaustiveDependencies: txVersion is a tripwire that re-runs the fetch when transactions are mutated elsewhere.
 	useEffect(() => {
 		let cancelled = false;
 		(async () => {
@@ -56,7 +59,7 @@ export function useBudgetOverage(): boolean {
 		return () => {
 			cancelled = true;
 		};
-	}, [month, tz]);
+	}, [month, tz, txVersion]);
 
 	return useMemo(() => {
 		if (!snapshot) return false;

@@ -6,6 +6,7 @@ import {
 	type SpendInputRow,
 	type SpendTrendPoint,
 } from "../utils/overviewAggregation";
+import { useTransactionVersion } from "./useTransactionVersion";
 
 type State = {
 	trend: SpendTrendPoint[];
@@ -57,9 +58,11 @@ export function useMonthlySpendTrend(today: Date, timezone: string) {
 		});
 	}, [today, timezone]);
 
+	const txVersion = useTransactionVersion();
+	// biome-ignore lint/correctness/useExhaustiveDependencies: txVersion is a tripwire that re-runs the fetch when transactions are mutated elsewhere.
 	useEffect(() => {
 		refetch();
-	}, [refetch]);
+	}, [refetch, txVersion]);
 
 	return { ...state, refetch };
 }

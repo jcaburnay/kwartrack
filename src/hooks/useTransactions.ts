@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
 import type { Transaction } from "../utils/transactionFilters";
+import { useTransactionVersion } from "./useTransactionVersion";
 
 /**
  * Transaction with the source recurring's `service` joined in. Used by
@@ -47,9 +48,11 @@ export function useTransactions() {
 		});
 	}, []);
 
+	const txVersion = useTransactionVersion();
+	// biome-ignore lint/correctness/useExhaustiveDependencies: txVersion is a tripwire that re-runs the fetch when transactions are mutated elsewhere.
 	useEffect(() => {
 		refetch();
-	}, [refetch]);
+	}, [refetch, txVersion]);
 
 	return { ...state, refetch };
 }
