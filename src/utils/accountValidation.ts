@@ -102,3 +102,16 @@ export const ACCOUNT_TYPE_LABEL: Record<AccountType, string> = {
 	credit: "Credit card",
 	"time-deposit": "Time deposit",
 };
+
+/**
+ * Noun phrase used in modal titles, e.g. "New {phrase}" / "Edit {phrase}".
+ * "credit card" reads better than "credit account"; "time deposit" stands
+ * alone as a noun phrase.
+ */
+export const ACCOUNT_TYPE_NOUN_PHRASE: Record<AccountType, string> = {
+	cash: "cash account",
+	"e-wallet": "e-wallet account",
+	savings: "savings account",
+	credit: "credit card",
+	"time-deposit": "time deposit",
+};

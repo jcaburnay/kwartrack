@@ -202,7 +202,7 @@ export function CreditForm({ mode, initial, groups, onRefetchGroups, onSaved, on
 
 			{submitError && <div className="alert alert-error text-sm">{submitError}</div>}
 
-			<div className="modal-action">
+			<div className="flex items-center justify-end gap-2 pt-2 mt-3">
 				<button type="button" className="btn btn-ghost" onClick={onCancel}>
 					Cancel
 				</button>
