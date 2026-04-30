@@ -136,7 +136,7 @@ export function RecurringTable({
 								<td className="hidden md:table-cell whitespace-nowrap">
 									{renderAccount(r, accountById)}
 								</td>
-								<td>
+								<td className="whitespace-nowrap">
 									<div className="tabular-nums">{formatScheduleDate(r.next_occurrence_at)}</div>
 									<div className="text-base-content/50">{subLine}</div>
 								</td>
