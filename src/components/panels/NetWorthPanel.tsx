@@ -72,7 +72,7 @@ export function NetWorthPanel() {
 			</div>
 			<div className="flex-1 min-w-0 p-4 flex flex-col gap-4">
 				{aLoading ? (
-					<div className="flex justify-center py-4">
+					<div className="flex-1 flex items-center justify-center">
 						<span className="loading loading-spinner loading-sm text-primary" />
 					</div>
 				) : (

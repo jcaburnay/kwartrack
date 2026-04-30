@@ -46,7 +46,7 @@ export function AccountsPanel({ pendingModal, onPendingModalConsumed }: Props = 
 	const { profile } = useAuth();
 	const { accounts, isLoading: aLoading, refetch: refetchAccounts } = useAccounts();
 	const { groups, refetch: refetchGroups } = useAccountGroups();
-	const { transactions, refetch: refetchTransactions } = useTransactions();
+	const { transactions, isLoading: tLoading, refetch: refetchTransactions } = useTransactions();
 	const { tags, createInline } = useTags();
 	const { recurrings } = useRecurrings();
 	const { selection, selectAccount, selectGroup, clear } = useSelectedAccount(accounts, groups);
@@ -246,7 +246,7 @@ export function AccountsPanel({ pendingModal, onPendingModalConsumed }: Props = 
 					<div className="flex-[1_1_35%] flex min-h-0 overflow-hidden">
 						<div className="flex-1 overflow-y-auto overflow-x-auto md:basis-1/2 md:flex-none border-r border-base-300">
 							{aLoading ? (
-								<div className="flex justify-center py-4">
+								<div className="h-full flex items-center justify-center">
 									<span className="loading loading-spinner loading-sm text-primary" />
 								</div>
 							) : (
@@ -351,19 +351,25 @@ export function AccountsPanel({ pendingModal, onPendingModalConsumed }: Props = 
 						/>
 					</div>
 					<div className="flex-1 overflow-y-auto overflow-x-auto min-h-0">
-						<TransactionsTable
-							transactions={filteredTransactions}
-							accounts={accounts}
-							groups={groups}
-							tags={tags}
-							onEdit={(tx) => setEditingTx(tx)}
-							onChanged={onTxChanged}
-							emptyCopy={
-								selection.kind === "account"
-									? "No transactions in this account yet."
-									: "No transactions match these filters."
-							}
-						/>
+						{tLoading ? (
+							<div className="h-full flex items-center justify-center">
+								<span className="loading loading-spinner loading-sm text-primary" />
+							</div>
+						) : (
+							<TransactionsTable
+								transactions={filteredTransactions}
+								accounts={accounts}
+								groups={groups}
+								tags={tags}
+								onEdit={(tx) => setEditingTx(tx)}
+								onChanged={onTxChanged}
+								emptyCopy={
+									selection.kind === "account"
+										? "No transactions in this account yet."
+										: "No transactions match these filters."
+								}
+							/>
+						)}
 					</div>
 				</div>
 			)}

@@ -32,7 +32,7 @@ export function DebtsPanel({ onSeeAll }: Props) {
 				</div>
 
 				{isLoading ? (
-					<div className="flex justify-center py-4">
+					<div className="flex-1 flex items-center justify-center">
 						<span className="loading loading-spinner loading-sm text-primary" />
 					</div>
 				) : (

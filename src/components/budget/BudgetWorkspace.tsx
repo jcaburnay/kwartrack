@@ -101,7 +101,7 @@ export function BudgetWorkspace() {
 
 			<div className="flex-1 min-h-0 flex flex-col overflow-hidden">
 				{isLoading ? (
-					<div className="flex justify-center py-4">
+					<div className="flex-1 flex items-center justify-center">
 						<span className="loading loading-spinner loading-sm text-primary" />
 					</div>
 				) : config == null ? null : view === "table" ? (

@@ -107,7 +107,7 @@ export function RecurringPanel({ pendingModal, onPendingModalConsumed }: Props) 
 			<div className="flex-1 overflow-y-auto flex flex-col">
 				{error && <div className="alert alert-error text-sm mx-4 mt-3">{error}</div>}
 				{isLoading ? (
-					<div className="flex justify-center py-8">
+					<div className="flex-1 flex items-center justify-center">
 						<span className="loading loading-spinner text-primary" />
 					</div>
 				) : (
