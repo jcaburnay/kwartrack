@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { Tag, TagScope } from "../../hooks/useTags";
+import { bumpTransactionVersion } from "../../hooks/useTransactionVersion";
 import { supabase } from "../../lib/supabase";
 import { useAuth } from "../../providers/AuthProvider";
 import type { Account } from "../../utils/accountBalances";
@@ -53,6 +54,7 @@ export function NewTransactionModal({
 			setSubmitError(error.message);
 			return;
 		}
+		bumpTransactionVersion();
 		await onSaved();
 	}
 

@@ -5,6 +5,7 @@ import type { DebtRow } from "../utils/debtFilters";
 import type { DebtInput } from "../utils/debtValidation";
 import type { SplitRow } from "../utils/splitFilters";
 import type { SplitInput } from "../utils/splitValidation";
+import { bumpTransactionVersion } from "./useTransactionVersion";
 
 type DebtRaw = Database["public"]["Tables"]["debt"]["Row"];
 type SplitRaw = Database["public"]["Tables"]["split_event"]["Row"];
@@ -136,6 +137,7 @@ export function useDebtsAndSplits() {
 				})),
 			});
 			if (error) return { error: error.message };
+			bumpTransactionVersion();
 			await refetch();
 			return { error: null };
 		},
@@ -159,6 +161,7 @@ export function useDebtsAndSplits() {
 				})),
 			});
 			if (error) return { error: error.message };
+			bumpTransactionVersion();
 			await refetch();
 			return { error: null };
 		},
@@ -169,6 +172,7 @@ export function useDebtsAndSplits() {
 		async (id: string): Promise<{ error: string | null }> => {
 			const { error } = await supabase.from("split_event").delete().eq("id", id);
 			if (error) return { error: error.message };
+			bumpTransactionVersion();
 			await refetch();
 			return { error: null };
 		},
@@ -190,6 +194,7 @@ export function useDebtsAndSplits() {
 				tag_id: input.tagId,
 			});
 			if (error) return { error: error.message };
+			bumpTransactionVersion();
 			await refetch();
 			return { error: null };
 		},
@@ -200,6 +205,7 @@ export function useDebtsAndSplits() {
 		async (id: string): Promise<{ error: string | null }> => {
 			const { error } = await supabase.from("debt").delete().eq("id", id);
 			if (error) return { error: error.message };
+			bumpTransactionVersion();
 			await refetch();
 			return { error: null };
 		},
@@ -220,6 +226,7 @@ export function useDebtsAndSplits() {
 				p_date: date,
 			});
 			if (error) return { error: error.message };
+			bumpTransactionVersion();
 			await refetch();
 			return { error: null };
 		},

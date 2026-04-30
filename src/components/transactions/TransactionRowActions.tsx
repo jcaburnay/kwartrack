@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { bumpTransactionVersion } from "../../hooks/useTransactionVersion";
 import { supabase } from "../../lib/supabase";
 import type { Transaction } from "../../utils/transactionFilters";
 
@@ -62,6 +63,7 @@ export function TransactionRowActions({ transaction, onEdit, onChanged }: Props)
 			window.alert(`Delete failed: ${error.message}`);
 			return;
 		}
+		bumpTransactionVersion();
 		await onChanged();
 	}
 
