@@ -130,15 +130,11 @@ export function RecurringTable({
 										</div>
 									)}
 								</td>
-								<td className="hidden md:table-cell">
-									<span className="block max-w-[16ch] truncate">
-										{r.tag_id ? (tagById.get(r.tag_id)?.name ?? "—") : "—"}
-									</span>
+								<td className="hidden md:table-cell whitespace-nowrap">
+									{r.tag_id ? (tagById.get(r.tag_id)?.name ?? "—") : "—"}
 								</td>
-								<td className="hidden md:table-cell">
-									<span className="block max-w-[20ch] truncate">
-										{renderAccount(r, accountById)}
-									</span>
+								<td className="hidden md:table-cell whitespace-nowrap">
+									{renderAccount(r, accountById)}
 								</td>
 								<td>
 									<div className="tabular-nums">{formatScheduleDate(r.next_occurrence_at)}</div>
