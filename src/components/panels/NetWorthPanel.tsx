@@ -65,11 +65,12 @@ export function NetWorthPanel() {
 
 	return (
 		<div className="bg-base-100 border border-base-300 h-full flex flex-col min-w-0">
-			<div className="card-body gap-4 flex-1 min-w-0">
-				<h2 className="text-sm font-semibold tracking-wide text-base-content/60 uppercase">
+			<div className="h-9 flex items-center px-4 border-b border-base-300 flex-shrink-0">
+				<span className="text-xs font-semibold uppercase tracking-wide text-base-content/50">
 					Net Worth
-				</h2>
-
+				</span>
+			</div>
+			<div className="flex-1 min-w-0 p-4 flex flex-col gap-4">
 				{aLoading ? (
 					<div className="flex justify-center py-4">
 						<span className="loading loading-spinner loading-sm text-primary" />

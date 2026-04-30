@@ -67,7 +67,7 @@ export function BudgetWorkspace() {
 
 	return (
 		<div className="bg-base-100 border border-base-300 h-full flex flex-col min-w-0 overflow-hidden">
-			<div className="h-9 flex items-center px-4 flex-shrink-0">
+			<div className="h-9 flex items-center px-4 border-b border-base-300 flex-shrink-0">
 				<span className="text-xs font-semibold uppercase tracking-wide text-base-content/50">
 					Budget
 				</span>
