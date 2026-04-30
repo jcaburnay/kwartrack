@@ -39,19 +39,6 @@ export function SplitsTable({
 	return (
 		<div className="overflow-x-auto">
 			<table className="table table-sm">
-				<thead>
-					<tr>
-						<th />
-						<th>Description</th>
-						<th>Total</th>
-						<th>Your Share</th>
-						<th>Paid From</th>
-						<th>Tag</th>
-						<th>Date</th>
-						<th>Method</th>
-						<th>Progress</th>
-					</tr>
-				</thead>
 				<tbody>
 					{splits.map((s) => (
 						<SplitRow

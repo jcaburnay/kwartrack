@@ -12,6 +12,7 @@ const base: DebtRow = {
 	tagName: "foods",
 	date: "2026-04-14",
 	description: "lunch",
+	splitId: null,
 };
 
 describe("matchesDebtFilters", () => {

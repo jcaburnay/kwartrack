@@ -1,5 +1,3 @@
-import { ExternalLink } from "lucide-react";
-import { Link } from "react-router";
 import { formatCentavos } from "../../utils/currency";
 import type { DebtRow as DebtRowType } from "../../utils/debtFilters";
 
@@ -14,29 +12,34 @@ type Props = {
 export function DebtRow({ debt, tagName, onSettle, onDelete, canDelete }: Props) {
 	const fullySettled = debt.settledCentavos >= debt.amountCentavos;
 	const remaining = debt.amountCentavos - debt.settledCentavos;
+	const subline = [debt.description, debt.date].filter(Boolean).join(" · ");
 	return (
 		<tr data-row-id={debt.id}>
-			<td>{debt.date}</td>
-			<td className="tabular-nums">{formatCentavos(debt.amountCentavos)}</td>
-			<td>{debt.direction}</td>
-			<td>{tagName ?? "—"}</td>
-			<td className="text-sm text-base-content/70">{debt.description ?? ""}</td>
-			<td className="text-right">
-				<Link
-					to={`/accounts?debt=${debt.id}`}
-					className="btn btn-xs btn-ghost mr-1"
-					aria-label="View transactions for this debt"
-					title="View transactions for this debt"
+			<td>
+				<div className="flex flex-col min-w-0">
+					<span className="text-sm truncate">{tagName ?? "—"}</span>
+					{subline && <span className="text-xs text-base-content/50 truncate">{subline}</span>}
+				</div>
+			</td>
+			<td className="text-right whitespace-nowrap">
+				<div
+					className={`text-sm font-medium tabular-nums ${
+						debt.direction === "loaned" ? "text-success" : "text-error"
+					}`}
 				>
-					<ExternalLink className="size-3" />
-				</Link>
+					{formatCentavos(debt.amountCentavos)}
+				</div>
+				{!fullySettled && debt.settledCentavos > 0 && (
+					<div className="text-xs text-base-content/50 tabular-nums">
+						{formatCentavos(remaining)} left
+					</div>
+				)}
+			</td>
+			<td className="text-right whitespace-nowrap">
 				{fullySettled ? (
-					<span className="badge badge-success">✓ Settled</span>
+					<span className="badge badge-success badge-sm">✓ Settled</span>
 				) : (
 					<>
-						<span className="text-xs text-base-content/60 mr-2">
-							{formatCentavos(remaining)} left
-						</span>
 						<button
 							type="button"
 							className="btn btn-xs btn-primary"

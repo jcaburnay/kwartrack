@@ -30,16 +30,6 @@ export function DebtsTable({ debts, tagsById, standaloneDebtIds, onSettle, onDel
 	return (
 		<div className="overflow-x-auto">
 			<table className="table table-sm">
-				<thead>
-					<tr>
-						<th>Date</th>
-						<th>Amount</th>
-						<th>Direction</th>
-						<th>Tag</th>
-						<th>Description</th>
-						<th />
-					</tr>
-				</thead>
 				<tbody>
 					{groups.map(([personId, group]) => (
 						<DebtsPersonGroup

@@ -176,6 +176,7 @@ function mkDebt(
 		tagName: null,
 		date: p.date,
 		description: null,
+		splitId: null,
 	};
 }
 

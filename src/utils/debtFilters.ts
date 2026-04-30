@@ -11,6 +11,7 @@ export type DebtRow = {
 	tagName: string | null;
 	date: string;
 	description: string | null;
+	splitId: string | null;
 };
 
 export type DebtSettledFilter = "all" | "settled" | "unsettled";

@@ -27,26 +27,40 @@ export function SplitRow({
 	onEdit,
 	onDelete,
 }: Props) {
+	const subline = [tagName, split.date, accountName, split.method]
+		.filter((v) => v && v !== "—")
+		.join(" · ");
 	return (
 		<>
 			<tr className="cursor-pointer hover:bg-base-200" onClick={onToggle}>
-				<td className="w-6">
-					{expanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-				</td>
-				<td>{split.description}</td>
-				<td className="tabular-nums">{formatCentavos(split.totalCentavos)}</td>
-				<td className="tabular-nums">{formatCentavos(split.userShareCentavos)}</td>
-				<td>{accountName}</td>
-				<td>{tagName}</td>
-				<td>{split.date}</td>
-				<td>{split.method}</td>
 				<td>
+					<div className="flex items-center gap-2 min-w-0">
+						{expanded ? (
+							<ChevronDown className="size-4 flex-shrink-0" />
+						) : (
+							<ChevronRight className="size-4 flex-shrink-0" />
+						)}
+						<div className="flex flex-col min-w-0">
+							<span className="text-sm truncate">{split.description}</span>
+							{subline && <span className="text-xs text-base-content/50 truncate">{subline}</span>}
+						</div>
+					</div>
+				</td>
+				<td className="text-right whitespace-nowrap">
+					<div className="text-sm font-medium tabular-nums">
+						{formatCentavos(split.totalCentavos)}
+					</div>
+					<div className="text-xs text-base-content/50 tabular-nums">
+						your share {formatCentavos(split.userShareCentavos)}
+					</div>
+				</td>
+				<td className="text-right whitespace-nowrap text-sm tabular-nums">
 					{split.settledCount}/{split.participantCount}
 				</td>
 			</tr>
 			{expanded && (
 				<tr>
-					<td colSpan={9}>
+					<td colSpan={3}>
 						<SplitRowExpansion
 							split={split}
 							loadParticipants={loadParticipants}

@@ -14,7 +14,7 @@ const split: SplitRow = {
 	tagName: "dates",
 	method: "equal",
 	date: "2026-04-26",
-	participantCount: 3,
+	participantCount: 2,
 	settledCount: 1,
 	participantNames: ["Alice", "Bob"],
 };

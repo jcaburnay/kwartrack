@@ -78,6 +78,7 @@ export function useDebtsAndSplits() {
 			tagName: null,
 			date: d.date,
 			description: d.description,
+			splitId: d.split_id,
 		}));
 
 		const splits: SplitRow[] = (splitsRes.data as unknown as SplitWithJoins[]).map((s) => ({
@@ -90,9 +91,9 @@ export function useDebtsAndSplits() {
 			tagName: "",
 			method: s.method,
 			date: s.date,
-			// +1 to include the user-the-payer (an implicit participant per
-			// spec §622's "{count}-way" wording).
-			participantCount: s.participants.length + 1,
+			// Count of non-payer participants (people who owe you for their share).
+			// The "{N}-way" wording adds +1 at the display site to include you.
+			participantCount: s.participants.length,
 			settledCount: s.debts.filter((d) => d.settled_centavos >= d.amount_centavos).length,
 			participantNames: s.participants.map((p) => p.person.name),
 		}));

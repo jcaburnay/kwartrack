@@ -87,7 +87,7 @@ export function SplitRowExpansion({
 				</table>
 			)}
 			<p className="text-xs text-base-content/60 text-right mt-2">
-				{split.participantCount}-way · {split.method} · {formatCentavos(pending)} pending ·{" "}
+				{split.participantCount + 1}-way · {split.method} · {formatCentavos(pending)} pending ·{" "}
 				{formatCentavos(settled)} settled
 			</p>
 		</div>

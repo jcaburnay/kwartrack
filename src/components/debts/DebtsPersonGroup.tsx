@@ -35,7 +35,7 @@ export function DebtsPersonGroup({
 	return (
 		<>
 			<tr className="bg-base-200">
-				<th colSpan={6}>
+				<th colSpan={3}>
 					<strong>{personName}</strong> — {netLabel}
 				</th>
 			</tr>

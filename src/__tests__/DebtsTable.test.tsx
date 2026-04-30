@@ -16,6 +16,7 @@ const debts: DebtRow[] = [
 		tagName: "foods",
 		date: "2026-04-14",
 		description: "lunch",
+		splitId: null,
 	},
 	{
 		id: "d2",
@@ -28,6 +29,7 @@ const debts: DebtRow[] = [
 		tagName: "foods",
 		date: "2026-04-18",
 		description: "Bali",
+		splitId: null,
 	},
 ];
 
