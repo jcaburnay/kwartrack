@@ -121,67 +121,71 @@ export function SplitForm({
 				/>
 			</label>
 
-			<label className="form-control">
-				<div className="label">
-					<span className="label-text">Total (₱)</span>
-				</div>
-				<input
-					type="number"
-					step="0.01"
-					min="0.01"
-					className="input input-bordered"
-					value={totalPesos}
-					onChange={(e) => setTotalPesos(Number(e.target.value))}
-				/>
-			</label>
+			<div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+				<label className="form-control">
+					<div className="label">
+						<span className="label-text">Total (₱)</span>
+					</div>
+					<input
+						type="number"
+						step="0.01"
+						min="0.01"
+						className="input input-bordered"
+						value={totalPesos}
+						onChange={(e) => setTotalPesos(Number(e.target.value))}
+					/>
+				</label>
 
-			<label className="form-control">
-				<div className="label">
-					<span className="label-text">Date</span>
-				</div>
-				<input
-					type="date"
-					className="input input-bordered"
-					value={date}
-					onChange={(e) => setDate(e.target.value)}
-				/>
-			</label>
+				<label className="form-control">
+					<div className="label">
+						<span className="label-text">Date</span>
+					</div>
+					<input
+						type="date"
+						className="input input-bordered"
+						value={date}
+						onChange={(e) => setDate(e.target.value)}
+					/>
+				</label>
+			</div>
 
-			<label className="form-control">
-				<div className="label">
-					<span className="label-text">Paid from</span>
-				</div>
-				<select
-					className="select select-bordered"
-					value={paidFromAccountId ?? ""}
-					onChange={(e) => setPaidFromAccountId(e.target.value || null)}
-				>
-					<option value="">Select…</option>
-					{pickableAccounts.map((a) => (
-						<option key={a.id} value={a.id}>
-							{a.name}
-						</option>
-					))}
-				</select>
-			</label>
+			<div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+				<label className="form-control">
+					<div className="label">
+						<span className="label-text">Paid from</span>
+					</div>
+					<select
+						className="select select-bordered"
+						value={paidFromAccountId ?? ""}
+						onChange={(e) => setPaidFromAccountId(e.target.value || null)}
+					>
+						<option value="">Select…</option>
+						{pickableAccounts.map((a) => (
+							<option key={a.id} value={a.id}>
+								{a.name}
+							</option>
+						))}
+					</select>
+				</label>
 
-			<label className="form-control">
-				<div className="label">
-					<span className="label-text">Tag</span>
-				</div>
-				<select
-					className="select select-bordered"
-					value={tagId ?? ""}
-					onChange={(e) => setTagId(e.target.value || null)}
-				>
-					<option value="">Select…</option>
-					{pickableTags.map((t) => (
-						<option key={t.id} value={t.id}>
-							{t.name}
-						</option>
-					))}
-				</select>
-			</label>
+				<label className="form-control">
+					<div className="label">
+						<span className="label-text">Tag</span>
+					</div>
+					<select
+						className="select select-bordered"
+						value={tagId ?? ""}
+						onChange={(e) => setTagId(e.target.value || null)}
+					>
+						<option value="">Select…</option>
+						{pickableTags.map((t) => (
+							<option key={t.id} value={t.id}>
+								{t.name}
+							</option>
+						))}
+					</select>
+				</label>
+			</div>
 
 			<SplitMethodPicker method={method} onChange={setMethod} />
 
@@ -205,7 +209,7 @@ export function SplitForm({
 
 			{error && <div className="alert alert-error text-sm">{error}</div>}
 			{submitError && <div className="alert alert-error text-sm">{submitError}</div>}
-			<div className="modal-action">
+			<div className="flex items-center justify-end gap-2 pt-2 mt-3">
 				<button type="button" className="btn btn-ghost" onClick={onCancel}>
 					Cancel
 				</button>

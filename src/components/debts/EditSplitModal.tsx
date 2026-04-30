@@ -5,6 +5,7 @@ import type { Account } from "../../utils/accountBalances";
 import { centavosToPesos } from "../../utils/currency";
 import type { SplitMethod } from "../../utils/splitMath";
 import type { SplitInput } from "../../utils/splitValidation";
+import { Modal } from "../ui/Modal";
 import { SplitForm, type SplitFormDefaults } from "./SplitForm";
 import type { ParticipantRow } from "./SplitParticipantList";
 
@@ -62,30 +63,20 @@ export function EditSplitModal({
 	}
 
 	return (
-		<div
-			className="modal modal-open"
-			role="dialog"
-			aria-modal="true"
-			aria-labelledby="edit-split-title"
-		>
-			<div className="modal-box max-w-lg">
-				<h3 id="edit-split-title" className="font-semibold text-lg mb-3">
-					Edit split
-				</h3>
-				<SplitForm
-					defaults={defaults}
-					persons={persons}
-					accounts={accounts}
-					tags={tags}
-					createPerson={createPerson}
-					submitLabel="Save"
-					submitError={submitError}
-					isSubmitting={isSubmitting}
-					onSubmit={handleSubmit}
-					onCancel={onCancel}
-				/>
-			</div>
-			<button type="button" className="modal-backdrop" onClick={onCancel} aria-label="Dismiss" />
-		</div>
+		<Modal onClose={onCancel} size="lg">
+			<Modal.Header title="Edit split" />
+			<SplitForm
+				defaults={defaults}
+				persons={persons}
+				accounts={accounts}
+				tags={tags}
+				createPerson={createPerson}
+				submitLabel="Save"
+				submitError={submitError}
+				isSubmitting={isSubmitting}
+				onSubmit={handleSubmit}
+				onCancel={onCancel}
+			/>
+		</Modal>
 	);
 }

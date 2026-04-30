@@ -5,6 +5,7 @@ import type { Tag } from "../../hooks/useTags";
 import type { Account } from "../../utils/accountBalances";
 import { pesosToCentavos } from "../../utils/currency";
 import { type DebtInput, validateDebt } from "../../utils/debtValidation";
+import { Modal } from "../ui/Modal";
 import { PersonPicker } from "./PersonPicker";
 
 type Props = {
@@ -36,7 +37,7 @@ export function NewDebtModal({
 	const [error, setError] = useState<string | null>(null);
 	const [isSubmitting, setIsSubmitting] = useState(false);
 
-	const accountLabel = direction === "loaned" ? "Paid from" : "Paid to";
+	const accountLabel = direction === "loaned" ? "Paid from (optional)" : "Paid to (optional)";
 	const pickableAccounts = accounts.filter((a) => !a.is_archived);
 	const pickableTags = tags.filter(
 		(t) => !t.is_system && (t.type === "expense" || t.type === "income"),
@@ -65,48 +66,41 @@ export function NewDebtModal({
 	}
 
 	return (
-		<div
-			className="modal modal-open"
-			role="dialog"
-			aria-modal="true"
-			aria-labelledby="new-debt-title"
-		>
-			<div className="modal-box max-w-md">
-				<h3 id="new-debt-title" className="font-semibold text-lg mb-3">
-					New debt
-				</h3>
-				<form onSubmit={handleSubmit} className="flex flex-col gap-3">
-					<PersonPicker
-						persons={persons}
-						value={personId}
-						onChange={setPersonId}
-						onCreate={createPerson}
-					/>
+		<Modal onClose={onCancel} size="md">
+			<Modal.Header title="New debt" />
+			<form onSubmit={handleSubmit} className="flex flex-col gap-3">
+				<PersonPicker
+					persons={persons}
+					value={personId}
+					onChange={setPersonId}
+					onCreate={createPerson}
+				/>
 
-					<div className="form-control">
-						<div className="label">
-							<span className="label-text">Direction</span>
-						</div>
-						<div role="tablist" className="tabs tabs-box">
-							<button
-								type="button"
-								role="tab"
-								className={`tab ${direction === "loaned" ? "tab-active" : ""}`}
-								onClick={() => setDirection("loaned")}
-							>
-								They owe me
-							</button>
-							<button
-								type="button"
-								role="tab"
-								className={`tab ${direction === "owed" ? "tab-active" : ""}`}
-								onClick={() => setDirection("owed")}
-							>
-								I owe them
-							</button>
-						</div>
+				<div className="form-control">
+					<div className="label">
+						<span className="label-text">Direction</span>
 					</div>
+					<div role="tablist" className="tabs tabs-box">
+						<button
+							type="button"
+							role="tab"
+							className={`tab ${direction === "loaned" ? "tab-active" : ""}`}
+							onClick={() => setDirection("loaned")}
+						>
+							They owe me
+						</button>
+						<button
+							type="button"
+							role="tab"
+							className={`tab ${direction === "owed" ? "tab-active" : ""}`}
+							onClick={() => setDirection("owed")}
+						>
+							I owe them
+						</button>
+					</div>
+				</div>
 
+				<div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
 					<label className="form-control">
 						<div className="label">
 							<span className="label-text">Amount (₱)</span>
@@ -132,69 +126,69 @@ export function NewDebtModal({
 							onChange={(e) => setDate(e.target.value)}
 						/>
 					</label>
+				</div>
 
+				<label className="form-control">
+					<div className="label">
+						<span className="label-text">{accountLabel}</span>
+					</div>
+					<select
+						className="select select-bordered"
+						value={paidAccountId ?? ""}
+						onChange={(e) => setPaidAccountId(e.target.value || null)}
+					>
+						<option value="">Data-only (no tracked account)</option>
+						{pickableAccounts.map((a) => (
+							<option key={a.id} value={a.id}>
+								{a.name}
+							</option>
+						))}
+					</select>
+				</label>
+
+				{paidAccountId && (
 					<label className="form-control">
 						<div className="label">
-							<span className="label-text">Description (optional)</span>
-						</div>
-						<input
-							type="text"
-							className="input input-bordered"
-							value={description}
-							onChange={(e) => setDescription(e.target.value)}
-						/>
-					</label>
-
-					<label className="form-control">
-						<div className="label">
-							<span className="label-text">{accountLabel} (optional)</span>
+							<span className="label-text">Tag (required)</span>
 						</div>
 						<select
 							className="select select-bordered"
-							value={paidAccountId ?? ""}
-							onChange={(e) => setPaidAccountId(e.target.value || null)}
+							value={tagId ?? ""}
+							onChange={(e) => setTagId(e.target.value || null)}
 						>
-							<option value="">Data-only (no tracked account)</option>
-							{pickableAccounts.map((a) => (
-								<option key={a.id} value={a.id}>
-									{a.name}
+							<option value="">Select…</option>
+							{pickableTags.map((t) => (
+								<option key={t.id} value={t.id}>
+									{t.name}
 								</option>
 							))}
 						</select>
 					</label>
+				)}
 
-					{paidAccountId && (
-						<label className="form-control">
-							<div className="label">
-								<span className="label-text">Tag (required)</span>
-							</div>
-							<select
-								className="select select-bordered"
-								value={tagId ?? ""}
-								onChange={(e) => setTagId(e.target.value || null)}
-							>
-								<option value="">Select…</option>
-								{pickableTags.map((t) => (
-									<option key={t.id} value={t.id}>
-										{t.name}
-									</option>
-								))}
-							</select>
-						</label>
-					)}
-
-					{error && <div className="alert alert-error text-sm">{error}</div>}
-					<div className="modal-action">
-						<button type="button" className="btn btn-ghost" onClick={onCancel}>
-							Cancel
-						</button>
-						<button type="submit" className="btn btn-primary" disabled={isSubmitting}>
-							{isSubmitting ? <span className="loading loading-spinner loading-sm" /> : "Create"}
-						</button>
+				<label className="form-control">
+					<div className="label">
+						<span className="label-text">Description (optional)</span>
 					</div>
-				</form>
-			</div>
-			<button type="button" className="modal-backdrop" onClick={onCancel} aria-label="Dismiss" />
-		</div>
+					<input
+						type="text"
+						className="input input-bordered"
+						value={description}
+						onChange={(e) => setDescription(e.target.value)}
+					/>
+				</label>
+
+				{error && <div className="alert alert-error text-sm">{error}</div>}
+
+				<div className="flex items-center justify-end gap-2 pt-2 mt-3">
+					<button type="button" className="btn btn-ghost" onClick={onCancel}>
+						Cancel
+					</button>
+					<button type="submit" className="btn btn-primary" disabled={isSubmitting}>
+						{isSubmitting ? <span className="loading loading-spinner loading-sm" /> : "Create"}
+					</button>
+				</div>
+			</form>
+		</Modal>
 	);
 }

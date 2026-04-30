@@ -2,6 +2,7 @@ import type React from "react";
 import { useState } from "react";
 import type { Account } from "../../utils/accountBalances";
 import { centavosToPesos, formatCentavos, pesosToCentavos } from "../../utils/currency";
+import { Modal } from "../ui/Modal";
 
 type Props = {
 	personName: string;
@@ -38,6 +39,8 @@ export function SettleModal({
 	const verb = direction === "loaned" ? "owes you" : "you owe";
 	const accountLabel = direction === "loaned" ? "Paid to" : "Paid from";
 
+	const subtitle = `${personName} ${verb} ${formatCentavos(amountCentavos)} · ${formatCentavos(settledCentavos)} already settled · ${formatCentavos(remaining)} left`;
+
 	async function handleSubmit(e: React.FormEvent) {
 		e.preventDefault();
 		e.stopPropagation();
@@ -55,21 +58,10 @@ export function SettleModal({
 	const pickable = accounts.filter((a) => !a.is_archived);
 
 	return (
-		<div
-			className="modal modal-open"
-			role="dialog"
-			aria-modal="true"
-			aria-labelledby="settle-debt-title"
-		>
-			<div className="modal-box max-w-md">
-				<h3 id="settle-debt-title" className="font-semibold text-lg mb-3">
-					Settle debt
-				</h3>
-				<p className="text-sm text-base-content/70 mb-3">
-					{personName} {verb} {formatCentavos(amountCentavos)} · {formatCentavos(settledCentavos)}{" "}
-					already settled · {formatCentavos(remaining)} left
-				</p>
-				<form onSubmit={handleSubmit} className="flex flex-col gap-3">
+		<Modal onClose={onCancel} size="md">
+			<Modal.Header title="Settle debt" subtitle={subtitle} />
+			<form onSubmit={handleSubmit} className="flex flex-col gap-3">
+				<div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
 					<label className="form-control">
 						<div className="label flex items-center justify-between">
 							<span className="label-text">Amount (₱)</span>
@@ -101,39 +93,38 @@ export function SettleModal({
 							onChange={(e) => setDate(e.target.value)}
 						/>
 					</label>
-					<label className="form-control">
-						<div className="label">
-							<span className="label-text">{accountLabel}</span>
-						</div>
-						<select
-							className="select select-bordered"
-							value={paidAccountId}
-							onChange={(e) => setPaidAccountId(e.target.value)}
-						>
-							<option value="">Select account…</option>
-							{pickable.map((a) => (
-								<option key={a.id} value={a.id}>
-									{a.name}
-								</option>
-							))}
-						</select>
-					</label>
-					{error && <div className="alert alert-error text-sm">{error}</div>}
-					<div className="modal-action">
-						<button type="button" className="btn btn-ghost" onClick={onCancel}>
-							Cancel
-						</button>
-						<button type="submit" className="btn btn-primary" disabled={isSubmitting}>
-							{isSubmitting ? (
-								<span className="loading loading-spinner loading-sm" />
-							) : (
-								"Record settlement"
-							)}
-						</button>
+				</div>
+				<label className="form-control">
+					<div className="label">
+						<span className="label-text">{accountLabel}</span>
 					</div>
-				</form>
-			</div>
-			<button type="button" className="modal-backdrop" onClick={onCancel} aria-label="Dismiss" />
-		</div>
+					<select
+						className="select select-bordered"
+						value={paidAccountId}
+						onChange={(e) => setPaidAccountId(e.target.value)}
+					>
+						<option value="">Select account…</option>
+						{pickable.map((a) => (
+							<option key={a.id} value={a.id}>
+								{a.name}
+							</option>
+						))}
+					</select>
+				</label>
+				{error && <div className="alert alert-error text-sm">{error}</div>}
+				<div className="flex items-center justify-end gap-2 pt-2 mt-3">
+					<button type="button" className="btn btn-ghost" onClick={onCancel}>
+						Cancel
+					</button>
+					<button type="submit" className="btn btn-primary" disabled={isSubmitting}>
+						{isSubmitting ? (
+							<span className="loading loading-spinner loading-sm" />
+						) : (
+							"Record settlement"
+						)}
+					</button>
+				</div>
+			</form>
+		</Modal>
 	);
 }
