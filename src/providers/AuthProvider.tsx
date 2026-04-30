@@ -1,5 +1,6 @@
 import type { Session, User } from "@supabase/supabase-js";
 import { createContext, type ReactNode, useCallback, useContext, useEffect, useState } from "react";
+import { subscribeTransactionRealtime } from "../hooks/useTransactionRealtime";
 import { supabase } from "../lib/supabase";
 import type { Database } from "../types/supabase";
 
@@ -58,6 +59,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 			subscription.subscription.unsubscribe();
 		};
 	}, [loadProfile]);
+
+	const userId = session?.user.id;
+	useEffect(() => {
+		if (!userId) return;
+		return subscribeTransactionRealtime(userId);
+	}, [userId]);
 
 	const signOut = useCallback(async () => {
 		await supabase.auth.signOut();

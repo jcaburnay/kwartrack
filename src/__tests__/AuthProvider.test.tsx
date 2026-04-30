@@ -19,6 +19,15 @@ const from = vi.fn((_table: string) => ({
 	}),
 }));
 
+const channel = vi.fn((_name: string) => {
+	const ch: Record<string, unknown> = {
+		on: () => ch,
+		subscribe: () => ch,
+	};
+	return ch;
+});
+const removeChannel = vi.fn((_ch: unknown) => {});
+
 vi.mock("../lib/supabase", () => ({
 	supabase: {
 		auth: {
@@ -30,6 +39,8 @@ vi.mock("../lib/supabase", () => ({
 			},
 		},
 		from: (table: string) => from(table),
+		channel: (name: string) => channel(name),
+		removeChannel: (ch: unknown) => removeChannel(ch),
 	},
 }));
 
@@ -62,6 +73,8 @@ describe("AuthProvider", () => {
 		unsubscribe.mockReset();
 		maybeSingle.mockReset();
 		from.mockClear();
+		channel.mockClear();
+		removeChannel.mockClear();
 		capturedCallback = null;
 	});
 
