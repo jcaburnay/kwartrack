@@ -39,11 +39,11 @@ describe("PillToggle", () => {
 		expect(onChange).toHaveBeenCalledWith("expense");
 	});
 
-	it("renders inside a join container with optional aria-label and role=group", () => {
+	it("renders inside a join container with optional aria-label and role=toolbar", () => {
 		const { container } = render(
 			<PillToggle ariaLabel="Type filter" value={null} options={OPTIONS} onChange={vi.fn()} />,
 		);
-		const group = container.querySelector('[role="group"]');
+		const group = container.querySelector('[role="toolbar"]');
 		expect(group).not.toBeNull();
 		expect(group).toHaveAttribute("aria-label", "Type filter");
 		expect(group?.className).toMatch(/join/);

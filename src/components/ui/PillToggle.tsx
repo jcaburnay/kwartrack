@@ -19,12 +19,12 @@ type Props<T> = {
 
 export function PillToggle<T>({ value, options, onChange, ariaLabel }: Props<T>) {
 	return (
-		<div role="group" aria-label={ariaLabel} className="join">
-			{options.map((opt, i) => {
+		<div role="toolbar" aria-label={ariaLabel} className="join">
+			{options.map((opt) => {
 				const active = value === opt.value;
 				return (
 					<button
-						key={i}
+						key={opt.label}
 						type="button"
 						aria-pressed={active}
 						className={`btn btn-sm join-item rounded-none [&:first-child]:rounded-l-sm [&:last-child]:rounded-r-sm border border-base-content/40 [&:not(:first-child)]:-ml-px ${active ? "btn-primary" : "btn-ghost"}`}
