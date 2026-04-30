@@ -1,4 +1,3 @@
-import { Plus } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useAccounts } from "../../hooks/useAccounts";
 import { useRecurrings } from "../../hooks/useRecurrings";
@@ -96,20 +95,13 @@ export function RecurringPanel({ pendingModal, onPendingModalConsumed }: Props) 
 
 	return (
 		<div className="bg-base-100 border border-base-300 h-full flex flex-col">
-			<div className="h-9 flex items-center justify-between px-4 border-b border-base-300">
+			<div className="h-9 flex items-center px-4 border-b border-base-300">
 				<div className="flex items-center gap-2 text-xs uppercase tracking-wide font-semibold text-base-content/50">
 					<span>Recurring</span>
 					<span className="text-base-content/40 normal-case tracking-normal">
 						· {summaryTokens.join(" · ")}
 					</span>
 				</div>
-				<button
-					type="button"
-					className="btn btn-primary btn-sm rounded-sm"
-					onClick={() => setCreating(true)}
-				>
-					<Plus className="w-3.5 h-3.5" /> New
-				</button>
 			</div>
 
 			<div className="flex-1 overflow-y-auto flex flex-col">

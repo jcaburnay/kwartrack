@@ -235,13 +235,6 @@ export function AccountsPanel({ pendingModal, onPendingModalConsumed }: Props = 
 							</label>
 							<button
 								type="button"
-								className="btn btn-primary btn-xs"
-								onClick={() => setShowNewAccount(true)}
-							>
-								+ New
-							</button>
-							<button
-								type="button"
 								aria-label="Fold accounts"
 								className="btn btn-ghost btn-xs btn-circle"
 								onClick={() => setAccountsFolded(true)}
@@ -336,13 +329,6 @@ export function AccountsPanel({ pendingModal, onPendingModalConsumed }: Props = 
 							)}
 						</div>
 						<div className="flex items-center gap-1.5">
-							<button
-								type="button"
-								className="btn btn-primary btn-xs"
-								onClick={() => openNewTransaction({})}
-							>
-								+ New
-							</button>
 							<button
 								type="button"
 								aria-label="Fold transactions"
