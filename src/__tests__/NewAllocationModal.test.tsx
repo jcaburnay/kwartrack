@@ -28,7 +28,7 @@ describe("NewAllocationModal", () => {
 			/>,
 		);
 		fireEvent.change(screen.getByLabelText(/Amount/i), { target: { value: "0" } });
-		fireEvent.click(screen.getByRole("button", { name: /^Add$/i }));
+		fireEvent.click(screen.getByRole("button", { name: /^Create$/i }));
 		expect(onUpsert).not.toHaveBeenCalled();
 		expect(await screen.findByText(/Enter an amount greater than 0/i)).toBeInTheDocument();
 	});
@@ -46,7 +46,7 @@ describe("NewAllocationModal", () => {
 			/>,
 		);
 		fireEvent.change(screen.getByLabelText(/Amount/i), { target: { value: "6000" } });
-		fireEvent.click(screen.getByRole("button", { name: /^Add$/i }));
+		fireEvent.click(screen.getByRole("button", { name: /^Create$/i }));
 		expect(onUpsert).not.toHaveBeenCalled();
 		expect(await screen.findByText(/Tag allocations total .* but Overall is/i)).toBeInTheDocument();
 	});
@@ -65,7 +65,7 @@ describe("NewAllocationModal", () => {
 			/>,
 		);
 		fireEvent.change(screen.getByLabelText(/Amount/i), { target: { value: "1500" } });
-		fireEvent.click(screen.getByRole("button", { name: /^Add$/i }));
+		fireEvent.click(screen.getByRole("button", { name: /^Create$/i }));
 		await screen.findByRole("dialog"); // settle async state
 		expect(onUpsert).toHaveBeenCalledWith("t-foods", 1500_00);
 		expect(onSaved).toHaveBeenCalled();

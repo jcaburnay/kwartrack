@@ -182,39 +182,41 @@ export function RecurringForm({
 				</div>
 			</div>
 
-			<label className="form-control">
-				<div className="label">
-					<span className="label-text">Amount (₱)</span>
-				</div>
-				<input
-					type="number"
-					step="0.01"
-					min="0"
-					className="input input-bordered"
-					{...register("amountPesos", {
-						valueAsNumber: true,
-						required: "Amount is required",
-						min: { value: 0.01, message: "Amount must be greater than 0" },
-					})}
-				/>
-				{errors.amountPesos && (
+			<div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+				<label className="form-control">
 					<div className="label">
-						<span className="label-text-alt text-error">{errors.amountPesos.message}</span>
+						<span className="label-text">Amount (₱)</span>
 					</div>
-				)}
-			</label>
+					<input
+						type="number"
+						step="0.01"
+						min="0"
+						className="input input-bordered"
+						{...register("amountPesos", {
+							valueAsNumber: true,
+							required: "Amount is required",
+							min: { value: 0.01, message: "Amount must be greater than 0" },
+						})}
+					/>
+					{errors.amountPesos && (
+						<div className="label">
+							<span className="label-text-alt text-error">{errors.amountPesos.message}</span>
+						</div>
+					)}
+				</label>
 
-			<TagPickerField
-				tags={tags}
-				transactionType={type}
-				value={tagId}
-				onChange={(id) => setValue("tagId", id, { shouldDirty: true })}
-				createInline={createTag}
-				required={type !== "transfer"}
-				errorMessage={
-					type !== "transfer" && tagId == null && errors.tagId ? "Tag is required" : undefined
-				}
-			/>
+				<TagPickerField
+					tags={tags}
+					transactionType={type}
+					value={tagId}
+					onChange={(id) => setValue("tagId", id, { shouldDirty: true })}
+					createInline={createTag}
+					required={type !== "transfer"}
+					errorMessage={
+						type !== "transfer" && tagId == null && errors.tagId ? "Tag is required" : undefined
+					}
+				/>
+			</div>
 
 			{showFrom && (
 				<label className="form-control">
@@ -337,7 +339,7 @@ export function RecurringForm({
 
 			{submitError && <div className="alert alert-error text-sm">{submitError}</div>}
 
-			<div className="modal-action">
+			<div className="flex items-center justify-end gap-2 pt-2 mt-3">
 				<button type="button" className="btn btn-ghost" onClick={onCancel}>
 					Cancel
 				</button>

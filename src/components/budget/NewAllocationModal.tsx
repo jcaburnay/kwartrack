@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { Tag } from "../../hooks/useTags";
 import { formatCentavos, pesosToCentavos } from "../../utils/currency";
+import { Modal } from "../ui/Modal";
 
 type Props = {
 	candidateTags: readonly Tag[];
@@ -53,24 +54,17 @@ export function NewAllocationModal({
 	}
 
 	return (
-		<div
-			className="modal modal-open"
-			role="dialog"
-			aria-modal="true"
-			aria-labelledby="new-allocation-title"
-		>
-			<div className="modal-box max-w-md">
-				<h3 id="new-allocation-title" className="font-semibold text-lg mb-4">
-					Add allocation
-				</h3>
-				<div className="flex flex-col gap-3">
+		<Modal onClose={onCancel} size="md">
+			<Modal.Header title="New allocation" />
+			<Modal.Body>
+				<div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
 					<label className="form-control">
-						<div className="label py-0">
-							<span className="label-text text-xs">Tag</span>
+						<div className="label">
+							<span className="label-text">Tag</span>
 						</div>
 						<select
 							aria-label="Tag"
-							className="select select-bordered select-sm"
+							className="select select-bordered"
 							value={tagId}
 							onChange={(e) => setTagId(e.target.value)}
 						>
@@ -83,42 +77,31 @@ export function NewAllocationModal({
 						</select>
 					</label>
 					<label className="form-control">
-						<div className="label py-0">
-							<span className="label-text text-xs">Amount (₱)</span>
+						<div className="label">
+							<span className="label-text">Amount (₱)</span>
 						</div>
 						<input
 							aria-label="Amount"
 							type="number"
 							min="0"
 							step="0.01"
-							className="input input-bordered input-sm"
+							className="input input-bordered"
 							value={draftPesos}
 							onChange={(e) => setDraftPesos(e.target.value)}
 							autoFocus
 						/>
 					</label>
-					{error && <div className="alert alert-error text-sm">{error}</div>}
-					<div className="flex justify-end gap-2 pt-1">
-						<button type="button" className="btn btn-sm btn-ghost" onClick={onCancel}>
-							Cancel
-						</button>
-						<button
-							type="button"
-							className="btn btn-sm btn-primary"
-							onClick={handleAdd}
-							disabled={saving}
-						>
-							{saving ? <span className="loading loading-spinner loading-xs" /> : "Add"}
-						</button>
-					</div>
 				</div>
-			</div>
-			<button
-				type="button"
-				className="modal-backdrop"
-				onClick={onCancel}
-				aria-label="Dismiss modal"
-			/>
-		</div>
+				{error && <div className="alert alert-error text-sm">{error}</div>}
+			</Modal.Body>
+			<Modal.Footer>
+				<button type="button" className="btn btn-ghost" onClick={onCancel}>
+					Cancel
+				</button>
+				<button type="button" className="btn btn-primary" onClick={handleAdd} disabled={saving}>
+					{saving ? <span className="loading loading-spinner loading-sm" /> : "Create"}
+				</button>
+			</Modal.Footer>
+		</Modal>
 	);
 }

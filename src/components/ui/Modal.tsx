@@ -78,7 +78,12 @@ function ModalRoot({ onClose, size = "md", children, labelledBy, ariaLabel }: Mo
 			<div ref={boxRef} className={`modal-box ${sizeClass[size]}`}>
 				<ModalContext.Provider value={{ titleId }}>{children}</ModalContext.Provider>
 			</div>
-			<button type="button" className="modal-backdrop" onClick={onClose} aria-label="Dismiss" />
+			<button
+				type="button"
+				className="modal-backdrop"
+				onClick={onClose}
+				aria-label="Dismiss modal"
+			/>
 		</div>,
 		document.body,
 	);

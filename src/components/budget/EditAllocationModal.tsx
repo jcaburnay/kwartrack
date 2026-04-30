@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { BudgetAllocation } from "../../hooks/useBudget";
 import { centavosToPesos, formatCentavos, pesosToCentavos } from "../../utils/currency";
+import { Modal } from "../ui/Modal";
 
 type Props = {
 	allocation: BudgetAllocation;
@@ -72,65 +73,47 @@ export function EditAllocationModal({
 	}
 
 	return (
-		<div
-			className="modal modal-open"
-			role="dialog"
-			aria-modal="true"
-			aria-labelledby="edit-allocation-title"
-		>
-			<div className="modal-box max-w-md">
-				<h3 id="edit-allocation-title" className="font-semibold text-lg mb-1">
-					Edit allocation
-				</h3>
-				<p className="text-xs text-base-content/60 mb-4">{tagName}</p>
-				<div className="flex flex-col gap-3">
-					<label className="form-control">
-						<div className="label py-0">
-							<span className="label-text text-xs">Amount (₱)</span>
-						</div>
-						<input
-							aria-label="Amount"
-							type="number"
-							min="0"
-							step="0.01"
-							className="input input-bordered input-sm"
-							value={draftPesos}
-							onChange={(e) => setDraftPesos(e.target.value)}
-							autoFocus
-						/>
-					</label>
-					{error && <div className="alert alert-error text-sm">{error}</div>}
-					<div className="flex justify-between gap-2 pt-1">
-						<button
-							type="button"
-							className="btn btn-sm btn-ghost text-error"
-							onClick={runDelete}
-							disabled={deleting || saving}
-						>
-							{deleting ? <span className="loading loading-spinner loading-xs" /> : "Delete"}
-						</button>
-						<div className="flex gap-2">
-							<button type="button" className="btn btn-sm btn-ghost" onClick={onCancel}>
-								Cancel
-							</button>
-							<button
-								type="button"
-								className="btn btn-sm btn-primary"
-								onClick={handleSave}
-								disabled={saving || deleting}
-							>
-								{saving ? <span className="loading loading-spinner loading-xs" /> : "Save"}
-							</button>
-						</div>
+		<Modal onClose={onCancel} size="md">
+			<Modal.Header title="Edit allocation" subtitle={tagName} />
+			<Modal.Body>
+				<label className="form-control">
+					<div className="label">
+						<span className="label-text">Amount (₱)</span>
 					</div>
-				</div>
-			</div>
-			<button
-				type="button"
-				className="modal-backdrop"
-				onClick={onCancel}
-				aria-label="Dismiss modal"
-			/>
-		</div>
+					<input
+						aria-label="Amount"
+						type="number"
+						min="0"
+						step="0.01"
+						className="input input-bordered"
+						value={draftPesos}
+						onChange={(e) => setDraftPesos(e.target.value)}
+						autoFocus
+					/>
+				</label>
+				{error && <div className="alert alert-error text-sm">{error}</div>}
+			</Modal.Body>
+			<Modal.Footer>
+				<button
+					type="button"
+					className="btn btn-ghost text-error mr-auto"
+					onClick={runDelete}
+					disabled={deleting || saving}
+				>
+					{deleting ? <span className="loading loading-spinner loading-sm" /> : "Delete"}
+				</button>
+				<button type="button" className="btn btn-ghost" onClick={onCancel}>
+					Cancel
+				</button>
+				<button
+					type="button"
+					className="btn btn-primary"
+					onClick={handleSave}
+					disabled={saving || deleting}
+				>
+					{saving ? <span className="loading loading-spinner loading-sm" /> : "Save"}
+				</button>
+			</Modal.Footer>
+		</Modal>
 	);
 }
