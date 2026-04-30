@@ -23,6 +23,7 @@ export type DebtsPending = "new-debt" | "new-split" | null;
 type Props = {
 	pendingModal: DebtsPending;
 	onPendingModalConsumed: () => void;
+	onCrossFilterSplit: (filter: { id: string; label: string }) => void;
 };
 
 type EditSplitSnapshot = {
@@ -99,7 +100,7 @@ function EditSplitModalLoader(props: {
 	);
 }
 
-export function DebtsPanel({ pendingModal, onPendingModalConsumed }: Props) {
+export function DebtsPanel({ pendingModal, onPendingModalConsumed, onCrossFilterSplit }: Props) {
 	const {
 		debts,
 		splits,
@@ -297,6 +298,14 @@ export function DebtsPanel({ pendingModal, onPendingModalConsumed }: Props) {
 											}
 											loadParticipants={splitParticipants}
 											onSettleParticipant={(debtId) => setSettlingDebtId(debtId)}
+											onCrossFilterSplit={(splitId) => {
+												const s = splits.find((x) => x.id === splitId);
+												if (!s) return;
+												onCrossFilterSplit({
+													id: splitId,
+													label: s.description?.trim() || "split",
+												});
+											}}
 											onEditSplit={setEditingSplitId}
 											onDeleteSplit={handleDeleteSplit}
 										/>

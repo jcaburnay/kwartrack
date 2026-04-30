@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router";
 import { Header } from "../components/Header";
-import { AccountsPanel } from "../components/panels/AccountsPanel";
+import { AccountsPanel, type CrossSplitFilter } from "../components/panels/AccountsPanel";
 import { BudgetPanel } from "../components/panels/BudgetPanel";
 import { DebtsPanel, type DebtsPending } from "../components/panels/DebtsPanel";
 import { NetWorthPanel } from "../components/panels/NetWorthPanel";
@@ -22,6 +22,7 @@ export function JigsawPage() {
 	const [accountsPending, setAccountsPending] = useState<AccountsPendingModal>(null);
 	const [recurringPending, setRecurringPending] = useState<RecurringPending>(null);
 	const [debtsPending, setDebtsPending] = useState<DebtsPending>(null);
+	const [crossSplitFilter, setCrossSplitFilter] = useState<CrossSplitFilter>(null);
 	const [params, setParams] = useSearchParams();
 
 	useEffect(() => {
@@ -69,6 +70,8 @@ export function JigsawPage() {
 						<AccountsPanel
 							pendingModal={accountsPending}
 							onPendingModalConsumed={() => setAccountsPending(null)}
+							crossSplitFilter={crossSplitFilter}
+							onClearCrossSplitFilter={() => setCrossSplitFilter(null)}
 						/>
 					</div>
 					<div id="panel-recurring" className="jigsaw-recurring">
@@ -84,6 +87,10 @@ export function JigsawPage() {
 						<DebtsPanel
 							pendingModal={debtsPending}
 							onPendingModalConsumed={() => setDebtsPending(null)}
+							onCrossFilterSplit={(filter) => {
+								setCrossSplitFilter(filter);
+								document.getElementById("panel-accounts")?.scrollIntoView({ behavior: "smooth" });
+							}}
 						/>
 					</div>
 				</div>

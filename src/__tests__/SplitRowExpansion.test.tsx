@@ -44,6 +44,7 @@ describe("SplitRowExpansion", () => {
 						},
 					]}
 					onSettleParticipant={() => {}}
+					onCrossFilter={() => {}}
 					onEdit={() => {}}
 					onDelete={() => {}}
 				/>

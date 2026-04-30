@@ -12,6 +12,7 @@ type Props = {
 	onToggleExpand: (splitId: string) => void;
 	loadParticipants: (splitId: string) => Promise<ExpandedSplitParticipant[]>;
 	onSettleParticipant: (debtId: string) => void;
+	onCrossFilterSplit: (splitId: string) => void;
 	onEditSplit: (splitId: string) => void;
 	onDeleteSplit: (splitId: string) => void;
 };
@@ -24,6 +25,7 @@ export function SplitsTable({
 	onToggleExpand,
 	loadParticipants,
 	onSettleParticipant,
+	onCrossFilterSplit,
 	onEditSplit,
 	onDeleteSplit,
 }: Props) {
@@ -50,6 +52,7 @@ export function SplitsTable({
 							onToggle={() => onToggleExpand(s.id)}
 							loadParticipants={loadParticipants}
 							onSettleParticipant={onSettleParticipant}
+							onCrossFilter={() => onCrossFilterSplit(s.id)}
 							onEdit={() => onEditSplit(s.id)}
 							onDelete={() => onDeleteSplit(s.id)}
 						/>

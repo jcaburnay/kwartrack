@@ -37,12 +37,21 @@ const DEFAULT_DATE_RANGE: DateRangeValue = {
 
 type PendingModal = "new-transaction" | "new-account" | null;
 
+export type CrossSplitFilter = { id: string; label: string } | null;
+
 type Props = {
 	pendingModal?: PendingModal;
 	onPendingModalConsumed?: () => void;
+	crossSplitFilter?: CrossSplitFilter;
+	onClearCrossSplitFilter?: () => void;
 };
 
-export function AccountsPanel({ pendingModal, onPendingModalConsumed }: Props = {}) {
+export function AccountsPanel({
+	pendingModal,
+	onPendingModalConsumed,
+	crossSplitFilter,
+	onClearCrossSplitFilter,
+}: Props = {}) {
 	const { profile } = useAuth();
 	const { accounts, isLoading: aLoading, refetch: refetchAccounts } = useAccounts();
 	const { groups, refetch: refetchGroups } = useAccountGroups();
@@ -90,12 +99,13 @@ export function AccountsPanel({ pendingModal, onPendingModalConsumed }: Props = 
 	}, [tags]);
 
 	const effectiveFilters: TransactionFilters = useMemo(() => {
+		const splitId = crossSplitFilter?.id ?? null;
 		if (selection.kind === "account")
-			return { ...filters, accountId: selection.account.id, groupId: null };
+			return { ...filters, accountId: selection.account.id, groupId: null, splitId };
 		if (selection.kind === "group")
-			return { ...filters, groupId: selection.group.id, accountId: null };
-		return filters;
-	}, [selection, filters]);
+			return { ...filters, groupId: selection.group.id, accountId: null, splitId };
+		return { ...filters, splitId };
+	}, [selection, filters, crossSplitFilter]);
 
 	const filteredTransactions = useMemo(
 		() =>
@@ -139,11 +149,12 @@ export function AccountsPanel({ pendingModal, onPendingModalConsumed }: Props = 
 
 	const visibleAccountsCount = accounts.filter((a) => !a.is_archived).length;
 
-	const crossFilterChip =
-		selection.kind === "account"
-			? { label: selection.account.name }
+	const crossFilterChip = crossSplitFilter
+		? { label: crossSplitFilter.label, onClear: onClearCrossSplitFilter ?? (() => {}) }
+		: selection.kind === "account"
+			? { label: selection.account.name, onClear: clear }
 			: selection.kind === "group"
-				? { label: selection.group.name }
+				? { label: selection.group.name, onClear: clear }
 				: null;
 
 	const rightPaneProps = {
@@ -320,7 +331,7 @@ export function AccountsPanel({ pendingModal, onPendingModalConsumed }: Props = 
 											type="button"
 											aria-label="Clear selection"
 											className="hover:text-error"
-											onClick={clear}
+											onClick={crossFilterChip.onClear}
 										>
 											<X className="size-3" />
 										</button>

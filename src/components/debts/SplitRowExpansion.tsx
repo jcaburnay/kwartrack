@@ -1,6 +1,5 @@
 import { ExternalLink } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Link } from "react-router";
 import type { ExpandedSplitParticipant } from "../../hooks/useDebtsAndSplits";
 import { formatCentavos } from "../../utils/currency";
 import type { SplitRow as SplitRowType } from "../../utils/splitFilters";
@@ -10,6 +9,7 @@ type Props = {
 	split: SplitRowType;
 	loadParticipants: (splitId: string) => Promise<ExpandedSplitParticipant[]>;
 	onSettleParticipant: (debtId: string) => void;
+	onCrossFilter: () => void;
 	onEdit: () => void;
 	onDelete: () => void;
 };
@@ -18,6 +18,7 @@ export function SplitRowExpansion({
 	split,
 	loadParticipants,
 	onSettleParticipant,
+	onCrossFilter,
 	onEdit,
 	onDelete,
 }: Props) {
@@ -43,14 +44,15 @@ export function SplitRowExpansion({
 	return (
 		<div className="bg-base-200 p-3 rounded-md">
 			<div className="flex justify-end gap-1 mb-2">
-				<Link
-					to={`/accounts?split=${split.id}`}
+				<button
+					type="button"
 					className="btn btn-xs btn-ghost"
+					onClick={onCrossFilter}
 					aria-label="View transactions for this split"
 				>
 					<ExternalLink className="size-3" />
 					Transactions
-				</Link>
+				</button>
 				<button type="button" className="btn btn-xs btn-ghost" onClick={onEdit}>
 					Edit
 				</button>

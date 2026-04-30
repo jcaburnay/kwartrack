@@ -12,6 +12,7 @@ type Props = {
 	onToggle: () => void;
 	loadParticipants: (splitId: string) => Promise<ExpandedSplitParticipant[]>;
 	onSettleParticipant: (debtId: string) => void;
+	onCrossFilter: () => void;
 	onEdit: () => void;
 	onDelete: () => void;
 };
@@ -24,6 +25,7 @@ export function SplitRow({
 	onToggle,
 	loadParticipants,
 	onSettleParticipant,
+	onCrossFilter,
 	onEdit,
 	onDelete,
 }: Props) {
@@ -65,6 +67,7 @@ export function SplitRow({
 							split={split}
 							loadParticipants={loadParticipants}
 							onSettleParticipant={onSettleParticipant}
+							onCrossFilter={onCrossFilter}
 							onEdit={onEdit}
 							onDelete={onDelete}
 						/>
