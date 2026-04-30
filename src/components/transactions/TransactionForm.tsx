@@ -153,40 +153,42 @@ export function TransactionForm({
 				</div>
 			</div>
 
-			<label className="form-control">
-				<div className="label">
-					<span className="label-text">Amount (₱)</span>
-				</div>
-				<input
-					type="number"
-					step="0.01"
-					min="0"
-					className="input input-bordered"
-					autoFocus={mode === "create"}
-					{...register("amountPesos", {
-						valueAsNumber: true,
-						required: "Amount is required",
-						min: { value: 0.01, message: "Amount must be greater than 0" },
-					})}
-				/>
-				{errors.amountPesos && (
+			<div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+				<label className="form-control">
 					<div className="label">
-						<span className="label-text-alt text-error">{errors.amountPesos.message}</span>
+						<span className="label-text">Amount (₱)</span>
 					</div>
-				)}
-			</label>
+					<input
+						type="number"
+						step="0.01"
+						min="0"
+						className="input input-bordered"
+						autoFocus={mode === "create"}
+						{...register("amountPesos", {
+							valueAsNumber: true,
+							required: "Amount is required",
+							min: { value: 0.01, message: "Amount must be greater than 0" },
+						})}
+					/>
+					{errors.amountPesos && (
+						<div className="label">
+							<span className="label-text-alt text-error">{errors.amountPesos.message}</span>
+						</div>
+					)}
+				</label>
 
-			<TagPickerField
-				tags={tags}
-				transactionType={type}
-				value={tagId}
-				onChange={(id) => setValue("tagId", id, { shouldDirty: true })}
-				createInline={createTag}
-				required={type !== "transfer"}
-				errorMessage={
-					type !== "transfer" && tagId == null && errors.tagId ? "Tag is required" : undefined
-				}
-			/>
+				<TagPickerField
+					tags={tags}
+					transactionType={type}
+					value={tagId}
+					onChange={(id) => setValue("tagId", id, { shouldDirty: true })}
+					createInline={createTag}
+					required={type !== "transfer"}
+					errorMessage={
+						type !== "transfer" && tagId == null && errors.tagId ? "Tag is required" : undefined
+					}
+				/>
+			</div>
 
 			{showFrom && (
 				<label className="form-control">
@@ -230,32 +232,6 @@ export function TransactionForm({
 				</label>
 			)}
 
-			{showFee && (
-				<label className="form-control">
-					<div className="label">
-						<span className="label-text">Fee (₱, optional)</span>
-					</div>
-					<input
-						type="number"
-						step="0.01"
-						min="0"
-						className="input input-bordered"
-						{...register("feePesos", {
-							setValueAs: (v) => (v === "" || v == null ? null : Number(v)),
-						})}
-					/>
-					{watch("feePesos") != null && (watch("feePesos") as number) > 0 && fromAccountId && (
-						<div className="label">
-							<span className="label-text-alt text-base-content/60">
-								A paired <code className="font-mono">transfer-fees</code> expense of{" "}
-								<span className="tabular-nums">{PHP.format(watch("feePesos") as number)}</span> will
-								be recorded from {accounts.find((a) => a.id === fromAccountId)?.name ?? "source"}.
-							</span>
-						</div>
-					)}
-				</label>
-			)}
-
 			<label className="form-control">
 				<div className="label">
 					<span className="label-text">Description (optional)</span>
@@ -263,25 +239,70 @@ export function TransactionForm({
 				<input type="text" className="input input-bordered" {...register("description")} />
 			</label>
 
-			<label className="form-control">
-				<div className="label">
-					<span className="label-text">Date</span>
+			{showFee ? (
+				<div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+					<label className="form-control">
+						<div className="label">
+							<span className="label-text">Fee (₱, optional)</span>
+						</div>
+						<input
+							type="number"
+							step="0.01"
+							min="0"
+							className="input input-bordered"
+							{...register("feePesos", {
+								setValueAs: (v) => (v === "" || v == null ? null : Number(v)),
+							})}
+						/>
+						{watch("feePesos") != null && (watch("feePesos") as number) > 0 && fromAccountId && (
+							<div className="label">
+								<span className="label-text-alt text-base-content/60">
+									A paired <code className="font-mono">transfer-fees</code> expense of{" "}
+									<span className="tabular-nums">{PHP.format(watch("feePesos") as number)}</span>{" "}
+									will be recorded from{" "}
+									{accounts.find((a) => a.id === fromAccountId)?.name ?? "source"}.
+								</span>
+							</div>
+						)}
+					</label>
+
+					<label className="form-control">
+						<div className="label">
+							<span className="label-text">Date</span>
+						</div>
+						<input
+							type="date"
+							className="input input-bordered"
+							{...register("date", { required: "Date is required" })}
+						/>
+						{errors.date && (
+							<div className="label">
+								<span className="label-text-alt text-error">{errors.date.message}</span>
+							</div>
+						)}
+					</label>
 				</div>
-				<input
-					type="date"
-					className="input input-bordered"
-					{...register("date", { required: "Date is required" })}
-				/>
-				{errors.date && (
+			) : (
+				<label className="form-control">
 					<div className="label">
-						<span className="label-text-alt text-error">{errors.date.message}</span>
+						<span className="label-text">Date</span>
 					</div>
-				)}
-			</label>
+					<input
+						type="date"
+						className="input input-bordered"
+						{...register("date", { required: "Date is required" })}
+					/>
+					{errors.date && (
+						<div className="label">
+							<span className="label-text-alt text-error">{errors.date.message}</span>
+						</div>
+					)}
+				</label>
+			)}
 
 			{submitError && <div className="alert alert-error text-sm">{submitError}</div>}
 
-			<div className="modal-action">
+			<div className="flex items-center justify-end gap-2 pt-2 mt-3">
 				<button type="button" className="btn btn-ghost" onClick={onCancel}>
 					Cancel
 				</button>

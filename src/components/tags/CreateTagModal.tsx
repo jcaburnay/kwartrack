@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { createPortal } from "react-dom";
 import { type SubmitHandler, useForm } from "react-hook-form";
 import type { Tag, TagScope } from "../../hooks/useTags";
+import { Modal } from "../ui/Modal";
 
 type TagType = Exclude<TagScope, "any">;
 
@@ -34,73 +34,57 @@ export function CreateTagModal({ create, onCreated, onCancel }: Props) {
 		onCreated();
 	};
 
-	return createPortal(
-		<div
-			className="modal modal-open"
-			role="dialog"
-			aria-modal="true"
-			aria-labelledby="create-tag-title"
-		>
-			<div className="modal-box max-w-sm">
-				<form
-					onSubmit={(e) => {
-						e.stopPropagation();
-						handleSubmit(onSubmit)(e);
-					}}
-					noValidate
-					className="flex flex-col gap-3"
-				>
-					<h3 id="create-tag-title" className="font-semibold text-lg">
-						New tag
-					</h3>
-					<label className="form-control">
-						<div className="label">
-							<span className="label-text">Name</span>
-						</div>
-						<input
-							type="text"
-							className="input input-bordered"
-							autoFocus
-							{...register("name", {
-								required: "Name is required",
-								maxLength: { value: 50, message: "50 characters or fewer" },
-								validate: (v) => v.trim().length > 0 || "Name is required",
-							})}
-						/>
-						{errors.name && (
-							<div className="label">
-								<span className="label-text-alt text-error">{errors.name.message}</span>
-							</div>
-						)}
-					</label>
-					<label className="form-control">
-						<div className="label">
-							<span className="label-text">Type</span>
-						</div>
-						<select className="select select-bordered" {...register("type", { required: true })}>
-							<option value="expense">Expense</option>
-							<option value="income">Income</option>
-							<option value="transfer">Transfer</option>
-						</select>
-					</label>
-					{submitError && <div className="alert alert-error text-sm">{submitError}</div>}
-					<div className="modal-action">
-						<button type="button" className="btn btn-ghost" onClick={onCancel}>
-							Cancel
-						</button>
-						<button type="submit" className="btn btn-primary" disabled={isSubmitting}>
-							{isSubmitting ? <span className="loading loading-spinner loading-sm" /> : "Create"}
-						</button>
+	return (
+		<Modal onClose={onCancel} size="sm">
+			<Modal.Header title="New tag" />
+			<form
+				onSubmit={(e) => {
+					e.stopPropagation();
+					handleSubmit(onSubmit)(e);
+				}}
+				noValidate
+				className="flex flex-col gap-3"
+			>
+				<label className="form-control">
+					<div className="label">
+						<span className="label-text">Name</span>
 					</div>
-				</form>
-			</div>
-			<button
-				type="button"
-				className="modal-backdrop"
-				onClick={onCancel}
-				aria-label="Dismiss modal"
-			/>
-		</div>,
-		document.body,
+					<input
+						type="text"
+						className="input input-bordered"
+						autoFocus
+						{...register("name", {
+							required: "Name is required",
+							maxLength: { value: 50, message: "50 characters or fewer" },
+							validate: (v) => v.trim().length > 0 || "Name is required",
+						})}
+					/>
+					{errors.name && (
+						<div className="label">
+							<span className="label-text-alt text-error">{errors.name.message}</span>
+						</div>
+					)}
+				</label>
+				<label className="form-control">
+					<div className="label">
+						<span className="label-text">Type</span>
+					</div>
+					<select className="select select-bordered" {...register("type", { required: true })}>
+						<option value="expense">Expense</option>
+						<option value="income">Income</option>
+						<option value="transfer">Transfer</option>
+					</select>
+				</label>
+				{submitError && <div className="alert alert-error text-sm">{submitError}</div>}
+				<div className="flex items-center justify-end gap-2 pt-2 mt-3">
+					<button type="button" className="btn btn-ghost" onClick={onCancel}>
+						Cancel
+					</button>
+					<button type="submit" className="btn btn-primary" disabled={isSubmitting}>
+						{isSubmitting ? <span className="loading loading-spinner loading-sm" /> : "Create"}
+					</button>
+				</div>
+			</form>
+		</Modal>
 	);
 }

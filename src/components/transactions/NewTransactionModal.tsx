@@ -5,6 +5,7 @@ import { supabase } from "../../lib/supabase";
 import { useAuth } from "../../providers/AuthProvider";
 import type { Account } from "../../utils/accountBalances";
 import type { TransactionInput } from "../../utils/transactionValidation";
+import { Modal } from "../ui/Modal";
 import {
 	formDefaultsFromTransaction,
 	TransactionForm,
@@ -59,34 +60,19 @@ export function NewTransactionModal({
 	}
 
 	return (
-		<div
-			className="modal modal-open"
-			role="dialog"
-			aria-modal="true"
-			aria-labelledby="new-transaction-title"
-		>
-			<div className="modal-box max-w-md">
-				<h3 id="new-transaction-title" className="font-semibold text-lg mb-3">
-					New transaction
-				</h3>
-				<TransactionForm
-					mode="create"
-					accounts={accounts}
-					tags={tags}
-					defaults={defaults}
-					submitError={submitError}
-					isSubmitting={isSubmitting}
-					createTag={createTag}
-					onSubmit={handleSubmit}
-					onCancel={onCancel}
-				/>
-			</div>
-			<button
-				type="button"
-				className="modal-backdrop"
-				onClick={onCancel}
-				aria-label="Dismiss modal"
+		<Modal onClose={onCancel} size="md">
+			<Modal.Header title="New transaction" />
+			<TransactionForm
+				mode="create"
+				accounts={accounts}
+				tags={tags}
+				defaults={defaults}
+				submitError={submitError}
+				isSubmitting={isSubmitting}
+				createTag={createTag}
+				onSubmit={handleSubmit}
+				onCancel={onCancel}
 			/>
-		</div>
+		</Modal>
 	);
 }
