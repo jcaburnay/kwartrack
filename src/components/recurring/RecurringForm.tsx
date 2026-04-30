@@ -163,23 +163,27 @@ export function RecurringForm({
 				)}
 			</label>
 
-			<div className="form-control">
-				<div className="label">
-					<span className="label-text">Type</span>
-				</div>
-				<div role="tablist" className="tabs tabs-box">
-					{(["expense", "income", "transfer"] as const).map((t) => (
+			<div role="toolbar" aria-label="Type" className="join w-full">
+				{(
+					[
+						{ value: "expense", label: "Expense", activeClass: "btn-error" },
+						{ value: "income", label: "Income", activeClass: "btn-success" },
+						{ value: "transfer", label: "Transfer", activeClass: "btn-neutral" },
+					] as const
+				).map((opt) => {
+					const active = type === opt.value;
+					return (
 						<button
-							key={t}
+							key={opt.value}
 							type="button"
-							role="tab"
-							className={`tab ${type === t ? "tab-active" : ""}`}
-							onClick={() => setValue("type", t, { shouldDirty: true })}
+							aria-pressed={active}
+							className={`btn join-item flex-1 border border-base-content/40 ${active ? opt.activeClass : "btn-ghost"}`}
+							onClick={() => setValue("type", opt.value, { shouldDirty: true })}
 						>
-							{t[0].toUpperCase() + t.slice(1)}
+							{opt.label}
 						</button>
-					))}
-				</div>
+					);
+				})}
 			</div>
 
 			<div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

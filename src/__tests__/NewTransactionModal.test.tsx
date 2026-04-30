@@ -102,7 +102,7 @@ describe("TransactionForm type switching", () => {
 				onCancel={vi.fn()}
 			/>,
 		);
-		await user.click(screen.getByRole("tab", { name: "Transfer" }));
+		await user.click(screen.getByRole("button", { name: "Transfer" }));
 		expect(screen.getByText(/From account/i)).toBeInTheDocument();
 		expect(screen.getByText(/To account/i)).toBeInTheDocument();
 		expect(screen.getByText(/^Fee/i)).toBeInTheDocument();
@@ -123,7 +123,7 @@ describe("TransactionForm type switching", () => {
 				onCancel={vi.fn()}
 			/>,
 		);
-		await user.click(screen.getByRole("tab", { name: "Income" }));
+		await user.click(screen.getByRole("button", { name: "Income" }));
 		expect(screen.queryByText(/From account/i)).not.toBeInTheDocument();
 		expect(screen.getByText(/To account/i)).toBeInTheDocument();
 	});
@@ -150,7 +150,7 @@ describe("TransactionForm type switching", () => {
 		expect(screen.queryByRole("option", { name: "transfer-fees" })).not.toBeInTheDocument();
 
 		// Switch to income.
-		await user.click(screen.getByRole("tab", { name: "Income" }));
+		await user.click(screen.getByRole("button", { name: "Income" }));
 		expect(screen.getByRole("option", { name: "monthly-salary" })).toBeInTheDocument();
 		expect(screen.queryByRole("option", { name: "foods" })).not.toBeInTheDocument();
 	});
