@@ -73,21 +73,30 @@ export function CashEWalletSavingsForm({
 
 	return (
 		<form onSubmit={handleSubmit(onSubmit)} noValidate className="flex flex-col gap-3">
-			<div>
-				<label className="floating-label">
-					<span>Name</span>
-					<input
-						type="text"
-						placeholder="e.g. Wallet"
-						className="input input-bordered w-full"
-						autoFocus
-						{...register("name", {
-							required: "Name is required",
-							maxLength: { value: 50, message: "50 characters or fewer" },
-						})}
-					/>
-				</label>
-				{errors.name && <p className="mt-1 text-xs text-error">{errors.name.message}</p>}
+			<div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+				<div>
+					<label className="floating-label">
+						<span>Name</span>
+						<input
+							type="text"
+							placeholder="e.g. Wallet"
+							className="input input-bordered w-full"
+							autoFocus
+							{...register("name", {
+								required: "Name is required",
+								maxLength: { value: 50, message: "50 characters or fewer" },
+							})}
+						/>
+					</label>
+					{errors.name && <p className="mt-1 text-xs text-error">{errors.name.message}</p>}
+				</div>
+
+				<GroupPickerField
+					groups={groups}
+					value={groupId}
+					onChange={(id) => setValue("groupId", id, { shouldDirty: true })}
+					onRefetchGroups={onRefetchGroups}
+				/>
 			</div>
 
 			<div>
@@ -111,13 +120,6 @@ export function CashEWalletSavingsForm({
 					<p className="mt-1 text-xs text-error">{errors.initialBalancePesos.message}</p>
 				)}
 			</div>
-
-			<GroupPickerField
-				groups={groups}
-				value={groupId}
-				onChange={(id) => setValue("groupId", id, { shouldDirty: true })}
-				onRefetchGroups={onRefetchGroups}
-			/>
 
 			{submitError && <div className="alert alert-error text-sm">{submitError}</div>}
 

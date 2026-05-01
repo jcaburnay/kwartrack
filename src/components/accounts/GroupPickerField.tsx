@@ -15,30 +15,30 @@ export function GroupPickerField({ groups, value, onChange, onRefetchGroups }: P
 	const [showModal, setShowModal] = useState(false);
 
 	return (
-		<label className="form-control">
-			<div className="label">
-				<span className="label-text">Group (optional)</span>
-			</div>
-			<select
-				className="select select-bordered"
-				value={value ?? ""}
-				onChange={async (e) => {
-					const v = e.target.value;
-					if (v === CREATE_SENTINEL) {
-						setShowModal(true);
-						return;
-					}
-					onChange(v === "" ? null : v);
-				}}
-			>
-				<option value="">None</option>
-				{groups.map((g) => (
-					<option key={g.id} value={g.id}>
-						{g.name}
-					</option>
-				))}
-				<option value={CREATE_SENTINEL}>+ Create new group</option>
-			</select>
+		<>
+			<label className="floating-label">
+				<span>Group (optional)</span>
+				<select
+					className="select select-bordered w-full"
+					value={value ?? ""}
+					onChange={async (e) => {
+						const v = e.target.value;
+						if (v === CREATE_SENTINEL) {
+							setShowModal(true);
+							return;
+						}
+						onChange(v === "" ? null : v);
+					}}
+				>
+					<option value="">None</option>
+					{groups.map((g) => (
+						<option key={g.id} value={g.id}>
+							{g.name}
+						</option>
+					))}
+					<option value={CREATE_SENTINEL}>+ Create new group</option>
+				</select>
+			</label>
 			{showModal && (
 				<NewGroupModal
 					onCancel={() => setShowModal(false)}
@@ -49,6 +49,6 @@ export function GroupPickerField({ groups, value, onChange, onRefetchGroups }: P
 					}}
 				/>
 			)}
-		</label>
+		</>
 	);
 }
