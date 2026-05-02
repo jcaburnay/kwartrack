@@ -48,12 +48,15 @@ export function SplitParticipantList({
 			</div>
 			<ul className="flex flex-col gap-2">
 				<li className="flex items-center gap-2 px-2 py-1 rounded bg-base-200 text-sm">
-					<span className="badge badge-ghost">You</span>
+					<span>You</span>
 					<span className="ml-auto tabular-nums text-xs">{formatCentavos(userShare)}</span>
 				</li>
 				{rows.map((r) => (
-					<li key={r.personId} className="flex items-center gap-2">
-						<span className="badge">{r.personName}</span>
+					<li
+						key={r.personId}
+						className="flex items-center gap-2 px-2 py-1 rounded bg-base-200 text-sm"
+					>
+						<span>{r.personName}</span>
 						{showInput && (
 							<input
 								type="number"
