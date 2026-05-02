@@ -1,10 +1,8 @@
-# Kwartrack (v2)
+# Kwartrack
 
-Personal finance tracker — v2 rebuild on Supabase. Authoritative spec: [`specs_v2.md`](specs_v2.md).
+Personal finance tracker on Supabase, deployed at <https://kwartrack.com>. Authoritative spec: [`specs_v2.md`](specs_v2.md). The earlier SpacetimeDB + Clerk implementation is preserved at the `v1-final` tag.
 
-v2 lives on the `v2` branch. `main` still holds v1 (SpacetimeDB + Clerk); it stays untouched until v2 is ready to merge.
-
-## Tech Stack (v2)
+## Tech Stack
 
 | Layer | Tool |
 |-------|------|
@@ -15,7 +13,7 @@ v2 lives on the `v2` branch. `main` still holds v1 (SpacetimeDB + Clerk); it sta
 | Testing | Vitest + Testing Library |
 | Package manager | pnpm |
 
-Slice-specific dependencies (React Router, React Hook Form, Recharts, `@supabase/supabase-js`, lucide-react) get installed as each vertical slice reaches them.
+Other runtime dependencies: React Router, React Hook Form, Recharts, `@supabase/supabase-js`, lucide-react.
 
 ## Commands
 
@@ -31,19 +29,27 @@ pnpm supabase:status    # list local service URLs
 pnpm supabase:stop      # tear down local stack
 ```
 
-## Project Structure (Slice 0)
+## Project Structure
 
 ```
 src/
   main.tsx              # entry
-  App.tsx               # placeholder shell
+  App.tsx               # app shell + router
   index.css             # tailwind + daisyui imports
-  __tests__/            # vitest tests (jsdom)
+  components/           # UI grouped by feature
+  hooks/                # data hooks
+  lib/supabase.ts       # supabase client
+  pages/                # route components
+  providers/            # AuthProvider etc.
+  types/                # generated supabase types
+  utils/                # helpers
+  __tests__/            # vitest (jsdom)
 supabase/
   config.toml           # local CLI config
+  migrations/           # schema migrations (push via supabase db push)
 ```
 
-Every later slice adds files under `src/` (providers, hooks, pages, components, utils) and `supabase/migrations/` for schema changes. See `specs_v2.md` for the full feature model and `/Users/binong/.claude/projects/-Users-binong-Projects-kwartrack/memory/project_supabase_migration.md` for the slice roadmap.
+See `specs_v2.md` for the full feature model.
 
 ## TypeScript
 

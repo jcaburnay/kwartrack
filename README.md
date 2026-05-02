@@ -2,7 +2,7 @@
 
 Personal finance tracker (PHP, single-user). Manage accounts, transactions, recurring charges, budgets, and debt splits.
 
-This branch (`v2`) is a ground-up rebuild on a new stack. The authoritative design lives in [`specs_v2.md`](specs_v2.md). `main` still carries v1 (SpacetimeDB + Clerk) and is frozen until v2 merges.
+Live at <https://kwartrack.com>. The authoritative design lives in [`specs_v2.md`](specs_v2.md). The earlier SpacetimeDB + Clerk implementation is preserved at the `v1-final` tag.
 
 ## Stack
 

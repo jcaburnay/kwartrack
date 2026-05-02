@@ -1,6 +1,6 @@
-# Kwartrack (v2) — Agent Guide
+# Kwartrack — Agent Guide
 
-Personal finance tracker being rebuilt as v2 on Supabase. `main` still carries v1 (SpacetimeDB + Clerk); all v2 work happens on the `v2` branch.
+Personal finance tracker on Supabase, deployed at <https://kwartrack.com>. The earlier SpacetimeDB + Clerk implementation is preserved at the `v1-final` tag.
 
 For any task, start here:
 
