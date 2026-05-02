@@ -67,7 +67,7 @@ export function NewGroupModal({ onCreated, onCancel }: Props) {
 					{errors.name && <p className="mt-1 text-xs text-error">{errors.name.message}</p>}
 				</div>
 				{submitError && <div className="alert alert-error text-sm">{submitError}</div>}
-				<div className="-mx-4 px-4 py-3 mt-4 border-t border-base-300 flex items-center justify-end gap-2">
+				<div className="-mx-4 px-4 py-3 border-t border-base-300 flex items-center justify-end gap-2">
 					<button type="button" className="btn btn-ghost" onClick={onCancel}>
 						Cancel
 					</button>

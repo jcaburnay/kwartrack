@@ -24,7 +24,7 @@
  * primitive detects there's no top-level Modal.Footer and switches the body
  * wrapper to `px-4 pt-4` (no bottom padding), so the form's own footer can
  * flush against modal-box bottom. Those form footers use
- * `-mx-4 px-4 py-3 mt-4 border-t border-base-300 …` to bleed left/right
+ * `-mx-4 px-4 py-3 border-t border-base-300 …` to bleed left/right
  * back to the modal-box edges.
  *
  * For loading-only overlays, use <Modal.LoadingShell />.
@@ -114,7 +114,7 @@ function ModalRoot({ onClose, size = "md", children, labelledBy, ariaLabel }: Mo
 		<div className="modal modal-open" role="dialog" aria-modal="true" {...labelProps}>
 			<div
 				ref={boxRef}
-				className={`modal-box ${sizeClass[size]} p-0 overflow-hidden flex flex-col`}
+				className={`modal-box ${sizeClass[size]} p-0 rounded-none overflow-hidden flex flex-col`}
 			>
 				<ModalContext.Provider value={{ titleId }}>
 					{header}
