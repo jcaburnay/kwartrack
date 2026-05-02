@@ -76,28 +76,26 @@ export function NewDebtModal({
 					onCreate={createPerson}
 				/>
 
-				<div className="form-control">
-					<div className="label">
-						<span className="label-text">Direction</span>
-					</div>
-					<div role="tablist" className="tabs tabs-box">
-						<button
-							type="button"
-							role="tab"
-							className={`tab ${direction === "loaned" ? "tab-active" : ""}`}
-							onClick={() => setDirection("loaned")}
-						>
-							They owe me
-						</button>
-						<button
-							type="button"
-							role="tab"
-							className={`tab ${direction === "owed" ? "tab-active" : ""}`}
-							onClick={() => setDirection("owed")}
-						>
-							I owe them
-						</button>
-					</div>
+				<div role="toolbar" aria-label="Direction" className="join w-full">
+					{(
+						[
+							{ value: "loaned", label: "They owe me", activeClass: "btn-success" },
+							{ value: "owed", label: "I owe them", activeClass: "btn-error" },
+						] as const
+					).map((opt) => {
+						const active = direction === opt.value;
+						return (
+							<button
+								key={opt.value}
+								type="button"
+								aria-pressed={active}
+								className={`btn join-item flex-1 border border-base-content/40 ${active ? opt.activeClass : "btn-ghost"}`}
+								onClick={() => setDirection(opt.value)}
+							>
+								{opt.label}
+							</button>
+						);
+					})}
 				</div>
 
 				<div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
