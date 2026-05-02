@@ -14,7 +14,7 @@ export function SettingsAboutPage() {
 				</a>
 				<a
 					className="link link-hover"
-					href="mailto:joseph@caburnay.dev?subject=Kwartrack%20feedback"
+					href="mailto:jonathan@caburnay.dev?subject=Kwartrack%20feedback"
 				>
 					Feedback →
 				</a>
