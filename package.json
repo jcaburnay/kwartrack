@@ -14,7 +14,7 @@
 		"supabase:start": "supabase start",
 		"supabase:stop": "supabase stop",
 		"supabase:status": "supabase status",
-		"types:gen": "supabase gen types typescript --local > src/types/supabase.ts"
+		"types:gen": "supabase gen types typescript --local | grep -vE '^(Initialising|<claude-code-hint)' > src/types/supabase.ts"
 	},
 	"dependencies": {
 		"@supabase/supabase-js": "^2.104.1",
@@ -38,7 +38,7 @@
 		"@types/react-dom": "^19.2.3",
 		"@vitejs/plugin-react": "^6.0.1",
 		"jsdom": "^29.0.1",
-		"supabase": "^2.24.3",
+		"supabase": "^2.98.0",
 		"typescript": "~6.0.2",
 		"vite": "8.0.3",
 		"vitest": "4.1.2"
