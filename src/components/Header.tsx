@@ -19,7 +19,13 @@ export function Header() {
 		<>
 			<header className="navbar bg-base-100 border-b border-base-300">
 				<div className="flex-1">
-					<span className="text-xl font-medium px-2">kwartrack</span>
+					<NavLink
+						to="/"
+						aria-label="Go to home"
+						className="text-xl font-medium px-2 rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+					>
+						kwartrack
+					</NavLink>
 				</div>
 
 				<div className="flex-none">
@@ -43,7 +49,7 @@ export function Header() {
 							<li className="menu-title text-xs font-normal text-base-content/60 px-3 py-1">
 								{displayName}
 							</li>
-							<li className="divider my-1" />
+							<li aria-hidden="true" className="-mx-2 my-1 border-t border-base-content/10" />
 							<li>
 								<span
 									className="text-xs font-medium text-base-content/50 uppercase tracking-wide px-3 py-1 cursor-default pointer-events-none"
@@ -69,7 +75,7 @@ export function Header() {
 									</button>
 								</li>
 							))}
-							<li className="divider my-1" />
+							<li aria-hidden="true" className="-mx-2 my-1 border-t border-base-content/10" />
 							<li>
 								<NavLink to="/settings">Settings</NavLink>
 							</li>
