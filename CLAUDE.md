@@ -46,10 +46,42 @@ src/
   __tests__/            # vitest (jsdom)
 supabase/
   config.toml           # local CLI config
-  migrations/           # schema migrations (push via supabase db push)
+  migrations/           # schema migrations (auto-applied by CI on push to main)
 ```
 
 See `specs_v2.md` for the full feature model.
+
+## Local development
+
+The dev workflow runs against a **self-hosted Supabase stack**, not the cloud project. `.env.local` is gitignored and must point at `http://127.0.0.1:54321` — never paste production URLs there.
+
+```
+1. pnpm supabase:start      # Docker stack up: Postgres@54322, Auth/API@54321, Studio@54323
+2. pnpm dev                 # Vite reads .env.local, app talks to local
+   ...                      # write code, test
+3. pnpm supabase:stop       # tear down at end of session
+```
+
+When you change the schema:
+
+```
+1. supabase migration new <name>     # creates supabase/migrations/<ts>_<name>.sql
+2. (write the SQL)
+3. pnpm exec supabase db reset       # re-applies all migrations to local DB
+4. pnpm types:gen                    # regen src/types/supabase.ts from local
+5. (verify; commit)
+```
+
+Integration tests under `src/__tests__/*.integration.test.ts` use the **local** service-role key (`SUPABASE_SECRET_KEY` in `.env.local`, copied from `pnpm supabase:status`) to seed/clean test data. They auto-skip when the key isn't present, so the unit suite still runs without it.
+
+## Deployment
+
+`main` auto-deploys via `.github/workflows/ci.yml`. A push runs **lint → test → build**, then (if any `supabase/migrations/*.sql` changed) **`supabase db push`**, then ships the bundle to Cloudflare Pages at <https://kwartrack.com>. Any failing step blocks the deploy.
+
+Implications when writing changes:
+- **Migrations land in prod automatically.** Keep them additive: new tables, new columns, new policies. Avoid renames, type changes, and drops. When unavoidable, do a multi-step add-then-remove rollout coordinated with the app code.
+- **App env vars are baked at CI build time** from repo secrets (`VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`). Adding a new `VITE_*` requires a matching repo secret and a `validate` job env-var line.
+- **Manual fallback for migrations** is `pnpm exec supabase db push` (CI does this on every push when migrations change).
 
 ## TypeScript
 
