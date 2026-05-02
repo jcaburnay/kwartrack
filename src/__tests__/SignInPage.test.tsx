@@ -2,7 +2,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { SignInPage } from "../pages/SignInPage";
+import { AuthPage } from "../pages/AuthPage";
 
 const signIn = vi.fn();
 const setSessionOptimistically = vi.fn();
@@ -25,13 +25,13 @@ vi.mock("../providers/AuthProvider", () => ({
 
 function renderPage() {
 	return render(
-		<MemoryRouter>
-			<SignInPage />
+		<MemoryRouter initialEntries={["/signin"]}>
+			<AuthPage />
 		</MemoryRouter>,
 	);
 }
 
-describe("SignInPage", () => {
+describe("AuthPage — sign in tab", () => {
 	beforeEach(() => {
 		signIn.mockReset();
 		setSessionOptimistically.mockReset();

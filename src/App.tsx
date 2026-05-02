@@ -1,13 +1,12 @@
 import { createBrowserRouter, Navigate, RouterProvider, useSearchParams } from "react-router";
 import { ProtectedRoute } from "./components/ProtectedRoute";
+import { AuthPage } from "./pages/AuthPage";
 import { JigsawPage } from "./pages/JigsawPage";
 import { SettingsAboutPage } from "./pages/SettingsAboutPage";
 import { SettingsContactsPage } from "./pages/SettingsContactsPage";
 import { SettingsGroupsPage } from "./pages/SettingsGroupsPage";
 import { SettingsPage } from "./pages/SettingsPage";
 import { SettingsTagsPage } from "./pages/SettingsTagsPage";
-import { SignInPage } from "./pages/SignInPage";
-import { SignUpPage } from "./pages/SignUpPage";
 
 function RecurringRedirect() {
 	const [params] = useSearchParams();
@@ -45,8 +44,8 @@ const router = createBrowserRouter([
 			{ path: "about", element: <SettingsAboutPage /> },
 		],
 	},
-	{ path: "/signin", element: <SignInPage /> },
-	{ path: "/signup", element: <SignUpPage /> },
+	{ path: "/signin", element: <AuthPage /> },
+	{ path: "/signup", element: <AuthPage /> },
 ]);
 
 export function App() {
