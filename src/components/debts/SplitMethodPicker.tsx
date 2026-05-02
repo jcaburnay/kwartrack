@@ -1,3 +1,4 @@
+import { useId } from "react";
 import type { SplitMethod } from "../../utils/splitMath";
 
 type Props = {
@@ -5,32 +6,38 @@ type Props = {
 	onChange: (m: SplitMethod) => void;
 };
 
-const LABELS: Record<SplitMethod, string> = {
-	equal: "Equal",
-	exact: "Exact",
-	percentage: "%",
-	shares: "Shares",
-};
+const METHODS: { value: SplitMethod; label: string }[] = [
+	{ value: "equal", label: "Equal" },
+	{ value: "exact", label: "Exact" },
+	{ value: "percentage", label: "%" },
+	{ value: "shares", label: "Shares" },
+];
 
 export function SplitMethodPicker({ method, onChange }: Props) {
+	const groupName = useId();
 	return (
-		<div role="toolbar" aria-label="Method" className="join w-full">
-			{(["equal", "exact", "percentage", "shares"] as const).map((m) => {
-				const active = method === m;
-				return (
-					<button
-						key={m}
-						type="button"
-						aria-pressed={active}
-						className={`btn join-item flex-1 border border-base-content/40 ${
-							active ? "btn-primary" : "btn-ghost"
-						}`}
-						onClick={() => onChange(m)}
-					>
-						{LABELS[m]}
-					</button>
-				);
-			})}
+		<div className="flex flex-col gap-1">
+			<span className="label-text text-xs">Split method</span>
+			<div role="radiogroup" aria-label="Split method" className="tabs tabs-box w-full">
+				{METHODS.map((m) => {
+					const active = method === m.value;
+					return (
+						<label
+							key={m.value}
+							className={`tab flex-1 focus-within:outline focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-base-content/60 ${active ? "tab-active" : ""}`}
+						>
+							<input
+								type="radio"
+								name={groupName}
+								className="sr-only"
+								checked={active}
+								onChange={() => onChange(m.value)}
+							/>
+							{m.label}
+						</label>
+					);
+				})}
+			</div>
 		</div>
 	);
 }

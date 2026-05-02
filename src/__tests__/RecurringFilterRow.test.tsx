@@ -20,10 +20,10 @@ function setup(overrides?: Partial<RecurringFilters>) {
 describe("RecurringFilterRow", () => {
 	it("renders type pills, tag/cadence dropdowns, search, and show-completed toggle", () => {
 		setup();
-		expect(screen.getByRole("button", { name: "All" })).toBeInTheDocument();
-		expect(screen.getByRole("button", { name: "Expenses" })).toBeInTheDocument();
-		expect(screen.getByRole("button", { name: "Income" })).toBeInTheDocument();
-		expect(screen.getByRole("button", { name: "Transfers" })).toBeInTheDocument();
+		expect(screen.getByRole("radio", { name: "All" })).toBeInTheDocument();
+		expect(screen.getByRole("radio", { name: "Expenses" })).toBeInTheDocument();
+		expect(screen.getByRole("radio", { name: "Income" })).toBeInTheDocument();
+		expect(screen.getByRole("radio", { name: "Transfers" })).toBeInTheDocument();
 		expect(screen.getByLabelText("Filter by tag")).toBeInTheDocument();
 		expect(screen.getByLabelText("Filter by cadence")).toBeInTheDocument();
 		expect(screen.getByPlaceholderText("Search service…")).toBeInTheDocument();
@@ -42,13 +42,13 @@ describe("RecurringFilterRow", () => {
 
 	it("emits onChange with new type when a pill is clicked", () => {
 		const { onChange } = setup();
-		fireEvent.click(screen.getByRole("button", { name: "Expenses" }));
+		fireEvent.click(screen.getByRole("radio", { name: "Expenses" }));
 		expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ type: "expense" }));
 	});
 
 	it("emits onChange resetting type to null when 'All' is clicked while a type is active", () => {
 		const { onChange } = setup({ type: "expense" });
-		fireEvent.click(screen.getByRole("button", { name: "All" }));
+		fireEvent.click(screen.getByRole("radio", { name: "All" }));
 		expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ type: null }));
 	});
 

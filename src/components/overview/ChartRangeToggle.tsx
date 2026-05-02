@@ -1,3 +1,5 @@
+import { PillToggle } from "../ui/PillToggle";
+
 export type RangeOption = "3m" | "6m" | "12m" | "all";
 
 type Props = {
@@ -13,28 +15,12 @@ const OPTIONS: { value: RangeOption; label: string }[] = [
 ];
 
 /**
- * Compact 4-segment range toggle for time-axis charts. Renders as a DaisyUI
- * button group; the active segment fills with `btn-primary` to match the
- * Transactions filter-bar type-pill pattern. Uses `aria-pressed` on each
- * button (toggle pattern) so screen readers announce selection without
- * requiring native radio semantics.
+ * Compact 4-segment range toggle for time-axis charts. Reuses the shared
+ * `PillToggle` so the visual treatment stays in lockstep with the
+ * Transactions / Recurring filter pills.
  */
 export function ChartRangeToggle({ value, onChange }: Props) {
-	return (
-		<div role="toolbar" aria-label="Chart range" className="join">
-			{OPTIONS.map((opt) => (
-				<button
-					key={opt.value}
-					type="button"
-					aria-pressed={value === opt.value}
-					className={`btn btn-sm join-item rounded-none [&:first-child]:rounded-l-sm [&:last-child]:rounded-r-sm border border-base-content/40 [&:not(:first-child)]:-ml-px ${value === opt.value ? "btn-primary" : "btn-ghost"}`}
-					onClick={() => onChange(opt.value)}
-				>
-					{opt.label}
-				</button>
-			))}
-		</div>
-	);
+	return <PillToggle ariaLabel="Chart range" value={value} options={OPTIONS} onChange={onChange} />;
 }
 
 export function rangeToMonthCount(range: RangeOption): number {
