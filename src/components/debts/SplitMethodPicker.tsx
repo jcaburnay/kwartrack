@@ -14,23 +14,23 @@ const LABELS: Record<SplitMethod, string> = {
 
 export function SplitMethodPicker({ method, onChange }: Props) {
 	return (
-		<div className="form-control">
-			<div className="label">
-				<span className="label-text">Method</span>
-			</div>
-			<div role="tablist" className="tabs tabs-box">
-				{(["equal", "exact", "percentage", "shares"] as const).map((m) => (
+		<div role="toolbar" aria-label="Method" className="join w-full">
+			{(["equal", "exact", "percentage", "shares"] as const).map((m) => {
+				const active = method === m;
+				return (
 					<button
 						key={m}
 						type="button"
-						role="tab"
-						className={`tab ${method === m ? "tab-active" : ""}`}
+						aria-pressed={active}
+						className={`btn join-item flex-1 border border-base-content/40 ${
+							active ? "btn-primary" : "btn-ghost"
+						}`}
 						onClick={() => onChange(m)}
 					>
 						{LABELS[m]}
 					</button>
-				))}
-			</div>
+				);
+			})}
 		</div>
 	);
 }
