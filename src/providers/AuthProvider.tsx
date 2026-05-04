@@ -81,7 +81,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 	useEffect(() => {
 		if (!userId) return;
-		return subscribeTransactionRealtime(userId);
+		// Defer the WebSocket setup until after the initial paint so it doesn't
+		// compete with critical-path work. requestIdleCallback where available,
+		// setTimeout(0) as a fallback for older Safari.
+		let teardown: (() => void) | null = null;
+		const win = window as Window & {
+			requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number;
+			cancelIdleCallback?: (handle: number) => void;
+		};
+		const handle = win.requestIdleCallback
+			? win.requestIdleCallback(
+					() => {
+						teardown = subscribeTransactionRealtime(userId);
+					},
+					{ timeout: 2000 },
+				)
+			: window.setTimeout(() => {
+					teardown = subscribeTransactionRealtime(userId);
+				}, 0);
+		return () => {
+			if (win.cancelIdleCallback && typeof handle === "number") {
+				win.cancelIdleCallback(handle);
+			} else {
+				window.clearTimeout(handle as number);
+			}
+			teardown?.();
+		};
 	}, [userId]);
 
 	const signOut = useCallback(async () => {
