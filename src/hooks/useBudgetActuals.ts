@@ -18,39 +18,47 @@ type ActualsRange = ReadonlyArray<{ month: string; tagId: string; actualCentavos
  * Cache is keyed by month (or month-range), so the dashboard's two consumers
  * for the current month share one round-trip.
  */
-const monthlyStore = createKeyedSharedStore<string, ActualByTag>(async (month: string) => {
-	const { data, error } = await supabase
-		.from("budget_actuals")
-		.select("tag_id, actual_centavos")
-		.eq("month", month);
-	if (error) throw new Error(error.message);
-	const map: ActualByTag = new Map();
-	for (const row of data ?? []) {
-		if (!row.tag_id) continue;
-		map.set(row.tag_id, Number(row.actual_centavos ?? 0));
-	}
-	return map;
-}, new Map());
+const monthlyStore = createKeyedSharedStore<string, ActualByTag>(
+	async (month: string) => {
+		const { data, error } = await supabase
+			.from("budget_actuals")
+			.select("tag_id, actual_centavos")
+			.eq("month", month);
+		if (error) throw new Error(error.message);
+		const map: ActualByTag = new Map();
+		for (const row of data ?? []) {
+			if (!row.tag_id) continue;
+			map.set(row.tag_id, Number(row.actual_centavos ?? 0));
+		}
+		return map;
+	},
+	new Map(),
+	["transaction"],
+);
 
-const rangeStore = createKeyedSharedStore<string, ActualsRange>(async (rangeKey: string) => {
-	const [startMonth, endMonth] = rangeKey.split("..", 2);
-	const { data, error } = await supabase
-		.from("budget_actuals")
-		.select("month, tag_id, actual_centavos")
-		.gte("month", startMonth)
-		.lte("month", endMonth);
-	if (error) throw new Error(error.message);
-	const rows: { month: string; tagId: string; actualCentavos: number }[] = [];
-	for (const row of data ?? []) {
-		if (!row.month || !row.tag_id) continue;
-		rows.push({
-			month: row.month,
-			tagId: row.tag_id,
-			actualCentavos: Number(row.actual_centavos ?? 0),
-		});
-	}
-	return rows;
-}, []);
+const rangeStore = createKeyedSharedStore<string, ActualsRange>(
+	async (rangeKey: string) => {
+		const [startMonth, endMonth] = rangeKey.split("..", 2);
+		const { data, error } = await supabase
+			.from("budget_actuals")
+			.select("month, tag_id, actual_centavos")
+			.gte("month", startMonth)
+			.lte("month", endMonth);
+		if (error) throw new Error(error.message);
+		const rows: { month: string; tagId: string; actualCentavos: number }[] = [];
+		for (const row of data ?? []) {
+			if (!row.month || !row.tag_id) continue;
+			rows.push({
+				month: row.month,
+				tagId: row.tag_id,
+				actualCentavos: Number(row.actual_centavos ?? 0),
+			});
+		}
+		return rows;
+	},
+	[],
+	["transaction"],
+);
 
 export function useBudgetActualsByMonth(month: string) {
 	const { data, isLoading, error, refetch } = monthlyStore.useStore(month);

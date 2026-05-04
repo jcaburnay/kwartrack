@@ -33,6 +33,11 @@ export type ExpandedSplitParticipant = {
 	settledCentavos: number;
 };
 
+// Debts and splits change via mutations in this session (refetch is called
+// directly from createDebt/settleDebt/etc.) and via realtime postgres_changes
+// — but `debt` and `split_event` aren't currently in the realtime publication.
+// Settle / create flows insert transaction rows, so the transaction bump
+// catches cross-tab edits indirectly (the DB-level cascade).
 const store = createSharedStore<DebtsAndSplits>(
 	async () => {
 		const [debtsRes, splitsRes] = await Promise.all([
@@ -86,6 +91,7 @@ const store = createSharedStore<DebtsAndSplits>(
 		return { debts, splits };
 	},
 	{ debts: [], splits: [] },
+	["transaction"],
 );
 
 registerSharedStore(store.reset);

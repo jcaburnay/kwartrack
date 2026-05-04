@@ -1,5 +1,7 @@
 import { useEffect, useSyncExternalStore } from "react";
-import { useTransactionVersion } from "./useTransactionVersion";
+import { useVersion } from "./useTransactionVersion";
+
+type TableName = "transaction" | "account" | "debt" | "split_event";
 
 type State<T> = {
 	data: T;
@@ -22,12 +24,22 @@ export type SharedStore<T> = {
  *   - Concurrent subscribers piggyback on the in-flight promise (no duplicate
  *     network calls).
  *   - All subscribers re-render together when the store updates.
- *   - On `txVersion` bump (mutations elsewhere), the store re-fetches once and
- *     fans out to all subscribers.
+ *   - On a bump of any of `invalidatesOn` tables, the store re-fetches once
+ *     and fans out to all subscribers.
+ *
+ * `invalidatesOn` is required so each store explicitly opts into
+ * invalidation — otherwise hooks (tags/persons/groups) silently picked up
+ * tx-version invalidation through this helper and refetched needlessly.
+ * Pass `[]` for queries that only need to fetch on mount (and on explicit
+ * mutation refetches via the returned `refetch` callback).
  *
  * Call `reset()` from sign-out / user-change flows to clear cross-user leaks.
  */
-export function createSharedStore<T>(fetcher: () => Promise<T>, initial: T): SharedStore<T> {
+export function createSharedStore<T>(
+	fetcher: () => Promise<T>,
+	initial: T,
+	invalidatesOn: readonly TableName[] = [],
+): SharedStore<T> {
 	let state: State<T> = { data: initial, isLoading: true, error: null };
 	let inflight: Promise<void> | null = null;
 	let lastVersion = -1;
@@ -75,10 +87,10 @@ export function createSharedStore<T>(fetcher: () => Promise<T>, initial: T): Sha
 
 	const useStore = () => {
 		const snap = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
-		const txVersion = useTransactionVersion();
+		const version = useVersion(invalidatesOn);
 		useEffect(() => {
-			ensureFresh(txVersion);
-		}, [txVersion]);
+			ensureFresh(version);
+		}, [version]);
 		return { ...snap, refetch };
 	};
 
@@ -105,12 +117,13 @@ export function resetAllSharedStores(): void {
 export function createKeyedSharedStore<K extends string, T>(
 	fetcherForKey: (key: K) => Promise<T>,
 	initial: T,
+	invalidatesOn: readonly TableName[] = [],
 ) {
 	const stores = new Map<K, SharedStore<T>>();
 	const get = (key: K): SharedStore<T> => {
 		let store = stores.get(key);
 		if (!store) {
-			store = createSharedStore(() => fetcherForKey(key), initial);
+			store = createSharedStore(() => fetcherForKey(key), initial, invalidatesOn);
 			stores.set(key, store);
 		}
 		return store;

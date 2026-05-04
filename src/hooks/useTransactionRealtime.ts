@@ -1,12 +1,12 @@
 import { supabase } from "../lib/supabase";
-import { bumpTransactionVersion } from "./useTransactionVersion";
+import { bumpVersion } from "./useTransactionVersion";
 
 /**
  * Opens a single Supabase realtime channel for the signed-in user that listens
  * for `postgres_changes` on the `transaction` and `account` tables and bumps
- * the in-session transaction-version bus on every event. This catches mutations
- * that don't originate from the current tab — server-side cron-fired
- * recurrings, edits in another tab, edits on another device.
+ * the matching table version. This catches mutations that don't originate from
+ * the current tab — server-side cron-fired recurrings, edits in another tab,
+ * edits on another device.
  *
  * Returns a teardown that removes the channel; the caller (AuthProvider) is
  * responsible for invoking it on sign-out / user change / unmount.
@@ -21,10 +21,10 @@ export function subscribeTransactionRealtime(userId: string): () => void {
 	const channel = supabase
 		.channel(`transactions:${userId}`)
 		.on("postgres_changes", { event: "*", schema: "public", table: "transaction", filter }, () => {
-			bumpTransactionVersion();
+			bumpVersion("transaction");
 		})
 		.on("postgres_changes", { event: "*", schema: "public", table: "account", filter }, () => {
-			bumpTransactionVersion();
+			bumpVersion("account");
 		})
 		.subscribe();
 

@@ -16,16 +16,20 @@ export type TransactionWithRecurring = Transaction & {
  * children are filtered out; they're surfaced via the parent row's `fee`
  * column in the UI and folded in by budget/summary math separately.
  */
-const store = createSharedStore<TransactionWithRecurring[]>(async () => {
-	const { data, error } = await supabase
-		.from("transaction")
-		.select("*, recurring:recurring!recurring_id(service)")
-		.is("parent_transaction_id", null)
-		.order("date", { ascending: false })
-		.order("created_at", { ascending: false });
-	if (error) throw new Error(error.message);
-	return (data ?? []) as TransactionWithRecurring[];
-}, []);
+const store = createSharedStore<TransactionWithRecurring[]>(
+	async () => {
+		const { data, error } = await supabase
+			.from("transaction")
+			.select("*, recurring:recurring!recurring_id(service)")
+			.is("parent_transaction_id", null)
+			.order("date", { ascending: false })
+			.order("created_at", { ascending: false });
+		if (error) throw new Error(error.message);
+		return (data ?? []) as TransactionWithRecurring[];
+	},
+	[],
+	["transaction"],
+);
 
 registerSharedStore(store.reset);
 

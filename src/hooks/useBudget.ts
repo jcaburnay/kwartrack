@@ -3,7 +3,9 @@ import { supabase } from "../lib/supabase";
 import type { Database } from "../types/supabase";
 import { computeOthersCentavos, computeOverallActualCentavos } from "../utils/budgetMath";
 import { useBudgetActualsByMonth } from "./useBudgetActuals";
-import { useTransactionVersion } from "./useTransactionVersion";
+import { useVersion } from "./useTransactionVersion";
+
+const TX_TABLES = ["transaction"] as const;
 
 export type BudgetConfig = Database["public"]["Tables"]["budget_config"]["Row"];
 export type BudgetAllocation = Database["public"]["Tables"]["budget_allocation"]["Row"];
@@ -40,7 +42,7 @@ export function useBudget(month: string) {
 		});
 	}, [month]);
 
-	const txVersion = useTransactionVersion();
+	const txVersion = useVersion(TX_TABLES);
 	// biome-ignore lint/correctness/useExhaustiveDependencies: txVersion is a tripwire that re-runs the fetch when transactions are mutated elsewhere.
 	useEffect(() => {
 		refetch();
