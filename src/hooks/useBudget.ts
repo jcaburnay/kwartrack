@@ -1,12 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "../lib/supabase";
 import type { Database } from "../types/supabase";
-import {
-	type ActualRow,
-	computeActualsByTag,
-	computeOthersCentavos,
-	computeOverallActualCentavos,
-} from "../utils/budgetMath";
+import { computeOthersCentavos, computeOverallActualCentavos } from "../utils/budgetMath";
+import { useBudgetActualsByMonth } from "./useBudgetActuals";
 import { useTransactionVersion } from "./useTransactionVersion";
 
 export type BudgetConfig = Database["public"]["Tables"]["budget_config"]["Row"];
@@ -15,57 +11,30 @@ export type BudgetAllocation = Database["public"]["Tables"]["budget_allocation"]
 type State = {
 	config: BudgetConfig | null;
 	allocations: BudgetAllocation[];
-	monthExpenses: ActualRow[];
 	isLoading: boolean;
 	error: string | null;
 };
-
-function monthRangeISO(month: string): { startISO: string; endExclusiveISO: string } {
-	const [yStr, mStr] = month.split("-");
-	const y = Number(yStr);
-	const m = Number(mStr);
-	const start = `${month}-01`;
-	const ny = m === 12 ? y + 1 : y;
-	const nm = m === 12 ? 1 : m + 1;
-	const end = `${ny}-${String(nm).padStart(2, "0")}-01`;
-	return { startISO: start, endExclusiveISO: end };
-}
 
 export function useBudget(month: string) {
 	const [state, setState] = useState<State>({
 		config: null,
 		allocations: [],
-		monthExpenses: [],
 		isLoading: true,
 		error: null,
 	});
 
+	const { actualsByTag, isLoading: actualsLoading } = useBudgetActualsByMonth(month);
+
 	const refetch = useCallback(async () => {
 		setState((s) => ({ ...s, isLoading: true, error: null }));
-		const { startISO, endExclusiveISO } = monthRangeISO(month);
-		const [cfgRes, allocRes, txRes] = await Promise.all([
+		const [cfgRes, allocRes] = await Promise.all([
 			supabase.from("budget_config").select("*").eq("month", month).maybeSingle(),
 			supabase.from("budget_allocation").select("*").eq("month", month),
-			supabase
-				.from("transaction")
-				.select("tag_id, amount_centavos, date, split:split_event!split_id(user_share_centavos)")
-				.eq("type", "expense")
-				.gte("date", startISO)
-				.lt("date", endExclusiveISO),
 		]);
-		const err = cfgRes.error?.message ?? allocRes.error?.message ?? txRes.error?.message ?? null;
-		// For split-linked rows, count only the user's share (spec §689-694).
-		const monthExpenses: ActualRow[] = (txRes.data ?? []).map((t) => ({
-			tagId: t.tag_id,
-			effectiveCentavos:
-				(t.split as unknown as { user_share_centavos: number } | null)?.user_share_centavos ??
-				t.amount_centavos,
-			date: t.date,
-		}));
+		const err = cfgRes.error?.message ?? allocRes.error?.message ?? null;
 		setState({
 			config: cfgRes.data ?? null,
 			allocations: allocRes.data ?? [],
-			monthExpenses,
 			isLoading: false,
 			error: err,
 		});
@@ -77,10 +46,6 @@ export function useBudget(month: string) {
 		refetch();
 	}, [refetch, txVersion]);
 
-	const actualsByTag = useMemo(
-		() => computeActualsByTag(state.monthExpenses, month),
-		[state.monthExpenses, month],
-	);
 	const allocatedTagIds = useMemo(
 		() => new Set(state.allocations.map((a) => a.tag_id)),
 		[state.allocations],
@@ -177,6 +142,7 @@ export function useBudget(month: string) {
 
 	return {
 		...state,
+		isLoading: state.isLoading || actualsLoading,
 		actualsByTag,
 		othersCentavos,
 		overallActualCentavos,

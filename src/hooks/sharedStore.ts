@@ -95,3 +95,33 @@ export function registerSharedStore(reset: () => void): void {
 export function resetAllSharedStores(): void {
 	for (const reset of allResetters) reset();
 }
+
+/**
+ * Same idea as createSharedStore, but the cache is keyed (e.g. by month). Each
+ * key gets its own store, lazily created on first use. Useful for queries that
+ * are scoped to a parameter — multiple panels asking about the same month
+ * share, while different months stay isolated.
+ */
+export function createKeyedSharedStore<K extends string, T>(
+	fetcherForKey: (key: K) => Promise<T>,
+	initial: T,
+) {
+	const stores = new Map<K, SharedStore<T>>();
+	const get = (key: K): SharedStore<T> => {
+		let store = stores.get(key);
+		if (!store) {
+			store = createSharedStore(() => fetcherForKey(key), initial);
+			stores.set(key, store);
+		}
+		return store;
+	};
+	const resetAll = () => {
+		for (const s of stores.values()) s.reset();
+	};
+	registerSharedStore(resetAll);
+	return {
+		useStore: (key: K) => get(key).useStore(),
+		refetch: (key: K) => get(key).refetch(),
+		resetAll,
+	};
+}

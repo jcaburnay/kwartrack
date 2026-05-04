@@ -7,7 +7,7 @@ import {
 	mergeBudgetHistory,
 } from "../utils/budgetHistory";
 import type { ActualRow } from "../utils/budgetMath";
-import { useTransactions } from "./useTransactions";
+import { useBudgetActualsRange } from "./useBudgetActuals";
 
 type Result = {
 	history: BudgetHistoryMonth[];
@@ -17,19 +17,18 @@ type Result = {
 
 /**
  * Fetches budget_allocation rows for the last `monthCount` months and composes
- * them with already-loaded transactions to yield per-month {allocatedByTag,
- * actualsByTag} for the Tag history view. Approximates split-linked actuals
- * with `amount_centavos` (vs `useBudget` which subscribes to split_event); the
- * approximation is acceptable for visualization-only history charts.
+ * them with the per-month actuals from the budget_actuals view to yield
+ * {allocatedByTag, actualsByTag} per month for the Tag history view.
  */
 export function useBudgetHistory(currentMonth: string, monthCount: number): Result {
-	const { transactions, isLoading: txLoading, error: txError } = useTransactions();
 	const [allocs, setAllocs] = useState<AllocationRow[]>([]);
 	const [isLoading, setIsLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
 
 	const months = useMemo(() => listMonths(currentMonth, monthCount), [currentMonth, monthCount]);
 	const earliest = months[0] ?? currentMonth;
+
+	const { actualsRange, isLoading: actualsLoading } = useBudgetActualsRange(earliest, currentMonth);
 
 	const refetch = useCallback(async () => {
 		setIsLoading(true);
@@ -55,19 +54,20 @@ export function useBudgetHistory(currentMonth: string, monthCount: number): Resu
 	}, [refetch]);
 
 	const history = useMemo<BudgetHistoryMonth[]>(() => {
-		const expenseRows: ActualRow[] = transactions
-			.filter((t) => t.type === "expense")
-			.map((t) => ({
-				tagId: t.tag_id,
-				effectiveCentavos: t.amount_centavos,
-				date: t.date,
-			}));
+		// Reshape the view's per-month aggregated rows into the ActualRow format
+		// mergeBudgetHistory expects. The day component is arbitrary — the merge
+		// function only inspects the month prefix.
+		const expenseRows: ActualRow[] = actualsRange.map((r) => ({
+			tagId: r.tagId,
+			effectiveCentavos: r.actualCentavos,
+			date: `${r.month}-01`,
+		}));
 		return mergeBudgetHistory(months, allocs, expenseRows);
-	}, [months, allocs, transactions]);
+	}, [months, allocs, actualsRange]);
 
 	return {
 		history,
-		isLoading: isLoading || txLoading,
-		error: error ?? txError,
+		isLoading: isLoading || actualsLoading,
+		error,
 	};
 }

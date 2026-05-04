@@ -1,11 +1,6 @@
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 
 export type Database = {
-	// Allows to automatically instantiate createClient with right options
-	// instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
-	__InternalSupabase: {
-		PostgrestVersion: "14.5";
-	};
 	graphql_public: {
 		Tables: {
 			[_ in never]: never;
@@ -658,7 +653,23 @@ export type Database = {
 			};
 		};
 		Views: {
-			[_ in never]: never;
+			budget_actuals: {
+				Row: {
+					actual_centavos: number | null;
+					month: string | null;
+					tag_id: string | null;
+					user_id: string | null;
+				};
+				Relationships: [
+					{
+						foreignKeyName: "transaction_tag_id_fkey";
+						columns: ["tag_id"];
+						isOneToOne: false;
+						referencedRelation: "tag";
+						referencedColumns: ["id"];
+					},
+				];
+			};
 		};
 		Functions: {
 			advance_recurring_next: {
