@@ -2,6 +2,7 @@ import { useState } from "react";
 import type { BudgetAllocation } from "../../hooks/useBudget";
 import { centavosToPesos, formatCentavos, pesosToCentavos } from "../../utils/currency";
 import { Modal } from "../ui/Modal";
+import { SubmitButton } from "../ui/SubmitButton";
 
 type Props = {
 	allocation: BudgetAllocation;
@@ -93,25 +94,27 @@ export function EditAllocationModal({
 				{error && <div className="alert alert-error text-sm">{error}</div>}
 			</Modal.Body>
 			<Modal.Footer>
-				<button
+				<SubmitButton
 					type="button"
 					className="btn btn-ghost text-error mr-auto"
 					onClick={runDelete}
-					disabled={deleting || saving}
+					loading={deleting}
+					disabled={saving}
 				>
-					{deleting ? <span className="loading loading-spinner loading-sm" /> : "Delete"}
-				</button>
+					Delete
+				</SubmitButton>
 				<button type="button" className="btn btn-ghost" onClick={onCancel}>
 					Cancel
 				</button>
-				<button
+				<SubmitButton
 					type="button"
 					className="btn btn-primary"
 					onClick={handleSave}
-					disabled={saving || deleting}
+					loading={saving}
+					disabled={deleting}
 				>
-					{saving ? <span className="loading loading-spinner loading-sm" /> : "Save"}
-				</button>
+					Save
+				</SubmitButton>
 			</Modal.Footer>
 		</Modal>
 	);

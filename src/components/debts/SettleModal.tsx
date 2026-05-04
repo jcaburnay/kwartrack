@@ -3,6 +3,7 @@ import { useState } from "react";
 import type { Account } from "../../utils/accountBalances";
 import { centavosToPesos, formatCentavos, pesosToCentavos } from "../../utils/currency";
 import { Modal } from "../ui/Modal";
+import { SubmitButton } from "../ui/SubmitButton";
 
 type Props = {
 	personName: string;
@@ -113,13 +114,9 @@ export function SettleModal({
 					<button type="button" className="btn btn-ghost" onClick={onCancel}>
 						Cancel
 					</button>
-					<button type="submit" className="btn btn-primary" disabled={isSubmitting}>
-						{isSubmitting ? (
-							<span className="loading loading-spinner loading-sm" />
-						) : (
-							"Record settlement"
-						)}
-					</button>
+					<SubmitButton type="submit" className="btn btn-primary" loading={isSubmitting}>
+						Record settlement
+					</SubmitButton>
 				</div>
 			</form>
 		</Modal>

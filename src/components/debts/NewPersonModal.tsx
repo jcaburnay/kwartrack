@@ -3,6 +3,7 @@ import { useState } from "react";
 import type { Person } from "../../hooks/usePersons";
 import { validatePerson } from "../../utils/personValidation";
 import { Modal } from "../ui/Modal";
+import { SubmitButton } from "../ui/SubmitButton";
 
 type Props = {
 	initialName?: string;
@@ -49,9 +50,9 @@ export function NewPersonModal({ initialName, create, onCreated, onCancel }: Pro
 					<button type="button" className="btn btn-ghost" onClick={onCancel}>
 						Cancel
 					</button>
-					<button type="submit" className="btn btn-primary" disabled={isSubmitting}>
-						{isSubmitting ? <span className="loading loading-spinner loading-sm" /> : "Create"}
-					</button>
+					<SubmitButton type="submit" className="btn btn-primary" loading={isSubmitting}>
+						Create
+					</SubmitButton>
 				</div>
 			</form>
 		</Modal>

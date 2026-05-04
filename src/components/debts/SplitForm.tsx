@@ -6,6 +6,7 @@ import type { Account } from "../../utils/accountBalances";
 import { pesosToCentavos } from "../../utils/currency";
 import { computeShareCentavos, type SplitMethod } from "../../utils/splitMath";
 import { type SplitInput, validateSplit } from "../../utils/splitValidation";
+import { SubmitButton } from "../ui/SubmitButton";
 import { SplitMethodPicker } from "./SplitMethodPicker";
 import { type ParticipantRow, SplitParticipantList } from "./SplitParticipantList";
 
@@ -205,9 +206,9 @@ export function SplitForm({
 				<button type="button" className="btn btn-ghost" onClick={onCancel}>
 					Cancel
 				</button>
-				<button type="submit" className="btn btn-primary" disabled={isSubmitting}>
-					{isSubmitting ? <span className="loading loading-spinner loading-sm" /> : submitLabel}
-				</button>
+				<SubmitButton type="submit" className="btn btn-primary" loading={isSubmitting}>
+					{submitLabel}
+				</SubmitButton>
 			</div>
 		</form>
 	);

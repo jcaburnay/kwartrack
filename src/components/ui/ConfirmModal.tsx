@@ -7,6 +7,7 @@
 
 import type { ReactNode } from "react";
 import { Modal } from "./Modal";
+import { SubmitButton } from "./SubmitButton";
 
 type Props = {
 	title: string;
@@ -46,14 +47,14 @@ export function ConfirmModal({
 				<button type="button" className="btn btn-ghost" onClick={onClose} disabled={pending}>
 					{cancelLabel}
 				</button>
-				<button
+				<SubmitButton
 					type="button"
 					className={destructive ? "btn btn-error" : "btn btn-primary"}
 					onClick={onConfirm}
-					disabled={pending}
+					loading={pending}
 				>
-					{pending ? <span className="loading loading-spinner loading-sm" /> : confirmLabel}
-				</button>
+					{confirmLabel}
+				</SubmitButton>
 			</Modal.Footer>
 		</Modal>
 	);

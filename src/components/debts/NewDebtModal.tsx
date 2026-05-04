@@ -6,6 +6,7 @@ import type { Account } from "../../utils/accountBalances";
 import { pesosToCentavos } from "../../utils/currency";
 import { type DebtInput, validateDebt } from "../../utils/debtValidation";
 import { Modal } from "../ui/Modal";
+import { SubmitButton } from "../ui/SubmitButton";
 import { PersonPicker } from "./PersonPicker";
 
 type Props = {
@@ -174,9 +175,9 @@ export function NewDebtModal({
 					<button type="button" className="btn btn-ghost" onClick={onCancel}>
 						Cancel
 					</button>
-					<button type="submit" className="btn btn-primary" disabled={isSubmitting}>
-						{isSubmitting ? <span className="loading loading-spinner loading-sm" /> : "Create"}
-					</button>
+					<SubmitButton type="submit" className="btn btn-primary" loading={isSubmitting}>
+						Create
+					</SubmitButton>
 				</div>
 			</form>
 		</Modal>

@@ -8,6 +8,7 @@ import {
 	type TransactionType,
 	validateTransaction,
 } from "../../utils/transactionValidation";
+import { SubmitButton } from "../ui/SubmitButton";
 import { TagPickerField } from "./TagPickerField";
 
 export type TransactionFormValues = {
@@ -344,15 +345,13 @@ export function TransactionForm({
 				<button type="button" className="btn btn-ghost" onClick={onCancel}>
 					Cancel
 				</button>
-				<button type="submit" className="btn btn-primary" disabled={isSubmitting || rhfSubmitting}>
-					{isSubmitting || rhfSubmitting ? (
-						<span className="loading loading-spinner loading-sm" />
-					) : mode === "create" ? (
-						"Create"
-					) : (
-						"Save"
-					)}
-				</button>
+				<SubmitButton
+					type="submit"
+					className="btn btn-primary"
+					loading={isSubmitting || rhfSubmitting}
+				>
+					{mode === "create" ? "Create" : "Save"}
+				</SubmitButton>
 			</div>
 		</form>
 	);

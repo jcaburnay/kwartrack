@@ -3,6 +3,7 @@ import { useState } from "react";
 import { projectedBucket } from "../../utils/budgetMath";
 import { centavosToPesos, formatCentavos, pesosToCentavos } from "../../utils/currency";
 import { daysRemaining, projectedEndOfMonth } from "../../utils/pacingMath";
+import { SubmitButton } from "../ui/SubmitButton";
 
 type Props = {
 	month: string;
@@ -101,14 +102,15 @@ export function BudgetAnchor({
 				</label>
 				{submitError && <div className="alert alert-error text-sm">{submitError}</div>}
 				<div className="flex gap-2">
-					<button
+					<SubmitButton
 						type="button"
 						className="btn btn-sm btn-primary"
 						onClick={handleSave}
-						disabled={saving}
+						loading={saving}
+						spinnerSize="xs"
 					>
-						{saving ? <span className="loading loading-spinner loading-xs" /> : "Save"}
-					</button>
+						Save
+					</SubmitButton>
 					<button
 						type="button"
 						className="btn btn-sm btn-ghost"
@@ -135,18 +137,15 @@ export function BudgetAnchor({
 						+ Set Budget
 					</button>
 					{canCopy && (
-						<button
+						<SubmitButton
 							type="button"
 							className="btn btn-sm btn-ghost"
 							onClick={handleCopy}
-							disabled={copying}
+							loading={copying}
+							spinnerSize="xs"
 						>
-							{copying ? (
-								<span className="loading loading-spinner loading-xs" />
-							) : (
-								"Copy from previous month"
-							)}
-						</button>
+							Copy from previous month
+						</SubmitButton>
 					)}
 				</div>
 				{submitError && <div className="alert alert-error text-sm">{submitError}</div>}

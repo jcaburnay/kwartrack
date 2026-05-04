@@ -4,6 +4,7 @@ import { supabase } from "../../../lib/supabase";
 import { useAuth } from "../../../providers/AuthProvider";
 import type { Account, AccountGroup } from "../../../utils/accountBalances";
 import { centavosToPesos, pesosToCentavos } from "../../../utils/currency";
+import { SubmitButton } from "../../ui/SubmitButton";
 import { GroupPickerField } from "../GroupPickerField";
 
 type Form = {
@@ -196,15 +197,9 @@ export function CreditForm({ mode, initial, groups, onRefetchGroups, onSaved, on
 				<button type="button" className="btn btn-ghost" onClick={onCancel}>
 					Cancel
 				</button>
-				<button type="submit" className="btn btn-primary" disabled={isSubmitting}>
-					{isSubmitting ? (
-						<span className="loading loading-spinner loading-sm" />
-					) : mode === "create" ? (
-						"Create"
-					) : (
-						"Save"
-					)}
-				</button>
+				<SubmitButton type="submit" className="btn btn-primary" loading={isSubmitting}>
+					{mode === "create" ? "Create" : "Save"}
+				</SubmitButton>
 			</div>
 		</form>
 	);

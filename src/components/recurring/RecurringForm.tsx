@@ -10,6 +10,7 @@ import {
 } from "../../utils/recurringValidation";
 import type { TransactionType } from "../../utils/transactionValidation";
 import { TagPickerField } from "../transactions/TagPickerField";
+import { SubmitButton } from "../ui/SubmitButton";
 
 export type RecurringFormValues = {
 	service: string;
@@ -383,15 +384,13 @@ export function RecurringForm({
 				<button type="button" className="btn btn-ghost" onClick={onCancel}>
 					Cancel
 				</button>
-				<button type="submit" className="btn btn-primary" disabled={isSubmitting || rhfSubmitting}>
-					{isSubmitting || rhfSubmitting ? (
-						<span className="loading loading-spinner loading-sm" />
-					) : mode === "create" ? (
-						"Create"
-					) : (
-						"Save"
-					)}
-				</button>
+				<SubmitButton
+					type="submit"
+					className="btn btn-primary"
+					loading={isSubmitting || rhfSubmitting}
+				>
+					{mode === "create" ? "Create" : "Save"}
+				</SubmitButton>
 			</div>
 		</form>
 	);

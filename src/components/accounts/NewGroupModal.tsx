@@ -3,6 +3,7 @@ import { type SubmitHandler, useForm } from "react-hook-form";
 import { supabase } from "../../lib/supabase";
 import { useAuth } from "../../providers/AuthProvider";
 import { Modal } from "../ui/Modal";
+import { SubmitButton } from "../ui/SubmitButton";
 
 type Form = { name: string };
 
@@ -71,9 +72,9 @@ export function NewGroupModal({ onCreated, onCancel }: Props) {
 					<button type="button" className="btn btn-ghost" onClick={onCancel}>
 						Cancel
 					</button>
-					<button type="submit" className="btn btn-primary" disabled={isSubmitting}>
-						{isSubmitting ? <span className="loading loading-spinner loading-sm" /> : "Create"}
-					</button>
+					<SubmitButton type="submit" className="btn btn-primary" loading={isSubmitting}>
+						Create
+					</SubmitButton>
 				</div>
 			</form>
 		</Modal>

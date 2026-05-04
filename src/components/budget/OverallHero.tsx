@@ -2,6 +2,7 @@ import { Pencil } from "lucide-react";
 import { useState } from "react";
 import { progressBucket } from "../../utils/budgetMath";
 import { centavosToPesos, formatCentavos, pesosToCentavos } from "../../utils/currency";
+import { SubmitButton } from "../ui/SubmitButton";
 
 type Props = {
 	overallCentavos: number | null;
@@ -105,14 +106,14 @@ export function OverallHero({
 				</label>
 				{submitError && <div className="alert alert-error text-sm">{submitError}</div>}
 				<div className="flex gap-2">
-					<button
+					<SubmitButton
 						type="button"
 						className="btn btn-sm btn-primary"
 						onClick={handleSave}
-						disabled={saving}
+						loading={saving}
 					>
-						{saving ? <span className="loading loading-spinner loading-sm" /> : "Save"}
-					</button>
+						Save
+					</SubmitButton>
 					<button
 						type="button"
 						className="btn btn-sm btn-ghost"

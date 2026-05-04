@@ -2,6 +2,7 @@ import { useState } from "react";
 import type { Tag } from "../../hooks/useTags";
 import { formatCentavos, pesosToCentavos } from "../../utils/currency";
 import { Modal } from "../ui/Modal";
+import { SubmitButton } from "../ui/SubmitButton";
 
 type Props = {
 	candidateTags: readonly Tag[];
@@ -95,9 +96,14 @@ export function NewAllocationModal({
 				<button type="button" className="btn btn-ghost" onClick={onCancel}>
 					Cancel
 				</button>
-				<button type="button" className="btn btn-primary" onClick={handleAdd} disabled={saving}>
-					{saving ? <span className="loading loading-spinner loading-sm" /> : "Create"}
-				</button>
+				<SubmitButton
+					type="button"
+					className="btn btn-primary"
+					onClick={handleAdd}
+					loading={saving}
+				>
+					Create
+				</SubmitButton>
 			</Modal.Footer>
 		</Modal>
 	);
