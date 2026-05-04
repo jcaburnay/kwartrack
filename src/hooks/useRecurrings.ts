@@ -1,17 +1,12 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback } from "react";
 import { supabase } from "../lib/supabase";
 import type { Database } from "../types/supabase";
 import type { Recurring } from "../utils/recurringFilters";
 import type { RecurringInput } from "../utils/recurringValidation";
+import { createSharedStore, registerSharedStore } from "./sharedStore";
 
 type RecurringInsert = Database["public"]["Tables"]["recurring"]["Insert"];
 type RecurringUpdate = Database["public"]["Tables"]["recurring"]["Update"];
-
-type State = {
-	recurrings: Recurring[];
-	isLoading: boolean;
-	error: string | null;
-};
 
 function inputToInsert(input: RecurringInput, userId: string): RecurringInsert {
 	// next_occurrence_at is set by the BEFORE trigger; we send a placeholder
@@ -34,39 +29,30 @@ function inputToInsert(input: RecurringInput, userId: string): RecurringInsert {
 	};
 }
 
+const store = createSharedStore<Recurring[]>(async () => {
+	const { data, error } = await supabase
+		.from("recurring")
+		.select("*")
+		.order("is_completed", { ascending: true })
+		.order("is_paused", { ascending: true })
+		.order("next_occurrence_at", { ascending: true });
+	if (error) throw new Error(error.message);
+	return data ?? [];
+}, []);
+
+registerSharedStore(store.reset);
+
 export function useRecurrings() {
-	const [state, setState] = useState<State>({
-		recurrings: [],
-		isLoading: true,
-		error: null,
-	});
-
-	const refetch = useCallback(async () => {
-		const { data, error } = await supabase
-			.from("recurring")
-			.select("*")
-			.order("is_completed", { ascending: true })
-			.order("is_paused", { ascending: true })
-			.order("next_occurrence_at", { ascending: true });
-		if (error) {
-			setState((s) => ({ ...s, isLoading: false, error: error.message }));
-			return;
-		}
-		setState({ recurrings: data ?? [], isLoading: false, error: null });
-	}, []);
-
-	useEffect(() => {
-		refetch();
-	}, [refetch]);
+	const { data, isLoading, error, refetch } = store.useStore();
 
 	const createRecurring = useCallback(
 		async (input: RecurringInput): Promise<{ error: string | null }> => {
 			const { data: userData } = await supabase.auth.getUser();
 			if (!userData.user) return { error: "Not signed in" };
-			const { error } = await supabase
+			const { error: insErr } = await supabase
 				.from("recurring")
 				.insert(inputToInsert(input, userData.user.id));
-			if (error) return { error: error.message };
+			if (insErr) return { error: insErr.message };
 			await refetch();
 			return { error: null };
 		},
@@ -75,8 +61,8 @@ export function useRecurrings() {
 
 	const updateRecurring = useCallback(
 		async (id: string, partial: RecurringUpdate): Promise<{ error: string | null }> => {
-			const { error } = await supabase.from("recurring").update(partial).eq("id", id);
-			if (error) return { error: error.message };
+			const { error: updErr } = await supabase.from("recurring").update(partial).eq("id", id);
+			if (updErr) return { error: updErr.message };
 			await refetch();
 			return { error: null };
 		},
@@ -85,8 +71,8 @@ export function useRecurrings() {
 
 	const deleteRecurring = useCallback(
 		async (id: string): Promise<{ error: string | null }> => {
-			const { error } = await supabase.from("recurring").delete().eq("id", id);
-			if (error) return { error: error.message };
+			const { error: delErr } = await supabase.from("recurring").delete().eq("id", id);
+			if (delErr) return { error: delErr.message };
 			await refetch();
 			return { error: null };
 		},
@@ -96,16 +82,25 @@ export function useRecurrings() {
 	const togglePaused = useCallback(
 		async (id: string, currentlyPaused: boolean): Promise<{ error: string | null }> => {
 			// The BEFORE trigger handles next_at recompute on resume.
-			const { error } = await supabase
+			const { error: updErr } = await supabase
 				.from("recurring")
 				.update({ is_paused: !currentlyPaused })
 				.eq("id", id);
-			if (error) return { error: error.message };
+			if (updErr) return { error: updErr.message };
 			await refetch();
 			return { error: null };
 		},
 		[refetch],
 	);
 
-	return { ...state, refetch, createRecurring, updateRecurring, deleteRecurring, togglePaused };
+	return {
+		recurrings: data,
+		isLoading,
+		error,
+		refetch,
+		createRecurring,
+		updateRecurring,
+		deleteRecurring,
+		togglePaused,
+	};
 }

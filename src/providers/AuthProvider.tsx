@@ -8,6 +8,7 @@ import {
 	useMemo,
 	useState,
 } from "react";
+import { resetAllSharedStores } from "../hooks/sharedStore";
 import { subscribeTransactionRealtime } from "../hooks/useTransactionRealtime";
 import { supabase } from "../lib/supabase";
 import type { Database } from "../types/supabase";
@@ -51,24 +52,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 		supabase.auth.getSession().then(({ data }) => {
 			if (!active) return;
 			setSession(data.session);
-			if (data.session) loadProfile(data.session.user.id);
 			setIsLoading(false);
 		});
 
 		const { data: subscription } = supabase.auth.onAuthStateChange((_event, next) => {
 			if (!active) return;
 			setSession(next);
-			if (next) loadProfile(next.user.id);
-			else setProfile(null);
 		});
 
 		return () => {
 			active = false;
 			subscription.subscription.unsubscribe();
 		};
-	}, [loadProfile]);
+	}, []);
 
 	const userId = session?.user.id;
+	// Load the profile once per signed-in user. Splitting this from the session
+	// effect avoids the duplicate fetch when getSession() and onAuthStateChange()
+	// both fire for the same session on initial load.
+	useEffect(() => {
+		if (!userId) {
+			setProfile(null);
+			resetAllSharedStores();
+			return;
+		}
+		loadProfile(userId);
+	}, [userId, loadProfile]);
+
 	useEffect(() => {
 		if (!userId) return;
 		return subscribeTransactionRealtime(userId);
@@ -78,14 +88,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 		await supabase.auth.signOut();
 	}, []);
 
-	const setSessionOptimistically = useCallback(
-		(next: Session | null) => {
-			setSession(next);
-			if (next) loadProfile(next.user.id);
-			else setProfile(null);
-		},
-		[loadProfile],
-	);
+	const setSessionOptimistically = useCallback((next: Session | null) => {
+		setSession(next);
+	}, []);
 
 	const value = useMemo<AuthContextValue>(
 		() => ({

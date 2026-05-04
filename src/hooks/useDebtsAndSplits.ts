@@ -1,10 +1,11 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo } from "react";
 import { supabase } from "../lib/supabase";
 import type { Database } from "../types/supabase";
 import type { DebtRow } from "../utils/debtFilters";
 import type { DebtInput } from "../utils/debtValidation";
 import type { SplitRow } from "../utils/splitFilters";
 import type { SplitInput } from "../utils/splitValidation";
+import { createSharedStore, registerSharedStore } from "./sharedStore";
 import { bumpTransactionVersion } from "./useTransactionVersion";
 
 type DebtRaw = Database["public"]["Tables"]["debt"]["Row"];
@@ -21,12 +22,7 @@ type SplitWithJoins = SplitRaw & {
 	debts: { settled_centavos: number; amount_centavos: number }[];
 };
 
-type State = {
-	debts: DebtRow[];
-	splits: SplitRow[];
-	isLoading: boolean;
-	error: string | null;
-};
+type DebtsAndSplits = { debts: DebtRow[]; splits: SplitRow[] };
 
 export type ExpandedSplitParticipant = {
 	participantId: string;
@@ -37,16 +33,8 @@ export type ExpandedSplitParticipant = {
 	settledCentavos: number;
 };
 
-export function useDebtsAndSplits() {
-	const [state, setState] = useState<State>({
-		debts: [],
-		splits: [],
-		isLoading: true,
-		error: null,
-	});
-
-	const refetch = useCallback(async () => {
-		setState((s) => ({ ...s, isLoading: true, error: null }));
+const store = createSharedStore<DebtsAndSplits>(
+	async () => {
 		const [debtsRes, splitsRes] = await Promise.all([
 			supabase
 				.from("debt")
@@ -56,16 +44,13 @@ export function useDebtsAndSplits() {
 				.from("split_event")
 				.select(
 					`*,
-					participants:split_participant(*, person:person!person_id(name)),
-					debts:debt(settled_centavos, amount_centavos)`,
+				participants:split_participant(*, person:person!person_id(name)),
+				debts:debt(settled_centavos, amount_centavos)`,
 				)
 				.order("date", { ascending: false }),
 		]);
 		const err = debtsRes.error?.message ?? splitsRes.error?.message ?? null;
-		if (err) {
-			setState({ debts: [], splits: [], isLoading: false, error: err });
-			return;
-		}
+		if (err) throw new Error(err);
 
 		const debts: DebtRow[] = (debtsRes.data as unknown as DebtWithJoins[]).map((d) => ({
 			id: d.id,
@@ -98,33 +83,37 @@ export function useDebtsAndSplits() {
 			participantNames: s.participants.map((p) => p.person.name),
 		}));
 
-		setState({ debts, splits, isLoading: false, error: null });
-	}, []);
+		return { debts, splits };
+	},
+	{ debts: [], splits: [] },
+);
 
-	useEffect(() => {
-		refetch();
-	}, [refetch]);
+registerSharedStore(store.reset);
+
+export function useDebtsAndSplits() {
+	const { data, isLoading, error, refetch } = store.useStore();
+	const { debts, splits } = data;
 
 	const balance = useMemo(() => {
 		let owed = 0;
 		let owe = 0;
-		for (const d of state.debts) {
+		for (const d of debts) {
 			const remaining = d.amountCentavos - d.settledCentavos;
 			if (remaining <= 0) continue;
 			if (d.direction === "loaned") owed += remaining;
 			else owe += remaining;
 		}
 		return { owedCentavos: owed, oweCentavos: owe };
-	}, [state.debts]);
+	}, [debts]);
 
 	const hasUnsettledLoaned = useMemo(
-		() => state.debts.some((d) => d.direction === "loaned" && d.settledCentavos < d.amountCentavos),
-		[state.debts],
+		() => debts.some((d) => d.direction === "loaned" && d.settledCentavos < d.amountCentavos),
+		[debts],
 	);
 
 	const createSplit = useCallback(
 		async (input: SplitInput): Promise<{ error: string | null }> => {
-			const { error } = await supabase.rpc("create_split", {
+			const { error: rpcErr } = await supabase.rpc("create_split", {
 				p_description: input.description.trim(),
 				p_total_centavos: input.totalCentavos,
 				p_date: input.date,
@@ -137,7 +126,7 @@ export function useDebtsAndSplits() {
 					share_input_value: p.shareInputValue ?? null,
 				})),
 			});
-			if (error) return { error: error.message };
+			if (rpcErr) return { error: rpcErr.message };
 			bumpTransactionVersion();
 			await refetch();
 			return { error: null };
@@ -147,7 +136,7 @@ export function useDebtsAndSplits() {
 
 	const updateSplit = useCallback(
 		async (id: string, input: SplitInput): Promise<{ error: string | null }> => {
-			const { error } = await supabase.rpc("update_split", {
+			const { error: rpcErr } = await supabase.rpc("update_split", {
 				p_split_id: id,
 				p_description: input.description.trim(),
 				p_total_centavos: input.totalCentavos,
@@ -161,7 +150,7 @@ export function useDebtsAndSplits() {
 					share_input_value: p.shareInputValue ?? null,
 				})),
 			});
-			if (error) return { error: error.message };
+			if (rpcErr) return { error: rpcErr.message };
 			bumpTransactionVersion();
 			await refetch();
 			return { error: null };
@@ -171,8 +160,8 @@ export function useDebtsAndSplits() {
 
 	const deleteSplit = useCallback(
 		async (id: string): Promise<{ error: string | null }> => {
-			const { error } = await supabase.from("split_event").delete().eq("id", id);
-			if (error) return { error: error.message };
+			const { error: delErr } = await supabase.from("split_event").delete().eq("id", id);
+			if (delErr) return { error: delErr.message };
 			bumpTransactionVersion();
 			await refetch();
 			return { error: null };
@@ -184,7 +173,7 @@ export function useDebtsAndSplits() {
 		async (input: DebtInput): Promise<{ error: string | null }> => {
 			const { data: userData } = await supabase.auth.getUser();
 			if (!userData.user) return { error: "Not signed in" };
-			const { error } = await supabase.from("debt").insert({
+			const { error: insErr } = await supabase.from("debt").insert({
 				user_id: userData.user.id,
 				person_id: input.personId as string,
 				direction: input.direction,
@@ -194,7 +183,7 @@ export function useDebtsAndSplits() {
 				paid_account_id: input.paidAccountId,
 				tag_id: input.tagId,
 			});
-			if (error) return { error: error.message };
+			if (insErr) return { error: insErr.message };
 			bumpTransactionVersion();
 			await refetch();
 			return { error: null };
@@ -204,8 +193,8 @@ export function useDebtsAndSplits() {
 
 	const deleteDebt = useCallback(
 		async (id: string): Promise<{ error: string | null }> => {
-			const { error } = await supabase.from("debt").delete().eq("id", id);
-			if (error) return { error: error.message };
+			const { error: delErr } = await supabase.from("debt").delete().eq("id", id);
+			if (delErr) return { error: delErr.message };
 			bumpTransactionVersion();
 			await refetch();
 			return { error: null };
@@ -220,13 +209,13 @@ export function useDebtsAndSplits() {
 			paidAccountId: string,
 			date: string,
 		): Promise<{ error: string | null }> => {
-			const { error } = await supabase.rpc("settle_debt", {
+			const { error: rpcErr } = await supabase.rpc("settle_debt", {
 				p_debt_id: debtId,
 				p_amount_centavos: amountCentavos,
 				p_paid_account_id: paidAccountId,
 				p_date: date,
 			});
-			if (error) return { error: error.message };
+			if (rpcErr) return { error: rpcErr.message };
 			bumpTransactionVersion();
 			await refetch();
 			return { error: null };
@@ -236,16 +225,16 @@ export function useDebtsAndSplits() {
 
 	const splitParticipants = useCallback(
 		async (splitId: string): Promise<ExpandedSplitParticipant[]> => {
-			const { data, error } = await supabase
+			const { data: rows, error: selErr } = await supabase
 				.from("split_participant")
 				.select(
 					`id, person_id, share_centavos, person:person!person_id(name),
 				 debts:debt!participant_id(id, settled_centavos, amount_centavos)`,
 				)
 				.eq("split_id", splitId);
-			if (error || !data) return [];
+			if (selErr || !rows) return [];
 			return (
-				data as unknown as Array<{
+				rows as unknown as Array<{
 					id: string;
 					person_id: string;
 					share_centavos: number;
@@ -269,7 +258,10 @@ export function useDebtsAndSplits() {
 	);
 
 	return {
-		...state,
+		debts,
+		splits,
+		isLoading,
+		error,
 		balance,
 		hasUnsettledLoaned,
 		refetch,
