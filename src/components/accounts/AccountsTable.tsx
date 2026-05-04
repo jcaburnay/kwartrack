@@ -126,7 +126,6 @@ export function AccountsTable({
 				<tbody>
 					{rows.map((row) =>
 						row.kind === "group-header" ? (
-							// biome-ignore lint/a11y/useKeyWithClickEvents: selection-on-row is the spec's interaction model.
 							<tr
 								key={`g-${row.group.id}`}
 								className={`bg-base-200 cursor-pointer ${
@@ -145,7 +144,6 @@ export function AccountsTable({
 								<th />
 							</tr>
 						) : (
-							// biome-ignore lint/a11y/useKeyWithClickEvents: selection-on-row is the spec's interaction model.
 							<tr
 								key={row.account.id}
 								className={`cursor-pointer hover:bg-base-200 ${
