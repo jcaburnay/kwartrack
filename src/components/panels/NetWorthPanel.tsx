@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { lazy, Suspense, useMemo, useState } from "react";
 import { useAccounts } from "../../hooks/useAccounts";
 import { useCashFlowTrend } from "../../hooks/useCashFlowTrend";
 import { useMtdDelta } from "../../hooks/useMtdDelta";
@@ -11,16 +11,27 @@ import {
 	assetMixByType,
 	liabilitiesByType,
 } from "../../utils/netWorthAggregation";
-import { AccountBalancesBar } from "../overview/AccountBalancesBar";
-import { AssetMix } from "../overview/AssetMix";
-import { CashFlowTrend } from "../overview/CashFlowTrend";
 import {
 	ChartRangeToggle,
 	type RangeOption,
 	rangeToMonthCount,
 } from "../overview/ChartRangeToggle";
-import { NetWorthTrend } from "../overview/NetWorthTrend";
 import { DropdownSelect } from "../ui/DropdownSelect";
+
+const NetWorthTrend = lazy(() =>
+	import("../overview/NetWorthTrend").then((m) => ({ default: m.NetWorthTrend })),
+);
+const CashFlowTrend = lazy(() =>
+	import("../overview/CashFlowTrend").then((m) => ({ default: m.CashFlowTrend })),
+);
+const AssetMix = lazy(() => import("../overview/AssetMix").then((m) => ({ default: m.AssetMix })));
+const AccountBalancesBar = lazy(() =>
+	import("../overview/AccountBalancesBar").then((m) => ({ default: m.AccountBalancesBar })),
+);
+
+function ChartSkeleton() {
+	return <div className="skeleton h-full w-full" />;
+}
 
 type ChartView = "netWorth" | "cashFlow" | "assetMix" | "accountBalances";
 
@@ -126,14 +137,16 @@ export function NetWorthPanel() {
 						</div>
 
 						<div className="flex-1 min-h-0 min-w-0">
-							{chart === "netWorth" && <NetWorthTrend data={nwTrend} isLoading={nwLoading} />}
-							{chart === "cashFlow" && <CashFlowTrend data={cfTrend} isLoading={cfLoading} />}
-							{chart === "assetMix" && (
-								<AssetMix assets={assetSlices} liabilities={liabilitySlices} isLoading={false} />
-							)}
-							{chart === "accountBalances" && (
-								<AccountBalancesBar rows={balanceRows} isLoading={false} />
-							)}
+							<Suspense fallback={<ChartSkeleton />}>
+								{chart === "netWorth" && <NetWorthTrend data={nwTrend} isLoading={nwLoading} />}
+								{chart === "cashFlow" && <CashFlowTrend data={cfTrend} isLoading={cfLoading} />}
+								{chart === "assetMix" && (
+									<AssetMix assets={assetSlices} liabilities={liabilitySlices} isLoading={false} />
+								)}
+								{chart === "accountBalances" && (
+									<AccountBalancesBar rows={balanceRows} isLoading={false} />
+								)}
+							</Suspense>
 						</div>
 					</>
 				)}

@@ -1,12 +1,36 @@
+import { lazy, Suspense } from "react";
 import { createBrowserRouter, Navigate, RouterProvider, useSearchParams } from "react-router";
 import { ProtectedRoute } from "./components/ProtectedRoute";
-import { AuthPage } from "./pages/AuthPage";
 import { JigsawPage } from "./pages/JigsawPage";
-import { SettingsAboutPage } from "./pages/SettingsAboutPage";
-import { SettingsContactsPage } from "./pages/SettingsContactsPage";
-import { SettingsGroupsPage } from "./pages/SettingsGroupsPage";
-import { SettingsPage } from "./pages/SettingsPage";
-import { SettingsTagsPage } from "./pages/SettingsTagsPage";
+
+const AuthPage = lazy(() => import("./pages/AuthPage").then((m) => ({ default: m.AuthPage })));
+const SettingsPage = lazy(() =>
+	import("./pages/SettingsPage").then((m) => ({ default: m.SettingsPage })),
+);
+const SettingsAboutPage = lazy(() =>
+	import("./pages/SettingsAboutPage").then((m) => ({ default: m.SettingsAboutPage })),
+);
+const SettingsContactsPage = lazy(() =>
+	import("./pages/SettingsContactsPage").then((m) => ({ default: m.SettingsContactsPage })),
+);
+const SettingsGroupsPage = lazy(() =>
+	import("./pages/SettingsGroupsPage").then((m) => ({ default: m.SettingsGroupsPage })),
+);
+const SettingsTagsPage = lazy(() =>
+	import("./pages/SettingsTagsPage").then((m) => ({ default: m.SettingsTagsPage })),
+);
+
+function PageFallback() {
+	return (
+		<div className="flex h-screen items-center justify-center">
+			<span className="loading loading-spinner loading-lg text-primary" />
+		</div>
+	);
+}
+
+function lazyRoute(node: React.ReactNode) {
+	return <Suspense fallback={<PageFallback />}>{node}</Suspense>;
+}
 
 function RecurringRedirect() {
 	const [params] = useSearchParams();
@@ -31,21 +55,21 @@ const router = createBrowserRouter([
 	{ path: "/debts-and-splits", element: <Navigate to="/" replace /> },
 	{
 		path: "/settings",
-		element: (
+		element: lazyRoute(
 			<ProtectedRoute>
 				<SettingsPage />
-			</ProtectedRoute>
+			</ProtectedRoute>,
 		),
 		children: [
 			{ index: true, element: <Navigate to="tags" replace /> },
-			{ path: "tags", element: <SettingsTagsPage /> },
-			{ path: "contacts", element: <SettingsContactsPage /> },
-			{ path: "groups", element: <SettingsGroupsPage /> },
-			{ path: "about", element: <SettingsAboutPage /> },
+			{ path: "tags", element: lazyRoute(<SettingsTagsPage />) },
+			{ path: "contacts", element: lazyRoute(<SettingsContactsPage />) },
+			{ path: "groups", element: lazyRoute(<SettingsGroupsPage />) },
+			{ path: "about", element: lazyRoute(<SettingsAboutPage />) },
 		],
 	},
-	{ path: "/signin", element: <AuthPage /> },
-	{ path: "/signup", element: <AuthPage /> },
+	{ path: "/signin", element: lazyRoute(<AuthPage />) },
+	{ path: "/signup", element: lazyRoute(<AuthPage />) },
 ]);
 
 export function App() {

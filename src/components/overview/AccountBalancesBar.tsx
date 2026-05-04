@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import {
 	Bar,
 	BarChart,
@@ -22,6 +23,7 @@ function truncate(name: string, max = 14): string {
 }
 
 export function AccountBalancesBar({ rows, isLoading }: Props) {
+	const data = useMemo(() => rows.map((r) => ({ ...r, displayName: truncate(r.name) })), [rows]);
 	if (isLoading) return <div className="skeleton h-full w-full" />;
 	if (rows.length === 0) {
 		return (
@@ -30,8 +32,6 @@ export function AccountBalancesBar({ rows, isLoading }: Props) {
 			</div>
 		);
 	}
-
-	const data = rows.map((r) => ({ ...r, displayName: truncate(r.name) }));
 	// Reserve ~28px per row + ~24px for the X axis. Caps so the chart can
 	// scroll inside a fixed-height parent.
 	const chartHeight = Math.max(160, data.length * 28 + 24);

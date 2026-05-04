@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import {
 	CartesianGrid,
 	Line,
@@ -35,8 +36,11 @@ function shortMonthLabel(monthISO: string): string {
 }
 
 export function NetWorthTrend({ data, isLoading }: Props) {
+	const enriched = useMemo(
+		() => data.map((p) => ({ ...p, label: shortMonthLabel(p.monthISO) })),
+		[data],
+	);
 	if (isLoading) return <div className="skeleton h-full w-full" />;
-	const enriched = data.map((p) => ({ ...p, label: shortMonthLabel(p.monthISO) }));
 
 	return (
 		<ResponsiveContainer width="100%" height="100%" minHeight={160}>

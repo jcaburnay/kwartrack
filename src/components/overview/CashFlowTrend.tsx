@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import {
 	Bar,
 	CartesianGrid,
@@ -37,13 +38,17 @@ function shortMonthLabel(monthISO: string): string {
 }
 
 export function CashFlowTrend({ data, isLoading }: Props) {
-	if (isLoading) return <div className="skeleton h-full w-full" />;
 	// Render expense as negative so income/expense flank the zero line.
-	const enriched = data.map((p) => ({
-		...p,
-		expenseSigned: -p.expenseCentavos,
-		label: shortMonthLabel(p.monthISO),
-	}));
+	const enriched = useMemo(
+		() =>
+			data.map((p) => ({
+				...p,
+				expenseSigned: -p.expenseCentavos,
+				label: shortMonthLabel(p.monthISO),
+			})),
+		[data],
+	);
+	if (isLoading) return <div className="skeleton h-full w-full" />;
 	const showDots = data.length <= 6;
 
 	return (

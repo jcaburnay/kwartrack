@@ -1,5 +1,13 @@
 import type { Session, User } from "@supabase/supabase-js";
-import { createContext, type ReactNode, useCallback, useContext, useEffect, useState } from "react";
+import {
+	createContext,
+	type ReactNode,
+	useCallback,
+	useContext,
+	useEffect,
+	useMemo,
+	useState,
+} from "react";
 import { subscribeTransactionRealtime } from "../hooks/useTransactionRealtime";
 import { supabase } from "../lib/supabase";
 import type { Database } from "../types/supabase";
@@ -79,14 +87,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 		[loadProfile],
 	);
 
-	const value: AuthContextValue = {
-		session,
-		user: session?.user ?? null,
-		profile,
-		isLoading,
-		signOut,
-		setSessionOptimistically,
-	};
+	const value = useMemo<AuthContextValue>(
+		() => ({
+			session,
+			user: session?.user ?? null,
+			profile,
+			isLoading,
+			signOut,
+			setSessionOptimistically,
+		}),
+		[session, profile, isLoading, signOut, setSessionOptimistically],
+	);
 
 	return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
