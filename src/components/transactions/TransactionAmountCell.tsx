@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { formatCentavos } from "../../utils/currency";
 import type { TransactionType } from "../../utils/transactionValidation";
 
@@ -9,7 +10,7 @@ type Props = {
 
 const MINUS = "−"; // proper minus sign U+2212, not hyphen — aligns with tabular nums
 
-export function TransactionAmountCell({ type, amountCentavos, feeCentavos }: Props) {
+function TransactionAmountCellInner({ type, amountCentavos, feeCentavos }: Props) {
 	const formatted = formatCentavos(amountCentavos);
 	let signed: string;
 	let colorClass = "";
@@ -33,3 +34,5 @@ export function TransactionAmountCell({ type, amountCentavos, feeCentavos }: Pro
 		</div>
 	);
 }
+
+export const TransactionAmountCell = memo(TransactionAmountCellInner);

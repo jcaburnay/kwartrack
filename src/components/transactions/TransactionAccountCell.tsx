@@ -1,3 +1,4 @@
+import { memo } from "react";
 import type { TransactionType } from "../../utils/transactionValidation";
 
 type Props = {
@@ -19,7 +20,7 @@ function MissingName() {
 	return <span className="text-base-content/40">{DASH}</span>;
 }
 
-export function TransactionAccountCell({ type, fromAccountId, toAccountId, accountsById }: Props) {
+function TransactionAccountCellInner({ type, fromAccountId, toAccountId, accountsById }: Props) {
 	if (type === "transfer") {
 		const from = lookupAccountName(fromAccountId, accountsById);
 		const to = lookupAccountName(toAccountId, accountsById);
@@ -37,3 +38,5 @@ export function TransactionAccountCell({ type, fromAccountId, toAccountId, accou
 	if (!display) return <MissingName />;
 	return <span className="truncate inline-block max-w-full">{display}</span>;
 }
+
+export const TransactionAccountCell = memo(TransactionAccountCellInner);

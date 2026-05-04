@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { type SubmitHandler, useForm } from "react-hook-form";
+import { type SubmitHandler, useForm, useWatch } from "react-hook-form";
 import type { Tag, TagScope } from "../../hooks/useTags";
 import type { Account } from "../../utils/accountBalances";
 import { centavosToPesos, pesosToCentavos } from "../../utils/currency";
@@ -59,16 +59,16 @@ export function RecurringForm({
 }: Props) {
 	const {
 		register,
-		watch,
+		control,
 		setValue,
 		handleSubmit,
 		formState: { errors, isSubmitting: rhfSubmitting },
 	} = useForm<RecurringFormValues>({ defaultValues: defaults });
 
-	const type = watch("type");
-	const tagId = watch("tagId");
-	const fromAccountId = watch("fromAccountId");
-	const toAccountId = watch("toAccountId");
+	const type = useWatch({ control, name: "type" });
+	const tagId = useWatch({ control, name: "tagId" });
+	const fromAccountId = useWatch({ control, name: "fromAccountId" });
+	const toAccountId = useWatch({ control, name: "toAccountId" });
 
 	// Mirror TransactionForm's account-relocation-on-type-change behaviour.
 	const [lastType, setLastType] = useState<TransactionType>(defaults.type);

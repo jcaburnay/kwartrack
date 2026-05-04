@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { type SubmitHandler, useForm } from "react-hook-form";
+import { type SubmitHandler, useForm, useWatch } from "react-hook-form";
 import type { Tag, TagScope } from "../../hooks/useTags";
 import type { Account } from "../../utils/accountBalances";
 import { centavosToPesos, PHP, pesosToCentavos } from "../../utils/currency";
@@ -53,16 +53,17 @@ export function TransactionForm({
 }: Props) {
 	const {
 		register,
-		watch,
+		control,
 		setValue,
 		handleSubmit,
 		formState: { errors, isSubmitting: rhfSubmitting },
 	} = useForm<TransactionFormValues>({ defaultValues: defaults });
 
-	const type = watch("type");
-	const tagId = watch("tagId");
-	const fromAccountId = watch("fromAccountId");
-	const toAccountId = watch("toAccountId");
+	const type = useWatch({ control, name: "type" });
+	const tagId = useWatch({ control, name: "tagId" });
+	const fromAccountId = useWatch({ control, name: "fromAccountId" });
+	const toAccountId = useWatch({ control, name: "toAccountId" });
+	const feePesos = useWatch({ control, name: "feePesos" });
 
 	// Relocate a picked account when type changes, matching the spec's pre-fill
 	// rule: expense/transfer use `from`, income uses `to`. We also scrub fields
@@ -304,11 +305,11 @@ export function TransactionForm({
 								})}
 							/>
 						</label>
-						{watch("feePesos") != null && (watch("feePesos") as number) > 0 && fromAccountId && (
+						{feePesos != null && (feePesos as number) > 0 && fromAccountId && (
 							<p className="mt-1 text-xs text-base-content/60">
 								A paired <code className="font-mono">transfer-fees</code> expense of{" "}
-								<span className="tabular-nums">{PHP.format(watch("feePesos") as number)}</span> will
-								be recorded from {accounts.find((a) => a.id === fromAccountId)?.name ?? "source"}.
+								<span className="tabular-nums">{PHP.format(feePesos as number)}</span> will be
+								recorded from {accounts.find((a) => a.id === fromAccountId)?.name ?? "source"}.
 							</p>
 						)}
 					</div>
