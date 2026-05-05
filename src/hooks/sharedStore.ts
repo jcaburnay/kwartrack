@@ -47,6 +47,14 @@ export function createSharedStore<T>(
 
 	const subscribe = (cb: () => void): (() => void) => {
 		listeners.add(cb);
+		// `useSyncExternalStore` calls this whenever the subscribe identity
+		// changes, which is exactly when a keyed parent (e.g. month picker) has
+		// swapped one store for another. Kick off a fetch if this store has
+		// never resolved — without this, switching to a brand-new keyed store
+		// whose `version` matches the previous store's `version` leaves the
+		// useEffect-driven `ensureFresh` skipped, and the new store stays at
+		// isLoading: true forever.
+		if (state.isLoading && !inflight) void refetch();
 		return () => {
 			listeners.delete(cb);
 		};
