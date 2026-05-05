@@ -137,7 +137,7 @@ export function AccountsTable({
 							>
 								<th className="font-semibold">{row.group.name}</th>
 								<th
-									className={`text-right font-semibold ${row.netCentavos < 0 ? "text-error" : ""}`}
+									className={`text-right font-semibold ${row.netCentavos < 0 ? "text-error" : "text-success"}`}
 								>
 									{formatCentavos(row.netCentavos)}
 								</th>
@@ -172,7 +172,7 @@ export function AccountsTable({
 									</div>
 								</td>
 								<td
-									className={`text-right tabular-nums ${isLiability(row.account) ? "text-error" : ""}`}
+									className={`text-right tabular-nums ${isLiability(row.account) ? "text-error" : "text-success"}`}
 								>
 									<div>{formatCentavos(row.account.balance_centavos)}</div>
 									{row.account.type === "credit" && (

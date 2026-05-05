@@ -16,6 +16,7 @@ function TransactionAmountCellInner({ type, amountCentavos, feeCentavos }: Props
 	let colorClass = "";
 	if (type === "expense") {
 		signed = `${MINUS}${formatted}`;
+		colorClass = "text-error";
 	} else if (type === "income") {
 		signed = `+${formatted}`;
 		colorClass = "text-success";

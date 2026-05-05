@@ -33,7 +33,7 @@ export function GroupSummaryCard({ group, accounts, onClear }: Props) {
 			<div>
 				<p
 					data-testid="group-rollup"
-					className={`text-3xl font-semibold tabular-nums ${isNegative ? "text-error" : ""}`}
+					className={`text-3xl font-semibold tabular-nums ${isNegative ? "text-error" : "text-success"}`}
 				>
 					{formatCentavos(rollup)}
 				</p>
@@ -47,9 +47,7 @@ export function GroupSummaryCard({ group, accounts, onClear }: Props) {
 					{members.map((a) => (
 						<li key={a.id} className="flex items-center justify-between gap-3">
 							<span className="text-base-content/80 truncate">{a.name}</span>
-							<span
-								className={`tabular-nums ${isLiability(a) ? "text-error" : "text-base-content/80"}`}
-							>
+							<span className={`tabular-nums ${isLiability(a) ? "text-error" : "text-success"}`}>
 								{formatCentavos(a.balance_centavos)}
 							</span>
 						</li>

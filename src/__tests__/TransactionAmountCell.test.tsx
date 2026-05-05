@@ -3,13 +3,13 @@ import { describe, expect, it } from "vitest";
 import { TransactionAmountCell } from "../components/transactions/TransactionAmountCell";
 
 describe("TransactionAmountCell", () => {
-	it("renders expense with leading minus and default color (no red)", () => {
+	it("renders expense with leading minus and error color", () => {
 		const { container } = render(
 			<TransactionAmountCell type="expense" amountCentavos={1_250_00} />,
 		);
 		const cell = container.firstChild as HTMLElement;
 		expect(cell.textContent).toContain("−₱1,250.00");
-		expect(cell.className).not.toMatch(/text-error/);
+		expect(cell.className).toMatch(/text-error/);
 	});
 
 	it("renders income with leading plus and success color", () => {
