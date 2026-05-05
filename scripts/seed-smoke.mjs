@@ -99,7 +99,9 @@ try {
 	console.log("   prod credentials. To override locally with a known password, run:");
 	console.log("");
 	console.log(`     psql "${LOCAL_DB}" \\`);
-	console.log(`       -c "UPDATE auth.users SET encrypted_password = crypt('YOUR_PW', gen_salt('bf')) WHERE email = 'YOUR_EMAIL';"`);
+	console.log(
+		`       -c "UPDATE auth.users SET encrypted_password = crypt('YOUR_PW', gen_salt('bf')) WHERE email = 'YOUR_EMAIL';"`,
+	);
 } finally {
 	rmSync(tmp, { recursive: true, force: true });
 }
