@@ -49,7 +49,7 @@ export function ConfirmModal({
 				</button>
 				<SubmitButton
 					type="button"
-					className={destructive ? "btn btn-error" : "btn btn-cta"}
+					className={destructive ? "btn btn-error" : "btn btn-primary"}
 					onClick={onConfirm}
 					loading={pending}
 				>

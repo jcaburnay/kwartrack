@@ -28,7 +28,7 @@ export function SettingsContactsPage() {
 		<div className="flex flex-col gap-4">
 			<div className="flex items-center justify-between gap-4">
 				<h2 className="text-lg font-semibold">Contacts</h2>
-				<button type="button" className="btn btn-cta btn-sm" onClick={() => setCreating(true)}>
+				<button type="button" className="btn btn-primary btn-sm" onClick={() => setCreating(true)}>
 					New person
 				</button>
 			</div>
@@ -58,7 +58,7 @@ export function SettingsContactsPage() {
 									/>
 									<button
 										type="button"
-										className="btn btn-sm btn-cta"
+										className="btn btn-sm btn-primary"
 										onClick={() => handleRename(p.id)}
 									>
 										Save

@@ -1,55 +1,8 @@
 @import "tailwindcss";
 @plugin "daisyui" {
 	themes:
-		silk --default,
-		dim --prefersdark;
-}
-
-/* Emerald success palette — green for income amounts, "settled" badges, and
-   other positive monetary signals. Theme-aware: emerald-600 on silk so it
-   reads against the near-white background, emerald-400 on dim so it reads
-   against the dark surface. */
-[data-theme="silk"] {
-	--color-success: #059669;
-	--color-success-content: #ffffff;
-	/* Black surface + white label on the light theme. */
-	--cta-bg: #000;
-	--cta-fg: #fff;
-}
-
-[data-theme="dim"] {
-	--color-success: #34d399;
-	--color-success-content: #052e1f;
-	/* Inverted on the dark theme: a black CTA on dim's dark-blue base
-	   would be invisible, so flip to a white surface with black label. */
-	--cta-bg: #fff;
-	--cta-fg: #000;
-}
-
-/* Primary call-to-action: black-and-white pair, theme-flipped, lifted off
-   the page so it reads as a physical chiclet next to the flat filter pill.
-   The filter pill keeps its cool near-black + yellow text in both themes;
-   the CTA differs by surface color, text color, and elevation. Elevation
-   comes from DaisyUI's `--depth` token (default 1 from the theme; bumped to
-   3 amplifies the inset top highlight and drop shadow at once). Hover
-   Y-translate is the standard Linear/Vercel-Geist tell that the CTA is an
-   object, not part of a track. */
-.btn-cta {
-	--depth: 3;
-	--btn-color: var(--cta-bg);
-	--btn-fg: var(--cta-fg);
-	transition:
-		transform 120ms cubic-bezier(0, 0, 0.2, 1),
-		color 200ms,
-		background-color 200ms,
-		border-color 200ms,
-		box-shadow 200ms;
-}
-.btn-cta:hover:not(:disabled) {
-	transform: translateY(-1px);
-}
-.btn-cta:active:not(:disabled) {
-	transform: translateY(0);
+		corporate --default,
+		business --prefersdark;
 }
 
 @keyframes row-flash {

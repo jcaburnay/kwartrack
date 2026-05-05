@@ -78,7 +78,7 @@ export function TimeDepositStrip({ account, onWithdrawMatured }: Props) {
 
 			{account.is_matured && onWithdrawMatured && (
 				<div className="flex justify-end">
-					<button type="button" className="btn btn-sm btn-cta" onClick={onWithdrawMatured}>
+					<button type="button" className="btn btn-sm btn-primary" onClick={onWithdrawMatured}>
 						Withdraw matured balance
 					</button>
 				</div>

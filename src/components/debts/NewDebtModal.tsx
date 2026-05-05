@@ -171,7 +171,7 @@ export function NewDebtModal({
 					<button type="button" className="btn btn-ghost" onClick={onCancel}>
 						Cancel
 					</button>
-					<SubmitButton type="submit" className="btn btn-cta" loading={isSubmitting}>
+					<SubmitButton type="submit" className="btn btn-primary" loading={isSubmitting}>
 						Create
 					</SubmitButton>
 				</div>

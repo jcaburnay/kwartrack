@@ -4,8 +4,8 @@ type Theme = "light" | "dark" | "system";
 
 const STORAGE_KEY = "theme";
 const THEME_MAP: Record<"light" | "dark", string> = {
-	light: "silk",
-	dark: "dim",
+	light: "corporate",
+	dark: "business",
 };
 
 function applyTheme(theme: Theme) {

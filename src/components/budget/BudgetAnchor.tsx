@@ -70,7 +70,11 @@ export function BudgetAnchor({
 						Set a monthly budget to track spending against limits across tags.
 					</p>
 					<div className="flex flex-wrap items-center gap-2">
-						<button type="button" className="btn btn-cta btn-sm" onClick={() => setEditing(true)}>
+						<button
+							type="button"
+							className="btn btn-primary btn-sm"
+							onClick={() => setEditing(true)}
+						>
 							+ Set Budget
 						</button>
 						{canCopy && (

@@ -26,7 +26,7 @@ export function SplitParticipantRow({ participant, onSettle }: Props) {
 						)}
 						<button
 							type="button"
-							className="btn btn-xs btn-cta"
+							className="btn btn-xs btn-primary"
 							onClick={() => onSettle(participant.debtId)}
 						>
 							Settle ▸
