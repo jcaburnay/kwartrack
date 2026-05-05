@@ -114,7 +114,7 @@ function ModalRoot({ onClose, size = "md", children, labelledBy, ariaLabel }: Mo
 		<div className="modal modal-open" role="dialog" aria-modal="true" {...labelProps}>
 			<div
 				ref={boxRef}
-				className={`modal-box ${sizeClass[size]} p-0 rounded-none overflow-hidden flex flex-col`}
+				className={`modal-box ${sizeClass[size]} p-0 rounded-box overflow-hidden flex flex-col`}
 			>
 				<ModalContext.Provider value={{ titleId }}>
 					{header}

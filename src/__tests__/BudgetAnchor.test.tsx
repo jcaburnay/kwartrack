@@ -79,7 +79,7 @@ describe("BudgetAnchor", () => {
 			/>,
 		);
 		fireEvent.click(screen.getByLabelText("Edit overall cap"));
-		const input = await screen.findByLabelText(/Monthly cap/i);
+		const input = await screen.findByRole("spinbutton", { name: /Monthly cap/i });
 		fireEvent.change(input, { target: { value: "40000" } });
 		fireEvent.click(screen.getByRole("button", { name: /Save/i }));
 		// onSetOverall takes pesos converted to centavos.

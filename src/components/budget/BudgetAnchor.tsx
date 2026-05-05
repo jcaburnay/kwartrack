@@ -1,9 +1,10 @@
 import { Pencil } from "lucide-react";
 import { useState } from "react";
 import { projectedBucket } from "../../utils/budgetMath";
-import { centavosToPesos, formatCentavos, pesosToCentavos } from "../../utils/currency";
+import { formatCentavos } from "../../utils/currency";
 import { daysRemaining, projectedEndOfMonth } from "../../utils/pacingMath";
 import { SubmitButton } from "../ui/SubmitButton";
+import { EditOverallModal } from "./EditOverallModal";
 
 type Props = {
 	month: string;
@@ -36,120 +37,62 @@ export function BudgetAnchor({
 	canCopy,
 }: Props) {
 	const [editing, setEditing] = useState(false);
-	const [draftPesos, setDraftPesos] = useState("");
-	const [submitError, setSubmitError] = useState<string | null>(null);
-	const [saving, setSaving] = useState(false);
+	const [copyError, setCopyError] = useState<string | null>(null);
 	const [copying, setCopying] = useState(false);
 
 	const isUnset = overallCentavos == null || overallCentavos === 0;
 	const left = daysRemaining(today, timezone, month);
 	const leftLabel = `${left} day${left === 1 ? "" : "s"} left`;
 
-	function startEdit() {
-		setDraftPesos(overallCentavos == null ? "" : centavosToPesos(overallCentavos).toString());
-		setSubmitError(null);
-		setEditing(true);
-	}
-
-	async function handleSave() {
-		setSubmitError(null);
-		const pesos = Number(draftPesos);
-		if (!Number.isFinite(pesos) || pesos < 0) {
-			setSubmitError("Enter a non-negative amount.");
-			return;
-		}
-		const centavos = pesosToCentavos(pesos);
-		if (centavos < allocatedSumCentavos) {
-			setSubmitError(
-				`Overall ${formatCentavos(centavos)} is below current allocations ${formatCentavos(allocatedSumCentavos)}. Increase Overall or reduce a tag.`,
-			);
-			return;
-		}
-		setSaving(true);
-		const err = await onSetOverall(centavos);
-		setSaving(false);
-		if (err) {
-			setSubmitError(err);
-			return;
-		}
-		setEditing(false);
-	}
-
 	async function handleCopy() {
 		setCopying(true);
-		setSubmitError(null);
+		setCopyError(null);
 		const err = await onCopyFromPrevious();
 		setCopying(false);
-		if (err) setSubmitError(err);
+		if (err) setCopyError(err);
 	}
 
-	if (editing) {
-		return (
-			<div className="flex flex-col gap-2">
-				<label className="form-control">
-					<div className="label py-0">
-						<span className="label-text text-xs">Monthly cap (₱)</span>
-					</div>
-					<input
-						type="number"
-						min="0"
-						step="0.01"
-						className="input input-bordered input-sm w-48"
-						value={draftPesos}
-						onChange={(e) => setDraftPesos(e.target.value)}
-						autoFocus
-					/>
-				</label>
-				{submitError && <div className="alert alert-error text-sm">{submitError}</div>}
-				<div className="flex gap-2">
-					<SubmitButton
-						type="button"
-						className="btn btn-sm btn-primary"
-						onClick={handleSave}
-						loading={saving}
-						spinnerSize="xs"
-					>
-						Save
-					</SubmitButton>
-					<button
-						type="button"
-						className="btn btn-sm btn-ghost"
-						onClick={() => {
-							setEditing(false);
-							setSubmitError(null);
-						}}
-					>
-						Cancel
-					</button>
-				</div>
-			</div>
-		);
-	}
+	const modal = editing ? (
+		<EditOverallModal
+			overallCentavos={overallCentavos}
+			allocatedSumCentavos={allocatedSumCentavos}
+			onSetOverall={onSetOverall}
+			onSaved={() => setEditing(false)}
+			onCancel={() => setEditing(false)}
+		/>
+	) : null;
 
 	if (isUnset && allocatedSumCentavos === 0) {
 		return (
-			<div className="flex flex-col gap-2">
-				<p className="text-sm text-base-content/60">
-					Set a monthly budget to track spending against limits across tags.
-				</p>
-				<div className="flex flex-wrap items-center gap-2">
-					<button type="button" className="btn btn-primary btn-sm" onClick={startEdit}>
-						+ Set Budget
-					</button>
-					{canCopy && (
-						<SubmitButton
+			<>
+				<div className="flex flex-col gap-2">
+					<p className="text-sm text-base-content/60">
+						Set a monthly budget to track spending against limits across tags.
+					</p>
+					<div className="flex flex-wrap items-center gap-2">
+						<button
 							type="button"
-							className="btn btn-sm btn-ghost"
-							onClick={handleCopy}
-							loading={copying}
-							spinnerSize="xs"
+							className="btn btn-primary btn-sm"
+							onClick={() => setEditing(true)}
 						>
-							Copy from previous month
-						</SubmitButton>
-					)}
+							+ Set Budget
+						</button>
+						{canCopy && (
+							<SubmitButton
+								type="button"
+								className="btn btn-sm btn-ghost"
+								onClick={handleCopy}
+								loading={copying}
+								spinnerSize="xs"
+							>
+								Copy from previous month
+							</SubmitButton>
+						)}
+					</div>
+					{copyError && <div className="alert alert-error text-sm">{copyError}</div>}
 				</div>
-				{submitError && <div className="alert alert-error text-sm">{submitError}</div>}
-			</div>
+				{modal}
+			</>
 		);
 	}
 
@@ -165,46 +108,51 @@ export function BudgetAnchor({
 			: 0;
 
 	return (
-		<div className="flex flex-col gap-2">
-			<div className="flex items-baseline justify-between gap-2 flex-wrap">
-				<div className="flex items-baseline gap-2 tabular-nums text-sm">
-					<span className="text-base-content/80 font-medium">{formatCentavos(actualCentavos)}</span>
-					<span className="text-base-content/50">of {formatCentavos(overall)}</span>
-					<span className="text-base-content/40">·</span>
-					<span className="text-base-content/60">{leftLabel}</span>
+		<>
+			<div className="flex flex-col gap-2">
+				<div className="flex items-baseline justify-between gap-2 flex-wrap">
+					<div className="flex items-baseline gap-2 tabular-nums text-sm">
+						<span className="text-base-content/80 font-medium">
+							{formatCentavos(actualCentavos)}
+						</span>
+						<span className="text-base-content/50">of {formatCentavos(overall)}</span>
+						<span className="text-base-content/40">·</span>
+						<span className="text-base-content/60">{leftLabel}</span>
+					</div>
+					<button
+						type="button"
+						className="btn btn-xs btn-ghost"
+						onClick={() => setEditing(true)}
+						aria-label="Edit overall cap"
+					>
+						<Pencil className="w-3.5 h-3.5" />
+					</button>
 				</div>
-				<button
-					type="button"
-					className="btn btn-xs btn-ghost"
-					onClick={startEdit}
-					aria-label="Edit overall cap"
-				>
-					<Pencil className="w-3.5 h-3.5" />
-				</button>
-			</div>
-			<div className="relative w-full h-2 bg-base-200 rounded-full overflow-hidden">
-				<div
-					className={`h-full ${BUCKET_BAR_CLASS[bucket]} transition-all`}
-					style={{ width: `${barWidth}%` }}
-				/>
-				{bucket === "orange" && projected > overall && expectedTick > barWidth && (
+				<div className="relative w-full h-2 bg-base-200 rounded-full overflow-hidden">
 					<div
-						className="absolute top-0 h-full w-px bg-warning/70"
-						style={{ left: `${expectedTick}%` }}
-						aria-hidden="true"
+						className={`h-full ${BUCKET_BAR_CLASS[bucket]} transition-all`}
+						style={{ width: `${barWidth}%` }}
 					/>
-				)}
+					{bucket === "orange" && projected > overall && expectedTick > barWidth && (
+						<div
+							className="absolute top-0 h-full w-px bg-warning/70"
+							style={{ left: `${expectedTick}%` }}
+							aria-hidden="true"
+						/>
+					)}
+				</div>
+				<div className="flex justify-between text-xs text-base-content/50 tabular-nums">
+					<span>
+						{remaining < 0
+							? `${formatCentavos(-remaining)} over`
+							: `${formatCentavos(remaining)} remaining`}
+					</span>
+					{bucket === "orange" && projected > overall && (
+						<span className="text-warning">projected {formatCentavos(projected)}</span>
+					)}
+				</div>
 			</div>
-			<div className="flex justify-between text-xs text-base-content/50 tabular-nums">
-				<span>
-					{remaining < 0
-						? `${formatCentavos(-remaining)} over`
-						: `${formatCentavos(remaining)} remaining`}
-				</span>
-				{bucket === "orange" && projected > overall && (
-					<span className="text-warning">projected {formatCentavos(projected)}</span>
-				)}
-			</div>
-		</div>
+			{modal}
+		</>
 	);
 }
