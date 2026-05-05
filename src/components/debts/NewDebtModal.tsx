@@ -2,9 +2,10 @@ import type React from "react";
 import { useState } from "react";
 import type { Person } from "../../hooks/usePersons";
 import type { Tag } from "../../hooks/useTags";
-import type { Account } from "../../utils/accountBalances";
+import type { Account, AccountGroup } from "../../utils/accountBalances";
 import { pesosToCentavos } from "../../utils/currency";
 import { type DebtInput, validateDebt } from "../../utils/debtValidation";
+import { AccountSelect } from "../accounts/AccountSelect";
 import { Modal } from "../ui/Modal";
 import { SubmitButton } from "../ui/SubmitButton";
 import { PersonPicker } from "./PersonPicker";
@@ -12,6 +13,7 @@ import { PersonPicker } from "./PersonPicker";
 type Props = {
 	persons: readonly Person[];
 	accounts: readonly Account[];
+	groups: readonly AccountGroup[];
 	tags: readonly Tag[];
 	createPerson: (name: string) => Promise<Person | null>;
 	createDebt: (input: DebtInput) => Promise<{ error: string | null }>;
@@ -22,6 +24,7 @@ type Props = {
 export function NewDebtModal({
 	persons,
 	accounts,
+	groups,
 	tags,
 	createPerson,
 	createDebt,
@@ -124,21 +127,14 @@ export function NewDebtModal({
 					</label>
 				</div>
 
-				<label className="floating-label">
-					<span>{accountLabel}</span>
-					<select
-						className="select select-bordered w-full"
-						value={paidAccountId ?? ""}
-						onChange={(e) => setPaidAccountId(e.target.value || null)}
-					>
-						<option value="">Data-only (no tracked account)</option>
-						{pickableAccounts.map((a) => (
-							<option key={a.id} value={a.id}>
-								{a.name}
-							</option>
-						))}
-					</select>
-				</label>
+				<AccountSelect
+					label={accountLabel}
+					placeholder="Data-only (no tracked account)"
+					value={paidAccountId}
+					onChange={setPaidAccountId}
+					accounts={pickableAccounts}
+					groups={groups}
+				/>
 
 				{paidAccountId && (
 					<label className="floating-label">

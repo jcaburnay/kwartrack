@@ -29,6 +29,7 @@ describe("SettleModal", () => {
 				settledCentavos={20000}
 				suggestedAccountId={null}
 				accounts={accounts}
+				groups={[]}
 				onSubmit={onSubmit}
 				onCancel={() => {}}
 			/>,
@@ -51,6 +52,7 @@ describe("SettleModal", () => {
 				settledCentavos={20000}
 				suggestedAccountId={null}
 				accounts={accounts}
+				groups={[]}
 				onSubmit={vi.fn()}
 				onCancel={() => {}}
 			/>,

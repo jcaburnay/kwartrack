@@ -3,7 +3,7 @@ import type { Tag, TagScope } from "../../hooks/useTags";
 import { bumpTransactionVersion } from "../../hooks/useTransactionVersion";
 import { supabase } from "../../lib/supabase";
 import { useAuth } from "../../providers/AuthProvider";
-import type { Account } from "../../utils/accountBalances";
+import type { Account, AccountGroup } from "../../utils/accountBalances";
 import type { TransactionInput } from "../../utils/transactionValidation";
 import { Modal } from "../ui/Modal";
 import {
@@ -14,6 +14,7 @@ import {
 
 type Props = {
 	accounts: readonly Account[];
+	groups: readonly AccountGroup[];
 	tags: readonly Tag[];
 	createTag: (name: string, type: Exclude<TagScope, "any">) => Promise<Tag | null>;
 	prefill?: Partial<TransactionFormValues>;
@@ -23,6 +24,7 @@ type Props = {
 
 export function NewTransactionModal({
 	accounts,
+	groups,
 	tags,
 	createTag,
 	prefill,
@@ -65,6 +67,7 @@ export function NewTransactionModal({
 			<TransactionForm
 				mode="create"
 				accounts={accounts}
+				groups={groups}
 				tags={tags}
 				defaults={defaults}
 				submitError={submitError}

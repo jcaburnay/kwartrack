@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useAccountGroups } from "../../hooks/useAccountGroups";
 import { useAccounts } from "../../hooks/useAccounts";
 import { useRecurrings } from "../../hooks/useRecurrings";
 import { useTags } from "../../hooks/useTags";
@@ -49,6 +50,7 @@ export function RecurringPanel({ pendingModal, onPendingModalConsumed }: Props) 
 		togglePaused,
 	} = useRecurrings();
 	const { accounts } = useAccounts();
+	const { groups } = useAccountGroups();
 	const { tags, createInline } = useTags();
 
 	const [creating, setCreating] = useState(false);
@@ -136,6 +138,7 @@ export function RecurringPanel({ pendingModal, onPendingModalConsumed }: Props) 
 			{creating && (
 				<NewRecurringModal
 					accounts={accounts}
+					groups={groups}
 					tags={tags}
 					createTag={createInline}
 					createRecurring={createRecurring}
@@ -151,6 +154,7 @@ export function RecurringPanel({ pendingModal, onPendingModalConsumed }: Props) 
 				<EditRecurringModal
 					recurring={editing}
 					accounts={accounts}
+					groups={groups}
 					tags={tags}
 					createTag={createInline}
 					updateRecurring={updateRecurring}

@@ -190,3 +190,40 @@ export function sortAccountsByGroupAndName(
 		return a.name.localeCompare(b.name);
 	});
 }
+
+export type AccountPickerGroup = {
+	key: string;
+	label: string;
+	accounts: readonly Account[];
+};
+
+/**
+ * Bucket accounts for a grouped picker (`<optgroup>`). Ungrouped first to match
+ * `sortAccountsByGroupAndName`, then groups alphabetically. Empty buckets are
+ * dropped so the dropdown never shows an empty group.
+ */
+export function groupAccountsForPicker(
+	accounts: readonly Account[],
+	groups: readonly AccountGroup[],
+): AccountPickerGroup[] {
+	const sorted = sortAccountsByGroupAndName(accounts, groups);
+	const byGroup = new Map<string | null, Account[]>();
+	for (const a of sorted) {
+		const key = a.group_id ?? null;
+		const list = byGroup.get(key);
+		if (list) list.push(a);
+		else byGroup.set(key, [a]);
+	}
+	const out: AccountPickerGroup[] = [];
+	const ungrouped = byGroup.get(null);
+	if (ungrouped && ungrouped.length > 0) {
+		out.push({ key: "ungrouped", label: "Ungrouped", accounts: ungrouped });
+	}
+	for (const g of [...groups].sort((a, b) => a.name.localeCompare(b.name))) {
+		const list = byGroup.get(g.id);
+		if (list && list.length > 0) {
+			out.push({ key: g.id, label: g.name, accounts: list });
+		}
+	}
+	return out;
+}

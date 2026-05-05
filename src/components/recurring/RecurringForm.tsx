@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { type SubmitHandler, useForm, useWatch } from "react-hook-form";
 import type { Tag, TagScope } from "../../hooks/useTags";
-import type { Account } from "../../utils/accountBalances";
+import type { Account, AccountGroup } from "../../utils/accountBalances";
 import { centavosToPesos, pesosToCentavos } from "../../utils/currency";
 import {
 	type RecurringInput,
@@ -9,6 +9,7 @@ import {
 	validateRecurring,
 } from "../../utils/recurringValidation";
 import type { TransactionType } from "../../utils/transactionValidation";
+import { AccountSelect } from "../accounts/AccountSelect";
 import { TagPickerField } from "../transactions/TagPickerField";
 import { SubmitButton } from "../ui/SubmitButton";
 
@@ -29,6 +30,7 @@ export type RecurringFormValues = {
 type Props = {
 	mode: "create" | "edit";
 	accounts: readonly Account[];
+	groups: readonly AccountGroup[];
 	tags: readonly Tag[];
 	defaults: RecurringFormValues;
 	submitError: string | null;
@@ -49,6 +51,7 @@ const INTERVALS: { value: RecurringInterval; label: string }[] = [
 export function RecurringForm({
 	mode,
 	accounts,
+	groups,
 	tags,
 	defaults,
 	submitError,
@@ -221,84 +224,50 @@ export function RecurringForm({
 
 			{showFrom && showTo ? (
 				<div className="flex items-center gap-2">
-					<label className="floating-label flex-1 min-w-0">
-						<span>From account</span>
-						<select
-							className="select select-bordered w-full"
-							value={fromAccountId ?? ""}
-							onChange={(e) =>
-								setValue("fromAccountId", e.target.value || null, { shouldDirty: true })
-							}
-						>
-							<option value="">Select source…</option>
-							{pickableAccounts.map((a) => (
-								<option key={a.id} value={a.id}>
-									{a.name}
-								</option>
-							))}
-						</select>
-					</label>
+					<AccountSelect
+						label="From account"
+						placeholder="Select source…"
+						value={fromAccountId}
+						onChange={(id) => setValue("fromAccountId", id, { shouldDirty: true })}
+						accounts={pickableAccounts}
+						groups={groups}
+						className="floating-label flex-1 min-w-0"
+					/>
 					<span aria-hidden className="text-base-content/50 shrink-0 px-1 text-lg leading-none">
 						→
 					</span>
-					<label className="floating-label flex-1 min-w-0">
-						<span>To account</span>
-						<select
-							className="select select-bordered w-full"
-							value={toAccountId ?? ""}
-							onChange={(e) =>
-								setValue("toAccountId", e.target.value || null, { shouldDirty: true })
-							}
-						>
-							<option value="">Select destination…</option>
-							{pickableAccounts.map((a) => (
-								<option key={a.id} value={a.id}>
-									{a.name}
-								</option>
-							))}
-						</select>
-					</label>
+					<AccountSelect
+						label="To account"
+						placeholder="Select destination…"
+						value={toAccountId}
+						onChange={(id) => setValue("toAccountId", id, { shouldDirty: true })}
+						accounts={pickableAccounts}
+						groups={groups}
+						className="floating-label flex-1 min-w-0"
+					/>
 				</div>
 			) : (
 				<>
 					{showFrom && (
-						<label className="floating-label">
-							<span>From account</span>
-							<select
-								className="select select-bordered w-full"
-								value={fromAccountId ?? ""}
-								onChange={(e) =>
-									setValue("fromAccountId", e.target.value || null, { shouldDirty: true })
-								}
-							>
-								<option value="">Select source…</option>
-								{pickableAccounts.map((a) => (
-									<option key={a.id} value={a.id}>
-										{a.name}
-									</option>
-								))}
-							</select>
-						</label>
+						<AccountSelect
+							label="From account"
+							placeholder="Select source…"
+							value={fromAccountId}
+							onChange={(id) => setValue("fromAccountId", id, { shouldDirty: true })}
+							accounts={pickableAccounts}
+							groups={groups}
+						/>
 					)}
 
 					{showTo && (
-						<label className="floating-label">
-							<span>To account</span>
-							<select
-								className="select select-bordered w-full"
-								value={toAccountId ?? ""}
-								onChange={(e) =>
-									setValue("toAccountId", e.target.value || null, { shouldDirty: true })
-								}
-							>
-								<option value="">Select destination…</option>
-								{pickableAccounts.map((a) => (
-									<option key={a.id} value={a.id}>
-										{a.name}
-									</option>
-								))}
-							</select>
-						</label>
+						<AccountSelect
+							label="To account"
+							placeholder="Select destination…"
+							value={toAccountId}
+							onChange={(id) => setValue("toAccountId", id, { shouldDirty: true })}
+							accounts={pickableAccounts}
+							groups={groups}
+						/>
 					)}
 				</>
 			)}

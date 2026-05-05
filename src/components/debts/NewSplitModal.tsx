@@ -1,7 +1,7 @@
 import { useState } from "react";
 import type { Person } from "../../hooks/usePersons";
 import type { Tag } from "../../hooks/useTags";
-import type { Account } from "../../utils/accountBalances";
+import type { Account, AccountGroup } from "../../utils/accountBalances";
 import type { SplitInput } from "../../utils/splitValidation";
 import { Modal } from "../ui/Modal";
 import { defaultSplitFormValues, SplitForm } from "./SplitForm";
@@ -9,6 +9,7 @@ import { defaultSplitFormValues, SplitForm } from "./SplitForm";
 type Props = {
 	persons: readonly Person[];
 	accounts: readonly Account[];
+	groups: readonly AccountGroup[];
 	tags: readonly Tag[];
 	createPerson: (name: string) => Promise<Person | null>;
 	createSplit: (input: SplitInput) => Promise<{ error: string | null }>;
@@ -19,6 +20,7 @@ type Props = {
 export function NewSplitModal({
 	persons,
 	accounts,
+	groups,
 	tags,
 	createPerson,
 	createSplit,
@@ -45,6 +47,7 @@ export function NewSplitModal({
 				defaults={defaultSplitFormValues(today)}
 				persons={persons}
 				accounts={accounts}
+				groups={groups}
 				tags={tags}
 				createPerson={createPerson}
 				submitLabel="Create"

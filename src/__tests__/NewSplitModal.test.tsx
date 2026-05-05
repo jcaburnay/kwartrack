@@ -30,6 +30,7 @@ describe("NewSplitModal", () => {
 			<NewSplitModal
 				persons={persons}
 				accounts={accounts}
+				groups={[]}
 				tags={tags}
 				createPerson={async () => null}
 				createSplit={create}

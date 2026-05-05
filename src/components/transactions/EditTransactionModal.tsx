@@ -2,7 +2,7 @@ import { useState } from "react";
 import type { Tag, TagScope } from "../../hooks/useTags";
 import { bumpTransactionVersion } from "../../hooks/useTransactionVersion";
 import { supabase } from "../../lib/supabase";
-import type { Account } from "../../utils/accountBalances";
+import type { Account, AccountGroup } from "../../utils/accountBalances";
 import type { Transaction } from "../../utils/transactionFilters";
 import type { TransactionInput } from "../../utils/transactionValidation";
 import { Modal } from "../ui/Modal";
@@ -11,6 +11,7 @@ import { formDefaultsFromTransaction, TransactionForm } from "./TransactionForm"
 type Props = {
 	transaction: Transaction;
 	accounts: readonly Account[];
+	groups: readonly AccountGroup[];
 	tags: readonly Tag[];
 	createTag: (name: string, type: Exclude<TagScope, "any">) => Promise<Tag | null>;
 	onSaved: () => Promise<void> | void;
@@ -20,6 +21,7 @@ type Props = {
 export function EditTransactionModal({
 	transaction,
 	accounts,
+	groups,
 	tags,
 	createTag,
 	onSaved,
@@ -61,6 +63,7 @@ export function EditTransactionModal({
 			<TransactionForm
 				mode="edit"
 				accounts={accounts}
+				groups={groups}
 				tags={tags}
 				defaults={defaults}
 				submitError={submitError}

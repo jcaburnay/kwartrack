@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useAccountGroups } from "../../hooks/useAccountGroups";
 import { useAccounts } from "../../hooks/useAccounts";
 import { useDebtsAndSplits } from "../../hooks/useDebtsAndSplits";
 import type { Person } from "../../hooks/usePersons";
@@ -6,7 +7,7 @@ import { usePersons } from "../../hooks/usePersons";
 import type { Tag } from "../../hooks/useTags";
 import { useTags } from "../../hooks/useTags";
 import { supabase } from "../../lib/supabase";
-import type { Account } from "../../utils/accountBalances";
+import type { Account, AccountGroup } from "../../utils/accountBalances";
 import { formatCentavos } from "../../utils/currency";
 import type { SplitMethod } from "../../utils/splitMath";
 import type { SplitInput } from "../../utils/splitValidation";
@@ -42,6 +43,7 @@ function EditSplitModalLoader(props: {
 	splitId: string;
 	persons: readonly Person[];
 	accounts: readonly Account[];
+	groups: readonly AccountGroup[];
 	tags: readonly Tag[];
 	createPerson: (name: string) => Promise<Person | null>;
 	updateSplit: (id: string, input: SplitInput) => Promise<{ error: string | null }>;
@@ -87,6 +89,7 @@ function EditSplitModalLoader(props: {
 			participantRows={data.rows}
 			persons={props.persons}
 			accounts={props.accounts}
+			groups={props.groups}
 			tags={props.tags}
 			createPerson={props.createPerson}
 			updateSplit={props.updateSplit}
@@ -113,6 +116,7 @@ export function DebtsPanel({ pendingModal, onPendingModalConsumed, onCrossFilter
 		refetch,
 	} = useDebtsAndSplits();
 	const { accounts } = useAccounts();
+	const { groups } = useAccountGroups();
 	const { tags } = useTags();
 	const { persons, createInline: createPerson } = usePersons();
 
@@ -332,6 +336,7 @@ export function DebtsPanel({ pendingModal, onPendingModalConsumed, onCrossFilter
 				<NewSplitModal
 					persons={persons}
 					accounts={accounts}
+					groups={groups}
 					tags={tags}
 					createPerson={createPerson}
 					createSplit={createSplit}
@@ -347,6 +352,7 @@ export function DebtsPanel({ pendingModal, onPendingModalConsumed, onCrossFilter
 				<NewDebtModal
 					persons={persons}
 					accounts={accounts}
+					groups={groups}
 					tags={tags}
 					createPerson={createPerson}
 					createDebt={createDebt}
@@ -366,6 +372,7 @@ export function DebtsPanel({ pendingModal, onPendingModalConsumed, onCrossFilter
 					settledCentavos={settlingDebt.settledCentavos}
 					suggestedAccountId={null}
 					accounts={accounts}
+					groups={groups}
 					onSubmit={handleSettleSubmit}
 					onCancel={() => setSettlingDebtId(null)}
 				/>
@@ -376,6 +383,7 @@ export function DebtsPanel({ pendingModal, onPendingModalConsumed, onCrossFilter
 					splitId={editingSplitId}
 					persons={persons}
 					accounts={accounts}
+					groups={groups}
 					tags={tags}
 					createPerson={createPerson}
 					updateSplit={updateSplit}

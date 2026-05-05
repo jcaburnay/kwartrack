@@ -1,7 +1,7 @@
 import { useState } from "react";
 import type { Person } from "../../hooks/usePersons";
 import type { Tag } from "../../hooks/useTags";
-import type { Account } from "../../utils/accountBalances";
+import type { Account, AccountGroup } from "../../utils/accountBalances";
 import { centavosToPesos } from "../../utils/currency";
 import type { SplitMethod } from "../../utils/splitMath";
 import type { SplitInput } from "../../utils/splitValidation";
@@ -22,6 +22,7 @@ type Props = {
 	participantRows: ParticipantRow[];
 	persons: readonly Person[];
 	accounts: readonly Account[];
+	groups: readonly AccountGroup[];
 	tags: readonly Tag[];
 	createPerson: (name: string) => Promise<Person | null>;
 	updateSplit: (id: string, input: SplitInput) => Promise<{ error: string | null }>;
@@ -34,6 +35,7 @@ export function EditSplitModal({
 	participantRows,
 	persons,
 	accounts,
+	groups,
 	tags,
 	createPerson,
 	updateSplit,
@@ -69,6 +71,7 @@ export function EditSplitModal({
 				defaults={defaults}
 				persons={persons}
 				accounts={accounts}
+				groups={groups}
 				tags={tags}
 				createPerson={createPerson}
 				submitLabel="Save"

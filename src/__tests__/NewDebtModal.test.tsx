@@ -27,6 +27,7 @@ describe("NewDebtModal", () => {
 			<NewDebtModal
 				persons={persons}
 				accounts={accounts}
+				groups={[]}
 				tags={tags}
 				createPerson={async () => null}
 				createDebt={create}

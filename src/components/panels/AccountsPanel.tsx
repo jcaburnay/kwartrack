@@ -411,6 +411,7 @@ export function AccountsPanel({
 			{showNewTx && (
 				<NewTransactionModal
 					accounts={accounts}
+					groups={groups}
 					tags={tags}
 					createTag={createInline}
 					prefill={newTxPrefill}
@@ -429,6 +430,7 @@ export function AccountsPanel({
 				<EditTransactionModal
 					transaction={editingTx}
 					accounts={accounts}
+					groups={groups}
 					tags={tags}
 					createTag={createInline}
 					onSaved={async () => {

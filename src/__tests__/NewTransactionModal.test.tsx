@@ -73,6 +73,7 @@ describe("TransactionForm type switching", () => {
 			<TransactionForm
 				mode="create"
 				accounts={accounts}
+				groups={[]}
 				tags={tags}
 				defaults={baseDefaults}
 				submitError={null}
@@ -93,6 +94,7 @@ describe("TransactionForm type switching", () => {
 			<TransactionForm
 				mode="create"
 				accounts={accounts}
+				groups={[]}
 				tags={tags}
 				defaults={baseDefaults}
 				submitError={null}
@@ -114,6 +116,7 @@ describe("TransactionForm type switching", () => {
 			<TransactionForm
 				mode="create"
 				accounts={accounts}
+				groups={[]}
 				tags={tags}
 				defaults={baseDefaults}
 				submitError={null}
@@ -134,6 +137,7 @@ describe("TransactionForm type switching", () => {
 			<TransactionForm
 				mode="create"
 				accounts={accounts}
+				groups={[]}
 				tags={tags}
 				defaults={baseDefaults}
 				submitError={null}

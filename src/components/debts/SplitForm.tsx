@@ -2,10 +2,11 @@ import type React from "react";
 import { useMemo, useState } from "react";
 import type { Person } from "../../hooks/usePersons";
 import type { Tag } from "../../hooks/useTags";
-import type { Account } from "../../utils/accountBalances";
+import type { Account, AccountGroup } from "../../utils/accountBalances";
 import { pesosToCentavos } from "../../utils/currency";
 import { computeShareCentavos, type SplitMethod } from "../../utils/splitMath";
 import { type SplitInput, validateSplit } from "../../utils/splitValidation";
+import { AccountSelect } from "../accounts/AccountSelect";
 import { SubmitButton } from "../ui/SubmitButton";
 import { SplitMethodPicker } from "./SplitMethodPicker";
 import { type ParticipantRow, SplitParticipantList } from "./SplitParticipantList";
@@ -24,6 +25,7 @@ type Props = {
 	defaults: SplitFormDefaults;
 	persons: readonly Person[];
 	accounts: readonly Account[];
+	groups: readonly AccountGroup[];
 	tags: readonly Tag[];
 	createPerson: (name: string) => Promise<Person | null>;
 	submitLabel: string;
@@ -49,6 +51,7 @@ export function SplitForm({
 	defaults,
 	persons,
 	accounts,
+	groups,
 	tags,
 	createPerson,
 	submitLabel,
@@ -147,21 +150,14 @@ export function SplitForm({
 			</div>
 
 			<div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-				<label className="floating-label">
-					<span>Paid from</span>
-					<select
-						className="select select-bordered w-full"
-						value={paidFromAccountId ?? ""}
-						onChange={(e) => setPaidFromAccountId(e.target.value || null)}
-					>
-						<option value="">Select…</option>
-						{pickableAccounts.map((a) => (
-							<option key={a.id} value={a.id}>
-								{a.name}
-							</option>
-						))}
-					</select>
-				</label>
+				<AccountSelect
+					label="Paid from"
+					placeholder="Select…"
+					value={paidFromAccountId}
+					onChange={setPaidFromAccountId}
+					accounts={pickableAccounts}
+					groups={groups}
+				/>
 
 				<label className="floating-label">
 					<span>Tag</span>

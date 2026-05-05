@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { Tag, TagScope } from "../../hooks/useTags";
-import type { Account } from "../../utils/accountBalances";
+import type { Account, AccountGroup } from "../../utils/accountBalances";
 import type { RecurringInput } from "../../utils/recurringValidation";
 import { Modal } from "../ui/Modal";
 import {
@@ -11,6 +11,7 @@ import {
 
 type Props = {
 	accounts: readonly Account[];
+	groups: readonly AccountGroup[];
 	tags: readonly Tag[];
 	createTag: (name: string, type: Exclude<TagScope, "any">) => Promise<Tag | null>;
 	createRecurring: (input: RecurringInput) => Promise<{ error: string | null }>;
@@ -21,6 +22,7 @@ type Props = {
 
 export function NewRecurringModal({
 	accounts,
+	groups,
 	tags,
 	createTag,
 	createRecurring,
@@ -51,6 +53,7 @@ export function NewRecurringModal({
 			<RecurringForm
 				mode="create"
 				accounts={accounts}
+				groups={groups}
 				tags={tags}
 				defaults={defaults}
 				submitError={submitError}

@@ -1,7 +1,8 @@
 import type React from "react";
 import { useState } from "react";
-import type { Account } from "../../utils/accountBalances";
+import type { Account, AccountGroup } from "../../utils/accountBalances";
 import { centavosToPesos, formatCentavos, pesosToCentavos } from "../../utils/currency";
+import { AccountSelect } from "../accounts/AccountSelect";
 import { Modal } from "../ui/Modal";
 import { SubmitButton } from "../ui/SubmitButton";
 
@@ -12,6 +13,7 @@ type Props = {
 	settledCentavos: number;
 	suggestedAccountId: string | null;
 	accounts: readonly Account[];
+	groups: readonly AccountGroup[];
 	onSubmit: (input: {
 		amountCentavos: number;
 		paidAccountId: string;
@@ -27,6 +29,7 @@ export function SettleModal({
 	settledCentavos,
 	suggestedAccountId,
 	accounts,
+	groups,
 	onSubmit,
 	onCancel,
 }: Props) {
@@ -94,21 +97,14 @@ export function SettleModal({
 						/>
 					</label>
 				</div>
-				<label className="floating-label">
-					<span>{accountLabel}</span>
-					<select
-						className="select select-bordered w-full"
-						value={paidAccountId}
-						onChange={(e) => setPaidAccountId(e.target.value)}
-					>
-						<option value="">Select account…</option>
-						{pickable.map((a) => (
-							<option key={a.id} value={a.id}>
-								{a.name}
-							</option>
-						))}
-					</select>
-				</label>
+				<AccountSelect
+					label={accountLabel}
+					placeholder="Select account…"
+					value={paidAccountId || null}
+					onChange={(id) => setPaidAccountId(id ?? "")}
+					accounts={pickable}
+					groups={groups}
+				/>
 				{error && <div className="alert alert-error text-sm">{error}</div>}
 				<div className="-mx-4 px-4 py-3 border-t border-base-300 flex items-center justify-end gap-2">
 					<button type="button" className="btn btn-ghost" onClick={onCancel}>
