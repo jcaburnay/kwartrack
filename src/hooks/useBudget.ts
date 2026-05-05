@@ -25,7 +25,11 @@ export function useBudget(month: string) {
 		error: null,
 	});
 
-	const { actualsByTag, isLoading: actualsLoading } = useBudgetActualsByMonth(month);
+	const {
+		actualsByTag,
+		isLoading: actualsLoading,
+		error: actualsError,
+	} = useBudgetActualsByMonth(month);
 
 	const refetch = useCallback(async () => {
 		setState((s) => ({ ...s, isLoading: true, error: null }));
@@ -145,6 +149,7 @@ export function useBudget(month: string) {
 	return {
 		...state,
 		isLoading: state.isLoading || actualsLoading,
+		error: state.error ?? actualsError,
 		actualsByTag,
 		othersCentavos,
 		overallActualCentavos,
