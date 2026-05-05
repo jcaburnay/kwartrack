@@ -44,7 +44,7 @@ export function SettingsTagsPage() {
 		<div className="flex flex-col gap-4">
 			<div className="flex items-center justify-between gap-4">
 				<h2 className="text-lg font-semibold">Tags</h2>
-				<button type="button" className="btn btn-primary btn-sm" onClick={() => setCreating(true)}>
+				<button type="button" className="btn btn-cta btn-sm" onClick={() => setCreating(true)}>
 					Create tag
 				</button>
 			</div>
@@ -83,7 +83,7 @@ export function SettingsTagsPage() {
 												/>
 												<button
 													type="button"
-													className="btn btn-sm btn-primary"
+													className="btn btn-sm btn-cta"
 													onClick={() => handleRename(tag.id)}
 												>
 													Save

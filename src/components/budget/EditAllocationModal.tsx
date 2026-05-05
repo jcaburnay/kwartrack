@@ -108,7 +108,7 @@ export function EditAllocationModal({
 				</button>
 				<SubmitButton
 					type="button"
-					className="btn btn-primary"
+					className="btn btn-cta"
 					onClick={handleSave}
 					loading={saving}
 					disabled={deleting}

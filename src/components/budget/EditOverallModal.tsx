@@ -74,12 +74,7 @@ export function EditOverallModal({
 				<button type="button" className="btn btn-ghost" onClick={onCancel}>
 					Cancel
 				</button>
-				<SubmitButton
-					type="button"
-					className="btn btn-primary"
-					onClick={handleSave}
-					loading={saving}
-				>
+				<SubmitButton type="button" className="btn btn-cta" onClick={handleSave} loading={saving}>
 					Save
 				</SubmitButton>
 			</Modal.Footer>

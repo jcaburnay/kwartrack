@@ -40,11 +40,7 @@ export function DebtRow({ debt, tagName, onSettle, onDelete, canDelete }: Props)
 					<span className="badge badge-success badge-sm">✓ Settled</span>
 				) : (
 					<>
-						<button
-							type="button"
-							className="btn btn-xs btn-primary"
-							onClick={() => onSettle(debt.id)}
-						>
+						<button type="button" className="btn btn-xs btn-cta" onClick={() => onSettle(debt.id)}>
 							Settle
 						</button>
 						{canDelete && (

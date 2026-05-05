@@ -206,7 +206,7 @@ export function SplitForm({
 				<button type="button" className="btn btn-ghost" onClick={onCancel}>
 					Cancel
 				</button>
-				<SubmitButton type="submit" className="btn btn-primary" loading={isSubmitting}>
+				<SubmitButton type="submit" className="btn btn-cta" loading={isSubmitting}>
 					{submitLabel}
 				</SubmitButton>
 			</div>

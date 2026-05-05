@@ -101,7 +101,7 @@ export function SignInForm() {
 
 			{submitError && <div className="alert alert-error text-sm">{submitError}</div>}
 
-			<button type="submit" className="btn btn-primary" disabled={isSubmitting}>
+			<button type="submit" className="btn btn-cta" disabled={isSubmitting}>
 				{isSubmitting ? <span className="loading loading-spinner loading-sm" /> : "Sign in"}
 			</button>
 		</form>

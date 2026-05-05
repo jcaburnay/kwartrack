@@ -96,12 +96,7 @@ export function NewAllocationModal({
 				<button type="button" className="btn btn-ghost" onClick={onCancel}>
 					Cancel
 				</button>
-				<SubmitButton
-					type="button"
-					className="btn btn-primary"
-					onClick={handleAdd}
-					loading={saving}
-				>
+				<SubmitButton type="button" className="btn btn-cta" onClick={handleAdd} loading={saving}>
 					Create
 				</SubmitButton>
 			</Modal.Footer>

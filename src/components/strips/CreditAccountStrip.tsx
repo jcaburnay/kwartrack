@@ -85,7 +85,7 @@ export function CreditAccountStrip({ account, recurrings, transactions, onPayThi
 			)}
 
 			<div className="flex justify-end">
-				<button type="button" className="btn btn-sm btn-primary" onClick={onPayThisCard}>
+				<button type="button" className="btn btn-sm btn-cta" onClick={onPayThisCard}>
 					Pay this card
 				</button>
 			</div>
