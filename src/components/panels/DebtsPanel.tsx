@@ -235,12 +235,13 @@ export function DebtsPanel({ pendingModal, onPendingModalConsumed, onCrossFilter
 	const isEmpty = !isLoading && visibleSplits.length === 0 && visibleDebts.length === 0;
 
 	return (
-		<div className="bg-base-100 border border-base-300 h-full flex flex-col">
+		<div className="bg-base-100 lg:border lg:border-base-300 h-full flex flex-col">
 			<div className="h-9 flex items-center px-4 border-b border-base-300 flex-shrink-0">
 				<div className="flex items-center gap-2 text-xs uppercase tracking-wide font-semibold text-base-content/50 min-w-0">
-					<span>Debts & Splits</span>
+					<span className="hidden lg:inline">Debts & Splits</span>
 					<span className="text-base-content/40 normal-case tracking-normal truncate">
-						· {summaryTokens.join(" · ")}
+						<span className="hidden lg:inline">· </span>
+						{summaryTokens.join(" · ")}
 					</span>
 				</div>
 			</div>

@@ -180,7 +180,7 @@ export function AccountsPanel({
 	};
 
 	return (
-		<div className="bg-base-100 border border-base-300 h-full flex flex-col overflow-hidden">
+		<div className="bg-base-100 lg:border lg:border-base-300 h-full flex flex-col overflow-hidden">
 			{accountsFolded ? (
 				// biome-ignore lint/a11y/useSemanticElements: hosts a nested clear button — using <button> would nest interactive content and break HTML5 validity.
 				<div

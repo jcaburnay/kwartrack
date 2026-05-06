@@ -80,7 +80,7 @@ export function JigsawPage() {
 	return (
 		<div className="h-dvh bg-base-200 flex flex-col overflow-hidden">
 			<Header />
-			<main className="flex-1 px-2 sm:px-3 pt-2 sm:pt-3 pb-[calc(5rem+env(safe-area-inset-bottom))] lg:pb-3 overflow-hidden">
+			<main className="flex-1 px-0 sm:px-3 pt-0 sm:pt-3 pb-[calc(4rem+env(safe-area-inset-bottom))] sm:pb-[calc(4rem+env(safe-area-inset-bottom)+0.75rem)] lg:pb-3 overflow-hidden">
 				<div className="jigsaw-grid flex flex-col gap-2 h-full">
 					<div id="panel-networth" className={panelClass("networth", "jigsaw-networth")}>
 						<NetWorthPanel />

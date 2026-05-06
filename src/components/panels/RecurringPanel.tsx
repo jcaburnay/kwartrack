@@ -97,12 +97,13 @@ export function RecurringPanel({ pendingModal, onPendingModalConsumed }: Props) 
 	}
 
 	return (
-		<div className="bg-base-100 border border-base-300 h-full flex flex-col">
+		<div className="bg-base-100 lg:border lg:border-base-300 h-full flex flex-col">
 			<div className="h-9 flex items-center px-4 border-b border-base-300">
 				<div className="flex items-center gap-2 text-xs uppercase tracking-wide font-semibold text-base-content/50">
-					<span>Recurring</span>
+					<span className="hidden lg:inline">Recurring</span>
 					<span className="text-base-content/40 normal-case tracking-normal">
-						· {summaryTokens.join(" · ")}
+						<span className="hidden lg:inline">· </span>
+						{summaryTokens.join(" · ")}
 					</span>
 				</div>
 			</div>
