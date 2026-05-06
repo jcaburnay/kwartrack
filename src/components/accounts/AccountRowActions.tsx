@@ -114,7 +114,7 @@ export function AccountRowActions({ account, onEdit, onChanged }: Props) {
 			<button
 				ref={buttonRef}
 				type="button"
-				className="btn btn-ghost btn-xs"
+				className="btn btn-ghost btn-xs touch-target"
 				aria-label="Row actions"
 				aria-expanded={open}
 				onClick={toggle}

@@ -124,7 +124,7 @@ export function BudgetTableView({
 										{!disabled && (
 											<button
 												type="button"
-												className="btn btn-xs btn-ghost"
+												className="btn btn-xs btn-ghost touch-target"
 												aria-label={`Edit ${row.tagName}`}
 												onClick={() => setEditingAllocation(allocation)}
 											>

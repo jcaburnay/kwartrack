@@ -80,7 +80,7 @@ export function SettingsContactsPage() {
 									<div className="flex gap-2">
 										<button
 											type="button"
-											className="btn btn-xs btn-ghost"
+											className="btn btn-xs btn-ghost touch-target"
 											onClick={() => {
 												setEditingId(p.id);
 												setEditingName(p.name);
@@ -90,7 +90,7 @@ export function SettingsContactsPage() {
 										</button>
 										<button
 											type="button"
-											className="btn btn-xs btn-ghost text-error"
+											className="btn btn-xs btn-ghost text-error touch-target"
 											onClick={() => handleDelete(p)}
 										>
 											Delete

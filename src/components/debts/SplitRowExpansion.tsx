@@ -46,19 +46,19 @@ export function SplitRowExpansion({
 			<div className="flex justify-end gap-1 mb-2">
 				<button
 					type="button"
-					className="btn btn-xs btn-ghost"
+					className="btn btn-xs btn-ghost touch-target"
 					onClick={onCrossFilter}
 					aria-label="View transactions for this split"
 				>
 					<ExternalLink className="size-3" />
 					Transactions
 				</button>
-				<button type="button" className="btn btn-xs btn-ghost" onClick={onEdit}>
+				<button type="button" className="btn btn-xs btn-ghost touch-target" onClick={onEdit}>
 					Edit
 				</button>
 				<button
 					type="button"
-					className="btn btn-xs btn-ghost text-error"
+					className="btn btn-xs btn-ghost text-error touch-target"
 					onClick={() => {
 						if (window.confirm("Delete this split?")) onDelete();
 					}}

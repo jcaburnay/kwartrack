@@ -42,7 +42,7 @@ export function DebtRow({ debt, tagName, onSettle, onDelete, canDelete }: Props)
 					<>
 						<button
 							type="button"
-							className="btn btn-xs btn-primary"
+							className="btn btn-xs btn-primary touch-target"
 							onClick={() => onSettle(debt.id)}
 						>
 							Settle
@@ -50,7 +50,7 @@ export function DebtRow({ debt, tagName, onSettle, onDelete, canDelete }: Props)
 						{canDelete && (
 							<button
 								type="button"
-								className="btn btn-xs btn-ghost text-error ml-1"
+								className="btn btn-xs btn-ghost text-error ml-1 touch-target"
 								onClick={() => onDelete(debt.id)}
 							>
 								Delete

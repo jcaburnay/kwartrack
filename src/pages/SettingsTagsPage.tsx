@@ -114,7 +114,7 @@ export function SettingsTagsPage() {
 													<div className="flex gap-2">
 														<button
 															type="button"
-															className="btn btn-xs btn-ghost"
+															className="btn btn-xs btn-ghost touch-target"
 															onClick={() => {
 																setEditingId(tag.id);
 																setEditingName(tag.name);
@@ -124,7 +124,7 @@ export function SettingsTagsPage() {
 														</button>
 														<button
 															type="button"
-															className="btn btn-xs btn-ghost text-error"
+															className="btn btn-xs btn-ghost text-error touch-target"
 															onClick={() => handleDelete(tag)}
 														>
 															Delete

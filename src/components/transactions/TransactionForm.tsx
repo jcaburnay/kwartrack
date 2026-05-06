@@ -199,7 +199,7 @@ export function TransactionForm({
 			</div>
 
 			{showFrom && showTo ? (
-				<div className="flex items-center gap-2">
+				<div className="flex flex-col sm:flex-row sm:items-center gap-2">
 					<AccountSelect
 						label="From account"
 						placeholder="Select source…"
@@ -209,7 +209,10 @@ export function TransactionForm({
 						groups={groups}
 						className="floating-label flex-1 min-w-0"
 					/>
-					<span aria-hidden className="text-base-content/50 shrink-0 px-1 text-lg leading-none">
+					<span
+						aria-hidden
+						className="text-base-content/50 shrink-0 self-center px-1 text-lg leading-none sm:rotate-0 rotate-90"
+					>
 						→
 					</span>
 					<AccountSelect

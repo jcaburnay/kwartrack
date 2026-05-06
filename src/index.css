@@ -23,6 +23,30 @@
 	-webkit-mask-image: linear-gradient(to bottom, black calc(100% - 2.5rem), transparent 100%);
 }
 
+/* Row-flash, pinned headers, and other table tricks already styled above.
+   Below: phone-only chrome adjustments for the floating action button so it
+   sits above the bottom MobileDock and the iOS home indicator. */
+@media (max-width: 639.98px) {
+	/* Doubled selector beats DaisyUI's `.fab` specificity without !important. */
+	.fab.fab {
+		bottom: calc(4rem + env(safe-area-inset-bottom) + 0.5rem);
+	}
+
+	/* iOS home-indicator clearance for the bottom dock. */
+	.dock {
+		padding-bottom: env(safe-area-inset-bottom);
+		height: calc(4rem + env(safe-area-inset-bottom));
+	}
+
+	/* Bumps row-action icon buttons to a 44×44 hit area on phones. Opt-in
+	   via the `touch-target` class so we don't inflate panel chrome
+	   (fold/unfold headers etc.) that depend on smaller heights. */
+	.touch-target {
+		min-height: 2.75rem;
+		min-width: 2.75rem;
+	}
+}
+
 @media (min-width: 640px) {
 	.jigsaw-grid {
 		display: grid;

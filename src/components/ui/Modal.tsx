@@ -50,7 +50,10 @@ type Size = "sm" | "md" | "lg";
 const sizeClass: Record<Size, string> = {
 	sm: "max-w-sm",
 	md: "max-w-md",
-	lg: "max-w-lg",
+	// `lg` modals (long forms — TransactionForm, RecurringForm, SplitForm)
+	// take the whole viewport on phones so users get usable input width and
+	// can't accidentally tap the backdrop with a thumb.
+	lg: "max-sm:!max-w-none max-sm:!w-screen max-sm:!h-dvh max-sm:!rounded-none max-w-lg",
 };
 
 type ModalContextValue = { titleId: string };

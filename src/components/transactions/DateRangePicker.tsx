@@ -20,7 +20,7 @@ export function DateRangePicker({ preset, customFrom, customTo, onChange }: Prop
 	}
 
 	return (
-		<div className="flex items-center gap-2">
+		<div className="flex flex-wrap items-center gap-2">
 			<select
 				aria-label="Date range"
 				className="select select-bordered select-sm rounded-sm border-base-content/40 min-w-0 w-auto"
@@ -34,7 +34,7 @@ export function DateRangePicker({ preset, customFrom, customTo, onChange }: Prop
 				))}
 			</select>
 			{preset === "custom" && (
-				<div className="flex items-center gap-1.5">
+				<div className="flex flex-wrap items-center gap-1.5">
 					<label className="text-xs text-base-content/60">
 						<span className="sr-only">From</span>
 						<input

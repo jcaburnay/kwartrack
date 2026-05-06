@@ -60,7 +60,7 @@ export function JigsawPage() {
 	return (
 		<div className="min-h-dvh sm:h-dvh bg-base-200 flex flex-col sm:overflow-hidden">
 			<Header />
-			<main className="flex-1 p-2 pb-20 sm:p-3 sm:overflow-hidden">
+			<main className="flex-1 p-2 pb-[calc(5rem+env(safe-area-inset-bottom))] sm:p-3 sm:pb-3 sm:overflow-hidden">
 				{/* Jigsaw grid — named areas on desktop, stacked on mobile */}
 				<div className="jigsaw-grid grid grid-cols-1 gap-2">
 					<div id="panel-networth" className="jigsaw-networth">
