@@ -17,22 +17,38 @@ export function SettingsPage() {
 			<Header />
 			<main className="flex-1 p-4 pb-[calc(5rem+env(safe-area-inset-bottom))] sm:p-6 sm:pb-6 max-w-6xl w-full mx-auto flex flex-col gap-5">
 				<h1 className="text-2xl font-semibold">Settings</h1>
-				<div className="grid grid-cols-1 md:grid-cols-[14rem_1fr] gap-6">
+				<div className="grid grid-cols-1 md:grid-cols-[14rem_1fr] gap-4 md:gap-6">
+					{/* Mobile: horizontal scrolling tab strip; desktop: vertical sidebar. */}
 					<nav>
-						<ul className="menu bg-base-100 rounded-box p-2">
+						<ul
+							className="
+								flex flex-row gap-1 overflow-x-auto whitespace-nowrap
+								bg-base-100 rounded-box p-1
+								md:menu md:flex-col md:p-2
+							"
+						>
 							{SECTIONS.map((s) =>
 								s.enabled ? (
-									<li key={s.slug}>
+									<li key={s.slug} className="shrink-0">
 										<NavLink
 											to={`/settings/${s.slug}`}
-											className={({ isActive }) => (isActive ? "active" : "")}
+											className={({ isActive }) =>
+												`block px-3 py-2 rounded-md text-sm md:w-full ${
+													isActive
+														? "bg-primary text-primary-content md:bg-base-200 md:text-base-content md:font-medium"
+														: "hover:bg-base-200"
+												}`
+											}
 										>
 											{s.label}
 										</NavLink>
 									</li>
 								) : (
-									<li key={s.slug}>
-										<span className="opacity-50 cursor-not-allowed" title="Coming in a later slice">
+									<li key={s.slug} className="shrink-0">
+										<span
+											className="block px-3 py-2 text-sm opacity-50 cursor-not-allowed"
+											title="Coming in a later slice"
+										>
 											{s.label}
 										</span>
 									</li>
@@ -40,7 +56,7 @@ export function SettingsPage() {
 							)}
 						</ul>
 					</nav>
-					<section className="bg-base-100 rounded-box p-5 min-h-[14rem]">
+					<section className="bg-base-100 rounded-box p-4 sm:p-5 min-h-[14rem]">
 						<Outlet />
 					</section>
 				</div>

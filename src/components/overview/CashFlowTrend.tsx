@@ -53,13 +53,13 @@ export function CashFlowTrend({ data, isLoading }: Props) {
 
 	return (
 		<ResponsiveContainer width="100%" height="100%" minHeight={160}>
-			<ComposedChart data={enriched} margin={{ top: 4, right: 4, bottom: 0, left: 0 }}>
+			<ComposedChart data={enriched} margin={{ top: 4, right: 4, bottom: 0, left: 4 }}>
 				<CartesianGrid strokeDasharray="3 3" className="stroke-base-300" />
 				<XAxis dataKey="label" tick={{ fontSize: 11 }} interval="preserveStartEnd" />
 				<YAxis
 					tick={{ fontSize: 11 }}
 					tickFormatter={(v: number) => formatCentavosCompact(v)}
-					width={56}
+					width={44}
 				/>
 				<Tooltip
 					formatter={(value: number, name: string) => {
