@@ -1,3 +1,4 @@
+import { ChevronDown, ChevronUp } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useAccountGroups } from "../../hooks/useAccountGroups";
 import { useAccounts } from "../../hooks/useAccounts";
@@ -122,6 +123,8 @@ export function DebtsPanel({ pendingModal, onPendingModalConsumed, onCrossFilter
 	const { persons, createInline: createPerson } = usePersons();
 
 	const [showSettled, setShowSettled] = useState(false);
+	const [splitsFolded, setSplitsFolded] = useState(false);
+	const [debtsFolded, setDebtsFolded] = useState(false);
 	const [showNewDebt, setShowNewDebt] = useState(false);
 	const [showNewSplit, setShowNewSplit] = useState(false);
 	const [editingSplitId, setEditingSplitId] = useState<string | null>(null);
@@ -232,10 +235,8 @@ export function DebtsPanel({ pendingModal, onPendingModalConsumed, onCrossFilter
 		setPendingDelete(null);
 	}
 
-	const isEmpty = !isLoading && visibleSplits.length === 0 && visibleDebts.length === 0;
-
 	return (
-		<div className="bg-base-100 lg:border lg:border-base-300 h-full flex flex-col">
+		<div className="bg-base-100 lg:border lg:border-base-300 h-full flex flex-col overflow-hidden">
 			<div className="h-9 flex items-center px-4 border-b border-base-300 flex-shrink-0">
 				<div className="flex items-center gap-2 text-xs uppercase tracking-wide font-semibold text-base-content/50 min-w-0">
 					<span className="hidden lg:inline">Debts & Splits</span>
@@ -246,93 +247,159 @@ export function DebtsPanel({ pendingModal, onPendingModalConsumed, onCrossFilter
 				</div>
 			</div>
 
-			<ScrollFadeContainer className="flex-1 overflow-y-auto flex flex-col min-h-0">
-				{error && <div className="alert alert-error text-sm mx-4 mt-3">{error}</div>}
-				{deleteError && !pendingDelete && (
-					<div className="alert alert-error text-sm mx-4 mt-3">
-						<span>{deleteError}</span>
+			{error && <div className="alert alert-error text-sm mx-4 mt-3 flex-shrink-0">{error}</div>}
+			{deleteError && !pendingDelete && (
+				<div className="alert alert-error text-sm mx-4 mt-3 flex-shrink-0">
+					<span>{deleteError}</span>
+					<button
+						type="button"
+						className="btn btn-ghost btn-xs"
+						onClick={() => setDeleteError(null)}
+					>
+						Dismiss
+					</button>
+				</div>
+			)}
+
+			{isLoading ? (
+				<div className="flex-1 flex items-center justify-center">
+					<span className="loading loading-spinner loading-sm text-primary" />
+				</div>
+			) : (
+				<>
+					<div className="px-4 py-2 border-b border-base-300 flex items-center justify-end flex-shrink-0">
+						<label className="flex items-center gap-2 text-xs text-base-content/70 cursor-pointer">
+							<input
+								type="checkbox"
+								className="checkbox checkbox-xs"
+								checked={showSettled}
+								onChange={(e) => setShowSettled(e.target.checked)}
+							/>
+							Show settled
+						</label>
+					</div>
+
+					{splitsFolded ? (
+						// biome-ignore lint/a11y/useSemanticElements: hosts no nested interactives — div+role keeps parity with the AccountsPanel folded patterns.
+						<div
+							role="button"
+							tabIndex={0}
+							aria-label="Expand splits"
+							aria-expanded="false"
+							className="h-9 flex items-center gap-2 px-4 bg-base-200 border-b border-base-300 flex-shrink-0 hover:bg-base-300 transition-colors cursor-pointer text-left focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary"
+							onClick={() => setSplitsFolded(false)}
+							onKeyDown={(e) => {
+								if (e.key === "Enter" || e.key === " ") {
+									e.preventDefault();
+									setSplitsFolded(false);
+								}
+							}}
+						>
+							<ChevronDown className="size-3.5 text-base-content/40" />
+							<span className="text-xs font-semibold uppercase tracking-wide text-base-content/50">
+								Splits
+							</span>
+							<span className="text-xs text-base-content/30">·</span>
+							<span className="text-xs text-base-content/60">
+								{visibleSplits.length} {visibleSplits.length === 1 ? "split" : "splits"}
+							</span>
+						</div>
+					) : (
+						<div className="flex-[1_1_50%] flex flex-col overflow-hidden min-h-0">
+							<div className="h-9 flex items-center justify-between px-4 flex-shrink-0 border-b border-base-300">
+								<div className="flex items-center gap-2 min-w-0">
+									<span className="text-xs font-semibold uppercase tracking-wide text-base-content/50">
+										Splits
+									</span>
+									<span className="text-xs text-base-content/30">·</span>
+									<span className="text-xs text-base-content/60">{visibleSplits.length}</span>
+								</div>
+								<button
+									type="button"
+									aria-label="Fold splits"
+									className="btn btn-ghost btn-xs btn-circle"
+									onClick={() => setSplitsFolded(true)}
+								>
+									<ChevronUp className="size-3.5" />
+								</button>
+							</div>
+							<ScrollFadeContainer className="flex-1 overflow-y-auto min-h-0">
+								<SplitsTable
+									splits={visibleSplits}
+									tags={tags}
+									accounts={accounts}
+									expandedSplitId={expandedSplitId}
+									onToggleExpand={(id) => setExpandedSplitId(id === expandedSplitId ? null : id)}
+									loadParticipants={splitParticipants}
+									onSettleParticipant={(debtId) => setSettlingDebtId(debtId)}
+									onCrossFilterSplit={(splitId) => {
+										const s = splits.find((x) => x.id === splitId);
+										if (!s) return;
+										onCrossFilterSplit({
+											id: splitId,
+											label: s.description?.trim() || "split",
+										});
+									}}
+									onEditSplit={setEditingSplitId}
+									onDeleteSplit={handleDeleteSplit}
+								/>
+							</ScrollFadeContainer>
+						</div>
+					)}
+
+					{!splitsFolded && !debtsFolded && (
+						<div className="border-t border-base-300 flex-shrink-0" />
+					)}
+
+					{debtsFolded ? (
 						<button
 							type="button"
-							className="btn btn-ghost btn-xs"
-							onClick={() => setDeleteError(null)}
+							aria-label="Expand debts"
+							aria-expanded="false"
+							className="h-9 flex items-center gap-2 px-4 bg-base-200 border-t border-base-300 flex-shrink-0 hover:bg-base-300 transition-colors cursor-pointer text-left focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary"
+							onClick={() => setDebtsFolded(false)}
 						>
-							Dismiss
+							<ChevronDown className="size-3.5 text-base-content/40" />
+							<span className="text-xs font-semibold uppercase tracking-wide text-base-content/50">
+								Debts
+							</span>
+							<span className="text-xs text-base-content/30">·</span>
+							<span className="text-xs text-base-content/60">
+								{visibleDebts.length} {visibleDebts.length === 1 ? "debt" : "debts"}
+							</span>
 						</button>
-					</div>
-				)}
-
-				{isLoading ? (
-					<div className="flex-1 flex items-center justify-center">
-						<span className="loading loading-spinner loading-sm text-primary" />
-					</div>
-				) : (
-					<>
-						<div className="px-4 py-2 border-b border-base-300 flex items-center justify-end">
-							<label className="flex items-center gap-2 text-xs text-base-content/70 cursor-pointer">
-								<input
-									type="checkbox"
-									className="checkbox checkbox-xs"
-									checked={showSettled}
-									onChange={(e) => setShowSettled(e.target.checked)}
-								/>
-								Show settled
-							</label>
-						</div>
-
-						{isEmpty ? (
-							<div className="m-4 border border-dashed border-base-300 p-8 text-center text-base-content/60 text-sm">
-								No open debts or splits. Use the + button to add one.
+					) : (
+						<div className="flex-[1_1_50%] flex flex-col overflow-hidden min-h-0">
+							<div className="h-9 flex items-center justify-between px-4 flex-shrink-0 border-b border-base-300">
+								<div className="flex items-center gap-2 min-w-0">
+									<span className="text-xs font-semibold uppercase tracking-wide text-base-content/50">
+										Debts
+									</span>
+									<span className="text-xs text-base-content/30">·</span>
+									<span className="text-xs text-base-content/60">{visibleDebts.length}</span>
+								</div>
+								<button
+									type="button"
+									aria-label="Fold debts"
+									className="btn btn-ghost btn-xs btn-circle"
+									onClick={() => setDebtsFolded(true)}
+								>
+									<ChevronUp className="size-3.5" />
+								</button>
 							</div>
-						) : (
-							<>
-								{visibleSplits.length > 0 && (
-									<section className="flex flex-col">
-										<div className="px-4 pt-3 pb-1 text-xs uppercase tracking-wide font-semibold text-base-content/50">
-											Splits
-										</div>
-										<SplitsTable
-											splits={visibleSplits}
-											tags={tags}
-											accounts={accounts}
-											expandedSplitId={expandedSplitId}
-											onToggleExpand={(id) =>
-												setExpandedSplitId(id === expandedSplitId ? null : id)
-											}
-											loadParticipants={splitParticipants}
-											onSettleParticipant={(debtId) => setSettlingDebtId(debtId)}
-											onCrossFilterSplit={(splitId) => {
-												const s = splits.find((x) => x.id === splitId);
-												if (!s) return;
-												onCrossFilterSplit({
-													id: splitId,
-													label: s.description?.trim() || "split",
-												});
-											}}
-											onEditSplit={setEditingSplitId}
-											onDeleteSplit={handleDeleteSplit}
-										/>
-									</section>
-								)}
-
-								{visibleDebts.length > 0 && (
-									<section className="flex flex-col">
-										<div className="px-4 pt-3 pb-1 text-xs uppercase tracking-wide font-semibold text-base-content/50">
-											Debts
-										</div>
-										<DebtsTable
-											debts={visibleDebts}
-											tagsById={tagsByIdMap}
-											standaloneDebtIds={standaloneDebtIds}
-											onSettle={(id) => setSettlingDebtId(id)}
-											onDelete={handleDeleteDebt}
-										/>
-									</section>
-								)}
-							</>
-						)}
-					</>
-				)}
-			</ScrollFadeContainer>
+							<ScrollFadeContainer className="flex-1 overflow-y-auto min-h-0">
+								<DebtsTable
+									debts={visibleDebts}
+									tagsById={tagsByIdMap}
+									standaloneDebtIds={standaloneDebtIds}
+									onSettle={(id) => setSettlingDebtId(id)}
+									onDelete={handleDeleteDebt}
+								/>
+							</ScrollFadeContainer>
+						</div>
+					)}
+				</>
+			)}
 
 			{showNewSplit && (
 				<NewSplitModal
