@@ -1,45 +1,38 @@
+import { ChevronRight } from "lucide-react";
 import { useState } from "react";
+import { ManageGroupMembersModal } from "../components/accounts/ManageGroupMembersModal";
 import { NewGroupModal } from "../components/accounts/NewGroupModal";
 import { useAccountGroups } from "../hooks/useAccountGroups";
 import { useAccounts } from "../hooks/useAccounts";
 import { supabase } from "../lib/supabase";
+import type { AccountGroup } from "../utils/accountBalances";
 
 export function SettingsGroupsPage() {
-	const { groups, isLoading, refetch } = useAccountGroups();
-	const { accounts } = useAccounts();
+	const { groups, isLoading, refetch: refetchGroups } = useAccountGroups();
+	const { accounts, refetch: refetchAccounts } = useAccounts();
 	const [creating, setCreating] = useState(false);
-	const [editingId, setEditingId] = useState<string | null>(null);
-	const [editingName, setEditingName] = useState("");
+	const [managingId, setManagingId] = useState<string | null>(null);
 	const [error, setError] = useState<string | null>(null);
 
-	const membersByGroup = groups.map((g) => ({
-		group: g,
-		memberCount: accounts.filter((a) => a.group_id === g.id).length,
-	}));
+	const groupsWithMembers = groups.map((g) => {
+		const members = accounts.filter((a) => a.group_id === g.id && !a.is_archived);
+		return { group: g, members };
+	});
 
-	async function renameGroup(id: string) {
+	async function deleteGroup(group: AccountGroup) {
 		setError(null);
-		const { error: err } = await supabase
-			.from("account_group")
-			.update({ name: editingName.trim() })
-			.eq("id", id);
+		if (!window.confirm(`Delete group "${group.name}"?`)) return;
+		const { error: err } = await supabase.from("account_group").delete().eq("id", group.id);
 		if (err) return setError(err.message);
-		setEditingId(null);
-		setEditingName("");
-		await refetch();
+		setManagingId(null);
+		await refetchGroups();
 	}
 
-	async function deleteGroup(id: string, name: string, memberCount: number) {
-		setError(null);
-		if (memberCount > 0) {
-			setError(`"${name}" has ${memberCount} member accounts. Reassign them first.`);
-			return;
-		}
-		if (!window.confirm(`Delete group "${name}"?`)) return;
-		const { error: err } = await supabase.from("account_group").delete().eq("id", id);
-		if (err) return setError(err.message);
-		await refetch();
+	async function refreshAll() {
+		await Promise.all([refetchGroups(), refetchAccounts()]);
 	}
+
+	const managing = managingId ? groupsWithMembers.find((g) => g.group.id === managingId) : null;
 
 	return (
 		<div className="flex flex-col gap-4">
@@ -51,7 +44,7 @@ export function SettingsGroupsPage() {
 			</div>
 			<p className="text-sm text-base-content/60">
 				Groups bucket accounts by institution (e.g. "Maya" grouping all Maya balances). An account
-				belongs to at most one group; set membership via the Account form.
+				belongs to at most one group. Click a group to manage its accounts.
 			</p>
 
 			{error && <div className="alert alert-error text-sm">{error}</div>}
@@ -60,71 +53,37 @@ export function SettingsGroupsPage() {
 				<div className="flex justify-center py-6">
 					<span className="loading loading-spinner text-primary" />
 				</div>
-			) : membersByGroup.length === 0 ? (
+			) : groupsWithMembers.length === 0 ? (
 				<p className="text-sm text-base-content/60">
 					No groups yet. Bucket accounts to summarise totals together.
 				</p>
 			) : (
 				<ul className="divide-y divide-base-300 rounded-box border border-base-300">
-					{membersByGroup.map(({ group, memberCount }) => (
-						<li key={group.id} className="flex items-center justify-between gap-3 p-3">
-							{editingId === group.id ? (
-								<div className="flex gap-2 flex-1">
-									<input
-										type="text"
-										className="input input-bordered input-sm flex-1"
-										value={editingName}
-										onChange={(e) => setEditingName(e.target.value)}
-									/>
-									<button
-										type="button"
-										className="btn btn-sm btn-primary"
-										onClick={() => renameGroup(group.id)}
-									>
-										Save
-									</button>
-									<button
-										type="button"
-										className="btn btn-sm btn-ghost"
-										onClick={() => {
-											setEditingId(null);
-											setEditingName("");
-										}}
-									>
-										Cancel
-									</button>
-								</div>
-							) : (
-								<>
-									<div>
+					{groupsWithMembers.map(({ group, members }) => {
+						const memberCount = members.length;
+						const previewNames = members.slice(0, 3).map((a) => a.name);
+						const previewSuffix = memberCount > 3 ? `, +${memberCount - 3}` : "";
+						const subtitle =
+							memberCount === 0
+								? "Empty group"
+								: `${memberCount} ${memberCount === 1 ? "account" : "accounts"} · ${previewNames.join(", ")}${previewSuffix}`;
+
+						return (
+							<li key={group.id}>
+								<button
+									type="button"
+									className="w-full flex items-center justify-between gap-3 p-3 text-left hover:bg-base-200 focus:bg-base-200 outline-none"
+									onClick={() => setManagingId(group.id)}
+								>
+									<div className="min-w-0 flex-1">
 										<p className="font-medium">{group.name}</p>
-										<p className="text-xs text-base-content/60">
-											{memberCount} {memberCount === 1 ? "account" : "accounts"}
-										</p>
+										<p className="text-xs text-base-content/60 truncate">{subtitle}</p>
 									</div>
-									<div className="flex gap-2">
-										<button
-											type="button"
-											className="btn btn-xs btn-ghost"
-											onClick={() => {
-												setEditingId(group.id);
-												setEditingName(group.name);
-											}}
-										>
-											Rename
-										</button>
-										<button
-											type="button"
-											className="btn btn-xs btn-ghost text-error"
-											onClick={() => deleteGroup(group.id, group.name, memberCount)}
-										>
-											Delete
-										</button>
-									</div>
-								</>
-							)}
-						</li>
-					))}
+									<ChevronRight className="w-4 h-4 text-base-content/40 shrink-0" />
+								</button>
+							</li>
+						);
+					})}
 				</ul>
 			)}
 
@@ -133,8 +92,19 @@ export function SettingsGroupsPage() {
 					onCancel={() => setCreating(false)}
 					onCreated={async () => {
 						setCreating(false);
-						await refetch();
+						await refetchGroups();
 					}}
+				/>
+			)}
+
+			{managing && (
+				<ManageGroupMembersModal
+					group={managing.group}
+					accounts={accounts}
+					groups={groups}
+					onClose={() => setManagingId(null)}
+					onChanged={refreshAll}
+					onRequestDelete={deleteGroup}
 				/>
 			)}
 		</div>
