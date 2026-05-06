@@ -1,6 +1,7 @@
 import { Repeat } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import { Link } from "react-router";
+import { useContainerNarrow } from "../../hooks/useContainerNarrow";
 import type { Tag } from "../../hooks/useTags";
 import type { TransactionWithRecurring } from "../../hooks/useTransactions";
 import { useAuth } from "../../providers/AuthProvider";
@@ -59,21 +60,7 @@ export function TransactionsTable({
 	const [sortKey, setSortKey] = useState<SortKey>("date");
 	const [sortDir, setSortDir] = useState<SortDir>("desc");
 
-	// Container-width-driven switch between table and cards. Default to table
-	// (width 0) so jsdom-based tests, which don't fire ResizeObserver, keep
-	// asserting against the existing <table> markup.
-	const containerRef = useRef<HTMLDivElement>(null);
-	const [width, setWidth] = useState(0);
-	useEffect(() => {
-		const node = containerRef.current;
-		if (!node) return;
-		const ro = new ResizeObserver(([entry]) => {
-			setWidth(entry?.contentRect.width ?? 0);
-		});
-		ro.observe(node);
-		return () => ro.disconnect();
-	}, []);
-	const isNarrow = width > 0 && width < CARD_MAX_WIDTH;
+	const { ref: containerRef, isNarrow } = useContainerNarrow<HTMLDivElement>(CARD_MAX_WIDTH);
 
 	const accountName = useMemo(() => {
 		const m = new Map<string, string>();
