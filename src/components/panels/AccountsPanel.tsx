@@ -28,6 +28,7 @@ import { NewTransactionModal } from "../transactions/NewTransactionModal";
 import { TransactionFilterBar } from "../transactions/TransactionFilterBar";
 import type { TransactionFormValues } from "../transactions/TransactionForm";
 import { TransactionsTable } from "../transactions/TransactionsTable";
+import { ScrollFadeContainer } from "../ui/ScrollFadeContainer";
 
 const DEFAULT_DATE_RANGE: DateRangeValue = {
 	preset: "all-time",
@@ -255,7 +256,7 @@ export function AccountsPanel({
 						</div>
 					</div>
 					<div className="flex-[1_1_35%] flex min-h-0 overflow-hidden">
-						<div className="flex-1 overflow-y-auto overflow-x-auto md:basis-1/2 md:flex-none border-r border-base-300">
+						<ScrollFadeContainer className="flex-1 overflow-y-auto overflow-x-auto md:basis-1/2 md:flex-none border-r border-base-300">
 							{aLoading ? (
 								<div className="h-full flex items-center justify-center">
 									<span className="loading loading-spinner loading-sm text-primary" />
@@ -274,7 +275,7 @@ export function AccountsPanel({
 									showArchived={showArchived}
 								/>
 							)}
-						</div>
+						</ScrollFadeContainer>
 						<div className="hidden md:block md:basis-1/2 md:flex-none overflow-y-auto">
 							<AccountsRightPane {...rightPaneProps} />
 						</div>
@@ -361,7 +362,7 @@ export function AccountsPanel({
 							tags={tags}
 						/>
 					</div>
-					<div className="flex-1 overflow-y-auto overflow-x-auto min-h-0">
+					<ScrollFadeContainer className="flex-1 overflow-y-auto overflow-x-auto min-h-0">
 						{tLoading ? (
 							<div className="h-full flex items-center justify-center">
 								<span className="loading loading-spinner loading-sm text-primary" />
@@ -381,7 +382,7 @@ export function AccountsPanel({
 								}
 							/>
 						)}
-					</div>
+					</ScrollFadeContainer>
 				</div>
 			)}
 

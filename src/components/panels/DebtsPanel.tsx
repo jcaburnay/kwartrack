@@ -20,6 +20,7 @@ import type { ParticipantRow } from "../debts/SplitParticipantList";
 import { SplitsTable } from "../debts/SplitsTable";
 import { ConfirmModal } from "../ui/ConfirmModal";
 import { Modal } from "../ui/Modal";
+import { ScrollFadeContainer } from "../ui/ScrollFadeContainer";
 
 export type DebtsPending = "new-debt" | "new-split" | null;
 
@@ -244,7 +245,7 @@ export function DebtsPanel({ pendingModal, onPendingModalConsumed, onCrossFilter
 				</div>
 			</div>
 
-			<div className="flex-1 overflow-y-auto flex flex-col min-h-0">
+			<ScrollFadeContainer className="flex-1 overflow-y-auto flex flex-col min-h-0">
 				{error && <div className="alert alert-error text-sm mx-4 mt-3">{error}</div>}
 				{deleteError && !pendingDelete && (
 					<div className="alert alert-error text-sm mx-4 mt-3">
@@ -330,7 +331,7 @@ export function DebtsPanel({ pendingModal, onPendingModalConsumed, onCrossFilter
 						)}
 					</>
 				)}
-			</div>
+			</ScrollFadeContainer>
 
 			{showNewSplit && (
 				<NewSplitModal

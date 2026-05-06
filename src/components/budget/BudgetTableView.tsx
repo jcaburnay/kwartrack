@@ -1,13 +1,13 @@
 import { Pencil } from "lucide-react";
-import { useRef, useState } from "react";
+import { useState } from "react";
 import type { BudgetAllocation } from "../../hooks/useBudget";
 import { useContainerNarrow } from "../../hooks/useContainerNarrow";
 import { useScrollAndFlash } from "../../hooks/useScrollAndFlash";
-import { useShouldShowBottomFade } from "../../hooks/useScrollFadeMask";
 import type { Tag } from "../../hooks/useTags";
 import { type ActualsByTag, projectedBucket } from "../../utils/budgetMath";
 import { type SortableRow, sortByOvershootRisk } from "../../utils/budgetSorting";
 import { formatCentavos } from "../../utils/currency";
+import { ScrollFadeContainer } from "../ui/ScrollFadeContainer";
 import { EditAllocationModal } from "./EditAllocationModal";
 import { NewAllocationModal } from "./NewAllocationModal";
 
@@ -51,8 +51,6 @@ export function BudgetTableView({
 }: Props) {
 	const [editingAllocation, setEditingAllocation] = useState<BudgetAllocation | null>(null);
 	const [showAdd, setShowAdd] = useState(false);
-	const scrollRef = useRef<HTMLDivElement>(null);
-	const showFade = useShouldShowBottomFade(scrollRef);
 	const { ref: containerRef, isNarrow } = useContainerNarrow<HTMLDivElement>(CARD_MAX_WIDTH);
 
 	useScrollAndFlash(focusTagId, allocations.length > 0);
@@ -78,10 +76,7 @@ export function BudgetTableView({
 
 	return (
 		<div ref={containerRef} className="flex flex-col min-h-0 flex-1 overflow-hidden">
-			<div
-				ref={scrollRef}
-				className={`flex-1 overflow-y-auto overflow-x-auto min-h-0 ${showFade ? "scroll-fade-bottom" : ""}`}
-			>
+			<ScrollFadeContainer className="flex-1 overflow-y-auto overflow-x-auto min-h-0">
 				{isNarrow ? (
 					<ul className="flex flex-col divide-y divide-base-200">
 						{sorted.map((row) => {
@@ -215,7 +210,7 @@ export function BudgetTableView({
 						</tbody>
 					</table>
 				)}
-			</div>
+			</ScrollFadeContainer>
 
 			<div className="flex items-center justify-between gap-2 px-4 py-2 border-t border-base-200 flex-shrink-0">
 				<span className="text-xs text-base-content/50">

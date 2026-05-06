@@ -14,6 +14,7 @@ import { EditRecurringModal } from "../recurring/EditRecurringModal";
 import { NewRecurringModal } from "../recurring/NewRecurringModal";
 import { RecurringFilterRow } from "../recurring/RecurringFilterRow";
 import { RecurringTable } from "../recurring/RecurringTable";
+import { ScrollFadeContainer } from "../ui/ScrollFadeContainer";
 
 function formatNextDueDate(iso: string): string {
 	const target = new Date(iso);
@@ -106,7 +107,7 @@ export function RecurringPanel({ pendingModal, onPendingModalConsumed }: Props) 
 				</div>
 			</div>
 
-			<div className="flex-1 overflow-y-auto flex flex-col">
+			<ScrollFadeContainer className="flex-1 overflow-y-auto flex flex-col">
 				{error && <div className="alert alert-error text-sm mx-4 mt-3">{error}</div>}
 				{isLoading ? (
 					<div className="flex-1 flex items-center justify-center">
@@ -133,7 +134,7 @@ export function RecurringPanel({ pendingModal, onPendingModalConsumed }: Props) 
 						)}
 					</>
 				)}
-			</div>
+			</ScrollFadeContainer>
 
 			{creating && (
 				<NewRecurringModal
