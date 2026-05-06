@@ -47,7 +47,25 @@
 	}
 }
 
-@media (min-width: 640px) {
+/* Tablet (sm/md, 640–1023px): txns/accounts gets a tall left column, the four
+   other panels stack alongside it. NetWorth bridges across the top so the
+   user keeps the at-a-glance hero. */
+@media (min-width: 640px) and (max-width: 1023.98px) {
+	.jigsaw-grid {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+		grid-template-rows: auto minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
+		grid-template-areas:
+			"networth  networth"
+			"txns      recurring"
+			"txns      budget"
+			"txns      debts";
+		height: 100%;
+	}
+}
+
+/* Desktop (lg+, ≥1024px): the original 3-column jigsaw. */
+@media (min-width: 1024px) {
 	.jigsaw-grid {
 		display: grid;
 		grid-template-columns: minmax(0, 1fr) minmax(0, 2.2fr) minmax(0, 1fr);
@@ -57,7 +75,12 @@
 			"budget   txns debts";
 		height: 100%;
 	}
+}
 
+/* Both tiers share named-area assignments and a container-query context so
+   panels can adapt their internal layout to the cell width they end up with
+   (cards vs table, axis widths, etc.). */
+@media (min-width: 640px) {
 	.jigsaw-networth {
 		grid-area: networth;
 	}
@@ -72,5 +95,13 @@
 	}
 	.jigsaw-debts {
 		grid-area: debts;
+	}
+
+	.jigsaw-networth,
+	.jigsaw-txns,
+	.jigsaw-recurring,
+	.jigsaw-budget,
+	.jigsaw-debts {
+		container-type: inline-size;
 	}
 }
