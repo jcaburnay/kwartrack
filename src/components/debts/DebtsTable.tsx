@@ -139,28 +139,26 @@ function DebtCard({ debt, tagName, onSettle, onDelete, canDelete }: CardProps) {
 	const remaining = debt.amountCentavos - debt.settledCentavos;
 	const subline = [debt.description, debt.date].filter(Boolean).join(" · ");
 	return (
-		<li data-row-id={debt.id} className="px-3 py-2.5 flex flex-col gap-1.5">
-			<div className="flex items-start justify-between gap-2">
-				<div className="flex flex-col min-w-0 flex-1">
-					<span className="text-sm truncate">{tagName ?? "—"}</span>
-					{subline && <span className="text-xs text-base-content/50 truncate">{subline}</span>}
-				</div>
-				<div className="text-right whitespace-nowrap shrink-0">
-					<div
-						className={`text-sm font-medium tabular-nums ${
-							debt.direction === "loaned" ? "text-success" : "text-error"
-						}`}
-					>
-						{formatCentavos(debt.amountCentavos)}
-					</div>
-					{!fullySettled && debt.settledCentavos > 0 && (
-						<div className="text-xs text-base-content/50 tabular-nums">
-							{formatCentavos(remaining)} left
-						</div>
-					)}
-				</div>
+		<li data-row-id={debt.id} className="px-3 py-2.5 flex items-center gap-2">
+			<div className="flex flex-col min-w-0 flex-1">
+				<span className="text-sm truncate">{tagName ?? "—"}</span>
+				{subline && <span className="text-xs text-base-content/50 truncate">{subline}</span>}
 			</div>
-			<div className="flex justify-end gap-1">
+			<div className="text-right whitespace-nowrap shrink-0">
+				<div
+					className={`text-sm font-medium tabular-nums ${
+						debt.direction === "loaned" ? "text-success" : "text-error"
+					}`}
+				>
+					{formatCentavos(debt.amountCentavos)}
+				</div>
+				{!fullySettled && debt.settledCentavos > 0 && (
+					<div className="text-xs text-base-content/50 tabular-nums">
+						{formatCentavos(remaining)} left
+					</div>
+				)}
+			</div>
+			<div className="flex items-center gap-1 shrink-0">
 				{fullySettled ? (
 					<span className="badge badge-success badge-sm">✓ Settled</span>
 				) : (
