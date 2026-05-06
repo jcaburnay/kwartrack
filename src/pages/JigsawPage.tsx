@@ -18,6 +18,13 @@ const RECURRING_DEEP_LINK_MODALS: ReadonlySet<string> = new Set([
 
 const DEBTS_DEEP_LINK_MODALS: ReadonlySet<string> = new Set(["new-debt", "new-split"]);
 
+const PANEL_IDS = ["networth", "accounts", "recurring", "budget", "debts"] as const;
+export type PanelId = (typeof PANEL_IDS)[number];
+
+function isPanelId(value: string | null): value is PanelId {
+	return value != null && (PANEL_IDS as readonly string[]).includes(value);
+}
+
 export function JigsawPage() {
 	const [accountsPending, setAccountsPending] = useState<AccountsPendingModal>(null);
 	const [recurringPending, setRecurringPending] = useState<RecurringPending>(null);
@@ -25,13 +32,18 @@ export function JigsawPage() {
 	const [crossSplitFilter, setCrossSplitFilter] = useState<CrossSplitFilter>(null);
 	const [params, setParams] = useSearchParams();
 
+	const rawPanel = params.get("panel");
+	const activePanel: PanelId = isPanelId(rawPanel) ? rawPanel : "networth";
+
 	useEffect(() => {
 		const modal = params.get("modal");
 		const focus = params.get("focus");
 
+		let nextActivePanel: PanelId | null = null;
+
 		if (modal && ACCOUNTS_DEEP_LINK_MODALS.has(modal)) {
 			setAccountsPending(modal as AccountsPendingModal);
-			document.getElementById("panel-accounts")?.scrollIntoView({ behavior: "smooth" });
+			nextActivePanel = "accounts";
 		} else if (modal && RECURRING_DEEP_LINK_MODALS.has(modal)) {
 			if (modal === "new-recurring") {
 				setRecurringPending({ kind: "new" });
@@ -39,13 +51,12 @@ export function JigsawPage() {
 				const id = params.get("id");
 				if (id) setRecurringPending({ kind: "edit", id });
 			}
-			document.getElementById("panel-recurring")?.scrollIntoView({ behavior: "smooth" });
+			nextActivePanel = "recurring";
 		} else if (modal && DEBTS_DEEP_LINK_MODALS.has(modal)) {
 			setDebtsPending(modal as DebtsPending);
-			document.getElementById("panel-debts")?.scrollIntoView({ behavior: "smooth" });
-		} else if (focus && ["accounts", "recurring", "debts"].includes(focus)) {
-			const el = document.getElementById(`panel-${focus}`);
-			el?.scrollIntoView({ behavior: "smooth" });
+			nextActivePanel = "debts";
+		} else if (focus && isPanelId(focus)) {
+			nextActivePanel = focus;
 		}
 
 		if (modal || focus) {
@@ -53,20 +64,28 @@ export function JigsawPage() {
 			next.delete("modal");
 			next.delete("focus");
 			next.delete("id");
+			if (nextActivePanel) next.set("panel", nextActivePanel);
 			setParams(next, { replace: true });
 		}
 	}, [params, setParams]);
 
+	function panelClass(name: PanelId, baseClass: string) {
+		const isActive = activePanel === name;
+		// On mobile + tablet (<lg) only the active panel is visible — the dock
+		// drives navigation. From lg up, the jigsaw grid lays them all out.
+		const visibility = isActive ? "" : "hidden lg:block";
+		return `${baseClass} flex-1 min-h-0 lg:flex-none ${visibility}`.trim();
+	}
+
 	return (
-		<div className="min-h-dvh sm:h-dvh bg-base-200 flex flex-col sm:overflow-hidden">
+		<div className="h-dvh bg-base-200 flex flex-col overflow-hidden">
 			<Header />
-			<main className="flex-1 p-2 pb-[calc(5rem+env(safe-area-inset-bottom))] sm:p-3 sm:pb-3 sm:overflow-hidden">
-				{/* Jigsaw grid — named areas on desktop, stacked on mobile */}
-				<div className="jigsaw-grid grid grid-cols-1 gap-2">
-					<div id="panel-networth" className="jigsaw-networth">
+			<main className="flex-1 px-2 sm:px-3 pt-2 sm:pt-3 pb-[calc(5rem+env(safe-area-inset-bottom))] lg:pb-3 overflow-hidden">
+				<div className="jigsaw-grid flex flex-col gap-2 h-full">
+					<div id="panel-networth" className={panelClass("networth", "jigsaw-networth")}>
 						<NetWorthPanel />
 					</div>
-					<div id="panel-accounts" className="jigsaw-txns">
+					<div id="panel-accounts" className={panelClass("accounts", "jigsaw-txns")}>
 						<AccountsPanel
 							pendingModal={accountsPending}
 							onPendingModalConsumed={() => setAccountsPending(null)}
@@ -74,22 +93,26 @@ export function JigsawPage() {
 							onClearCrossSplitFilter={() => setCrossSplitFilter(null)}
 						/>
 					</div>
-					<div id="panel-recurring" className="jigsaw-recurring">
+					<div id="panel-recurring" className={panelClass("recurring", "jigsaw-recurring")}>
 						<RecurringPanel
 							pendingModal={recurringPending}
 							onPendingModalConsumed={() => setRecurringPending(null)}
 						/>
 					</div>
-					<div id="panel-budget" className="jigsaw-budget">
+					<div id="panel-budget" className={panelClass("budget", "jigsaw-budget")}>
 						<BudgetPanel />
 					</div>
-					<div id="panel-debts" className="jigsaw-debts">
+					<div id="panel-debts" className={panelClass("debts", "jigsaw-debts")}>
 						<DebtsPanel
 							pendingModal={debtsPending}
 							onPendingModalConsumed={() => setDebtsPending(null)}
 							onCrossFilterSplit={(filter) => {
 								setCrossSplitFilter(filter);
-								document.getElementById("panel-accounts")?.scrollIntoView({ behavior: "smooth" });
+								// Cross-filtering jumps to the accounts panel so the user sees the
+								// filtered transactions immediately.
+								const next = new URLSearchParams(params);
+								next.set("panel", "accounts");
+								setParams(next, { replace: true });
 							}}
 						/>
 					</div>

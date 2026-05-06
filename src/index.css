@@ -23,48 +23,40 @@
 	-webkit-mask-image: linear-gradient(to bottom, black calc(100% - 2.5rem), transparent 100%);
 }
 
-/* Row-flash, pinned headers, and other table tricks already styled above.
-   Below: phone-only chrome adjustments for the floating action button so it
-   sits above the bottom MobileDock and the iOS home indicator. */
-@media (max-width: 639.98px) {
+/* Phone + tablet (<lg): the MobileDock is fixed along the bottom, so the FAB
+   is lifted above it (and above the iOS home indicator), and the dock itself
+   reserves the home-indicator inset. Touch-target opt-in expands icon-only
+   row buttons to 44×44 in the same range. */
+@media (max-width: 1023.98px) {
 	/* Doubled selector beats DaisyUI's `.fab` specificity without !important. */
 	.fab.fab {
 		bottom: calc(4rem + env(safe-area-inset-bottom) + 0.5rem);
 	}
 
-	/* iOS home-indicator clearance for the bottom dock. */
 	.dock {
 		padding-bottom: env(safe-area-inset-bottom);
 		height: calc(4rem + env(safe-area-inset-bottom));
 	}
 
-	/* Bumps row-action icon buttons to a 44×44 hit area on phones. Opt-in
-	   via the `touch-target` class so we don't inflate panel chrome
-	   (fold/unfold headers etc.) that depend on smaller heights. */
 	.touch-target {
 		min-height: 2.75rem;
 		min-width: 2.75rem;
 	}
 }
 
-/* Tablet (sm/md, 640–1023px): txns/accounts gets a tall left column, the four
-   other panels stack alongside it. NetWorth bridges across the top so the
-   user keeps the at-a-glance hero. */
-@media (min-width: 640px) and (max-width: 1023.98px) {
-	.jigsaw-grid {
-		display: grid;
-		grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-		grid-template-rows: auto minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
-		grid-template-areas:
-			"networth  networth"
-			"txns      recurring"
-			"txns      budget"
-			"txns      debts";
-		height: 100%;
-	}
+/* Each panel cell is a containment context regardless of viewport so panel
+   internals (cards vs table, axis widths) can react to the cell width they
+   end up with — full main area on mobile/tablet, grid cell on desktop. */
+.jigsaw-networth,
+.jigsaw-txns,
+.jigsaw-recurring,
+.jigsaw-budget,
+.jigsaw-debts {
+	container-type: inline-size;
 }
 
-/* Desktop (lg+, ≥1024px): the original 3-column jigsaw. */
+/* Desktop (lg+, ≥1024px): the original 3-column jigsaw. Mobile and tablet
+   render only the active panel (dock-driven), so they don't need a grid. */
 @media (min-width: 1024px) {
 	.jigsaw-grid {
 		display: grid;
@@ -75,12 +67,7 @@
 			"budget   txns debts";
 		height: 100%;
 	}
-}
 
-/* Both tiers share named-area assignments and a container-query context so
-   panels can adapt their internal layout to the cell width they end up with
-   (cards vs table, axis widths, etc.). */
-@media (min-width: 640px) {
 	.jigsaw-networth {
 		grid-area: networth;
 	}
@@ -95,13 +82,5 @@
 	}
 	.jigsaw-debts {
 		grid-area: debts;
-	}
-
-	.jigsaw-networth,
-	.jigsaw-txns,
-	.jigsaw-recurring,
-	.jigsaw-budget,
-	.jigsaw-debts {
-		container-type: inline-size;
 	}
 }

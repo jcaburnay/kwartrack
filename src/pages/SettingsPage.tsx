@@ -15,7 +15,7 @@ export function SettingsPage() {
 	return (
 		<div className="min-h-dvh bg-base-200 flex flex-col">
 			<Header />
-			<main className="flex-1 p-4 pb-[calc(5rem+env(safe-area-inset-bottom))] sm:p-6 sm:pb-6 max-w-6xl w-full mx-auto flex flex-col gap-5">
+			<main className="flex-1 px-4 sm:px-6 pt-4 sm:pt-6 pb-[calc(5rem+env(safe-area-inset-bottom))] lg:pb-6 max-w-6xl w-full mx-auto flex flex-col gap-5">
 				<h1 className="text-2xl font-semibold">Settings</h1>
 				<div className="grid grid-cols-1 md:grid-cols-[14rem_1fr] gap-4 md:gap-6">
 					{/* Mobile: horizontal scrolling tab strip; desktop: vertical sidebar. */}
