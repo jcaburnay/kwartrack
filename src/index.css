@@ -23,9 +23,19 @@
 	-webkit-mask-image: linear-gradient(to bottom, black calc(100% - 2.5rem), transparent 100%);
 }
 
-/* FAB backdrop — fades+blurs the page behind the open FAB menu. Click-through
-   (pointer-events: none) so any tap outside the action buttons just blurs the
-   FAB trigger and DaisyUI's :focus-within toggles the menu closed. */
+/* FAB backdrop — fades+blurs the page behind the open FAB menu.
+
+   It MUST be a sibling of `.fab`, not a child. DaisyUI's fab styles use
+   `&>[tabindex]:first-child` to position the trigger button and
+   `&>:nth-child(n+2)` to hide non-first children — putting the backdrop
+   inside `.fab` demotes the trigger to the 2nd child and hides it.
+
+   Z-index 998 sits just below DaisyUI's `.fab { z-index: 999 }`, so the
+   open menu stays above the dim while the backdrop covers the rest of
+   the page (including the MobileDock at z-index 30). pointer-events:none
+   keeps the backdrop click-through so a tap outside the action buttons
+   blurs the FAB trigger and DaisyUI's :focus-within toggles the menu
+   closed. */
 .fab-backdrop {
 	position: fixed;
 	inset: 0;
@@ -35,9 +45,10 @@
 	pointer-events: none;
 	opacity: 0;
 	transition: opacity 180ms ease-out;
+	z-index: 998;
 }
 
-.fab:focus-within > .fab-backdrop {
+.fab-backdrop:has(~ .fab:focus-within) {
 	opacity: 1;
 }
 
