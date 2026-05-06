@@ -23,6 +23,24 @@
 	-webkit-mask-image: linear-gradient(to bottom, black calc(100% - 2.5rem), transparent 100%);
 }
 
+/* FAB backdrop — fades+blurs the page behind the open FAB menu. Click-through
+   (pointer-events: none) so any tap outside the action buttons just blurs the
+   FAB trigger and DaisyUI's :focus-within toggles the menu closed. */
+.fab-backdrop {
+	position: fixed;
+	inset: 0;
+	background-color: rgb(0 0 0 / 0.3);
+	backdrop-filter: blur(4px);
+	-webkit-backdrop-filter: blur(4px);
+	pointer-events: none;
+	opacity: 0;
+	transition: opacity 180ms ease-out;
+}
+
+.fab:focus-within > .fab-backdrop {
+	opacity: 1;
+}
+
 /* Phone + tablet (<lg): the MobileDock is fixed along the bottom, so the FAB
    is lifted above it (and above the iOS home indicator), and the dock itself
    reserves the home-indicator inset. Touch-target opt-in expands icon-only

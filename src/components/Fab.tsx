@@ -37,6 +37,10 @@ export function Fab({ actions }: Props) {
 
 	return (
 		<div className="fab">
+			{/* Dim + blur backdrop, only visible while the FAB is open
+			   (`.fab:focus-within > .fab-backdrop` rule in index.css). Stays
+			   click-through so leaving focus naturally closes the menu. */}
+			<div aria-hidden="true" className="fab-backdrop" />
 			{/* biome-ignore lint/a11y/useSemanticElements: DaisyUI's `fab` uses
 			   `:focus-within` for open/close, which requires a focusable `div`
 			   with `role="button"` — a real `<button>` has inconsistent focus
