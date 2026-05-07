@@ -1,6 +1,9 @@
+import { Check, Pencil, Trash2, X } from "lucide-react";
 import { useState } from "react";
 import { NewPersonModal } from "../components/debts/NewPersonModal";
+import { SettingsSection } from "../components/settings/SettingsSection";
 import { type Person, usePersons } from "../hooks/usePersons";
+import { initialsFrom } from "../utils/initials";
 
 export function SettingsContactsPage() {
 	const { persons, isLoading, renamePerson, deletePerson, createInline } = usePersons();
@@ -25,83 +28,97 @@ export function SettingsContactsPage() {
 	}
 
 	return (
-		<div className="flex flex-col gap-4">
-			<div className="flex items-center justify-between gap-4">
-				<h2 className="text-lg font-semibold">Contacts</h2>
+		<SettingsSection
+			title="Contacts"
+			description="People referenced by your splits and debts. Delete is blocked if a contact has linked records."
+			action={
 				<button type="button" className="btn btn-primary btn-sm" onClick={() => setCreating(true)}>
 					New person
 				</button>
-			</div>
-			<p className="text-sm text-base-content/60">
-				Contacts are people referenced by your splits and debts.
-			</p>
+			}
+		>
 			{error && <div className="alert alert-error text-sm">{error}</div>}
+
 			{isLoading ? (
 				<div className="flex justify-center py-6">
 					<span className="loading loading-spinner text-primary" />
 				</div>
 			) : persons.length === 0 ? (
-				<p className="text-sm text-base-content/60">
+				<div className="border border-dashed border-base-300 rounded-box p-8 text-center text-sm text-base-content/60">
 					No contacts yet. Add people to attach them to splits and IOUs.
-				</p>
+				</div>
 			) : (
-				<ul className="divide-y divide-base-300 rounded-box border border-base-300">
-					{persons.map((p) => (
-						<li key={p.id} className="flex items-center justify-between gap-3 p-3">
-							{editingId === p.id ? (
-								<div className="flex gap-2 flex-1">
-									<input
-										type="text"
-										className="input input-bordered input-sm flex-1"
-										value={editingName}
-										onChange={(e) => setEditingName(e.target.value)}
-									/>
-									<button
-										type="button"
-										className="btn btn-sm btn-primary"
-										onClick={() => handleRename(p.id)}
-									>
-										Save
-									</button>
-									<button
-										type="button"
-										className="btn btn-sm btn-ghost"
-										onClick={() => {
-											setEditingId(null);
-											setEditingName("");
-										}}
-									>
-										Cancel
-									</button>
-								</div>
-							) : (
-								<>
-									<p className="font-medium">{p.name}</p>
-									<div className="flex gap-2">
+				<ul className="divide-y divide-base-300 rounded-box border border-base-300 bg-base-100">
+					{persons.map((p) => {
+						const isEditing = editingId === p.id;
+						return (
+							<li key={p.id} className="flex items-center gap-3 px-4 py-2.5 min-h-[3.25rem]">
+								{isEditing ? (
+									<div className="flex gap-2 flex-1">
+										<input
+											type="text"
+											className="input input-bordered input-sm flex-1"
+											value={editingName}
+											onChange={(e) => setEditingName(e.target.value)}
+											autoFocus
+										/>
 										<button
 											type="button"
-											className="btn btn-xs btn-ghost touch-target"
+											aria-label="Save"
+											className="btn btn-sm btn-primary btn-square"
+											onClick={() => handleRename(p.id)}
+										>
+											<Check className="size-4" />
+										</button>
+										<button
+											type="button"
+											aria-label="Cancel"
+											className="btn btn-sm btn-ghost btn-square"
 											onClick={() => {
-												setEditingId(p.id);
-												setEditingName(p.name);
+												setEditingId(null);
+												setEditingName("");
 											}}
 										>
-											Rename
-										</button>
-										<button
-											type="button"
-											className="btn btn-xs btn-ghost text-error touch-target"
-											onClick={() => handleDelete(p)}
-										>
-											Delete
+											<X className="size-4" />
 										</button>
 									</div>
-								</>
-							)}
-						</li>
-					))}
+								) : (
+									<>
+										<div className="avatar avatar-placeholder shrink-0">
+											<div className="bg-base-200 text-base-content/70 w-8 rounded-full">
+												<span className="text-xs font-medium">{initialsFrom(p.name)}</span>
+											</div>
+										</div>
+										<p className="text-sm flex-1 truncate">{p.name}</p>
+										<div className="flex gap-1 shrink-0">
+											<button
+												type="button"
+												aria-label={`Rename ${p.name}`}
+												className="btn btn-xs btn-ghost btn-square touch-target"
+												onClick={() => {
+													setEditingId(p.id);
+													setEditingName(p.name);
+												}}
+											>
+												<Pencil className="size-3.5" />
+											</button>
+											<button
+												type="button"
+												aria-label={`Delete ${p.name}`}
+												className="btn btn-xs btn-ghost btn-square text-error touch-target"
+												onClick={() => handleDelete(p)}
+											>
+												<Trash2 className="size-3.5" />
+											</button>
+										</div>
+									</>
+								)}
+							</li>
+						);
+					})}
 				</ul>
 			)}
+
 			{creating && (
 				<NewPersonModal
 					create={createInline}
@@ -109,6 +126,6 @@ export function SettingsContactsPage() {
 					onCancel={() => setCreating(false)}
 				/>
 			)}
-		</div>
+		</SettingsSection>
 	);
 }

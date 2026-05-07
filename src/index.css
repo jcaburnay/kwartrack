@@ -2,7 +2,15 @@
 @plugin "daisyui" {
 	themes:
 		corporate --default,
-		business --prefersdark;
+		business --prefersdark,
+		light,
+		dark,
+		emerald,
+		cupcake,
+		lemonade,
+		winter,
+		night,
+		dim;
 }
 
 @keyframes row-flash {

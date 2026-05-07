@@ -1,36 +1,62 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { supabase } from "../lib/supabase";
+import { useAuth } from "../providers/AuthProvider";
 
-type Theme = "light" | "dark" | "system";
+export const THEMES = [
+	"system",
+	"light",
+	"dark",
+	"corporate",
+	"business",
+	"emerald",
+	"cupcake",
+	"lemonade",
+	"winter",
+	"night",
+	"dim",
+] as const;
+
+export type Theme = (typeof THEMES)[number];
 
 const STORAGE_KEY = "theme";
-const THEME_MAP: Record<"light" | "dark", string> = {
-	light: "corporate",
-	dark: "business",
-};
+
+function isTheme(value: unknown): value is Theme {
+	return typeof value === "string" && (THEMES as readonly string[]).includes(value);
+}
+
+// `system` resolves to a daisyUI theme based on the OS preference. Corporate/
+// business were the v1 defaults, so we keep them as the system-resolved themes
+// to preserve the brand palette for users who never explicitly choose.
+export function resolveTheme(theme: Theme): string {
+	if (theme !== "system") return theme;
+	const prefersDark =
+		typeof window !== "undefined" && window.matchMedia("(prefers-color-scheme: dark)").matches;
+	return prefersDark ? "business" : "corporate";
+}
 
 function applyTheme(theme: Theme) {
-	const resolved =
-		theme === "system"
-			? window.matchMedia("(prefers-color-scheme: dark)").matches
-				? THEME_MAP.dark
-				: THEME_MAP.light
-			: THEME_MAP[theme];
-	document.documentElement.setAttribute("data-theme", resolved);
+	document.documentElement.setAttribute("data-theme", resolveTheme(theme));
 }
 
 function readStored(): Theme {
-	const stored = localStorage.getItem(STORAGE_KEY);
-	return stored === "light" || stored === "dark" || stored === "system" ? stored : "system";
+	if (typeof window === "undefined") return "system";
+	const stored = window.localStorage.getItem(STORAGE_KEY);
+	return isTheme(stored) ? stored : "system";
 }
 
 export function useTheme(): { theme: Theme; setTheme: (t: Theme) => void } {
-	const [theme, setThemeState] = useState<Theme>(readStored);
+	const { user, profile, patchProfileOptimistic } = useAuth();
+	const [localTheme, setLocalTheme] = useState<Theme>(readStored);
+
+	// Server-stored theme wins when present so the choice follows the user
+	// across devices. localStorage is the pre-auth + optimistic fallback.
+	const theme = useMemo<Theme>(
+		() => (isTheme(profile?.theme) ? (profile.theme as Theme) : localTheme),
+		[profile?.theme, localTheme],
+	);
 
 	useEffect(() => {
 		applyTheme(theme);
-		// While in "system" mode, react to OS-level light/dark changes so the
-		// resolved DaisyUI theme (and our `[data-theme="..."]` color overrides)
-		// stay in sync.
 		if (theme !== "system") return;
 		const mql = window.matchMedia("(prefers-color-scheme: dark)");
 		const onChange = () => applyTheme("system");
@@ -38,10 +64,17 @@ export function useTheme(): { theme: Theme; setTheme: (t: Theme) => void } {
 		return () => mql.removeEventListener("change", onChange);
 	}, [theme]);
 
-	function setTheme(next: Theme) {
-		localStorage.setItem(STORAGE_KEY, next);
-		setThemeState(next);
-	}
+	const setTheme = useCallback(
+		(next: Theme) => {
+			window.localStorage.setItem(STORAGE_KEY, next);
+			setLocalTheme(next);
+			if (user) {
+				patchProfileOptimistic({ theme: next });
+				void supabase.from("user_profile").update({ theme: next }).eq("id", user.id);
+			}
+		},
+		[user, patchProfileOptimistic],
+	);
 
 	return { theme, setTheme };
 }

@@ -10,11 +10,20 @@ const SettingsPage = lazy(() =>
 const SettingsAboutPage = lazy(() =>
 	import("./pages/SettingsAboutPage").then((m) => ({ default: m.SettingsAboutPage })),
 );
+const SettingsAppearancePage = lazy(() =>
+	import("./pages/SettingsAppearancePage").then((m) => ({ default: m.SettingsAppearancePage })),
+);
 const SettingsContactsPage = lazy(() =>
 	import("./pages/SettingsContactsPage").then((m) => ({ default: m.SettingsContactsPage })),
 );
+const SettingsExportPage = lazy(() =>
+	import("./pages/SettingsExportPage").then((m) => ({ default: m.SettingsExportPage })),
+);
 const SettingsGroupsPage = lazy(() =>
 	import("./pages/SettingsGroupsPage").then((m) => ({ default: m.SettingsGroupsPage })),
+);
+const SettingsProfilePage = lazy(() =>
+	import("./pages/SettingsProfilePage").then((m) => ({ default: m.SettingsProfilePage })),
 );
 const SettingsTagsPage = lazy(() =>
 	import("./pages/SettingsTagsPage").then((m) => ({ default: m.SettingsTagsPage })),
@@ -61,10 +70,13 @@ const router = createBrowserRouter([
 			</ProtectedRoute>,
 		),
 		children: [
-			{ index: true, element: <Navigate to="tags" replace /> },
+			{ index: true, element: <Navigate to="profile" replace /> },
+			{ path: "profile", element: lazyRoute(<SettingsProfilePage />) },
+			{ path: "appearance", element: lazyRoute(<SettingsAppearancePage />) },
 			{ path: "tags", element: lazyRoute(<SettingsTagsPage />) },
 			{ path: "contacts", element: lazyRoute(<SettingsContactsPage />) },
 			{ path: "groups", element: lazyRoute(<SettingsGroupsPage />) },
+			{ path: "export", element: lazyRoute(<SettingsExportPage />) },
 			{ path: "about", element: lazyRoute(<SettingsAboutPage />) },
 		],
 	},

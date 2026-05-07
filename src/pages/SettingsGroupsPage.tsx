@@ -2,6 +2,7 @@ import { ChevronRight } from "lucide-react";
 import { useState } from "react";
 import { ManageGroupMembersModal } from "../components/accounts/ManageGroupMembersModal";
 import { NewGroupModal } from "../components/accounts/NewGroupModal";
+import { SettingsSection } from "../components/settings/SettingsSection";
 import { useAccountGroups } from "../hooks/useAccountGroups";
 import { useAccounts } from "../hooks/useAccounts";
 import { supabase } from "../lib/supabase";
@@ -14,10 +15,10 @@ export function SettingsGroupsPage() {
 	const [managingId, setManagingId] = useState<string | null>(null);
 	const [error, setError] = useState<string | null>(null);
 
-	const groupsWithMembers = groups.map((g) => {
-		const members = accounts.filter((a) => a.group_id === g.id && !a.is_archived);
-		return { group: g, members };
-	});
+	const groupsWithMembers = groups.map((g) => ({
+		group: g,
+		members: accounts.filter((a) => a.group_id === g.id && !a.is_archived),
+	}));
 
 	async function deleteGroup(group: AccountGroup) {
 		setError(null);
@@ -35,18 +36,15 @@ export function SettingsGroupsPage() {
 	const managing = managingId ? groupsWithMembers.find((g) => g.group.id === managingId) : null;
 
 	return (
-		<div className="flex flex-col gap-4">
-			<div className="flex items-center justify-between gap-4">
-				<h2 className="text-lg font-semibold">Groups</h2>
+		<SettingsSection
+			title="Groups"
+			description='Bucket accounts by institution (e.g. "Maya" grouping all Maya balances). An account belongs to at most one group. Click a group to manage its accounts.'
+			action={
 				<button type="button" className="btn btn-primary btn-sm" onClick={() => setCreating(true)}>
 					Create group
 				</button>
-			</div>
-			<p className="text-sm text-base-content/60">
-				Groups bucket accounts by institution (e.g. "Maya" grouping all Maya balances). An account
-				belongs to at most one group. Click a group to manage its accounts.
-			</p>
-
+			}
+		>
 			{error && <div className="alert alert-error text-sm">{error}</div>}
 
 			{isLoading ? (
@@ -54,30 +52,44 @@ export function SettingsGroupsPage() {
 					<span className="loading loading-spinner text-primary" />
 				</div>
 			) : groupsWithMembers.length === 0 ? (
-				<p className="text-sm text-base-content/60">
+				<div className="border border-dashed border-base-300 rounded-box p-8 text-center text-sm text-base-content/60">
 					No groups yet. Bucket accounts to summarise totals together.
-				</p>
+				</div>
 			) : (
-				<ul className="divide-y divide-base-300 rounded-box border border-base-300">
+				<ul className="divide-y divide-base-300 rounded-box border border-base-300 bg-base-100">
 					{groupsWithMembers.map(({ group, members }) => {
 						const memberCount = members.length;
-						const previewNames = members.slice(0, 3).map((a) => a.name);
-						const previewSuffix = memberCount > 3 ? `, +${memberCount - 3}` : "";
-						const subtitle =
-							memberCount === 0
-								? "Empty group"
-								: `${memberCount} ${memberCount === 1 ? "account" : "accounts"} · ${previewNames.join(", ")}${previewSuffix}`;
+						const previewMembers = members.slice(0, 3);
+						const overflow = memberCount - previewMembers.length;
 
 						return (
 							<li key={group.id}>
 								<button
 									type="button"
-									className="w-full flex items-center justify-between gap-3 p-3 text-left hover:bg-base-200 focus:bg-base-200 outline-none"
+									className="w-full flex items-center justify-between gap-3 px-4 py-3 text-left hover:bg-base-200/60 focus:bg-base-200/60 outline-none transition-colors"
 									onClick={() => setManagingId(group.id)}
 								>
-									<div className="min-w-0 flex-1">
-										<p className="font-medium">{group.name}</p>
-										<p className="text-xs text-base-content/60 truncate">{subtitle}</p>
+									<div className="min-w-0 flex-1 flex flex-col gap-1.5">
+										<p className="text-sm font-medium truncate">{group.name}</p>
+										{memberCount === 0 ? (
+											<span className="text-xs text-base-content/50">No accounts yet</span>
+										) : (
+											<div className="flex flex-wrap items-center gap-1">
+												{previewMembers.map((a) => (
+													<span
+														key={a.id}
+														className="badge badge-ghost badge-sm font-normal max-w-[10rem] truncate"
+													>
+														{a.name}
+													</span>
+												))}
+												{overflow > 0 && (
+													<span className="badge badge-ghost badge-sm font-normal text-base-content/60">
+														+{overflow}
+													</span>
+												)}
+											</div>
+										)}
 									</div>
 									<ChevronRight className="w-4 h-4 text-base-content/40 shrink-0" />
 								</button>
@@ -107,6 +119,6 @@ export function SettingsGroupsPage() {
 					onRequestDelete={deleteGroup}
 				/>
 			)}
-		</div>
+		</SettingsSection>
 	);
 }

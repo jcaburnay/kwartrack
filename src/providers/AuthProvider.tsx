@@ -22,6 +22,8 @@ type AuthContextValue = {
 	isLoading: boolean;
 	signOut: () => Promise<void>;
 	setSessionOptimistically: (session: Session | null) => void;
+	refreshProfile: () => Promise<void>;
+	patchProfileOptimistic: (patch: Partial<UserProfile>) => void;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -117,6 +119,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 		setSession(next);
 	}, []);
 
+	const refreshProfile = useCallback(async () => {
+		if (!userId) return;
+		await loadProfile(userId);
+	}, [userId, loadProfile]);
+
+	const patchProfileOptimistic = useCallback((patch: Partial<UserProfile>) => {
+		setProfile((prev) => (prev ? { ...prev, ...patch } : prev));
+	}, []);
+
 	const value = useMemo<AuthContextValue>(
 		() => ({
 			session,
@@ -125,8 +136,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 			isLoading,
 			signOut,
 			setSessionOptimistically,
+			refreshProfile,
+			patchProfileOptimistic,
 		}),
-		[session, profile, isLoading, signOut, setSessionOptimistically],
+		[
+			session,
+			profile,
+			isLoading,
+			signOut,
+			setSessionOptimistically,
+			refreshProfile,
+			patchProfileOptimistic,
+		],
 	);
 
 	return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
