@@ -32,7 +32,6 @@ export function ManageGroupMembersModal({
 	const [renameValue, setRenameValue] = useState(group.name);
 	const [submitError, setSubmitError] = useState<string | null>(null);
 	const [isSaving, setIsSaving] = useState(false);
-	const [isRenaming, setIsRenaming] = useState(false);
 
 	const groupNameById = useMemo(() => {
 		const m = new Map<string, string>();
@@ -62,9 +61,11 @@ export function ManageGroupMembersModal({
 		return { added: a, removed: r };
 	}, [selectedIds, initialMemberIds]);
 
-	const changeCount = added.length + removed.length;
 	const trimmedRename = renameValue.trim();
 	const renameDirty = trimmedRename !== group.name && trimmedRename.length > 0;
+	const renameInvalid = trimmedRename.length === 0;
+	const memberChangeCount = added.length + removed.length;
+	const changeCount = memberChangeCount + (renameDirty ? 1 : 0);
 
 	function handleDelete() {
 		if (changeCount > 0) {
@@ -89,27 +90,18 @@ export function ManageGroupMembersModal({
 		});
 	}
 
-	async function rename() {
-		if (!renameDirty) return;
-		setSubmitError(null);
-		setIsRenaming(true);
-		const { error } = await supabase
-			.from("account_group")
-			.update({ name: trimmedRename })
-			.eq("id", group.id);
-		setIsRenaming(false);
-		if (error) {
-			setSubmitError(error.message);
-			return;
-		}
-		onChanged();
-	}
-
 	async function save() {
-		if (changeCount === 0) return;
+		if (changeCount === 0 || renameInvalid) return;
 		setSubmitError(null);
 		setIsSaving(true);
 		try {
+			if (renameDirty) {
+				const { error } = await supabase
+					.from("account_group")
+					.update({ name: trimmedRename })
+					.eq("id", group.id);
+				if (error) throw new Error(error.message);
+			}
 			if (added.length > 0) {
 				const { error } = await supabase
 					.from("account")
@@ -138,29 +130,21 @@ export function ManageGroupMembersModal({
 			<Modal.Header title={`Manage members of "${group.name}"`} />
 
 			<div className="flex flex-col gap-3">
-				<div className="flex gap-2">
+				<div className="flex flex-col gap-1">
 					<input
 						type="text"
 						aria-label="Group name"
-						className="input input-bordered input-sm flex-1"
+						className={`input input-bordered input-sm w-full ${renameInvalid ? "input-error" : ""}`}
 						value={renameValue}
 						onChange={(e) => setRenameValue(e.target.value)}
 					/>
-					<SubmitButton
-						type="button"
-						className="btn btn-sm btn-ghost"
-						loading={isRenaming}
-						disabled={!renameDirty}
-						onClick={rename}
-					>
-						Rename
-					</SubmitButton>
+					{renameInvalid && <span className="text-xs text-error">Group name can’t be empty.</span>}
 				</div>
 
 				<input
 					type="search"
 					placeholder="Search accounts…"
-					className="input input-bordered input-sm"
+					className="input input-bordered input-sm w-full"
 					value={search}
 					onChange={(e) => setSearch(e.target.value)}
 				/>
@@ -212,7 +196,7 @@ export function ManageGroupMembersModal({
 					type="button"
 					className="btn btn-sm btn-primary"
 					loading={isSaving}
-					disabled={changeCount === 0}
+					disabled={changeCount === 0 || renameInvalid}
 					onClick={save}
 				>
 					{changeCount === 0
