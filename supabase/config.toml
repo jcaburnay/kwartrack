@@ -150,10 +150,11 @@ max_indexes = 5
 [auth]
 enabled = true
 # The base URL of your website. Used as an allow-list for redirects and for constructing URLs used
-# in emails.
-site_url = "http://127.0.0.1:3000"
+# in emails. Vite dev server runs on :5173.
+site_url = "http://localhost:5173"
 # A list of *exact* URLs that auth providers are permitted to redirect to post authentication.
-additional_redirect_urls = ["https://127.0.0.1:3000"]
+# OAuth flows (e.g. Google) compare `redirectTo` against this list; mismatches fail before reaching the provider.
+additional_redirect_urls = ["http://localhost:5173", "http://127.0.0.1:5173"]
 # How long tokens are valid for, in seconds. Defaults to 3600 (1 hour), maximum 604,800 (1 week).
 jwt_expiry = 3600
 # JWT issuer URL. If not set, defaults to the local API URL (http://127.0.0.1:<port>/auth/v1).
@@ -326,6 +327,22 @@ url = ""
 skip_nonce_check = false
 # If enabled, it will allow the user to successfully authenticate when the provider does not return an email address.
 email_optional = false
+
+# Google OAuth. Add these to .env.local before running `pnpm supabase:start`:
+#   SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID=...
+#   SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET=...
+# Production config lives in Supabase Dashboard → Authentication → Providers;
+# this block has no effect on the deployed app.
+[auth.external.google]
+enabled = true
+client_id = "env(SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID)"
+secret = "env(SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET)"
+# Must be set explicitly — GoTrue does not auto-default and will reject the
+# authorize request with "missing redirect URI" if this is empty.
+redirect_uri = "http://127.0.0.1:54321/auth/v1/callback"
+url = ""
+# Required for local sign-in with Google auth.
+skip_nonce_check = true
 
 # Allow Solana wallet holders to sign in to your project via the Sign in with Solana (SIWS, EIP-4361) standard.
 # You can configure "web3" rate limit in the [auth.rate_limit] section and set up [auth.captcha] if self-hosting.

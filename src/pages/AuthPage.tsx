@@ -56,12 +56,12 @@ export function AuthPage() {
 		<main className="min-h-dvh flex items-center justify-center bg-base-200 p-6">
 			<div className="card bg-base-100 shadow-md max-w-md w-full">
 				<div className="card-body gap-4">
-					<div role="tablist" aria-label="Authentication mode" className="tabs tabs-border">
+					<div role="tablist" aria-label="Authentication mode" className="tabs tabs-box w-full">
 						<button
 							type="button"
 							role="tab"
 							aria-selected={mode === "signin"}
-							className={`tab text-base font-medium ${mode === "signin" ? "tab-active" : ""}`}
+							className={`tab flex-1 font-medium ${mode === "signin" ? "tab-active" : ""}`}
 							onClick={() => selectMode("signin")}
 						>
 							Sign in
@@ -70,7 +70,7 @@ export function AuthPage() {
 							type="button"
 							role="tab"
 							aria-selected={mode === "signup"}
-							className={`tab text-base font-medium ${mode === "signup" ? "tab-active" : ""}`}
+							className={`tab flex-1 font-medium ${mode === "signup" ? "tab-active" : ""}`}
 							onClick={() => selectMode("signup")}
 						>
 							Sign up

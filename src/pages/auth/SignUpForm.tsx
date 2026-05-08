@@ -1,8 +1,10 @@
+import { Lock, Mail, User } from "lucide-react";
 import { useState } from "react";
 import { type SubmitHandler, useForm } from "react-hook-form";
 import { useNavigate } from "react-router";
 import { supabase } from "../../lib/supabase";
 import { useAuth } from "../../providers/AuthProvider";
+import { SocialAuthButtons } from "./SocialAuthButtons";
 
 type SignUpFormValues = {
 	displayName: string;
@@ -87,14 +89,19 @@ export function SignUpForm({ onCheckEmail }: Props) {
 
 	return (
 		<form className="flex flex-col gap-4" onSubmit={handleSubmit(onSubmit)} noValidate>
+			<SocialAuthButtons setError={setSubmitError} />
 			<div className="flex flex-col gap-1">
-				<label className="floating-label">
+				<label className="floating-label relative">
 					<span>Display name</span>
+					<User
+						aria-hidden="true"
+						className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 size-4 text-base-content/50 z-10"
+					/>
 					<input
 						type="text"
-						placeholder="Display name: John Doe"
+						placeholder="John Doe"
 						autoComplete="name"
-						className="input input-bordered w-full"
+						className="input input-bordered w-full pl-10"
 						aria-invalid={Boolean(errors.displayName)}
 						{...register("displayName", {
 							required: "Display name is required",
@@ -112,13 +119,17 @@ export function SignUpForm({ onCheckEmail }: Props) {
 			</div>
 
 			<div className="flex flex-col gap-1">
-				<label className="floating-label">
+				<label className="floating-label relative">
 					<span>Email</span>
+					<Mail
+						aria-hidden="true"
+						className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 size-4 text-base-content/50 z-10"
+					/>
 					<input
 						type="email"
-						placeholder="Email: you@example.com"
+						placeholder="you@example.com"
 						autoComplete="email"
-						className="input input-bordered w-full"
+						className="input input-bordered w-full pl-10"
 						aria-invalid={Boolean(errors.email)}
 						{...register("email", {
 							required: "Email is required",
@@ -133,13 +144,17 @@ export function SignUpForm({ onCheckEmail }: Props) {
 			</div>
 
 			<div className="flex flex-col gap-1">
-				<label className="floating-label">
+				<label className="floating-label relative">
 					<span>Password</span>
+					<Lock
+						aria-hidden="true"
+						className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 size-4 text-base-content/50 z-10"
+					/>
 					<input
 						type="password"
-						placeholder="Password: at least 6 characters"
+						placeholder="At least 6 characters"
 						autoComplete="new-password"
-						className="input input-bordered w-full"
+						className="input input-bordered w-full pl-10"
 						aria-invalid={Boolean(errors.password)}
 						{...register("password", {
 							required: "Password is required",
