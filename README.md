@@ -1,6 +1,9 @@
 # Kwartrack
 
-A personal finance tracker, built single-user, ₱-first. Live at <https://kwartrack.com>.
+[![CI](https://github.com/jcaburnay/kwartrack/actions/workflows/ci.yml/badge.svg)](https://github.com/jcaburnay/kwartrack/actions/workflows/ci.yml)
+[![Live](https://img.shields.io/badge/live-kwartrack.com-22c55e)](https://kwartrack.com)
+
+A personal finance tracker, built single-user, ₱-first.
 
 Manage everyday money flow without the overhead of a full bookkeeping app: log transactions across all your accounts, set monthly budget caps and per-tag allocations, automate recurring charges (Netflix, Spotify, salary), track debts and group splits, and watch your time-deposits accrue interest until maturity.
 
@@ -59,11 +62,17 @@ Production deploys to Cloudflare Pages on every push to `main`, gated by CI:
 
 ```
 git push main  →  GitHub Actions (.github/workflows/ci.yml)
-                  ├─ pnpm run ci      (Biome lint + format check)
-                  ├─ pnpm test        (Vitest)
-                  ├─ pnpm build       (tsc + Vite, env vars baked in)
-                  └─ wrangler pages deploy dist
-                                      ↓
+                  ├─ validate
+                  │   ├─ pnpm run ci      (Biome lint + format check)
+                  │   ├─ pnpm test        (Vitest)
+                  │   └─ pnpm build       (tsc + Vite, env vars baked in)
+                  │
+                  ├─ deploy_db            (only when supabase/migrations/** changed)
+                  │   └─ supabase db push
+                  │
+                  └─ deploy
+                      └─ wrangler pages deploy dist
+                                          ↓
                   Cloudflare Pages → https://kwartrack.com
 ```
 
@@ -71,22 +80,27 @@ Cloudflare Pages' own auto-build is intentionally paused — CI is the single so
 
 ### Required secrets
 
-| Where             | Name                              | Purpose                          |
-|-------------------|-----------------------------------|----------------------------------|
-| GitHub Actions    | `CLOUDFLARE_API_TOKEN`            | wrangler authentication          |
-| GitHub Actions    | `CLOUDFLARE_ACCOUNT_ID`           | wrangler target account          |
-| GitHub Actions    | `VITE_SUPABASE_URL`               | bundled into the production JS   |
-| GitHub Actions    | `VITE_SUPABASE_PUBLISHABLE_KEY`   | bundled into the production JS   |
+| Where             | Name                              | Purpose                                          |
+|-------------------|-----------------------------------|--------------------------------------------------|
+| GitHub Actions    | `CLOUDFLARE_API_TOKEN`            | wrangler authentication                          |
+| GitHub Actions    | `CLOUDFLARE_ACCOUNT_ID`           | wrangler target account                          |
+| GitHub Actions    | `VITE_SUPABASE_URL`               | bundled into the production JS                   |
+| GitHub Actions    | `VITE_SUPABASE_PUBLISHABLE_KEY`   | bundled into the production JS                   |
+| GitHub Actions    | `SUPABASE_ACCESS_TOKEN`           | auth for `supabase link` in the deploy_db job    |
+| GitHub Actions    | `SUPABASE_DB_PASSWORD`            | DB password for `supabase db push`               |
+| GitHub Actions    | `SUPABASE_PROJECT_ID`             | target Supabase project ref to link against      |
 
 ### Database migrations
 
-Schema migrations live in `supabase/migrations/` and are applied to the linked remote project with:
+Schema migrations live in `supabase/migrations/`. CI's `deploy_db` job auto-applies them to the linked Supabase project on every push to `main` whenever any file under `supabase/migrations/**` changes — `supabase db push` is not run manually in the normal flow.
+
+Manual fallback (for hot-fixes or recovery):
 
 ```bash
 pnpm exec supabase db push
 ```
 
-Run this manually after merging schema changes to `main` (no automation yet).
+Because migrations land in production automatically, **keep them additive** — new tables, new columns, new policies. Avoid renames, type changes, and drops; when unavoidable, do a multi-step add-then-remove rollout coordinated with the app code.
 
 ## Repository pointers
 
