@@ -26,17 +26,17 @@ function TransactionAccountCellInner({ type, fromAccountId, toAccountId, account
 		const to = lookupAccountName(toAccountId, accountsById);
 		if (!from && !to) return <MissingName />;
 		return (
-			<span className="truncate inline-block max-w-full">
+			<>
 				{from ?? <span className="text-base-content/40">{DASH}</span>} {ARROW}{" "}
 				{to ?? <span className="text-base-content/40">{DASH}</span>}
-			</span>
+			</>
 		);
 	}
 
 	const id = type === "expense" ? fromAccountId : toAccountId;
 	const display = lookupAccountName(id, accountsById);
 	if (!display) return <MissingName />;
-	return <span className="truncate inline-block max-w-full">{display}</span>;
+	return <>{display}</>;
 }
 
 export const TransactionAccountCell = memo(TransactionAccountCellInner);
