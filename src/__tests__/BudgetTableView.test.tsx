@@ -110,4 +110,61 @@ describe("BudgetTableView", () => {
 		expect(screen.getByRole("dialog")).toBeInTheDocument();
 		expect(screen.getByText(/Edit allocation/i)).toBeInTheDocument();
 	});
+
+	it("calls onDrillToTag with the tag id when a row is clicked", () => {
+		const onDrillToTag = vi.fn();
+		const actuals = new Map([
+			["t-foods", 4_000_00],
+			["t-pets", 4_000_00],
+		]);
+		render(
+			<BudgetTableView
+				tags={tags}
+				allocations={allocations}
+				actualsByTag={actuals}
+				othersCentavos={0}
+				overallCentavos={20_000_00}
+				month="2026-04"
+				today={today}
+				timezone={TZ}
+				onUpsert={vi.fn(async () => null)}
+				onDelete={vi.fn(async () => null)}
+				disabled={false}
+				focusTagId={null}
+				onDrillToTag={onDrillToTag}
+			/>,
+		);
+		const row = document.querySelector('[data-row-id="t-foods"]');
+		if (!row) throw new Error("expected t-foods row");
+		fireEvent.click(row);
+		expect(onDrillToTag).toHaveBeenCalledWith("t-foods");
+	});
+
+	it("clicking the Edit pencil does not also drill (propagation stopped)", () => {
+		const onDrillToTag = vi.fn();
+		const actuals = new Map([
+			["t-foods", 4_000_00],
+			["t-pets", 4_000_00],
+		]);
+		render(
+			<BudgetTableView
+				tags={tags}
+				allocations={allocations}
+				actualsByTag={actuals}
+				othersCentavos={0}
+				overallCentavos={20_000_00}
+				month="2026-04"
+				today={today}
+				timezone={TZ}
+				onUpsert={vi.fn(async () => null)}
+				onDelete={vi.fn(async () => null)}
+				disabled={false}
+				focusTagId={null}
+				onDrillToTag={onDrillToTag}
+			/>,
+		);
+		fireEvent.click(screen.getByRole("button", { name: /Edit foods/i }));
+		expect(onDrillToTag).not.toHaveBeenCalled();
+		expect(screen.getByRole("dialog")).toBeInTheDocument();
+	});
 });

@@ -1,7 +1,11 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router";
 import { Header } from "../components/Header";
-import { AccountsPanel, type CrossSplitFilter } from "../components/panels/AccountsPanel";
+import {
+	AccountsPanel,
+	type CrossBudgetFilter,
+	type CrossSplitFilter,
+} from "../components/panels/AccountsPanel";
 import { BudgetPanel } from "../components/panels/BudgetPanel";
 import { DebtsPanel, type DebtsPending } from "../components/panels/DebtsPanel";
 import { NetWorthPanel } from "../components/panels/NetWorthPanel";
@@ -30,6 +34,7 @@ export function JigsawPage() {
 	const [recurringPending, setRecurringPending] = useState<RecurringPending>(null);
 	const [debtsPending, setDebtsPending] = useState<DebtsPending>(null);
 	const [crossSplitFilter, setCrossSplitFilter] = useState<CrossSplitFilter>(null);
+	const [crossBudgetFilter, setCrossBudgetFilter] = useState<CrossBudgetFilter>(null);
 	const [params, setParams] = useSearchParams();
 
 	const rawPanel = params.get("panel");
@@ -91,6 +96,8 @@ export function JigsawPage() {
 							onPendingModalConsumed={() => setAccountsPending(null)}
 							crossSplitFilter={crossSplitFilter}
 							onClearCrossSplitFilter={() => setCrossSplitFilter(null)}
+							crossBudgetFilter={crossBudgetFilter}
+							onClearCrossBudgetFilter={() => setCrossBudgetFilter(null)}
 						/>
 					</div>
 					<div id="panel-recurring" className={panelClass("recurring", "jigsaw-recurring")}>
@@ -100,7 +107,16 @@ export function JigsawPage() {
 						/>
 					</div>
 					<div id="panel-budget" className={panelClass("budget", "jigsaw-budget")}>
-						<BudgetPanel />
+						<BudgetPanel
+							onDrillToTag={(tagId, month) => {
+								setCrossBudgetFilter({ tagId, month });
+								// Drill jumps to the accounts panel so the user sees the
+								// filtered transactions immediately.
+								const next = new URLSearchParams(params);
+								next.set("panel", "accounts");
+								setParams(next, { replace: true });
+							}}
+						/>
 					</div>
 					<div id="panel-debts" className={panelClass("debts", "jigsaw-debts")}>
 						<DebtsPanel

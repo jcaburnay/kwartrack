@@ -10,7 +10,6 @@ import {
 	rangeToMonthCount,
 } from "../overview/ChartRangeToggle";
 import { BudgetAnchor } from "./BudgetAnchor";
-import { BudgetComparisonView } from "./BudgetComparisonView";
 import { BudgetTableView } from "./BudgetTableView";
 import { BudgetTagHistoryView } from "./BudgetTagHistoryView";
 import {
@@ -21,7 +20,11 @@ import {
 } from "./BudgetViewSelector";
 import { MonthPicker } from "./MonthPicker";
 
-export function BudgetWorkspace() {
+type Props = {
+	onDrillToTag?: (tagId: string, month: string) => void;
+};
+
+export function BudgetWorkspace({ onDrillToTag }: Props = {}) {
 	const { profile } = useAuth();
 	const tz = profile?.timezone ?? "Asia/Manila";
 	const today = useMemo(() => new Date(), []);
@@ -30,7 +33,6 @@ export function BudgetWorkspace() {
 	const [view, setView] = useState<BudgetView>(() => loadStoredBudgetView());
 	const [range, setRange] = useState<RangeOption>("12m");
 	const [historyTagId, setHistoryTagId] = useState<string | null>(null);
-	const [focusTagId, setFocusTagId] = useState<string | null>(null);
 
 	useEffect(() => {
 		storeBudgetView(view);
@@ -59,11 +61,6 @@ export function BudgetWorkspace() {
 
 	const allocatedSum = allocations.reduce((s, a) => s + a.amount_centavos, 0);
 	const overall = config?.overall_centavos ?? 0;
-
-	function handleComparisonClick(tagId: string) {
-		setView("table");
-		setFocusTagId(tagId);
-	}
 
 	return (
 		<div className="bg-base-100 lg:border lg:border-base-300 h-full flex flex-col min-w-0 overflow-hidden">
@@ -117,17 +114,8 @@ export function BudgetWorkspace() {
 						onUpsert={upsertAllocation}
 						onDelete={deleteAllocation}
 						disabled={config == null}
-						focusTagId={focusTagId}
-					/>
-				) : view === "comparison" ? (
-					<BudgetComparisonView
-						tags={tags}
-						allocations={allocations}
-						actualsByTag={actualsByTag}
-						month={month}
-						today={today}
-						timezone={tz}
-						onTagClick={handleComparisonClick}
+						focusTagId={null}
+						onDrillToTag={onDrillToTag ? (tagId) => onDrillToTag(tagId, month) : undefined}
 					/>
 				) : (
 					<BudgetTagHistoryView

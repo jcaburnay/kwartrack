@@ -33,6 +33,7 @@ type Props = {
 	onDelete: (tagId: string) => Promise<string | null>;
 	disabled: boolean;
 	focusTagId: string | null;
+	onDrillToTag?: (tagId: string) => void;
 };
 
 export function BudgetTableView({
@@ -48,6 +49,7 @@ export function BudgetTableView({
 	onDelete,
 	disabled,
 	focusTagId,
+	onDrillToTag,
 }: Props) {
 	const [editingAllocation, setEditingAllocation] = useState<BudgetAllocation | null>(null);
 	const [showAdd, setShowAdd] = useState(false);
@@ -91,7 +93,21 @@ export function BudgetTableView({
 								<li
 									key={row.tagId}
 									data-row-id={row.tagId}
-									className="px-3 py-2.5 flex flex-col gap-1.5"
+									role={onDrillToTag ? "button" : undefined}
+									tabIndex={onDrillToTag ? 0 : undefined}
+									aria-label={onDrillToTag ? `View ${row.tagName} transactions` : undefined}
+									className={`px-3 py-2.5 flex flex-col gap-1.5 ${onDrillToTag ? "cursor-pointer hover:bg-base-200 focus:bg-base-200 outline-none" : ""}`}
+									onClick={onDrillToTag ? () => onDrillToTag(row.tagId) : undefined}
+									onKeyDown={
+										onDrillToTag
+											? (e) => {
+													if (e.key === "Enter" || e.key === " ") {
+														e.preventDefault();
+														onDrillToTag(row.tagId);
+													}
+												}
+											: undefined
+									}
 								>
 									<div className="flex items-center justify-between gap-2">
 										<span className="font-medium text-sm truncate">{row.tagName}</span>
@@ -108,7 +124,10 @@ export function BudgetTableView({
 													type="button"
 													className="btn btn-xs btn-ghost touch-target"
 													aria-label={`Edit ${row.tagName}`}
-													onClick={() => setEditingAllocation(allocation)}
+													onClick={(e) => {
+														e.stopPropagation();
+														setEditingAllocation(allocation);
+													}}
 												>
 													<Pencil className="w-3.5 h-3.5" />
 												</button>
@@ -158,7 +177,29 @@ export function BudgetTableView({
 								const barWidth =
 									row.allocated > 0 ? Math.min(100, (actual / row.allocated) * 100) : 0;
 								return (
-									<tr key={row.tagId} data-row-id={row.tagId}>
+									<tr
+										key={row.tagId}
+										data-row-id={row.tagId}
+										role={onDrillToTag ? "button" : undefined}
+										tabIndex={onDrillToTag ? 0 : undefined}
+										aria-label={onDrillToTag ? `View ${row.tagName} transactions` : undefined}
+										className={
+											onDrillToTag
+												? "cursor-pointer hover:bg-base-200 focus:bg-base-200 outline-none"
+												: undefined
+										}
+										onClick={onDrillToTag ? () => onDrillToTag(row.tagId) : undefined}
+										onKeyDown={
+											onDrillToTag
+												? (e) => {
+														if (e.key === "Enter" || e.key === " ") {
+															e.preventDefault();
+															onDrillToTag(row.tagId);
+														}
+													}
+												: undefined
+										}
+									>
 										<td className="font-medium">{row.tagName}</td>
 										<td className="text-right tabular-nums whitespace-nowrap">
 											<span>{formatCentavos(actual)}</span>
@@ -190,7 +231,10 @@ export function BudgetTableView({
 													type="button"
 													className="btn btn-xs btn-ghost touch-target"
 													aria-label={`Edit ${row.tagName}`}
-													onClick={() => setEditingAllocation(allocation)}
+													onClick={(e) => {
+														e.stopPropagation();
+														setEditingAllocation(allocation);
+													}}
 												>
 													<Pencil className="w-3.5 h-3.5" />
 												</button>

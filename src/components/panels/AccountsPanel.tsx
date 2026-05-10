@@ -9,6 +9,7 @@ import { useAuth } from "../../providers/AuthProvider";
 import type { Account } from "../../utils/accountBalances";
 import { computeNetWorth } from "../../utils/accountBalances";
 import { formatCentavos } from "../../utils/currency";
+import { monthBounds, shiftDaysISO } from "../../utils/dateRange";
 import {
 	EMPTY_FILTERS,
 	matchesFilters,
@@ -39,11 +40,18 @@ type PendingModal = "new-transaction" | "new-account" | null;
 
 export type CrossSplitFilter = { id: string; label: string } | null;
 
+// One-shot drill signal from the Budget panel: applies tagId + month-bounded
+// custom date range, then clears itself so subsequent filter-bar edits are
+// preserved.
+export type CrossBudgetFilter = { tagId: string; month: string } | null;
+
 type Props = {
 	pendingModal?: PendingModal;
 	onPendingModalConsumed?: () => void;
 	crossSplitFilter?: CrossSplitFilter;
 	onClearCrossSplitFilter?: () => void;
+	crossBudgetFilter?: CrossBudgetFilter;
+	onClearCrossBudgetFilter?: () => void;
 };
 
 export function AccountsPanel({
@@ -51,6 +59,8 @@ export function AccountsPanel({
 	onPendingModalConsumed,
 	crossSplitFilter,
 	onClearCrossSplitFilter,
+	crossBudgetFilter,
+	onClearCrossBudgetFilter,
 }: Props = {}) {
 	const { profile } = useAuth();
 	const { accounts, isLoading: aLoading, refetch: refetchAccounts } = useAccounts();
@@ -145,6 +155,19 @@ export function AccountsPanel({
 		}
 		onPendingModalConsumed?.();
 	}, [pendingModal, onPendingModalConsumed]);
+
+	// Drill-in from Budget: apply tag + month-bounded custom date range, then
+	// signal upward to clear so this acts as a one-shot rather than persistent
+	// state. After the apply, the user can freely edit the filter bar.
+	useEffect(() => {
+		if (!crossBudgetFilter) return;
+		const bounds = monthBounds(timezone, new Date(`${crossBudgetFilter.month}-15T12:00:00Z`));
+		const dateFrom = bounds.startISO;
+		const dateTo = shiftDaysISO(bounds.endExclusiveISO, -1);
+		setFilters((prev) => ({ ...prev, tagId: crossBudgetFilter.tagId }));
+		setDateRange({ preset: "custom", customFrom: dateFrom, customTo: dateTo });
+		onClearCrossBudgetFilter?.();
+	}, [crossBudgetFilter, timezone, onClearCrossBudgetFilter]);
 
 	const visibleAccountsCount = accounts.filter((a) => !a.is_archived).length;
 
