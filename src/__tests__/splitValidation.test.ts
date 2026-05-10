@@ -55,6 +55,24 @@ describe("validateSplit", () => {
 			message: "Add at least one participant",
 		});
 	});
+	it("rejects a participant with a 0 share", () => {
+		// Exact-with-0, percent-rounds-to-0, shares-floors-to-0, and the
+		// all-zero fallback (computeShareCentavos === null) all surface here.
+		const bad: SplitInput = {
+			...base,
+			participants: [
+				{ personId: "p-2", shareCentavos: 240000, shareInputValue: null },
+				{ personId: "p-3", shareCentavos: 240000, shareInputValue: null },
+				{ personId: "p-4", shareCentavos: 0, shareInputValue: 0 },
+			],
+		};
+		expect(validateSplit(bad)).toEqual({
+			ok: false,
+			field: "participants",
+			message:
+				"Each participant must owe more than 0 — remove anyone with a 0 share or adjust the split",
+		});
+	});
 	it("rejects when shares exceed the total", () => {
 		// Sum 140000 > total 100000 — invalid. (Sum < total is valid; the
 		// remainder is the user-the-payer's implicit share.)

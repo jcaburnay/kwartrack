@@ -44,6 +44,18 @@ export function validateSplit(input: SplitInput): SplitValidation {
 	if (input.participants.length === 0) {
 		return { ok: false, field: "participants", message: "Add at least one participant" };
 	}
+	// Each debt row must be > 0 centavos (DB CHECK on debt.amount_centavos).
+	// Catches explicit "0" inputs (Exact), rounding-to-zero in Percent/Shares,
+	// and the all-zero fallback when computeShareCentavos returns null
+	// (internally-inconsistent inputs, e.g. exact shares that don't sum).
+	if (input.participants.some((p) => p.shareCentavos <= 0)) {
+		return {
+			ok: false,
+			field: "participants",
+			message:
+				"Each participant must owe more than 0 — remove anyone with a 0 share or adjust the split",
+		};
+	}
 	// The user-the-payer absorbs the remainder (spec §652) and is NOT a row in
 	// `participants`. So shares only need to be <= total; the leftover becomes
 	// the payer's share via split_event.user_share_centavos.

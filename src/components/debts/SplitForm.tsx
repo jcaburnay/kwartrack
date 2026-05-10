@@ -75,14 +75,21 @@ export function SplitForm({
 
 	// Derive share_centavos from method/total/inputs without storing in state.
 	// Avoids the loop where storing computed shares triggers another render.
-	// payer is index 0 in computeShareCentavos; spec absorbs remainder on payer.
+	// computeShareCentavos returns one share per non-payer participant; the
+	// payer's share = total − Σ(returned) is computed in SplitParticipantList.
+	// Exact inputs are pesos (matching the Total field); convert to centavos
+	// before handing to the math.
 	const rowsWithShares = useMemo(() => {
 		if (rows.length === 0) return rows;
-		const inputRows = [{ input: null }, ...rows.map((r) => ({ input: r.input }))];
-		const result = computeShareCentavos({ method, totalCentavos, rows: inputRows });
+		const result = computeShareCentavos({
+			method,
+			totalCentavos,
+			rows: rows.map((r) => ({
+				input: method === "exact" && r.input != null ? pesosToCentavos(r.input) : r.input,
+			})),
+		});
 		if (result == null) return rows.map((r) => ({ ...r, shareCentavos: 0 }));
-		// result[0] = payer share; rows[i] gets result[i+1].
-		return rows.map((r, i) => ({ ...r, shareCentavos: result[i + 1] }));
+		return rows.map((r, i) => ({ ...r, shareCentavos: result[i] }));
 	}, [rows, method, totalCentavos]);
 
 	const pickableAccounts = accounts.filter((a) => !a.is_archived);

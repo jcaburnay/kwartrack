@@ -1,11 +1,16 @@
 /**
- * Pure rounding logic for the four split methods. All amounts are centavos
- * (integer). The user-the-payer is at index 0 and absorbs any rounding
- * remainder (spec §652).
+ * Per-participant share math for the four split methods. All amounts are
+ * centavos (integer).
+ *
+ * Contract: `rows` is the array of **non-payer participants only**. The
+ * function returns one centavos value per participant; the caller derives
+ * the user-the-payer's share as `totalCentavos − Σ(returned)` (spec §692).
+ * The payer always absorbs the rounding residual because each method only
+ * ever rounds down (or to-nearest), never up — so the residual is ≥ 0.
  *
  * Returns null when the user input is internally inconsistent (e.g. exact
- * shares don't sum to total, percentages don't sum to 100, shares ≤ 0).
- * Callers translate `null` into a friendly form-level error.
+ * shares exceed total, percentages exceed 100, shares ≤ 0). Callers
+ * translate `null` into a friendly form-level error.
  */
 export type SplitMethod = "equal" | "exact" | "percentage" | "shares";
 
@@ -21,22 +26,21 @@ export function computeShareCentavos(args: SplitMathInput): number[] | null {
 	if (!Number.isInteger(totalCentavos) || totalCentavos <= 0) return null;
 
 	if (method === "equal") {
-		const base = Math.floor(totalCentavos / rows.length);
-		const out = rows.map(() => base);
-		const remainder = totalCentavos - base * rows.length;
-		out[0] += remainder;
-		return out;
+		// Payer counts as one more participant; floor each, residual lands on
+		// the payer via the caller.
+		const base = Math.floor(totalCentavos / (rows.length + 1));
+		return rows.map(() => base);
 	}
 
 	if (method === "exact") {
 		const out: number[] = [];
 		let sum = 0;
 		for (const row of rows) {
-			if (row.input == null || !Number.isInteger(row.input) || row.input < 0) return null;
+			if (row.input == null || !Number.isInteger(row.input) || row.input <= 0) return null;
 			out.push(row.input);
 			sum += row.input;
 		}
-		if (sum !== totalCentavos) return null;
+		if (sum > totalCentavos) return null;
 		return out;
 	}
 
@@ -49,14 +53,11 @@ export function computeShareCentavos(args: SplitMathInput): number[] | null {
 			pctSum += row.input;
 		}
 		// Allow tiny float slop (0.01) — UI rounds to 2dp.
-		if (Math.abs(pctSum - 100) > 0.01) return null;
-		const out = pcts.map((p) => Math.round((totalCentavos * p) / 100));
-		const remainder = totalCentavos - out.reduce((a, b) => a + b, 0);
-		out[0] += remainder;
-		return out;
+		if (pctSum - 100 > 0.01) return null;
+		return pcts.map((p) => Math.round((totalCentavos * p) / 100));
 	}
 
-	// shares
+	// shares — payer has implicit weight 1, divisor = 1 + Σw.
 	const counts: number[] = [];
 	let countSum = 0;
 	for (const row of rows) {
@@ -64,8 +65,6 @@ export function computeShareCentavos(args: SplitMathInput): number[] | null {
 		counts.push(row.input);
 		countSum += row.input;
 	}
-	const out = counts.map((c) => Math.floor((totalCentavos * c) / countSum));
-	const remainder = totalCentavos - out.reduce((a, b) => a + b, 0);
-	out[0] += remainder;
-	return out;
+	const divisor = 1 + countSum;
+	return counts.map((c) => Math.floor((totalCentavos * c) / divisor));
 }

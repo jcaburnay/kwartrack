@@ -37,6 +37,8 @@ export function SplitParticipantList({
 	const showInput = method !== "equal";
 	const inputLabel =
 		method === "exact" ? "₱" : method === "percentage" ? "%" : method === "shares" ? "shares" : "";
+	const inputStep = method === "shares" ? 1 : 0.01;
+	const inputMin = method === "shares" ? 1 : 0.01;
 
 	return (
 		<div className="form-control">
@@ -60,6 +62,8 @@ export function SplitParticipantList({
 						{showInput && (
 							<input
 								type="number"
+								step={inputStep}
+								min={inputMin}
 								className="input input-sm input-bordered w-24"
 								aria-label={`Share for ${r.personName} (${inputLabel})`}
 								value={r.input ?? ""}
