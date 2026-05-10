@@ -40,7 +40,6 @@ describe("validateCredit", () => {
 				name: "Card",
 				initialBalanceCentavos: 0,
 				creditLimitCentavos: 0,
-				installmentLimitCentavos: null,
 			}),
 		).toMatchObject({ field: "creditLimit" });
 	});
@@ -51,31 +50,8 @@ describe("validateCredit", () => {
 				name: "Card",
 				initialBalanceCentavos: 200_00,
 				creditLimitCentavos: 100_00,
-				installmentLimitCentavos: null,
 			}),
 		).toMatchObject({ field: "initialBalance" });
-	});
-
-	it("allows installment limit of 0", () => {
-		expect(
-			validateCredit({
-				name: "Card",
-				initialBalanceCentavos: 0,
-				creditLimitCentavos: 100_00,
-				installmentLimitCentavos: 0,
-			}),
-		).toEqual({ ok: true });
-	});
-
-	it("rejects negative installment limit", () => {
-		expect(
-			validateCredit({
-				name: "Card",
-				initialBalanceCentavos: 0,
-				creditLimitCentavos: 100_00,
-				installmentLimitCentavos: -1,
-			}),
-		).toMatchObject({ field: "installmentLimit" });
 	});
 });
 

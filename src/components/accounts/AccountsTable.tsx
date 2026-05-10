@@ -1,6 +1,5 @@
 import type { Account, AccountGroup, AccountType } from "../../utils/accountBalances";
 import {
-	creditInstallmentMetrics,
 	creditUtilization,
 	groupRollup,
 	isLiability,
@@ -8,13 +7,11 @@ import {
 } from "../../utils/accountBalances";
 import { ACCOUNT_TYPE_LABEL } from "../../utils/accountValidation";
 import { formatCentavos } from "../../utils/currency";
-import type { Recurring } from "../../utils/recurringFilters";
 import { AccountRowActions } from "./AccountRowActions";
 
 type Props = {
 	accounts: readonly Account[];
 	groups: readonly AccountGroup[];
-	recurrings: readonly Recurring[];
 	selectedAccountId: string | null;
 	selectedGroupId: string | null;
 	onSelectAccount: (id: string | null) => void;
@@ -31,16 +28,9 @@ function pctClass(pct: number): string {
 	return "progress-success";
 }
 
-function CompactCreditBars({
-	account,
-	recurrings,
-}: {
-	account: Account;
-	recurrings: readonly Recurring[];
-}) {
+function CompactCreditBar({ account }: { account: Account }) {
 	const util = creditUtilization(account);
 	if (!util) return null;
-	const installment = creditInstallmentMetrics(account, recurrings);
 	const utilPct = Math.min(100, Math.round(util.utilizationPct * 100));
 	return (
 		<div className="flex flex-col gap-0.5 mt-1 w-32 sm:w-40 ml-auto">
@@ -49,13 +39,6 @@ function CompactCreditBars({
 				value={utilPct}
 				max="100"
 			/>
-			{installment && (
-				<progress
-					className={`progress h-1 ${pctClass(installment.utilizationPct)}`}
-					value={Math.min(100, Math.round(installment.utilizationPct * 100))}
-					max="100"
-				/>
-			)}
 		</div>
 	);
 }
@@ -89,7 +72,6 @@ function buildRows(accounts: readonly Account[], groups: readonly AccountGroup[]
 export function AccountsTable({
 	accounts,
 	groups,
-	recurrings,
 	selectedAccountId,
 	selectedGroupId,
 	onSelectAccount,
@@ -175,9 +157,7 @@ export function AccountsTable({
 									className={`text-right tabular-nums ${isLiability(row.account) ? "text-error" : "text-success"}`}
 								>
 									<div>{formatCentavos(row.account.balance_centavos)}</div>
-									{row.account.type === "credit" && (
-										<CompactCreditBars account={row.account} recurrings={recurrings} />
-									)}
+									{row.account.type === "credit" && <CompactCreditBar account={row.account} />}
 								</td>
 								{/* biome-ignore lint/a11y/useKeyWithClickEvents: stopPropagation wrapper for the row-actions kebab. */}
 								<td onClick={(e) => e.stopPropagation()}>

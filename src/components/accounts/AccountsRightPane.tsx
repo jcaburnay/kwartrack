@@ -1,7 +1,6 @@
 import { Wallet } from "lucide-react";
 import type { Selection } from "../../hooks/useSelectedAccount";
 import type { Account } from "../../utils/accountBalances";
-import type { Recurring } from "../../utils/recurringFilters";
 import type { Transaction } from "../../utils/transactionFilters";
 import { AccountDetailStrip } from "../strips/AccountDetailStrip";
 import { GroupSummaryCard } from "../strips/GroupSummaryCard";
@@ -10,7 +9,6 @@ type Props = {
 	selection: Selection;
 	accounts: readonly Account[];
 	transactions: readonly Transaction[];
-	recurrings: readonly Recurring[];
 	timezone: string;
 	onClear: () => void;
 	onPayThisCard: () => void;
@@ -21,7 +19,6 @@ export function AccountsRightPane({
 	selection,
 	accounts,
 	transactions,
-	recurrings,
 	timezone,
 	onClear,
 	onPayThisCard,
@@ -32,7 +29,6 @@ export function AccountsRightPane({
 			<AccountDetailStrip
 				account={selection.account}
 				transactions={transactions}
-				recurrings={recurrings}
 				timezone={timezone}
 				onClear={onClear}
 				onPayThisCard={onPayThisCard}

@@ -11,7 +11,6 @@ export type CommonAccountInput = {
 
 export type CreditInput = CommonAccountInput & {
 	creditLimitCentavos: number;
-	installmentLimitCentavos: number | null;
 };
 
 export type TimeDepositInput = {
@@ -55,11 +54,6 @@ export function validateCredit(input: CreditInput): ValidationResult {
 	}
 	if (input.initialBalanceCentavos > input.creditLimitCentavos) {
 		return fail("initialBalance", "Initial balance can't exceed credit limit");
-	}
-	if (input.installmentLimitCentavos != null) {
-		if (!Number.isFinite(input.installmentLimitCentavos) || input.installmentLimitCentavos < 0) {
-			return fail("installmentLimit", "Installment limit must be 0 or more");
-		}
 	}
 	return ok();
 }

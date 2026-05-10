@@ -2,7 +2,6 @@ import { ChevronDown, ChevronUp, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useAccountGroups } from "../../hooks/useAccountGroups";
 import { useAccounts } from "../../hooks/useAccounts";
-import { useRecurrings } from "../../hooks/useRecurrings";
 import { useSelectedAccount } from "../../hooks/useSelectedAccount";
 import { useTags } from "../../hooks/useTags";
 import { useTransactions } from "../../hooks/useTransactions";
@@ -58,7 +57,6 @@ export function AccountsPanel({
 	const { groups, refetch: refetchGroups } = useAccountGroups();
 	const { transactions, isLoading: tLoading, refetch: refetchTransactions } = useTransactions();
 	const { tags, createInline } = useTags();
-	const { recurrings } = useRecurrings();
 	const { selection, selectAccount, selectGroup, clear } = useSelectedAccount(accounts, groups);
 
 	const [accountsFolded, setAccountsFolded] = useState(false);
@@ -162,7 +160,6 @@ export function AccountsPanel({
 		selection,
 		accounts,
 		transactions,
-		recurrings,
 		timezone,
 		onClear: clear,
 		onPayThisCard: () =>
@@ -265,7 +262,6 @@ export function AccountsPanel({
 								<AccountsTable
 									accounts={accounts}
 									groups={groups}
-									recurrings={recurrings}
 									selectedAccountId={selection.kind === "account" ? selection.account.id : null}
 									selectedGroupId={selection.kind === "group" ? selection.group.id : null}
 									onSelectAccount={selectAccount}

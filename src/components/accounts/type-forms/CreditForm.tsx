@@ -11,8 +11,6 @@ type Form = {
 	name: string;
 	initialBalancePesos: number;
 	creditLimitPesos: number;
-	hasInstallmentLimit: boolean;
-	installmentLimitPesos: number;
 	groupId: string | null;
 };
 
@@ -42,26 +40,17 @@ export function CreditForm({ mode, initial, groups, onRefetchGroups, onSaved, on
 				initial && initial.credit_limit_centavos != null
 					? centavosToPesos(initial.credit_limit_centavos)
 					: 0,
-			hasInstallmentLimit: initial?.installment_limit_centavos != null,
-			installmentLimitPesos:
-				initial && initial.installment_limit_centavos != null
-					? centavosToPesos(initial.installment_limit_centavos)
-					: 0,
 			groupId: initial?.group_id ?? null,
 		},
 	});
 
 	const groupId = watch("groupId");
-	const hasInstallmentLimit = watch("hasInstallmentLimit");
 	const initialBalancePesos = watch("initialBalancePesos");
 
 	const onSubmit: SubmitHandler<Form> = async (values) => {
 		setSubmitError(null);
 		if (!user) return;
 		const creditLimitCentavos = pesosToCentavos(values.creditLimitPesos || 0);
-		const installmentLimitCentavos = values.hasInstallmentLimit
-			? pesosToCentavos(values.installmentLimitPesos || 0)
-			: null;
 
 		if (mode === "create") {
 			const { error } = await supabase.from("account").insert({
@@ -70,7 +59,6 @@ export function CreditForm({ mode, initial, groups, onRefetchGroups, onSaved, on
 				type: "credit",
 				initial_balance_centavos: pesosToCentavos(values.initialBalancePesos || 0),
 				credit_limit_centavos: creditLimitCentavos,
-				installment_limit_centavos: installmentLimitCentavos,
 				group_id: values.groupId,
 			});
 			if (error) return setSubmitError(error.message);
@@ -80,7 +68,6 @@ export function CreditForm({ mode, initial, groups, onRefetchGroups, onSaved, on
 				.update({
 					name: values.name.trim(),
 					credit_limit_centavos: creditLimitCentavos,
-					installment_limit_centavos: installmentLimitCentavos,
 					group_id: values.groupId,
 				})
 				.eq("id", initial.id);
@@ -156,40 +143,6 @@ export function CreditForm({ mode, initial, groups, onRefetchGroups, onSaved, on
 					<p className="mt-1 text-xs text-error">{errors.creditLimitPesos.message}</p>
 				)}
 			</div>
-
-			<label className="label cursor-pointer justify-start gap-2 py-0">
-				<input
-					type="checkbox"
-					className="checkbox checkbox-sm"
-					{...register("hasInstallmentLimit")}
-				/>
-				<span className="label-text">Separate installment limit</span>
-			</label>
-
-			{hasInstallmentLimit && (
-				<div>
-					<label className="floating-label">
-						<span>Installment limit (₱)</span>
-						<input
-							type="number"
-							step="0.01"
-							min="0"
-							placeholder="0.00"
-							className="input input-bordered w-full"
-							{...register("installmentLimitPesos", {
-								valueAsNumber: true,
-								min: { value: 0, message: "Must be 0 or more" },
-							})}
-						/>
-					</label>
-					{errors.installmentLimitPesos && (
-						<p className="mt-1 text-xs text-error">{errors.installmentLimitPesos.message}</p>
-					)}
-					<p className="mt-1 text-xs text-base-content/60">
-						No enforced relation to credit limit — e.g. BPI Bonus Madness can exceed it.
-					</p>
-				</div>
-			)}
 
 			{submitError && <div className="alert alert-error text-sm">{submitError}</div>}
 

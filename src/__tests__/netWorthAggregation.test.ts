@@ -27,7 +27,6 @@ function mkAccount(overrides: Partial<Account> & Pick<Account, "type">): Account
 		balance_centavos: overrides.balance_centavos ?? 0,
 		is_archived: overrides.is_archived ?? false,
 		credit_limit_centavos: overrides.credit_limit_centavos ?? null,
-		installment_limit_centavos: overrides.installment_limit_centavos ?? null,
 		principal_centavos: overrides.principal_centavos ?? null,
 		interest_rate_bps: overrides.interest_rate_bps ?? null,
 		maturity_date: overrides.maturity_date ?? null,

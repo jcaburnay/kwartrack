@@ -17,7 +17,6 @@ const baseAccount = {
 	user_id: "u1",
 	is_archived: false,
 	credit_limit_centavos: null,
-	installment_limit_centavos: null,
 	principal_centavos: null,
 	interest_rate_bps: null,
 	maturity_date: null,

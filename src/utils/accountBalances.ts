@@ -1,6 +1,4 @@
 import type { Database } from "../types/supabase";
-import type { Recurring } from "./recurringFilters";
-import type { Transaction } from "./transactionFilters";
 
 export type Account = Database["public"]["Tables"]["account"]["Row"];
 export type AccountGroup = Database["public"]["Tables"]["account_group"]["Row"];
@@ -58,79 +56,6 @@ export function creditUtilization(account: Account): CreditUtilization | null {
 		limitCentavos: limit,
 		utilizationPct: limit === 0 ? 0 : utilized / limit,
 	};
-}
-
-export type InstallmentMetrics = {
-	committedCentavos: number;
-	limitCentavos: number;
-	availableCentavos: number;
-	utilizationPct: number;
-};
-
-/**
- * Future installment commitments against a credit card's separate installment pool.
- * Sums `remaining_occurrences × amount_centavos` across recurrings whose
- * `from_account_id` is this card and that have a finite remaining count.
- * Open-ended recurrings (null `remaining_occurrences`) are treated as ongoing
- * subscriptions, not installment plans, so they are excluded.
- *
- * Returns null when the account has no separate installment limit; in that case
- * everything shares the regular pool and `creditUtilization` is enough.
- */
-export function creditInstallmentMetrics(
-	account: Account,
-	recurrings: readonly Recurring[],
-): InstallmentMetrics | null {
-	if (account.type !== "credit" || account.installment_limit_centavos == null) return null;
-	const limit = account.installment_limit_centavos;
-	let committed = 0;
-	for (const r of recurrings) {
-		if (r.from_account_id !== account.id) continue;
-		if (r.remaining_occurrences == null) continue;
-		committed += r.remaining_occurrences * r.amount_centavos;
-	}
-	return {
-		committedCentavos: committed,
-		limitCentavos: limit,
-		availableCentavos: Math.max(0, limit - committed),
-		utilizationPct: limit === 0 ? 0 : committed / limit,
-	};
-}
-
-/**
- * How much of a credit card's outstanding balance is attributable to posted
- * installment expenses, used by the `availableCredit` formula (spec §216) to
- * subtract installment-linked debt from the regular credit pool.
- *
- * Conservative-clamp attribution rule: `min(Σ installment-portion expenses,
- * balance)`. Spec doesn't define how to attribute payments to installment vs.
- * non-installment portions; clamping to balance avoids the pathological case
- * where past installments + payments make the sum exceed the current balance
- * (which would push availableCredit above creditLimit). In practice this
- * means payments drain the non-installment portion first — the user-favorable
- * read for "how much regular credit do I still have free?". If the user
- * prefers payments-drain-installments-first instead, this is a one-line
- * change.
- *
- * Returns 0 for non-credit accounts or when the input transactions list
- * doesn't contain any installment-portion expenses for this card.
- */
-export function creditInstallmentLinkedBalance(
-	account: Pick<Account, "id" | "type" | "balance_centavos">,
-	transactions: readonly Pick<
-		Transaction,
-		"type" | "from_account_id" | "is_installment_portion" | "amount_centavos"
-	>[],
-): number {
-	if (account.type !== "credit") return 0;
-	let sum = 0;
-	for (const t of transactions) {
-		if (t.type !== "expense") continue;
-		if (t.from_account_id !== account.id) continue;
-		if (!t.is_installment_portion) continue;
-		sum += t.amount_centavos;
-	}
-	return Math.min(sum, account.balance_centavos);
 }
 
 /**

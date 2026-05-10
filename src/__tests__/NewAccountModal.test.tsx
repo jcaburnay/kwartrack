@@ -69,7 +69,6 @@ describe("NewAccountModal — type picker", () => {
 		);
 		await userEvent.click(screen.getByRole("button", { name: /^credit card/i }));
 		expect(screen.getByLabelText(/credit limit/i)).toBeInTheDocument();
-		expect(screen.getByLabelText(/separate installment limit/i)).toBeInTheDocument();
 	});
 
 	it("reveals time-deposit fields after picking Time deposit", async () => {

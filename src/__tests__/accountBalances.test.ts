@@ -2,8 +2,6 @@ import { describe, expect, it } from "vitest";
 import type { Account, AccountGroup } from "../utils/accountBalances";
 import {
 	computeNetWorth,
-	creditInstallmentLinkedBalance,
-	creditInstallmentMetrics,
 	creditUtilization,
 	daysToMaturity,
 	estimatedTimeDepositValue,
@@ -11,8 +9,6 @@ import {
 	interestAccrued,
 	sortAccountsByGroupAndName,
 } from "../utils/accountBalances";
-import type { Recurring } from "../utils/recurringFilters";
-import type { Transaction } from "../utils/transactionFilters";
 
 const ts = "2026-04-24T00:00:00Z";
 
@@ -24,7 +20,6 @@ const base: Omit<
 	group_id: null,
 	is_archived: false,
 	credit_limit_centavos: null,
-	installment_limit_centavos: null,
 	principal_centavos: null,
 	interest_rate_bps: null,
 	maturity_date: null,
@@ -116,229 +111,6 @@ describe("creditUtilization", () => {
 			limitCentavos: 1000_00,
 			utilizationPct: 0.25,
 		});
-	});
-});
-
-describe("creditInstallmentMetrics", () => {
-	function mkRecurring(
-		p: Partial<Recurring> & Pick<Recurring, "id" | "from_account_id">,
-	): Recurring {
-		return {
-			id: p.id,
-			user_id: "u1",
-			service: p.service ?? "Plan",
-			description: null,
-			amount_centavos: p.amount_centavos ?? 100_00,
-			type: p.type ?? "expense",
-			tag_id: p.tag_id ?? "tag1",
-			from_account_id: p.from_account_id,
-			to_account_id: p.to_account_id ?? null,
-			fee_centavos: null,
-			interval: p.interval ?? "monthly",
-			first_occurrence_date: "2026-01-15",
-			next_occurrence_at: "2026-05-15T00:00:00Z",
-			remaining_occurrences: p.remaining_occurrences ?? null,
-			is_paused: p.is_paused ?? false,
-			is_completed: p.is_completed ?? false,
-			completed_at: p.completed_at ?? null,
-			created_at: ts,
-			updated_at: ts,
-		};
-	}
-
-	const card = mkAccount({
-		name: "Card",
-		type: "credit",
-		balance_centavos: 250_00,
-		credit_limit_centavos: 1000_00,
-		installment_limit_centavos: 500_00,
-	});
-
-	it("returns null for non-credit accounts", () => {
-		expect(creditInstallmentMetrics(mkAccount({ name: "Cash", type: "cash" }), [])).toBeNull();
-	});
-
-	it("returns null when installment_limit is not set", () => {
-		const noPool = mkAccount({
-			name: "C",
-			type: "credit",
-			balance_centavos: 100_00,
-			credit_limit_centavos: 500_00,
-		});
-		expect(creditInstallmentMetrics(noPool, [])).toBeNull();
-	});
-
-	it("sums remaining_occurrences × amount across this card's installment recurrings", () => {
-		const recurrings: Recurring[] = [
-			mkRecurring({
-				id: "r1",
-				from_account_id: card.id,
-				amount_centavos: 50_00,
-				remaining_occurrences: 3,
-			}),
-			mkRecurring({
-				id: "r2",
-				from_account_id: card.id,
-				amount_centavos: 25_00,
-				remaining_occurrences: 6,
-			}),
-		];
-		const m = creditInstallmentMetrics(card, recurrings);
-		expect(m).not.toBeNull();
-		// 50*3 + 25*6 = 150 + 150 = 300 pesos
-		expect(m?.committedCentavos).toBe(300_00);
-		expect(m?.limitCentavos).toBe(500_00);
-		expect(m?.availableCentavos).toBe(200_00);
-		expect(m?.utilizationPct).toBeCloseTo(0.6, 5);
-	});
-
-	it("excludes recurrings with NULL remaining_occurrences (open-ended subscriptions)", () => {
-		const recurrings: Recurring[] = [
-			mkRecurring({
-				id: "sub",
-				from_account_id: card.id,
-				amount_centavos: 99_00,
-				remaining_occurrences: null,
-			}),
-		];
-		const m = creditInstallmentMetrics(card, recurrings);
-		expect(m?.committedCentavos).toBe(0);
-	});
-
-	it("ignores recurrings paying TO the card (not installments on it)", () => {
-		const recurrings: Recurring[] = [
-			mkRecurring({
-				id: "auto-pay",
-				from_account_id: "other-bank",
-				to_account_id: card.id,
-				type: "transfer",
-				amount_centavos: 1000_00,
-				remaining_occurrences: 12,
-			}),
-		];
-		const m = creditInstallmentMetrics(card, recurrings);
-		expect(m?.committedCentavos).toBe(0);
-	});
-
-	it("clamps available to 0 when committed exceeds limit", () => {
-		const recurrings: Recurring[] = [
-			mkRecurring({
-				id: "huge",
-				from_account_id: card.id,
-				amount_centavos: 1000_00,
-				remaining_occurrences: 12,
-			}),
-		];
-		const m = creditInstallmentMetrics(card, recurrings);
-		expect(m?.committedCentavos).toBe(12_000_00);
-		expect(m?.availableCentavos).toBe(0);
-		expect(m?.utilizationPct).toBeGreaterThan(1);
-	});
-});
-
-describe("creditInstallmentLinkedBalance", () => {
-	type TxLite = Pick<
-		Transaction,
-		"type" | "from_account_id" | "is_installment_portion" | "amount_centavos"
-	>;
-	function tx(p: TxLite): TxLite {
-		return p;
-	}
-	const card = mkAccount({
-		name: "Card",
-		type: "credit",
-		balance_centavos: 1_000_00,
-		credit_limit_centavos: 50_000_00,
-	});
-
-	it("returns 0 for non-credit accounts", () => {
-		const cash = mkAccount({ name: "Cash", type: "cash", balance_centavos: 500_00 });
-		expect(creditInstallmentLinkedBalance(cash, [])).toBe(0);
-	});
-
-	it("returns 0 when no installment-portion expenses are present", () => {
-		const txs: TxLite[] = [
-			tx({
-				type: "expense",
-				from_account_id: card.id,
-				is_installment_portion: false,
-				amount_centavos: 500_00,
-			}),
-		];
-		expect(creditInstallmentLinkedBalance(card, txs)).toBe(0);
-	});
-
-	it("sums installment-portion expenses on this card only", () => {
-		const txs: TxLite[] = [
-			tx({
-				type: "expense",
-				from_account_id: card.id,
-				is_installment_portion: true,
-				amount_centavos: 300_00,
-			}),
-			tx({
-				type: "expense",
-				from_account_id: card.id,
-				is_installment_portion: true,
-				amount_centavos: 200_00,
-			}),
-			// Different card, should not contribute.
-			tx({
-				type: "expense",
-				from_account_id: "other-card",
-				is_installment_portion: true,
-				amount_centavos: 999_00,
-			}),
-			// Income, should not contribute (refund flow).
-			tx({
-				type: "income",
-				from_account_id: card.id,
-				is_installment_portion: true,
-				amount_centavos: 50_00,
-			}),
-		];
-		// Sum of installment expenses on this card = 500.00, balance = 1000.00 → no clamp.
-		expect(creditInstallmentLinkedBalance(card, txs)).toBe(500_00);
-	});
-
-	it("clamps to balance when sum exceeds balance (partial-payment scenario)", () => {
-		// Two ₱1,000 installments fired (sum = 2,000), then user paid down ₱1,000 of card balance
-		// (a transfer to the card is not marked installment-portion). Card balance ends at 1,000.
-		// Conservative clamp: min(2000, 1000) = 1000 — assumes payments drain the non-installment
-		// pool first.
-		const txs: TxLite[] = [
-			tx({
-				type: "expense",
-				from_account_id: card.id,
-				is_installment_portion: true,
-				amount_centavos: 1_000_00,
-			}),
-			tx({
-				type: "expense",
-				from_account_id: card.id,
-				is_installment_portion: true,
-				amount_centavos: 1_000_00,
-			}),
-		];
-		expect(creditInstallmentLinkedBalance(card, txs)).toBe(1_000_00);
-	});
-
-	it("returns 0 when balance is 0 even if installment expenses exist", () => {
-		const paidOff = mkAccount({
-			name: "PaidCard",
-			type: "credit",
-			balance_centavos: 0,
-			credit_limit_centavos: 50_000_00,
-		});
-		const txs: TxLite[] = [
-			tx({
-				type: "expense",
-				from_account_id: paidOff.id,
-				is_installment_portion: true,
-				amount_centavos: 500_00,
-			}),
-		];
-		expect(creditInstallmentLinkedBalance(paidOff, txs)).toBe(0);
 	});
 });
 

@@ -39,7 +39,6 @@ function mkAccount(id: string, name: string): Account {
 		type: "cash",
 		group_id: null,
 		credit_limit_centavos: null,
-		installment_limit_centavos: null,
 		principal_centavos: null,
 		interest_rate_bps: null,
 		maturity_date: null,

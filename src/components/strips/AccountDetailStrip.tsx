@@ -1,6 +1,5 @@
 import { X } from "lucide-react";
 import type { Account } from "../../utils/accountBalances";
-import type { Recurring } from "../../utils/recurringFilters";
 import type { Transaction } from "../../utils/transactionFilters";
 import { CreditAccountStrip } from "./CreditAccountStrip";
 import { SimpleAccountStrip } from "./SimpleAccountStrip";
@@ -9,7 +8,6 @@ import { TimeDepositStrip } from "./TimeDepositStrip";
 type Props = {
 	account: Account;
 	transactions: readonly Transaction[];
-	recurrings: readonly Recurring[];
 	timezone: string;
 	onClear: () => void;
 	onPayThisCard: () => void;
@@ -19,7 +17,6 @@ type Props = {
 export function AccountDetailStrip({
 	account,
 	transactions,
-	recurrings,
 	timezone,
 	onClear,
 	onPayThisCard,
@@ -46,12 +43,7 @@ export function AccountDetailStrip({
 				</button>
 			</div>
 			{account.type === "credit" && (
-				<CreditAccountStrip
-					account={account}
-					recurrings={recurrings}
-					transactions={transactions}
-					onPayThisCard={onPayThisCard}
-				/>
+				<CreditAccountStrip account={account} onPayThisCard={onPayThisCard} />
 			)}
 			{account.type === "time-deposit" && (
 				<TimeDepositStrip account={account} onWithdrawMatured={onWithdrawMatured} />

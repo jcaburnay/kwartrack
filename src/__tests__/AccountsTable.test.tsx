@@ -2,7 +2,6 @@ import { render, screen, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { AccountsTable } from "../components/accounts/AccountsTable";
 import type { Account, AccountGroup } from "../utils/accountBalances";
-import type { Recurring } from "../utils/recurringFilters";
 
 const ts = "2026-04-24T00:00:00Z";
 const baseAccount: Omit<
@@ -13,7 +12,6 @@ const baseAccount: Omit<
 	group_id: null,
 	is_archived: false,
 	credit_limit_centavos: null,
-	installment_limit_centavos: null,
 	principal_centavos: null,
 	interest_rate_bps: null,
 	maturity_date: null,
@@ -44,7 +42,6 @@ describe("AccountsTable", () => {
 			<AccountsTable
 				accounts={[]}
 				groups={[]}
-				recurrings={[]}
 				selectedAccountId={null}
 				selectedGroupId={null}
 				onSelectAccount={() => {}}
@@ -67,7 +64,6 @@ describe("AccountsTable", () => {
 			<AccountsTable
 				accounts={accounts}
 				groups={groups}
-				recurrings={[]}
 				selectedAccountId={null}
 				selectedGroupId={null}
 				onSelectAccount={() => {}}
@@ -94,7 +90,6 @@ describe("AccountsTable", () => {
 			<AccountsTable
 				accounts={accounts}
 				groups={[]}
-				recurrings={[]}
 				selectedAccountId={null}
 				selectedGroupId={null}
 				onSelectAccount={() => {}}
@@ -109,7 +104,6 @@ describe("AccountsTable", () => {
 			<AccountsTable
 				accounts={accounts}
 				groups={[]}
-				recurrings={[]}
 				selectedAccountId={null}
 				selectedGroupId={null}
 				onSelectAccount={() => {}}
@@ -122,48 +116,17 @@ describe("AccountsTable", () => {
 		expect(screen.getByText("Old")).toBeInTheDocument();
 	});
 
-	it("renders compact utilization bar(s) on credit rows", () => {
+	it("renders a compact utilization bar on credit rows", () => {
 		const card = mk({
 			name: "BPI",
 			type: "credit",
 			balance_centavos: 200_00,
 			credit_limit_centavos: 1000_00,
-			installment_limit_centavos: 500_00,
 		});
-		const card2 = mk({
-			name: "BDO",
-			type: "credit",
-			balance_centavos: 100_00,
-			credit_limit_centavos: 1000_00,
-		});
-		const recurrings: Recurring[] = [
-			{
-				id: "r1",
-				user_id: "u1",
-				service: "Plan",
-				description: null,
-				amount_centavos: 50_00,
-				type: "expense",
-				tag_id: "tag1",
-				from_account_id: "BPI",
-				to_account_id: null,
-				fee_centavos: null,
-				interval: "monthly",
-				first_occurrence_date: "2026-01-15",
-				next_occurrence_at: "2026-05-15T00:00:00Z",
-				remaining_occurrences: 4,
-				is_paused: false,
-				is_completed: false,
-				completed_at: null,
-				created_at: ts,
-				updated_at: ts,
-			},
-		];
 		render(
 			<AccountsTable
-				accounts={[card, card2]}
+				accounts={[card]}
 				groups={[]}
-				recurrings={recurrings}
 				selectedAccountId={null}
 				selectedGroupId={null}
 				onSelectAccount={() => {}}
@@ -173,12 +136,9 @@ describe("AccountsTable", () => {
 				showArchived={false}
 			/>,
 		);
-		// BPI has both pools → two bars; BDO has only regular → one bar.
 		const bpiRow = screen.getByText("BPI").closest("tr");
-		const bdoRow = screen.getByText("BDO").closest("tr");
-		if (!bpiRow || !bdoRow) throw new Error("missing rows");
-		expect(within(bpiRow).getAllByRole("progressbar")).toHaveLength(2);
-		expect(within(bdoRow).getAllByRole("progressbar")).toHaveLength(1);
+		if (!bpiRow) throw new Error("missing row");
+		expect(within(bpiRow).getAllByRole("progressbar")).toHaveLength(1);
 	});
 
 	it("renders a Matured badge on a matured time-deposit row", () => {
@@ -208,7 +168,6 @@ describe("AccountsTable", () => {
 			<AccountsTable
 				accounts={[td, liveTd]}
 				groups={[]}
-				recurrings={[]}
 				selectedAccountId={null}
 				selectedGroupId={null}
 				onSelectAccount={() => {}}
@@ -233,7 +192,6 @@ describe("AccountsTable", () => {
 			<AccountsTable
 				accounts={accounts}
 				groups={[]}
-				recurrings={[]}
 				selectedAccountId={null}
 				selectedGroupId={null}
 				onSelectAccount={onSelectAccount}
@@ -258,7 +216,6 @@ describe("AccountsTable typeFilter", () => {
 			<AccountsTable
 				accounts={accounts}
 				groups={[]}
-				recurrings={[]}
 				selectedAccountId={null}
 				selectedGroupId={null}
 				onSelectAccount={() => {}}
@@ -282,7 +239,6 @@ describe("AccountsTable typeFilter", () => {
 			<AccountsTable
 				accounts={accounts}
 				groups={[]}
-				recurrings={[]}
 				selectedAccountId={null}
 				selectedGroupId={null}
 				onSelectAccount={() => {}}

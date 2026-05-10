@@ -15,7 +15,6 @@ const mockAccount = {
 	user_id: "u1",
 	credit_limit_centavos: null,
 	initial_balance_centavos: 0,
-	installment_limit_centavos: null,
 	created_at: "2024-01-01",
 	updated_at: "2024-01-01",
 	current_balance_centavos: 27394600,

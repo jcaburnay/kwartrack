@@ -23,7 +23,6 @@ const account: Account = {
 	group_id: null,
 	is_archived: false,
 	credit_limit_centavos: null,
-	installment_limit_centavos: null,
 	principal_centavos: null,
 	interest_rate_bps: null,
 	maturity_date: null,
@@ -41,7 +40,6 @@ describe("AccountsRightPane", () => {
 				selection={{ kind: "none" }}
 				accounts={[]}
 				transactions={[]}
-				recurrings={[]}
 				timezone="Asia/Manila"
 				onClear={() => {}}
 				onPayThisCard={() => {}}
@@ -57,7 +55,6 @@ describe("AccountsRightPane", () => {
 				selection={{ kind: "account", account }}
 				accounts={[account]}
 				transactions={[]}
-				recurrings={[]}
 				timezone="Asia/Manila"
 				onClear={() => {}}
 				onPayThisCard={() => {}}
@@ -75,7 +72,6 @@ describe("AccountsRightPane", () => {
 				selection={{ kind: "group", group }}
 				accounts={[account]}
 				transactions={[]}
-				recurrings={[]}
 				timezone="Asia/Manila"
 				onClear={() => {}}
 				onPayThisCard={() => {}}

@@ -18,7 +18,6 @@ const acc = (p: Partial<Account> & Pick<Account, "id" | "name" | "type">): Accou
 	group_id: null,
 	is_archived: false,
 	credit_limit_centavos: null,
-	installment_limit_centavos: null,
 	principal_centavos: null,
 	interest_rate_bps: null,
 	maturity_date: null,

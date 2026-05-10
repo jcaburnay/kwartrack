@@ -36,7 +36,6 @@ export type Database = {
 					group_id: string | null;
 					id: string;
 					initial_balance_centavos: number;
-					installment_limit_centavos: number | null;
 					interest_posting_interval: Database["public"]["Enums"]["posting_interval"] | null;
 					interest_rate_bps: number | null;
 					interest_recurring_id: string | null;
@@ -56,7 +55,6 @@ export type Database = {
 					group_id?: string | null;
 					id?: string;
 					initial_balance_centavos: number;
-					installment_limit_centavos?: number | null;
 					interest_posting_interval?: Database["public"]["Enums"]["posting_interval"] | null;
 					interest_rate_bps?: number | null;
 					interest_recurring_id?: string | null;
@@ -76,7 +74,6 @@ export type Database = {
 					group_id?: string | null;
 					id?: string;
 					initial_balance_centavos?: number;
-					installment_limit_centavos?: number | null;
 					interest_posting_interval?: Database["public"]["Enums"]["posting_interval"] | null;
 					interest_rate_bps?: number | null;
 					interest_recurring_id?: string | null;
