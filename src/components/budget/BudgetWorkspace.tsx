@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useBudget } from "../../hooks/useBudget";
 import { useBudgetHistory } from "../../hooks/useBudgetHistory";
+import { useOverallBudgetHistory } from "../../hooks/useOverallBudgetHistory";
 import { useTags } from "../../hooks/useTags";
 import { useAuth } from "../../providers/AuthProvider";
 import { monthBounds } from "../../utils/dateRange";
@@ -55,6 +56,10 @@ export function BudgetWorkspace({ onDrillToTag }: Props = {}) {
 
 	const monthCount = rangeToMonthCount(range);
 	const { history, isLoading: historyLoading } = useBudgetHistory(
+		month,
+		view === "history" ? monthCount : 1,
+	);
+	const { history: overallHistory, isLoading: overallHistoryLoading } = useOverallBudgetHistory(
 		month,
 		view === "history" ? monthCount : 1,
 	);
@@ -121,9 +126,10 @@ export function BudgetWorkspace({ onDrillToTag }: Props = {}) {
 					<BudgetTagHistoryView
 						tags={tags}
 						history={history}
+						overallHistory={overallHistory}
 						selectedTagId={historyTagId}
 						onSelectTag={setHistoryTagId}
-						isLoading={historyLoading}
+						isLoading={historyLoading || overallHistoryLoading}
 					/>
 				)}
 			</div>

@@ -11,10 +11,14 @@ import {
 import type { Tag } from "../../hooks/useTags";
 import type { BudgetHistoryMonth } from "../../utils/budgetHistory";
 import { formatCentavos, formatCentavosCompact } from "../../utils/currency";
+import type { OverallBudgetHistoryMonth } from "../../utils/overallBudgetHistory";
+
+const OVERALL_VALUE = "__overall__";
 
 type Props = {
 	tags: readonly Tag[];
 	history: readonly BudgetHistoryMonth[];
+	overallHistory: readonly OverallBudgetHistoryMonth[];
 	selectedTagId: string | null;
 	onSelectTag: (tagId: string) => void;
 	isLoading: boolean;
@@ -23,6 +27,7 @@ type Props = {
 export function BudgetTagHistoryView({
 	tags,
 	history,
+	overallHistory,
 	selectedTagId,
 	onSelectTag,
 	isLoading,
@@ -34,14 +39,22 @@ export function BudgetTagHistoryView({
 		})
 		.sort((a, b) => a.name.localeCompare(b.name));
 
-	const data = selectedTagId
-		? history.map((m) => ({
+	const isOverall = selectedTagId === OVERALL_VALUE;
+	const data = isOverall
+		? overallHistory.map((m) => ({
 				label: m.monthLabel,
 				monthISO: m.monthISO,
-				budget: m.allocatedByTag.get(selectedTagId) ?? 0,
-				actual: m.actualsByTag.get(selectedTagId) ?? 0,
+				budget: m.capCentavos,
+				actual: m.actualCentavos,
 			}))
-		: [];
+		: selectedTagId
+			? history.map((m) => ({
+					label: m.monthLabel,
+					monthISO: m.monthISO,
+					budget: m.allocatedByTag.get(selectedTagId) ?? 0,
+					actual: m.actualsByTag.get(selectedTagId) ?? 0,
+				}))
+			: [];
 	const hasAnyData = data.some((d) => d.budget > 0 || d.actual > 0);
 
 	return (
@@ -57,6 +70,7 @@ export function BudgetTagHistoryView({
 					<option value="" disabled>
 						Pick a tag…
 					</option>
+					<option value={OVERALL_VALUE}>Overall (all expenses)</option>
 					{selectableTags.map((t) => (
 						<option key={t.id} value={t.id}>
 							{t.name}

@@ -4,7 +4,7 @@ export type BudgetView = "table" | "history";
 
 const OPTIONS: { value: BudgetView; label: string }[] = [
 	{ value: "table", label: "Table" },
-	{ value: "history", label: "Tag history" },
+	{ value: "history", label: "History" },
 ];
 
 type Props = {
