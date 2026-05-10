@@ -103,9 +103,12 @@ export function BudgetTagHistoryView({
 									return point?.label ?? "";
 								}}
 							/>
-							<Legend wrapperStyle={{ fontSize: 11 }} />
-							<Bar dataKey="budget" name="Budget" className="fill-base-300" />
-							<Bar dataKey="actual" name="Actual" className="fill-primary" />
+							<Legend
+								wrapperStyle={{ fontSize: 11 }}
+								formatter={(value) => <span className="text-base-content">{value}</span>}
+							/>
+							<Bar dataKey="budget" name="Budget" fill="var(--color-base-content)" />
+							<Bar dataKey="actual" name="Actual" fill="var(--color-primary)" />
 						</BarChart>
 					</ResponsiveContainer>
 				)}
