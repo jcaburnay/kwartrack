@@ -53,7 +53,7 @@ function SwatchTile({ value, selected, onSelect, onHover }: SwatchTileProps) {
 			{isSystem ? (
 				<SystemTile />
 			) : (
-				<div data-theme={value} className="rounded-md overflow-hidden">
+				<div data-theme={value} className="rounded-md overflow-hidden w-full">
 					<TilePalette />
 				</div>
 			)}
@@ -87,7 +87,7 @@ function TilePalette() {
 
 function SystemTile() {
 	return (
-		<div className="grid grid-cols-2 h-14 rounded-md overflow-hidden">
+		<div className="grid grid-cols-2 h-14 rounded-md overflow-hidden w-full">
 			<div data-theme="corporate">
 				<div className="grid grid-rows-2 h-full">
 					<div className="bg-base-100" />
