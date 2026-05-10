@@ -12,7 +12,7 @@ import {
 } from "../overview/ChartRangeToggle";
 import { BudgetAnchor } from "./BudgetAnchor";
 import { BudgetTableView } from "./BudgetTableView";
-import { BudgetTagHistoryView } from "./BudgetTagHistoryView";
+import { BudgetTagHistoryView, OVERALL_VALUE } from "./BudgetTagHistoryView";
 import {
 	type BudgetView,
 	BudgetViewSelector,
@@ -33,7 +33,7 @@ export function BudgetWorkspace({ onDrillToTag }: Props = {}) {
 	const [month, setMonth] = useState(initialMonth);
 	const [view, setView] = useState<BudgetView>(() => loadStoredBudgetView());
 	const [range, setRange] = useState<RangeOption>("12m");
-	const [historyTagId, setHistoryTagId] = useState<string | null>(null);
+	const [historyTagId, setHistoryTagId] = useState<string | null>(OVERALL_VALUE);
 
 	useEffect(() => {
 		storeBudgetView(view);

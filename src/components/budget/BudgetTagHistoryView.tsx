@@ -13,7 +13,7 @@ import type { BudgetHistoryMonth } from "../../utils/budgetHistory";
 import { formatCentavos, formatCentavosCompact } from "../../utils/currency";
 import type { OverallBudgetHistoryMonth } from "../../utils/overallBudgetHistory";
 
-const OVERALL_VALUE = "__overall__";
+export const OVERALL_VALUE = "__overall__";
 
 type Props = {
 	tags: readonly Tag[];
@@ -64,12 +64,9 @@ export function BudgetTagHistoryView({
 				<select
 					aria-label="Tag"
 					className="select select-bordered select-sm w-48"
-					value={selectedTagId ?? ""}
+					value={selectedTagId ?? OVERALL_VALUE}
 					onChange={(e) => onSelectTag(e.target.value)}
 				>
-					<option value="" disabled>
-						Pick a tag…
-					</option>
 					<option value={OVERALL_VALUE}>Overall (all expenses)</option>
 					{selectableTags.map((t) => (
 						<option key={t.id} value={t.id}>
@@ -82,8 +79,6 @@ export function BudgetTagHistoryView({
 			<div className="flex-1 min-h-0">
 				{isLoading ? (
 					<div className="skeleton h-full w-full" />
-				) : !selectedTagId ? (
-					<p className="text-sm text-base-content/60">Pick a tag to see its history.</p>
 				) : !hasAnyData ? (
 					<p className="text-sm text-base-content/60">No data for this range.</p>
 				) : (
