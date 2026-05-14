@@ -12,6 +12,7 @@ import {
 import { summariseRecurrings } from "../../utils/recurringSummary";
 import { EditRecurringModal } from "../recurring/EditRecurringModal";
 import { NewRecurringModal } from "../recurring/NewRecurringModal";
+import { RecurringFilterChip } from "../recurring/RecurringFilterChip";
 import { RecurringFilterRow } from "../recurring/RecurringFilterRow";
 import { RecurringTable } from "../recurring/RecurringTable";
 import { ScrollFadeContainer } from "../ui/ScrollFadeContainer";
@@ -117,6 +118,9 @@ export function RecurringPanel({ pendingModal, onPendingModalConsumed }: Props) 
 				) : (
 					<>
 						<div className="px-4 py-2 border-b border-base-300">
+							<div className="lg:hidden">
+								<RecurringFilterChip filters={filters} onChange={setFilters} tags={tags} />
+							</div>
 							<RecurringFilterRow filters={filters} onChange={setFilters} tags={tags} />
 						</div>
 						{visible.length === 0 && recurrings.length > 0 ? (

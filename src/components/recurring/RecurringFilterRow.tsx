@@ -64,7 +64,7 @@ export function RecurringFilterRow({ filters, onChange, tags }: Props) {
 	];
 
 	return (
-		<div className="flex flex-wrap items-center gap-2 py-1">
+		<div className="hidden lg:flex flex-wrap items-center gap-2 py-1">
 			<PillToggle
 				ariaLabel="Filter by type"
 				value={filters.type}
