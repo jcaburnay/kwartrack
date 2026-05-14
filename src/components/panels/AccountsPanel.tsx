@@ -2,6 +2,7 @@ import { ChevronDown, ChevronUp, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useAccountGroups } from "../../hooks/useAccountGroups";
 import { useAccounts } from "../../hooks/useAccounts";
+import { usePersistedBoolean } from "../../hooks/usePersistedBoolean";
 import { useSelectedAccount } from "../../hooks/useSelectedAccount";
 import { useTags } from "../../hooks/useTags";
 import { useTransactions } from "../../hooks/useTransactions";
@@ -26,8 +27,14 @@ import type { DateRangeValue } from "../transactions/DateRangePicker";
 import { EditTransactionModal } from "../transactions/EditTransactionModal";
 import { NewTransactionModal } from "../transactions/NewTransactionModal";
 import { TransactionFilterBar } from "../transactions/TransactionFilterBar";
+import { TransactionFilterChip } from "../transactions/TransactionFilterChip";
 import type { TransactionFormValues } from "../transactions/TransactionForm";
-import { TransactionsTable } from "../transactions/TransactionsTable";
+import {
+	SORT_OPTIONS,
+	type SortDir,
+	type SortKey,
+	TransactionsTable,
+} from "../transactions/TransactionsTable";
 import { ScrollFadeContainer } from "../ui/ScrollFadeContainer";
 
 const DEFAULT_DATE_RANGE: DateRangeValue = {
@@ -69,8 +76,17 @@ export function AccountsPanel({
 	const { tags, createInline } = useTags();
 	const { selection, selectAccount, selectGroup, clear } = useSelectedAccount(accounts, groups);
 
-	const [accountsFolded, setAccountsFolded] = useState(false);
-	const [txFolded, setTxFolded] = useState(false);
+	const [accountsFolded, setAccountsFolded] = usePersistedBoolean(
+		"kwartrack:accountsFolded",
+		false,
+	);
+	const [txFolded, setTxFolded] = usePersistedBoolean("kwartrack:txFolded", false);
+	const [sortKey, setSortKey] = useState<SortKey>("date");
+	const [sortDir, setSortDir] = useState<SortDir>("desc");
+	const handleSortChange = useCallback((key: SortKey, dir: SortDir) => {
+		setSortKey(key);
+		setSortDir(dir);
+	}, []);
 
 	const [showNewAccount, setShowNewAccount] = useState(false);
 	const [editingAccount, setEditingAccount] = useState<Account | null>(null);
@@ -371,6 +387,34 @@ export function AccountsPanel({
 						</div>
 					</div>
 					<div className="flex-shrink-0">
+						<div className="lg:hidden flex items-center justify-between gap-2 px-4 py-2 border-b border-base-300">
+							<TransactionFilterChip
+								filters={filters}
+								dateRange={dateRange}
+								search={search}
+								onChange={handleSetFilters}
+								onDateRangeChange={handleSetDateRange}
+								onSearchChange={handleSetSearch}
+								tags={tags}
+							/>
+							<label className="flex items-center gap-1.5">
+								<span className="sr-only">Sort by</span>
+								<select
+									className="select select-bordered select-sm rounded-sm border-base-content/40"
+									value={`${sortKey}-${sortDir}`}
+									onChange={(e) => {
+										const [key, dir] = e.target.value.split("-") as [SortKey, SortDir];
+										handleSortChange(key, dir);
+									}}
+								>
+									{SORT_OPTIONS.map((o) => (
+										<option key={o.value} value={o.value}>
+											{o.label}
+										</option>
+									))}
+								</select>
+							</label>
+						</div>
 						<TransactionFilterBar
 							filters={filters}
 							dateRange={dateRange}
@@ -392,6 +436,9 @@ export function AccountsPanel({
 								accounts={accounts}
 								groups={groups}
 								tags={tags}
+								sortKey={sortKey}
+								sortDir={sortDir}
+								onSortChange={handleSortChange}
 								onEdit={(tx) => setEditingTx(tx)}
 								onChanged={onTxChanged}
 								emptyCopy={

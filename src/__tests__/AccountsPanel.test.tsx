@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { AccountsPanel } from "../components/panels/AccountsPanel";
 
 const mockAccount = {
@@ -56,6 +56,10 @@ function renderPanel() {
 }
 
 describe("AccountsPanel", () => {
+	beforeEach(() => {
+		window.localStorage.clear();
+	});
+
 	it("renders accounts section header", () => {
 		renderPanel();
 		expect(screen.getByText(/accounts/i)).toBeInTheDocument();

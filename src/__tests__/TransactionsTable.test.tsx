@@ -1,12 +1,38 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { useState } from "react";
 import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { TransactionsTable } from "../components/transactions/TransactionsTable";
+import {
+	type SortDir,
+	type SortKey,
+	TransactionsTable,
+} from "../components/transactions/TransactionsTable";
 import type { Tag } from "../hooks/useTags";
 import type { TransactionWithRecurring } from "../hooks/useTransactions";
 import type { Account } from "../utils/accountBalances";
 import type { Transaction } from "../utils/transactionFilters";
+
+type HarnessProps = Omit<
+	React.ComponentProps<typeof TransactionsTable>,
+	"sortKey" | "sortDir" | "onSortChange"
+>;
+
+function Harness(props: HarnessProps) {
+	const [sortKey, setSortKey] = useState<SortKey>("date");
+	const [sortDir, setSortDir] = useState<SortDir>("desc");
+	return (
+		<TransactionsTable
+			{...props}
+			sortKey={sortKey}
+			sortDir={sortDir}
+			onSortChange={(k, d) => {
+				setSortKey(k);
+				setSortDir(d);
+			}}
+		/>
+	);
+}
 
 vi.mock("../providers/AuthProvider", () => ({
 	useAuth: () => ({ profile: { timezone: "Asia/Manila" } }),
@@ -67,7 +93,7 @@ describe("TransactionsTable", () => {
 
 	it("renders empty state when empty", () => {
 		render(
-			<TransactionsTable
+			<Harness
 				transactions={[]}
 				accounts={accounts}
 				groups={[]}
@@ -103,7 +129,7 @@ describe("TransactionsTable", () => {
 			}),
 		];
 		render(
-			<TransactionsTable
+			<Harness
 				transactions={rows}
 				accounts={accounts}
 				groups={[]}
@@ -139,7 +165,7 @@ describe("TransactionsTable", () => {
 			}),
 		];
 		render(
-			<TransactionsTable
+			<Harness
 				transactions={rows}
 				accounts={accounts}
 				groups={[]}
@@ -183,7 +209,7 @@ describe("TransactionsTable", () => {
 		];
 		render(
 			<MemoryRouter>
-				<TransactionsTable
+				<Harness
 					transactions={rows}
 					accounts={accounts}
 					groups={[]}
@@ -212,7 +238,7 @@ describe("TransactionsTable", () => {
 			}),
 		];
 		render(
-			<TransactionsTable
+			<Harness
 				transactions={rows}
 				accounts={accounts}
 				groups={[]}

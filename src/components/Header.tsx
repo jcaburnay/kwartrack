@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { NavLink } from "react-router";
 import { useAuth } from "../providers/AuthProvider";
 import { initialsFrom } from "../utils/initials";
@@ -7,15 +8,33 @@ import { MobileDock } from "./MobileDock";
 export function Header() {
 	const { profile, signOut } = useAuth();
 	const displayName = profile?.display_name ?? "…";
+	const [scrolled, setScrolled] = useState(false);
+
+	useEffect(() => {
+		function onScroll(e: Event) {
+			const t = e.target;
+			if (!(t instanceof HTMLElement)) return;
+			setScrolled(t.scrollTop > 24);
+		}
+		const opts = { capture: true, passive: true } as const;
+		document.addEventListener("scroll", onScroll, opts);
+		return () => document.removeEventListener("scroll", onScroll, opts as AddEventListenerOptions);
+	}, []);
 
 	return (
 		<>
-			<header className="navbar bg-base-100 border-b border-base-300">
+			<header
+				className={`navbar bg-base-100 border-b border-base-300 transition-all duration-200 ${
+					scrolled ? "max-lg:!min-h-9 max-lg:!py-0" : ""
+				}`}
+			>
 				<div className="flex-1">
 					<NavLink
 						to="/"
 						aria-label="Go to home"
-						className="text-xl font-medium px-2 rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+						className={`text-xl font-medium px-2 rounded transition-all duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
+							scrolled ? "max-lg:!text-base" : ""
+						}`}
 					>
 						kwartrack
 					</NavLink>

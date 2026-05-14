@@ -98,7 +98,7 @@ export function AccountsTable({
 	return (
 		<div className="overflow-x-auto">
 			<table className="table table-pin-rows">
-				<thead>
+				<thead className="hidden lg:table-header-group">
 					<tr className="text-base-content/60">
 						<th>Account</th>
 						<th className="text-right">Balance</th>

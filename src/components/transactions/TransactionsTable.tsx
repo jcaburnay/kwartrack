@@ -1,5 +1,5 @@
 import { Repeat } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { Link } from "react-router";
 import { useContainerNarrow } from "../../hooks/useContainerNarrow";
 import type { Tag } from "../../hooks/useTags";
@@ -12,14 +12,26 @@ import { TransactionAccountCell } from "./TransactionAccountCell";
 import { TransactionAmountCell } from "./TransactionAmountCell";
 import { TransactionRowActions } from "./TransactionRowActions";
 
-type SortKey = "date" | "amount" | "tag" | "account";
-type SortDir = "asc" | "desc";
+export type SortKey = "date" | "amount" | "tag" | "account";
+export type SortDir = "asc" | "desc";
+
+export const SORT_OPTIONS: { value: string; label: string }[] = [
+	{ value: "date-desc", label: "Newest first" },
+	{ value: "date-asc", label: "Oldest first" },
+	{ value: "amount-desc", label: "Amount, high → low" },
+	{ value: "amount-asc", label: "Amount, low → high" },
+	{ value: "tag-asc", label: "Tag (A → Z)" },
+	{ value: "account-asc", label: "Account (A → Z)" },
+];
 
 type Props = {
 	transactions: readonly TransactionWithRecurring[];
 	accounts: readonly Account[];
 	groups: readonly AccountGroup[];
 	tags: readonly Tag[];
+	sortKey: SortKey;
+	sortDir: SortDir;
+	onSortChange: (key: SortKey, dir: SortDir) => void;
 	onEdit: (tx: Transaction) => void;
 	onChanged: () => Promise<void> | void;
 	emptyCopy: string;
@@ -51,14 +63,15 @@ export function TransactionsTable({
 	transactions,
 	accounts,
 	tags,
+	sortKey,
+	sortDir,
+	onSortChange,
 	onEdit,
 	onChanged,
 	emptyCopy,
 }: Props) {
 	const { profile } = useAuth();
 	const timezone = profile?.timezone ?? "Asia/Manila";
-	const [sortKey, setSortKey] = useState<SortKey>("date");
-	const [sortDir, setSortDir] = useState<SortDir>("desc");
 
 	const { ref: containerRef, isNarrow } = useContainerNarrow<HTMLDivElement>(CARD_MAX_WIDTH);
 
@@ -97,10 +110,10 @@ export function TransactionsTable({
 	}, [transactions, sortKey, sortDir, tagName, accountName]);
 
 	function onHeaderClick(key: SortKey) {
-		if (key === sortKey) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
-		else {
-			setSortKey(key);
-			setSortDir(key === "date" || key === "amount" ? "desc" : "asc");
+		if (key === sortKey) {
+			onSortChange(key, sortDir === "asc" ? "desc" : "asc");
+		} else {
+			onSortChange(key, key === "date" || key === "amount" ? "desc" : "asc");
 		}
 	}
 
@@ -125,15 +138,6 @@ export function TransactionsTable({
 		<div ref={containerRef}>
 			{isNarrow ? (
 				<div className="flex flex-col">
-					<CardSortBar
-						count={sorted.length}
-						sortKey={sortKey}
-						sortDir={sortDir}
-						onChange={(key, dir) => {
-							setSortKey(key);
-							setSortDir(dir);
-						}}
-					/>
 					<ul className="flex flex-col divide-y divide-base-200">
 						{sorted.map((tx) => (
 							<TransactionCard
@@ -234,50 +238,6 @@ export function TransactionsTable({
 					</table>
 				</div>
 			)}
-		</div>
-	);
-}
-
-type CardSortBarProps = {
-	count: number;
-	sortKey: SortKey;
-	sortDir: SortDir;
-	onChange: (key: SortKey, dir: SortDir) => void;
-};
-
-const SORT_OPTIONS: { value: string; label: string }[] = [
-	{ value: "date-desc", label: "Newest first" },
-	{ value: "date-asc", label: "Oldest first" },
-	{ value: "amount-desc", label: "Amount, high → low" },
-	{ value: "amount-asc", label: "Amount, low → high" },
-	{ value: "tag-asc", label: "Tag (A → Z)" },
-	{ value: "account-asc", label: "Account (A → Z)" },
-];
-
-function CardSortBar({ count, sortKey, sortDir, onChange }: CardSortBarProps) {
-	const value = `${sortKey}-${sortDir}`;
-	return (
-		<div className="flex items-center justify-between gap-2 px-3 py-2 border-b border-base-200 text-xs text-base-content/60">
-			<span className="tabular-nums">
-				{count} {count === 1 ? "transaction" : "transactions"}
-			</span>
-			<label className="flex items-center gap-1.5">
-				<span className="sr-only">Sort by</span>
-				<select
-					value={value}
-					onChange={(e) => {
-						const [key, dir] = e.target.value.split("-") as [SortKey, SortDir];
-						onChange(key, dir);
-					}}
-					className="select select-bordered select-xs rounded-sm border-base-content/30"
-				>
-					{SORT_OPTIONS.map((o) => (
-						<option key={o.value} value={o.value}>
-							{o.label}
-						</option>
-					))}
-				</select>
-			</label>
 		</div>
 	);
 }
