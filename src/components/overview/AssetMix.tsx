@@ -1,5 +1,6 @@
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
 import type { AccountType } from "../../utils/accountBalances";
+import { chartTooltipProps } from "../../utils/chartTheme";
 import { formatCentavos } from "../../utils/currency";
 import type { AssetMixSlice } from "../../utils/netWorthAggregation";
 
@@ -55,7 +56,10 @@ export function AssetMix({ assets, liabilities, isLoading }: Props) {
 								<Cell key={slice.type} style={{ fill: TYPE_FILL[slice.type] }} />
 							))}
 						</Pie>
-						<Tooltip formatter={(value: number, name: string) => [formatCentavos(value), name]} />
+						<Tooltip
+							{...chartTooltipProps}
+							formatter={(value: number, name: string) => [formatCentavos(value), name]}
+						/>
 					</PieChart>
 				</ResponsiveContainer>
 			</div>

@@ -9,6 +9,7 @@ import {
 	XAxis,
 	YAxis,
 } from "recharts";
+import { chartTooltipProps } from "../../utils/chartTheme";
 import { formatCentavos, formatCentavosCompact } from "../../utils/currency";
 import type { AccountBalanceRow } from "../../utils/netWorthAggregation";
 
@@ -48,6 +49,7 @@ export function AccountBalancesBar({ rows, isLoading }: Props) {
 					/>
 					<YAxis type="category" dataKey="displayName" tick={{ fontSize: 11 }} width={96} />
 					<Tooltip
+						{...chartTooltipProps}
 						formatter={(value: number) => [formatCentavos(value), "Balance"]}
 						labelFormatter={(label: string, payload) => {
 							const row = payload?.[0]?.payload as AccountBalanceRow | undefined;

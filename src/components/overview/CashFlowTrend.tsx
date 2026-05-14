@@ -10,6 +10,7 @@ import {
 	XAxis,
 	YAxis,
 } from "recharts";
+import { chartTooltipProps } from "../../utils/chartTheme";
 import { formatCentavos, formatCentavosCompact } from "../../utils/currency";
 import type { CashFlowPoint } from "../../utils/netWorthAggregation";
 
@@ -62,6 +63,7 @@ export function CashFlowTrend({ data, isLoading }: Props) {
 					width={44}
 				/>
 				<Tooltip
+					{...chartTooltipProps}
 					formatter={(value: number, name: string) => {
 						const display = name === "Expense" ? Math.abs(value) : value;
 						return [formatCentavos(display), name];

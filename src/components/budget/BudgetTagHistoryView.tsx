@@ -10,6 +10,7 @@ import {
 } from "recharts";
 import type { Tag } from "../../hooks/useTags";
 import type { BudgetHistoryMonth } from "../../utils/budgetHistory";
+import { chartTooltipProps } from "../../utils/chartTheme";
 import { formatCentavos, formatCentavosCompact } from "../../utils/currency";
 import type { OverallBudgetHistoryMonth } from "../../utils/overallBudgetHistory";
 
@@ -92,6 +93,7 @@ export function BudgetTagHistoryView({
 								width={56}
 							/>
 							<Tooltip
+								{...chartTooltipProps}
 								formatter={(value: number, name: string) => [formatCentavos(value), name]}
 								labelFormatter={(_label, payload) => {
 									const point = payload?.[0]?.payload as { label: string } | undefined;

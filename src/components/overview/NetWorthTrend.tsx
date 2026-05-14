@@ -8,6 +8,7 @@ import {
 	XAxis,
 	YAxis,
 } from "recharts";
+import { chartTooltipProps } from "../../utils/chartTheme";
 import { formatCentavos, formatCentavosCompact } from "../../utils/currency";
 import type { NetWorthPoint } from "../../utils/netWorthAggregation";
 
@@ -53,6 +54,7 @@ export function NetWorthTrend({ data, isLoading }: Props) {
 					width={44}
 				/>
 				<Tooltip
+					{...chartTooltipProps}
 					formatter={(value: number) => [formatCentavos(value), "Net Worth"]}
 					labelFormatter={(_label, payload) => {
 						const point = payload?.[0]?.payload as NetWorthPoint | undefined;
