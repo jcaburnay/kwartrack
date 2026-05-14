@@ -103,53 +103,55 @@ export function RecurringFilterChip({ filters, onChange, tags }: Props) {
 							/>
 						</div>
 
-						<div className="flex flex-col gap-1.5">
-							<label
-								className="text-xs font-medium text-base-content/60"
-								htmlFor="recurring-chip-tag"
-							>
-								Tag
-							</label>
-							<select
-								id="recurring-chip-tag"
-								className="select select-bordered select-sm rounded-sm border-base-content/40 w-full"
-								value={filters.tagId ?? ""}
-								onChange={(e) => onChange({ ...filters, tagId: e.target.value || null })}
-							>
-								<option value="">All tags</option>
-								{userTags.map((t) => (
-									<option key={t.id} value={t.id}>
-										{t.name}
-									</option>
-								))}
-							</select>
-						</div>
+						<div className="grid grid-cols-2 gap-3">
+							<div className="flex flex-col gap-1.5">
+								<label
+									className="text-xs font-medium text-base-content/60"
+									htmlFor="recurring-chip-tag"
+								>
+									Tag
+								</label>
+								<select
+									id="recurring-chip-tag"
+									className="select select-bordered select-sm rounded-sm border-base-content/40 w-full"
+									value={filters.tagId ?? ""}
+									onChange={(e) => onChange({ ...filters, tagId: e.target.value || null })}
+								>
+									<option value="">All tags</option>
+									{userTags.map((t) => (
+										<option key={t.id} value={t.id}>
+											{t.name}
+										</option>
+									))}
+								</select>
+							</div>
 
-						<div className="flex flex-col gap-1.5">
-							<label
-								className="text-xs font-medium text-base-content/60"
-								htmlFor="recurring-chip-cadence"
-							>
-								Cadence
-							</label>
-							<select
-								id="recurring-chip-cadence"
-								className="select select-bordered select-sm rounded-sm border-base-content/40 w-full"
-								value={filters.interval ?? "all"}
-								onChange={(e) => {
-									const v = e.target.value;
-									onChange({
-										...filters,
-										interval: v === "all" ? null : (v as RecurringInterval),
-									});
-								}}
-							>
-								{CADENCE_OPTIONS.map((o) => (
-									<option key={o.value} value={o.value}>
-										{o.label}
-									</option>
-								))}
-							</select>
+							<div className="flex flex-col gap-1.5">
+								<label
+									className="text-xs font-medium text-base-content/60"
+									htmlFor="recurring-chip-cadence"
+								>
+									Cadence
+								</label>
+								<select
+									id="recurring-chip-cadence"
+									className="select select-bordered select-sm rounded-sm border-base-content/40 w-full"
+									value={filters.interval ?? "all"}
+									onChange={(e) => {
+										const v = e.target.value;
+										onChange({
+											...filters,
+											interval: v === "all" ? null : (v as RecurringInterval),
+										});
+									}}
+								>
+									{CADENCE_OPTIONS.map((o) => (
+										<option key={o.value} value={o.value}>
+											{o.label}
+										</option>
+									))}
+								</select>
+							</div>
 						</div>
 
 						<div className="flex flex-col gap-1.5">

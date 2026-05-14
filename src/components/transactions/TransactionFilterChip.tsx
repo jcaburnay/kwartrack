@@ -108,33 +108,39 @@ export function TransactionFilterChip({
 							/>
 						</div>
 
-						<div className="flex flex-col gap-1.5">
-							<label className="text-xs font-medium text-base-content/60" htmlFor="filter-chip-tag">
-								Tag
-							</label>
-							<select
-								id="filter-chip-tag"
-								className="select select-bordered select-sm rounded-sm border-base-content/40 w-full"
-								value={filters.tagId ?? ""}
-								onChange={(e) => onChange({ ...filters, tagId: e.target.value || null })}
-							>
-								<option value="">All tags</option>
-								{userTags.map((t) => (
-									<option key={t.id} value={t.id}>
-										{t.name}
-									</option>
-								))}
-							</select>
-						</div>
+						<div className="grid grid-cols-2 gap-3">
+							<div className="flex flex-col gap-1.5">
+								<label
+									className="text-xs font-medium text-base-content/60"
+									htmlFor="filter-chip-tag"
+								>
+									Tag
+								</label>
+								<select
+									id="filter-chip-tag"
+									className="select select-bordered select-sm rounded-sm border-base-content/40 w-full"
+									value={filters.tagId ?? ""}
+									onChange={(e) => onChange({ ...filters, tagId: e.target.value || null })}
+								>
+									<option value="">All tags</option>
+									{userTags.map((t) => (
+										<option key={t.id} value={t.id}>
+											{t.name}
+										</option>
+									))}
+								</select>
+							</div>
 
-						<div className="flex flex-col gap-1.5">
-							<span className="text-xs font-medium text-base-content/60">Date range</span>
-							<DateRangePicker
-								preset={dateRange.preset}
-								customFrom={dateRange.customFrom}
-								customTo={dateRange.customTo}
-								onChange={pickDateRange}
-							/>
+							<div className="flex flex-col gap-1.5">
+								<span className="text-xs font-medium text-base-content/60">Date range</span>
+								<DateRangePicker
+									preset={dateRange.preset}
+									customFrom={dateRange.customFrom}
+									customTo={dateRange.customTo}
+									onChange={pickDateRange}
+									fullWidth
+								/>
+							</div>
 						</div>
 
 						<div className="flex flex-col gap-1.5">

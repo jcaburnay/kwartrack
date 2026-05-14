@@ -8,9 +8,16 @@ export type DateRangeValue = {
 
 type Props = DateRangeValue & {
 	onChange: (next: DateRangeValue) => void;
+	fullWidth?: boolean;
 };
 
-export function DateRangePicker({ preset, customFrom, customTo, onChange }: Props) {
+export function DateRangePicker({
+	preset,
+	customFrom,
+	customTo,
+	onChange,
+	fullWidth = false,
+}: Props) {
 	function pick(next: DateRangePreset) {
 		if (next === "custom") {
 			onChange({ preset: "custom", customFrom, customTo });
@@ -20,10 +27,10 @@ export function DateRangePicker({ preset, customFrom, customTo, onChange }: Prop
 	}
 
 	return (
-		<div className="flex flex-wrap items-center gap-2">
+		<div className={`flex flex-wrap items-center gap-2${fullWidth ? " w-full" : ""}`}>
 			<select
 				aria-label="Date range"
-				className="select select-bordered select-sm rounded-sm border-base-content/40 min-w-0 w-auto"
+				className={`select select-bordered select-sm rounded-sm border-base-content/40 ${fullWidth ? "w-full" : "min-w-0 w-auto"}`}
 				value={preset}
 				onChange={(e) => pick(e.target.value as DateRangePreset)}
 			>
