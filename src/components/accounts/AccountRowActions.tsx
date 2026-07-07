@@ -94,14 +94,15 @@ export function AccountRowActions({ account, onEdit, onChanged }: Props) {
 		}
 		const { error } = await supabase.from("account").delete().eq("id", account.id);
 		if (error) {
-			// Friendly translation for the FK violation users hit when deleting a
-			// time-deposit that still has a scheduled interest recurring pointing
-			// at it (recurring.to_account_id is ON DELETE RESTRICT).
+			// Friendly translation for FK violations users hit when deleting a
+			// time-deposit with scheduled interest rows or ledger history pointing
+			// at it. Archive is the retirement path once history exists.
 			const isFkBlock =
-				account.type === "time-deposit" && /foreign key|violates|recurring/i.test(error.message);
+				account.type === "time-deposit" &&
+				/foreign key|violates|recurring|transaction/i.test(error.message);
 			window.alert(
 				isFkBlock
-					? "This time deposit can't be deleted while interest postings are scheduled. Wait for maturity, or change the posting interval to at-maturity and re-try after maturity."
+					? "This time deposit can't be deleted while interest postings or transaction history still reference it. Withdraw and archive it instead."
 					: `Delete failed: ${error.message}`,
 			);
 			return;

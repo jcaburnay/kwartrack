@@ -59,6 +59,11 @@ function accountSortKey(tx: Transaction, lookup: ReadonlyMap<string, string>): s
 	return `${from} → ${to}`;
 }
 
+function ariaSort(key: SortKey, sortKey: SortKey, sortDir: SortDir) {
+	if (key !== sortKey) return "none";
+	return sortDir === "asc" ? "ascending" : "descending";
+}
+
 export function TransactionsTable({
 	transactions,
 	accounts,
@@ -132,6 +137,21 @@ export function TransactionsTable({
 		return sortDir === "asc" ? " ▲" : " ▼";
 	}
 
+	function sortableHeader(label: string, key: SortKey, align: "left" | "right" = "left") {
+		return (
+			<button
+				type="button"
+				className={`inline-flex w-full items-center gap-1 bg-transparent p-0 font-semibold text-base-content/70 hover:text-base-content focus:outline-none focus-visible:text-base-content focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-base-100 ${
+					align === "right" ? "justify-end text-right" : "justify-start text-left"
+				}`}
+				onClick={() => onHeaderClick(key)}
+			>
+				{label}
+				{headerArrow(key)}
+			</button>
+		);
+	}
+
 	const today = new Date();
 
 	return (
@@ -159,22 +179,22 @@ export function TransactionsTable({
 						<thead>
 							<tr className="text-base-content/60">
 								<th
-									className="cursor-pointer select-none whitespace-nowrap"
-									onClick={() => onHeaderClick("date")}
+									aria-sort={ariaSort("date", sortKey, sortDir)}
+									className="select-none whitespace-nowrap"
 								>
-									Date{headerArrow("date")}
+									{sortableHeader("Date", "date")}
 								</th>
-								<th className="cursor-pointer select-none" onClick={() => onHeaderClick("tag")}>
-									Tag{headerArrow("tag")}
+								<th aria-sort={ariaSort("tag", sortKey, sortDir)} className="select-none">
+									{sortableHeader("Tag", "tag")}
 								</th>
 								<th
-									className="cursor-pointer select-none text-right whitespace-nowrap"
-									onClick={() => onHeaderClick("amount")}
+									aria-sort={ariaSort("amount", sortKey, sortDir)}
+									className="select-none text-right whitespace-nowrap"
 								>
-									Amount{headerArrow("amount")}
+									{sortableHeader("Amount", "amount", "right")}
 								</th>
-								<th className="cursor-pointer select-none" onClick={() => onHeaderClick("account")}>
-									Account{headerArrow("account")}
+								<th aria-sort={ariaSort("account", sortKey, sortDir)} className="select-none">
+									{sortableHeader("Account", "account")}
 								</th>
 								<th className="hidden md:table-cell">Description</th>
 								<th className="w-12" />

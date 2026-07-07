@@ -302,11 +302,10 @@ begin
           (r.user_id, v_amount, 'income', v_tag_id, r.id, 'At-maturity interest', r.maturity_date);
       end if;
     elsif r.interest_recurring_id is not null then
-      -- Delete (rather than pause) so the user can later hard-delete the
-      -- account if they want — recurring.to_account_id ON DELETE RESTRICT
-      -- otherwise turns the account into a tombstone. Past interest
-      -- transactions keep their history because transaction.recurring_id
-      -- is ON DELETE SET NULL.
+      -- Delete (rather than pause) so the recurring no longer blocks account
+      -- retirement. Hard-delete is still only possible when no historical
+      -- transaction references this account; otherwise archive preserves the
+      -- ledger history, which is the intended retirement path.
       delete from public.recurring where id = r.interest_recurring_id;
     end if;
 

@@ -175,13 +175,50 @@ describe("TransactionsTable", () => {
 				emptyCopy="empty"
 			/>,
 		);
-		await user.click(screen.getByText(/^Amount/));
+		await user.click(screen.getByRole("button", { name: /^Amount/ }));
 		const bodyRows = screen.getAllByRole("row").slice(1);
 		expect(bodyRows[0]).toHaveTextContent("200.00");
 		// Click again for ascending.
-		await user.click(screen.getByText(/^Amount/));
+		await user.click(screen.getByRole("button", { name: /^Amount/ }));
 		const asc = screen.getAllByRole("row").slice(1);
 		expect(asc[0]).toHaveTextContent("100.00");
+	});
+
+	it("exposes sortable table headers as keyboard-focusable buttons with aria-sort", () => {
+		const rows: TransactionWithRecurring[] = [
+			tx({
+				id: "a",
+				type: "expense",
+				date: "2026-04-10",
+				amount_centavos: 100_00,
+				from_account_id: "cash",
+				tag_id: "foods",
+			}),
+		];
+		render(
+			<Harness
+				transactions={rows}
+				accounts={accounts}
+				groups={[]}
+				tags={tags}
+				onEdit={() => {}}
+				onChanged={() => {}}
+				emptyCopy="empty"
+			/>,
+		);
+
+		expect(screen.getByRole("button", { name: /^Date/ })).toBeInTheDocument();
+		expect(screen.getByRole("button", { name: /^Tag/ })).toBeInTheDocument();
+		expect(screen.getByRole("button", { name: /^Amount/ })).toBeInTheDocument();
+		expect(screen.getByRole("button", { name: /^Account/ })).toBeInTheDocument();
+		expect(screen.getByRole("columnheader", { name: /^Date/ })).toHaveAttribute(
+			"aria-sort",
+			"descending",
+		);
+		expect(screen.getByRole("columnheader", { name: /^Amount/ })).toHaveAttribute(
+			"aria-sort",
+			"none",
+		);
 	});
 
 	it("shows the repeat icon on auto-generated rows and not on manual rows", () => {

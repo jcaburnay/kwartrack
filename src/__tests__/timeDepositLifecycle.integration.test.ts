@@ -7,8 +7,8 @@
  *     periodic transitions.
  *   - td_check_maturity_due() flips is_matured and either pauses the linked
  *     recurring (periodic) or posts the lump-sum income (at-maturity).
- *   - account delete is blocked by recurring.to_account_id ON DELETE
- *     RESTRICT when an active recurring exists.
+ *   - account delete is blocked by linked recurring rows before maturity and
+ *     by historical transactions once ledger history exists.
  *
  * Skipped without SUPABASE_SECRET_KEY (mirrors recurringTriggers pattern).
  */
@@ -238,11 +238,32 @@ runOrSkip("td_check_maturity_due()", () => {
 		expect(rec ?? []).toHaveLength(0);
 	});
 
-	it("matured TDs can now be hard-deleted through the normal path", async () => {
+	it("matured TDs without transaction history can be hard-deleted through the normal path", async () => {
 		const td = await createTd({ name: "Cleanup TD", maturity_date: shiftDays(todayInTZ(), -1) });
 		await admin.rpc("td_check_maturity_due");
 		const { error } = await admin.from("account").delete().eq("id", td.id);
 		expect(error).toBeNull();
+	});
+
+	it("matured TDs with posted interest remain hard-delete-blocked to preserve history", async () => {
+		const yearAgo = shiftDays(todayInTZ(), -365);
+		const td = await createTd({
+			name: "History TD",
+			interest_posting_interval: "at-maturity",
+			maturity_date: shiftDays(todayInTZ(), -1),
+		});
+		await admin
+			.from("account")
+			.update({ created_at: `${yearAgo}T00:00:00Z` })
+			.eq("id", td.id);
+
+		await admin.rpc("td_check_maturity_due");
+		const { error } = await admin.from("account").delete().eq("id", td.id);
+		expect(error).not.toBeNull();
+		expect(error!.message).toMatch(/transaction_to_account_id_fkey|still referenced/i);
+
+		const archive = await admin.from("account").update({ is_archived: true }).eq("id", td.id);
+		expect(archive.error).toBeNull();
 	});
 
 	it("posts a single lump-sum income for at-maturity TD past maturity", async () => {

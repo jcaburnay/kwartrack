@@ -15,5 +15,8 @@ export default defineConfig({
 		setupFiles: ["./src/__tests__/setup.ts"],
 		include: ["src/__tests__/**/*.test.{ts,tsx}"],
 		env,
+		// Integration tests share one local Supabase database and exercise
+		// global cron RPCs. Running files in parallel makes those suites race.
+		fileParallelism: false,
 	},
 });

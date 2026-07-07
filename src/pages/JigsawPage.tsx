@@ -10,6 +10,7 @@ import { BudgetPanel } from "../components/panels/BudgetPanel";
 import { DebtsPanel, type DebtsPending } from "../components/panels/DebtsPanel";
 import { NetWorthPanel } from "../components/panels/NetWorthPanel";
 import { RecurringPanel, type RecurringPending } from "../components/panels/RecurringPanel";
+import { useMediaQuery } from "../hooks/useMediaQuery";
 
 type AccountsPendingModal = "new-transaction" | "new-account" | null;
 
@@ -24,6 +25,7 @@ const DEBTS_DEEP_LINK_MODALS: ReadonlySet<string> = new Set(["new-debt", "new-sp
 
 const PANEL_IDS = ["networth", "accounts", "recurring", "budget", "debts"] as const;
 export type PanelId = (typeof PANEL_IDS)[number];
+const DESKTOP_PANEL_QUERY = "(min-width: 1024px)";
 
 function isPanelId(value: string | null): value is PanelId {
 	return value != null && (PANEL_IDS as readonly string[]).includes(value);
@@ -36,6 +38,7 @@ export function JigsawPage() {
 	const [crossSplitFilter, setCrossSplitFilter] = useState<CrossSplitFilter>(null);
 	const [crossBudgetFilter, setCrossBudgetFilter] = useState<CrossBudgetFilter>(null);
 	const [params, setParams] = useSearchParams();
+	const isDesktopLayout = useMediaQuery(DESKTOP_PANEL_QUERY);
 
 	const rawPanel = params.get("panel");
 	const activePanel: PanelId = isPanelId(rawPanel) ? rawPanel : "networth";
@@ -82,55 +85,67 @@ export function JigsawPage() {
 		return `${baseClass} flex-1 min-h-0 lg:flex-none ${visibility}`.trim();
 	}
 
+	function shouldMountPanel(name: PanelId) {
+		return isDesktopLayout || activePanel === name;
+	}
+
 	return (
 		<div className="h-dvh bg-base-200 flex flex-col overflow-hidden">
 			<Header />
 			<main className="flex-1 px-0 sm:px-3 pt-0 sm:pt-3 pb-[calc(4rem+env(safe-area-inset-bottom))] sm:pb-[calc(4rem+env(safe-area-inset-bottom)+0.75rem)] lg:pb-3 overflow-hidden">
 				<div className="jigsaw-grid flex flex-col gap-2 h-full">
 					<div id="panel-networth" className={panelClass("networth", "jigsaw-networth")}>
-						<NetWorthPanel />
+						{shouldMountPanel("networth") && <NetWorthPanel />}
 					</div>
 					<div id="panel-accounts" className={panelClass("accounts", "jigsaw-txns")}>
-						<AccountsPanel
-							pendingModal={accountsPending}
-							onPendingModalConsumed={() => setAccountsPending(null)}
-							crossSplitFilter={crossSplitFilter}
-							onClearCrossSplitFilter={() => setCrossSplitFilter(null)}
-							crossBudgetFilter={crossBudgetFilter}
-							onClearCrossBudgetFilter={() => setCrossBudgetFilter(null)}
-						/>
+						{shouldMountPanel("accounts") && (
+							<AccountsPanel
+								pendingModal={accountsPending}
+								onPendingModalConsumed={() => setAccountsPending(null)}
+								crossSplitFilter={crossSplitFilter}
+								onClearCrossSplitFilter={() => setCrossSplitFilter(null)}
+								crossBudgetFilter={crossBudgetFilter}
+								onClearCrossBudgetFilter={() => setCrossBudgetFilter(null)}
+							/>
+						)}
 					</div>
 					<div id="panel-recurring" className={panelClass("recurring", "jigsaw-recurring")}>
-						<RecurringPanel
-							pendingModal={recurringPending}
-							onPendingModalConsumed={() => setRecurringPending(null)}
-						/>
+						{shouldMountPanel("recurring") && (
+							<RecurringPanel
+								pendingModal={recurringPending}
+								onPendingModalConsumed={() => setRecurringPending(null)}
+							/>
+						)}
 					</div>
 					<div id="panel-budget" className={panelClass("budget", "jigsaw-budget")}>
-						<BudgetPanel
-							onDrillToTag={(tagId, month) => {
-								setCrossBudgetFilter({ tagId, month });
-								// Drill jumps to the accounts panel so the user sees the
-								// filtered transactions immediately.
-								const next = new URLSearchParams(params);
-								next.set("panel", "accounts");
-								setParams(next, { replace: true });
-							}}
-						/>
+						{shouldMountPanel("budget") && (
+							<BudgetPanel
+								onDrillToTag={(tagId, month) => {
+									setCrossBudgetFilter({ tagId, month });
+									// Drill jumps to the accounts panel so the user sees the
+									// filtered transactions immediately.
+									const next = new URLSearchParams(params);
+									next.set("panel", "accounts");
+									setParams(next, { replace: true });
+								}}
+							/>
+						)}
 					</div>
 					<div id="panel-debts" className={panelClass("debts", "jigsaw-debts")}>
-						<DebtsPanel
-							pendingModal={debtsPending}
-							onPendingModalConsumed={() => setDebtsPending(null)}
-							onCrossFilterSplit={(filter) => {
-								setCrossSplitFilter(filter);
-								// Cross-filtering jumps to the accounts panel so the user sees the
-								// filtered transactions immediately.
-								const next = new URLSearchParams(params);
-								next.set("panel", "accounts");
-								setParams(next, { replace: true });
-							}}
-						/>
+						{shouldMountPanel("debts") && (
+							<DebtsPanel
+								pendingModal={debtsPending}
+								onPendingModalConsumed={() => setDebtsPending(null)}
+								onCrossFilterSplit={(filter) => {
+									setCrossSplitFilter(filter);
+									// Cross-filtering jumps to the accounts panel so the user sees the
+									// filtered transactions immediately.
+									const next = new URLSearchParams(params);
+									next.set("panel", "accounts");
+									setParams(next, { replace: true });
+								}}
+							/>
+						)}
 					</div>
 				</div>
 			</main>
