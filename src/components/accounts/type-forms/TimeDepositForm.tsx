@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { type SubmitHandler, useForm } from "react-hook-form";
 import { supabase } from "../../../lib/supabase";
 import { useAuth } from "../../../providers/AuthProvider";
 import type { Account, AccountGroup } from "../../../utils/accountBalances";
 import { centavosToPesos, pesosToCentavos } from "../../../utils/currency";
 import { SubmitButton } from "../../ui/SubmitButton";
+import { AccountSelect } from "../AccountSelect";
 import { GroupPickerField } from "../GroupPickerField";
 
 type Interval = "monthly" | "quarterly" | "semi-annual" | "annual" | "at-maturity";
@@ -16,11 +17,13 @@ type Form = {
 	maturityDate: string;
 	interestPostingInterval: Interval;
 	groupId: string | null;
+	fundingAccountId: string | null;
 };
 
 type Props = {
 	mode: "create" | "edit";
 	initial?: Account;
+	accounts?: readonly Account[];
 	groups: readonly AccountGroup[];
 	onRefetchGroups: () => Promise<void>;
 	onSaved: () => void;
@@ -38,6 +41,7 @@ const INTERVALS: { value: Interval; label: string }[] = [
 export function TimeDepositForm({
 	mode,
 	initial,
+	accounts = [],
 	groups,
 	onRefetchGroups,
 	onSaved,
@@ -63,11 +67,21 @@ export function TimeDepositForm({
 			maturityDate: initial?.maturity_date ?? "",
 			interestPostingInterval: (initial?.interest_posting_interval as Interval | null) ?? "monthly",
 			groupId: initial?.group_id ?? null,
+			fundingAccountId: null,
 		},
 	});
 
 	const groupId = watch("groupId");
+	const fundingAccountId = watch("fundingAccountId");
 	const today = new Date().toISOString().slice(0, 10);
+	const fundingAccounts = useMemo(
+		() =>
+			accounts.filter(
+				(a) =>
+					!a.is_archived && (a.type === "cash" || a.type === "e-wallet" || a.type === "savings"),
+			),
+		[accounts],
+	);
 
 	const onSubmit: SubmitHandler<Form> = async (values) => {
 		setSubmitError(null);
@@ -76,16 +90,15 @@ export function TimeDepositForm({
 		const bps = Math.round(values.interestRatePercent * 100);
 
 		if (mode === "create") {
-			const { error } = await supabase.from("account").insert({
-				user_id: user.id,
-				name: values.name.trim(),
-				type: "time-deposit",
-				initial_balance_centavos: principalCentavos,
-				principal_centavos: principalCentavos,
-				interest_rate_bps: bps,
-				maturity_date: values.maturityDate,
-				interest_posting_interval: values.interestPostingInterval,
-				group_id: values.groupId,
+			const { error } = await supabase.rpc("create_time_deposit", {
+				p_name: values.name.trim(),
+				p_principal_centavos: principalCentavos,
+				p_interest_rate_bps: bps,
+				p_maturity_date: values.maturityDate,
+				p_interest_posting_interval: values.interestPostingInterval,
+				p_group_id: values.groupId ?? undefined,
+				p_funding_account_id: values.fundingAccountId ?? undefined,
+				p_funding_date: today,
 			});
 			if (error) return setSubmitError(error.message);
 		} else if (initial) {
@@ -131,6 +144,17 @@ export function TimeDepositForm({
 					onRefetchGroups={onRefetchGroups}
 				/>
 			</div>
+
+			{mode === "create" && (
+				<AccountSelect
+					label="Funding source"
+					placeholder="Select Account"
+					value={fundingAccountId}
+					onChange={(id) => setValue("fundingAccountId", id, { shouldDirty: true })}
+					accounts={fundingAccounts}
+					groups={groups}
+				/>
+			)}
 
 			<div>
 				<label className="floating-label">

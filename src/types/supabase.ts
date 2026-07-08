@@ -722,6 +722,19 @@ export type Database = {
 				};
 				Returns: string;
 			};
+			create_time_deposit: {
+				Args: {
+					p_funding_account_id?: string;
+					p_funding_date?: string;
+					p_group_id?: string;
+					p_interest_posting_interval: Database["public"]["Enums"]["posting_interval"];
+					p_interest_rate_bps: number;
+					p_maturity_date: string;
+					p_name: string;
+					p_principal_centavos: number;
+				};
+				Returns: string;
+			};
 			enforce_budget_cap: {
 				Args: { p_month: string; p_user_id: string };
 				Returns: undefined;

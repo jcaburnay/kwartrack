@@ -466,11 +466,12 @@ export function AccountsPanel({
 
 			{showNewAccount && (
 				<NewAccountModal
+					accounts={accounts}
 					groups={groups}
 					onRefetchGroups={refetchGroups}
 					onSaved={async () => {
 						setShowNewAccount(false);
-						await refetchAccounts();
+						await onTxChanged();
 					}}
 					onCancel={() => setShowNewAccount(false)}
 				/>

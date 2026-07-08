@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { AccountGroup, AccountType } from "../../utils/accountBalances";
+import type { Account, AccountGroup, AccountType } from "../../utils/accountBalances";
 import {
 	ACCOUNT_TYPE_LABEL,
 	ACCOUNT_TYPE_NOUN_PHRASE,
@@ -11,6 +11,7 @@ import { CreditForm } from "./type-forms/CreditForm";
 import { TimeDepositForm } from "./type-forms/TimeDepositForm";
 
 type Props = {
+	accounts?: readonly Account[];
 	groups: readonly AccountGroup[];
 	onRefetchGroups: () => Promise<void>;
 	onSaved: () => void;
@@ -25,7 +26,13 @@ const TYPE_DESCRIPTIONS: Record<AccountType, string> = {
 	"time-deposit": "Locked deposit with interest.",
 };
 
-export function NewAccountModal({ groups, onRefetchGroups, onSaved, onCancel }: Props) {
+export function NewAccountModal({
+	accounts = [],
+	groups,
+	onRefetchGroups,
+	onSaved,
+	onCancel,
+}: Props) {
 	const [type, setType] = useState<AccountType | null>(null);
 
 	const title = type ? `New ${ACCOUNT_TYPE_NOUN_PHRASE[type]}` : "New account";
@@ -93,6 +100,7 @@ export function NewAccountModal({ groups, onRefetchGroups, onSaved, onCancel }: 
 					{type === "time-deposit" && (
 						<TimeDepositForm
 							mode="create"
+							accounts={accounts}
 							groups={groups}
 							onRefetchGroups={onRefetchGroups}
 							onSaved={onSaved}
