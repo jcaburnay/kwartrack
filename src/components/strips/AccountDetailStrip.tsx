@@ -1,14 +1,13 @@
 import { X } from "lucide-react";
 import type { Account } from "../../utils/accountBalances";
-import type { Transaction } from "../../utils/transactionFilters";
+import type { MonthSummary } from "../../utils/transactionSummary";
 import { CreditAccountStrip } from "./CreditAccountStrip";
 import { SimpleAccountStrip } from "./SimpleAccountStrip";
 import { TimeDepositStrip } from "./TimeDepositStrip";
 
 type Props = {
 	account: Account;
-	transactions: readonly Transaction[];
-	timezone: string;
+	accountMonthSummary: MonthSummary;
 	onClear: () => void;
 	onPayThisCard: () => void;
 	onWithdrawMatured: () => void;
@@ -16,8 +15,7 @@ type Props = {
 
 export function AccountDetailStrip({
 	account,
-	transactions,
-	timezone,
+	accountMonthSummary,
 	onClear,
 	onPayThisCard,
 	onWithdrawMatured,
@@ -49,7 +47,7 @@ export function AccountDetailStrip({
 				<TimeDepositStrip account={account} onWithdrawMatured={onWithdrawMatured} />
 			)}
 			{(account.type === "cash" || account.type === "e-wallet" || account.type === "savings") && (
-				<SimpleAccountStrip account={account} transactions={transactions} timezone={timezone} />
+				<SimpleAccountStrip account={account} monthSummary={accountMonthSummary} />
 			)}
 		</div>
 	);

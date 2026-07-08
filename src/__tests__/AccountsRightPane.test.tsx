@@ -33,14 +33,18 @@ const account: Account = {
 	updated_at: ts,
 };
 
+const monthSummary = {
+	inflowCentavos: 0,
+	outflowCentavos: 0,
+};
+
 describe("AccountsRightPane", () => {
 	it("shows placeholder copy when nothing is selected", () => {
 		render(
 			<AccountsRightPane
 				selection={{ kind: "none" }}
 				accounts={[]}
-				transactions={[]}
-				timezone="Asia/Manila"
+				accountMonthSummary={monthSummary}
 				onClear={() => {}}
 				onPayThisCard={() => {}}
 				onWithdrawMatured={() => {}}
@@ -54,8 +58,7 @@ describe("AccountsRightPane", () => {
 			<AccountsRightPane
 				selection={{ kind: "account", account }}
 				accounts={[account]}
-				transactions={[]}
-				timezone="Asia/Manila"
+				accountMonthSummary={monthSummary}
 				onClear={() => {}}
 				onPayThisCard={() => {}}
 				onWithdrawMatured={() => {}}
@@ -71,8 +74,7 @@ describe("AccountsRightPane", () => {
 			<AccountsRightPane
 				selection={{ kind: "group", group }}
 				accounts={[account]}
-				transactions={[]}
-				timezone="Asia/Manila"
+				accountMonthSummary={monthSummary}
 				onClear={() => {}}
 				onPayThisCard={() => {}}
 				onWithdrawMatured={() => {}}

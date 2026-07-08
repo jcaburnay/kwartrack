@@ -686,6 +686,30 @@ export type Database = {
 				};
 				Returns: undefined;
 			};
+			assert_account_owned: {
+				Args: { p_account_id: string; p_label: string; p_user_id: string };
+				Returns: undefined;
+			};
+			assert_debt_owned: {
+				Args: { p_debt_id: string; p_label: string; p_user_id: string };
+				Returns: undefined;
+			};
+			assert_person_owned: {
+				Args: { p_label: string; p_person_id: string; p_user_id: string };
+				Returns: undefined;
+			};
+			assert_recurring_owned: {
+				Args: { p_label: string; p_recurring_id: string; p_user_id: string };
+				Returns: undefined;
+			};
+			assert_split_owned: {
+				Args: { p_label: string; p_split_id: string; p_user_id: string };
+				Returns: undefined;
+			};
+			assert_tag_owned: {
+				Args: { p_label: string; p_tag_id: string; p_user_id: string };
+				Returns: undefined;
+			};
 			create_split: {
 				Args: {
 					p_date: string;
@@ -753,6 +777,58 @@ export type Database = {
 			td_recurring_interval: {
 				Args: { p_interval: Database["public"]["Enums"]["posting_interval"] };
 				Returns: Database["public"]["Enums"]["recurring_interval"];
+			};
+			transaction_list: {
+				Args: {
+					p_account_id?: string;
+					p_date_from?: string;
+					p_date_to?: string;
+					p_debt_id?: string;
+					p_group_id?: string;
+					p_limit?: number;
+					p_offset?: number;
+					p_search?: string;
+					p_sort_dir?: string;
+					p_sort_key?: string;
+					p_split_id?: string;
+					p_tag_id?: string;
+					p_type?: Database["public"]["Enums"]["transaction_type"];
+				};
+				Returns: {
+					amount_centavos: number;
+					created_at: string;
+					date: string;
+					debt_id: string;
+					description: string;
+					fee_centavos: number;
+					from_account_id: string;
+					id: string;
+					is_installment_portion: boolean;
+					parent_transaction_id: string;
+					recurring_id: string;
+					recurring_service: string;
+					split_id: string;
+					tag_id: string;
+					to_account_id: string;
+					total_count: number;
+					type: Database["public"]["Enums"]["transaction_type"];
+					updated_at: string;
+					user_id: string;
+				}[];
+			};
+			transaction_month_summary: {
+				Args: {
+					p_account_id?: string;
+					p_date_from: string;
+					p_date_to_exclusive: string;
+				};
+				Returns: {
+					account_inflow_centavos: number;
+					account_outflow_centavos: number;
+					net_centavos: number;
+					net_inflow_centavos: number;
+					net_outflow_centavos: number;
+				}[];
 			};
 			update_split: {
 				Args: {

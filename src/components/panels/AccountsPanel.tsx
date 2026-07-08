@@ -5,7 +5,8 @@ import { useAccounts } from "../../hooks/useAccounts";
 import { usePersistedBoolean } from "../../hooks/usePersistedBoolean";
 import { useSelectedAccount } from "../../hooks/useSelectedAccount";
 import { useTags } from "../../hooks/useTags";
-import { useTransactions } from "../../hooks/useTransactions";
+import { useTransactionListQuery } from "../../hooks/useTransactionListQuery";
+import { useTransactionMonthSummary } from "../../hooks/useTransactionMonthSummary";
 import { useAuth } from "../../providers/AuthProvider";
 import type { Account } from "../../utils/accountBalances";
 import { computeNetWorth } from "../../utils/accountBalances";
@@ -13,12 +14,9 @@ import { formatCentavos } from "../../utils/currency";
 import { monthBounds, shiftDaysISO } from "../../utils/dateRange";
 import {
 	EMPTY_FILTERS,
-	matchesFilters,
 	type Transaction,
 	type TransactionFilters,
 } from "../../utils/transactionFilters";
-import { matchesTransactionSearch } from "../../utils/transactionSearch";
-import { summariseNetFlowThisMonth } from "../../utils/transactionSummary";
 import { AccountsRightPane } from "../accounts/AccountsRightPane";
 import { AccountsTable } from "../accounts/AccountsTable";
 import { EditAccountModal } from "../accounts/EditAccountModal";
@@ -72,7 +70,6 @@ export function AccountsPanel({
 	const { profile } = useAuth();
 	const { accounts, isLoading: aLoading, refetch: refetchAccounts } = useAccounts();
 	const { groups, refetch: refetchGroups } = useAccountGroups();
-	const { transactions, isLoading: tLoading, refetch: refetchTransactions } = useTransactions();
 	const { tags, createInline } = useTags();
 	const { selection, selectAccount, selectGroup, clear } = useSelectedAccount(accounts, groups);
 
@@ -100,28 +97,6 @@ export function AccountsPanel({
 
 	const timezone = profile?.timezone ?? "Asia/Manila";
 	const net = useMemo(() => computeNetWorth(accounts), [accounts]);
-	const netFlow = useMemo(
-		() => summariseNetFlowThisMonth(transactions, timezone),
-		[transactions, timezone],
-	);
-
-	const accountsById = useMemo(() => {
-		const m = new Map<string, { id: string; groupId: string | null }>();
-		for (const a of accounts) m.set(a.id, { id: a.id, groupId: a.group_id });
-		return m;
-	}, [accounts]);
-
-	const accountNameById = useMemo(() => {
-		const m = new Map<string, string>();
-		for (const a of accounts) m.set(a.id, a.name);
-		return m;
-	}, [accounts]);
-
-	const tagNameById = useMemo(() => {
-		const m = new Map<string, string>();
-		for (const t of tags) m.set(t.id, t.name);
-		return m;
-	}, [tags]);
 
 	const effectiveFilters: TransactionFilters = useMemo(() => {
 		const splitId = crossSplitFilter?.id ?? null;
@@ -132,14 +107,34 @@ export function AccountsPanel({
 		return { ...filters, splitId };
 	}, [selection, filters, crossSplitFilter]);
 
-	const filteredTransactions = useMemo(
-		() =>
-			transactions.filter(
-				(t) =>
-					matchesFilters(t, effectiveFilters, accountsById) &&
-					matchesTransactionSearch(t, search, accountNameById, tagNameById),
-			),
-		[transactions, effectiveFilters, accountsById, search, accountNameById, tagNameById],
+	const {
+		transactions,
+		totalCount,
+		isLoading: tLoading,
+		isLoadingMore: tLoadingMore,
+		refetch: refetchTransactions,
+		loadMore,
+		hasMore,
+	} = useTransactionListQuery({
+		filters: effectiveFilters,
+		search,
+		sortKey,
+		sortDir,
+	});
+
+	const selectedAccountId = selection.kind === "account" ? selection.account.id : null;
+	const currentMonth = useMemo(() => monthBounds(timezone, new Date()), [timezone]);
+	const { summary: monthSummary, refetch: refetchMonthSummary } = useTransactionMonthSummary({
+		dateFrom: currentMonth.startISO,
+		dateToExclusive: currentMonth.endExclusiveISO,
+		accountId: selectedAccountId,
+	});
+	const accountMonthSummary = useMemo(
+		() => ({
+			inflowCentavos: monthSummary.accountInflowCentavos,
+			outflowCentavos: monthSummary.accountOutflowCentavos,
+		}),
+		[monthSummary.accountInflowCentavos, monthSummary.accountOutflowCentavos],
 	);
 
 	const handleSetFilters = useCallback((next: TransactionFilters) => setFilters(next), []);
@@ -147,7 +142,7 @@ export function AccountsPanel({
 	const handleSetSearch = useCallback((next: string) => setSearch(next), []);
 
 	async function onTxChanged() {
-		await Promise.all([refetchTransactions(), refetchAccounts()]);
+		await Promise.all([refetchTransactions(), refetchMonthSummary(), refetchAccounts()]);
 	}
 
 	function openNewTransaction(prefill: Partial<TransactionFormValues>) {
@@ -198,8 +193,7 @@ export function AccountsPanel({
 	const rightPaneProps = {
 		selection,
 		accounts,
-		transactions,
-		timezone,
+		accountMonthSummary,
 		onClear: clear,
 		onPayThisCard: () =>
 			openNewTransaction({
@@ -339,13 +333,13 @@ export function AccountsPanel({
 					</span>
 					<span className="text-xs text-base-content/30">·</span>
 					<span className="text-xs text-base-content/60">
-						{filteredTransactions.length} transaction
-						{filteredTransactions.length !== 1 ? "s" : ""}
+						{totalCount} transaction
+						{totalCount !== 1 ? "s" : ""}
 					</span>
 					<span className="text-xs text-base-content/30">·</span>
 					<span className="text-xs tabular-nums text-base-content/70">
-						Net flow this month: {netFlow.netCentavos >= 0 ? "+" : ""}
-						{formatCentavos(netFlow.netCentavos)}
+						Net flow this month: {monthSummary.netCentavos >= 0 ? "+" : ""}
+						{formatCentavos(monthSummary.netCentavos)}
 					</span>
 				</button>
 			) : (
@@ -356,7 +350,7 @@ export function AccountsPanel({
 								Transactions
 							</span>
 							<span className="text-xs text-base-content/30">·</span>
-							<span className="text-xs text-base-content/60">{filteredTransactions.length}</span>
+							<span className="text-xs text-base-content/60">{totalCount}</span>
 							{crossFilterChip && (
 								<>
 									<span className="text-xs text-base-content/30">·</span>
@@ -431,22 +425,40 @@ export function AccountsPanel({
 								<span className="loading loading-spinner loading-sm text-primary" />
 							</div>
 						) : (
-							<TransactionsTable
-								transactions={filteredTransactions}
-								accounts={accounts}
-								groups={groups}
-								tags={tags}
-								sortKey={sortKey}
-								sortDir={sortDir}
-								onSortChange={handleSortChange}
-								onEdit={(tx) => setEditingTx(tx)}
-								onChanged={onTxChanged}
-								emptyCopy={
-									selection.kind === "account"
-										? "No transactions in this account yet."
-										: "No transactions match these filters."
-								}
-							/>
+							<>
+								<TransactionsTable
+									transactions={transactions}
+									accounts={accounts}
+									groups={groups}
+									tags={tags}
+									sortKey={sortKey}
+									sortDir={sortDir}
+									onSortChange={handleSortChange}
+									onEdit={(tx) => setEditingTx(tx)}
+									onChanged={onTxChanged}
+									emptyCopy={
+										selection.kind === "account"
+											? "No transactions in this account yet."
+											: "No transactions match these filters."
+									}
+								/>
+								{hasMore && (
+									<div className="flex items-center justify-center gap-3 border-t border-base-200 px-4 py-3">
+										<span className="text-xs text-base-content/50">
+											Showing {transactions.length} of {totalCount}
+										</span>
+										<button
+											type="button"
+											className="btn btn-ghost btn-sm"
+											onClick={() => void loadMore()}
+											disabled={tLoadingMore}
+										>
+											{tLoadingMore && <span className="loading loading-spinner loading-xs" />}
+											Load more
+										</button>
+									</div>
+								)}
+							</>
 						)}
 					</ScrollFadeContainer>
 				</div>

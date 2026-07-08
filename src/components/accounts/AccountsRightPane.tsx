@@ -1,15 +1,14 @@
 import { Wallet } from "lucide-react";
 import type { Selection } from "../../hooks/useSelectedAccount";
 import type { Account } from "../../utils/accountBalances";
-import type { Transaction } from "../../utils/transactionFilters";
+import type { MonthSummary } from "../../utils/transactionSummary";
 import { AccountDetailStrip } from "../strips/AccountDetailStrip";
 import { GroupSummaryCard } from "../strips/GroupSummaryCard";
 
 type Props = {
 	selection: Selection;
 	accounts: readonly Account[];
-	transactions: readonly Transaction[];
-	timezone: string;
+	accountMonthSummary: MonthSummary;
 	onClear: () => void;
 	onPayThisCard: () => void;
 	onWithdrawMatured: () => void;
@@ -18,8 +17,7 @@ type Props = {
 export function AccountsRightPane({
 	selection,
 	accounts,
-	transactions,
-	timezone,
+	accountMonthSummary,
 	onClear,
 	onPayThisCard,
 	onWithdrawMatured,
@@ -28,8 +26,7 @@ export function AccountsRightPane({
 		return (
 			<AccountDetailStrip
 				account={selection.account}
-				transactions={transactions}
-				timezone={timezone}
+				accountMonthSummary={accountMonthSummary}
 				onClear={onClear}
 				onPayThisCard={onPayThisCard}
 				onWithdrawMatured={onWithdrawMatured}

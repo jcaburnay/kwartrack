@@ -1,21 +1,15 @@
 import type { Account } from "../../utils/accountBalances";
 import { formatCentavos } from "../../utils/currency";
-import type { Transaction } from "../../utils/transactionFilters";
-import { summariseThisMonth } from "../../utils/transactionSummary";
+import type { MonthSummary } from "../../utils/transactionSummary";
 
 type Props = {
 	account: Account;
-	transactions: readonly Transaction[];
-	timezone: string;
+	monthSummary: MonthSummary;
 };
 
 /** Simple strip for cash / e-wallet / savings accounts. */
-export function SimpleAccountStrip({ account, transactions, timezone }: Props) {
-	const { inflowCentavos, outflowCentavos } = summariseThisMonth(
-		transactions,
-		account.id,
-		timezone,
-	);
+export function SimpleAccountStrip({ account, monthSummary }: Props) {
+	const { inflowCentavos, outflowCentavos } = monthSummary;
 
 	return (
 		<div className="flex flex-col gap-3">
