@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useBudget } from "../../hooks/useBudget";
 import { useBudgetHistory } from "../../hooks/useBudgetHistory";
 import { useOverallBudgetHistory } from "../../hooks/useOverallBudgetHistory";
+import { usePersistedOption } from "../../hooks/usePersistedOption";
 import { useTags } from "../../hooks/useTags";
 import { useAuth } from "../../providers/AuthProvider";
 import { monthBounds } from "../../utils/dateRange";
@@ -13,17 +14,15 @@ import {
 import { BudgetAnchor } from "./BudgetAnchor";
 import { BudgetTableView } from "./BudgetTableView";
 import { BudgetTagHistoryView, OVERALL_VALUE } from "./BudgetTagHistoryView";
-import {
-	type BudgetView,
-	BudgetViewSelector,
-	loadStoredBudgetView,
-	storeBudgetView,
-} from "./BudgetViewSelector";
+import { type BudgetView, BudgetViewSelector } from "./BudgetViewSelector";
 import { MonthPicker } from "./MonthPicker";
 
 type Props = {
 	onDrillToTag?: (tagId: string, month: string) => void;
 };
+
+const BUDGET_VIEW_VALUES: BudgetView[] = ["table", "history"];
+const RANGE_VALUES: RangeOption[] = ["3m", "6m", "12m", "all"];
 
 export function BudgetWorkspace({ onDrillToTag }: Props = {}) {
 	const { profile } = useAuth();
@@ -31,13 +30,20 @@ export function BudgetWorkspace({ onDrillToTag }: Props = {}) {
 	const today = useMemo(() => new Date(), []);
 	const initialMonth = useMemo(() => monthBounds(tz).startISO.slice(0, 7), [tz]);
 	const [month, setMonth] = useState(initialMonth);
-	const [view, setView] = useState<BudgetView>(() => loadStoredBudgetView());
-	const [range, setRange] = useState<RangeOption>("12m");
-	const [historyTagId, setHistoryTagId] = useState<string | null>(OVERALL_VALUE);
-
-	useEffect(() => {
-		storeBudgetView(view);
-	}, [view]);
+	const [view, setView] = usePersistedOption<BudgetView>(
+		"kwartrack:budgetView",
+		"table",
+		BUDGET_VIEW_VALUES,
+	);
+	const [range, setRange] = usePersistedOption<RangeOption>(
+		"kwartrack:budgetRange",
+		"12m",
+		RANGE_VALUES,
+	);
+	const [historyTagId, setHistoryTagId] = usePersistedOption<string>(
+		"kwartrack:budgetHistoryTag",
+		OVERALL_VALUE,
+	);
 
 	const {
 		config,
@@ -52,7 +58,12 @@ export function BudgetWorkspace({ onDrillToTag }: Props = {}) {
 		deleteAllocation,
 		copyFromPrevious,
 	} = useBudget(month);
-	const { tags } = useTags();
+	const { tags, isLoading: tagsLoading } = useTags();
+
+	useEffect(() => {
+		if (tagsLoading || historyTagId === OVERALL_VALUE) return;
+		if (!tags.some((tag) => tag.id === historyTagId)) setHistoryTagId(OVERALL_VALUE);
+	}, [historyTagId, setHistoryTagId, tags, tagsLoading]);
 
 	const monthCount = rangeToMonthCount(range);
 	const { history, isLoading: historyLoading } = useBudgetHistory(

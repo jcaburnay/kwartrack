@@ -17,16 +17,3 @@ export function BudgetViewSelector({ value, onChange }: Props) {
 		<DropdownSelect ariaLabel="Budget view" value={value} options={OPTIONS} onChange={onChange} />
 	);
 }
-
-const STORAGE_KEY = "kwartrack:budgetView";
-
-export function loadStoredBudgetView(): BudgetView {
-	const v = typeof localStorage === "undefined" ? null : localStorage.getItem(STORAGE_KEY);
-	if (v === "table" || v === "history") return v;
-	return "table";
-}
-
-export function storeBudgetView(view: BudgetView): void {
-	if (typeof localStorage === "undefined") return;
-	localStorage.setItem(STORAGE_KEY, view);
-}

@@ -1,8 +1,9 @@
-import { lazy, Suspense, useMemo, useState } from "react";
+import { lazy, Suspense, useMemo } from "react";
 import { useAccounts } from "../../hooks/useAccounts";
 import { useCashFlowTrend } from "../../hooks/useCashFlowTrend";
 import { useMtdDelta } from "../../hooks/useMtdDelta";
 import { useNetWorthTrend } from "../../hooks/useNetWorthTrend";
+import { usePersistedOption } from "../../hooks/usePersistedOption";
 import { useAuth } from "../../providers/AuthProvider";
 import { computeNetWorth } from "../../utils/accountBalances";
 import { formatCentavos } from "../../utils/currency";
@@ -41,6 +42,8 @@ const CHART_OPTIONS: { value: ChartView; label: string }[] = [
 	{ value: "assetMix", label: "Asset Mix" },
 	{ value: "accountBalances", label: "Balances" },
 ];
+const CHART_VALUES = CHART_OPTIONS.map((option) => option.value);
+const RANGE_VALUES: RangeOption[] = ["3m", "6m", "12m", "all"];
 
 const SIGNIFICANT_DROP_RATIO = 0.02;
 
@@ -59,8 +62,16 @@ export function NetWorthPanel() {
 	const net = useMemo(() => computeNetWorth(accounts), [accounts]);
 	const { deltaCentavos, percentOfCurrent } = useMtdDelta(today, tz);
 
-	const [chart, setChart] = useState<ChartView>("netWorth");
-	const [range, setRange] = useState<RangeOption>("12m");
+	const [chart, setChart] = usePersistedOption<ChartView>(
+		"kwartrack:netWorthChart",
+		"netWorth",
+		CHART_VALUES,
+	);
+	const [range, setRange] = usePersistedOption<RangeOption>(
+		"kwartrack:netWorthRange",
+		"12m",
+		RANGE_VALUES,
+	);
 	const monthCount = rangeToMonthCount(range);
 
 	const { trend: nwTrend, isLoading: nwLoading } = useNetWorthTrend(today, tz, monthCount);
