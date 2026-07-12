@@ -9,8 +9,6 @@ import { useTransactionListQuery } from "../../hooks/useTransactionListQuery";
 import { useTransactionMonthSummary } from "../../hooks/useTransactionMonthSummary";
 import { useAuth } from "../../providers/AuthProvider";
 import type { Account } from "../../utils/accountBalances";
-import { computeNetWorth } from "../../utils/accountBalances";
-import { formatCentavos } from "../../utils/currency";
 import { monthBounds, shiftDaysISO } from "../../utils/dateRange";
 import {
 	EMPTY_FILTERS,
@@ -96,7 +94,6 @@ export function AccountsPanel({
 	const [search, setSearch] = useState("");
 
 	const timezone = profile?.timezone ?? "Asia/Manila";
-	const net = useMemo(() => computeNetWorth(accounts), [accounts]);
 
 	const effectiveFilters: TransactionFilters = useMemo(() => {
 		const splitId = crossSplitFilter?.id ?? null;
@@ -227,7 +224,7 @@ export function AccountsPanel({
 						}
 					}}
 				>
-					<ChevronDown className="size-3.5 text-base-content/40" />
+					<ChevronDown className="size-3.5 shrink-0 text-base-content/40" />
 					<span className="text-xs font-semibold uppercase tracking-wide text-base-content/50">
 						Accounts
 					</span>
@@ -248,15 +245,9 @@ export function AccountsPanel({
 							</button>
 						</>
 					) : (
-						<>
-							<span className="text-xs text-base-content/60">
-								{visibleAccountsCount} account{visibleAccountsCount !== 1 ? "s" : ""}
-							</span>
-							<span className="text-xs text-base-content/30">·</span>
-							<span className="text-xs tabular-nums text-base-content/70">
-								Net {formatCentavos(net.netWorthCentavos)}
-							</span>
-						</>
+						<span className="text-xs text-base-content/60">
+							{visibleAccountsCount} account{visibleAccountsCount !== 1 ? "s" : ""}
+						</span>
 					)}
 				</div>
 			) : (
@@ -327,7 +318,7 @@ export function AccountsPanel({
 					className="h-9 flex items-center gap-2 px-4 bg-base-200 border-t border-base-300 flex-shrink-0 hover:bg-base-300 transition-colors cursor-pointer text-left focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary"
 					onClick={() => setTxFolded(false)}
 				>
-					<ChevronDown className="size-3.5 text-base-content/40" />
+					<ChevronDown className="size-3.5 shrink-0 text-base-content/40" />
 					<span className="text-xs font-semibold uppercase tracking-wide text-base-content/50">
 						Transactions
 					</span>
@@ -335,11 +326,6 @@ export function AccountsPanel({
 					<span className="text-xs text-base-content/60">
 						{totalCount} transaction
 						{totalCount !== 1 ? "s" : ""}
-					</span>
-					<span className="text-xs text-base-content/30">·</span>
-					<span className="text-xs tabular-nums text-base-content/70">
-						Net flow this month: {monthSummary.netCentavos >= 0 ? "+" : ""}
-						{formatCentavos(monthSummary.netCentavos)}
 					</span>
 				</button>
 			) : (
