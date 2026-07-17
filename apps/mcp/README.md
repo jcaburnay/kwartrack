@@ -20,6 +20,8 @@ site remains a separate Cloudflare Pages deployment.
 4. The Worker validates the token and creates a Supabase client with that exact bearer token.
 5. Existing RLS limits every query to `auth.uid()`.
 6. Restrictive database policies reject all writes from JWTs containing an OAuth `client_id` claim.
+7. Restrictive SELECT policies allow first-party sessions and only Kwartrack's registered ChatGPT
+   `client_id`; every other OAuth client is denied.
 
 The MCP service never receives a Supabase secret/service-role key.
 
@@ -87,6 +89,10 @@ to the protected-resource metadata.
 5. Set Authorization Path to `/oauth/authorize`.
 6. Enable Dynamic Client Registration and require user consent.
 7. Deploy the new database migration and frontend before connecting ChatGPT.
+
+After ChatGPT registers successfully, disable Dynamic Client Registration again. Existing registered
+clients continue to appear under Authentication → OAuth Apps; audit this list regularly and revoke
+anything unexpected. Temporarily re-enable dynamic registration only when recreating the ChatGPT app.
 
 Dynamic registration lets ChatGPT register its exact callback URI automatically. Review registered
 clients periodically because enabling DCR allows other MCP clients to request registration too.

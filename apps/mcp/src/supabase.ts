@@ -112,16 +112,29 @@ export function createUserSupabaseClient(
 	});
 }
 
+export function isApprovedOAuthClaims(
+	claims: Record<string, unknown>,
+	allowedOAuthClientId: string,
+) {
+	return claims.client_id === allowedOAuthClientId;
+}
+
 export async function validateAccessToken(
 	supabaseUrl: string,
 	publishableKey: string,
 	accessToken: string,
+	allowedOAuthClientId: string,
 ) {
 	const client = createClient(supabaseUrl, publishableKey, {
 		auth: { autoRefreshToken: false, detectSessionInUrl: false, persistSession: false },
 	});
-	const { data, error } = await client.auth.getUser(accessToken);
-	return error ? null : data.user;
+	const [claimsResponse, userResponse] = await Promise.all([
+		client.auth.getClaims(accessToken),
+		client.auth.getUser(accessToken),
+	]);
+	if (claimsResponse.error || userResponse.error) return null;
+	if (!isApprovedOAuthClaims(claimsResponse.data?.claims ?? {}, allowedOAuthClientId)) return null;
+	return userResponse.data.user;
 }
 
 export class SupabaseFinanceDataSource implements FinanceDataSource {
