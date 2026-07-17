@@ -1,5 +1,13 @@
 import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js";
-import { allowedCorsOrigin, isAllowedMcpOrigin, oauthScopes, requestIsTooLarge } from "./auth.js";
+import {
+	allowedCorsOrigin,
+	declaredRequestIsTooLarge,
+	InvalidJsonBodyError,
+	isAllowedMcpOrigin,
+	oauthScopes,
+	RequestBodyTooLargeError,
+	readBoundedJsonBody,
+} from "./auth.js";
 import type { McpConfig } from "./config.js";
 import { SupabaseFinanceDataSource, validateAccessToken } from "./supabase.js";
 import { createKwartrackServer } from "./tools.js";
@@ -106,7 +114,10 @@ export async function handleWorkerRequest(request: Request, env: WorkerEnv): Pro
 		if (url.pathname !== "/mcp" || !["GET", "POST", "DELETE"].includes(request.method)) {
 			return withCors(request, new Response("Not Found", { status: 404 }));
 		}
-		if (request.method === "POST" && requestIsTooLarge(request.headers.get("Content-Length"))) {
+		if (
+			request.method === "POST" &&
+			declaredRequestIsTooLarge(request.headers.get("Content-Length"))
+		) {
 			return withCors(request, Response.json({ error: "request_too_large" }, { status: 413 }));
 		}
 
@@ -122,6 +133,21 @@ export async function handleWorkerRequest(request: Request, env: WorkerEnv): Pro
 		);
 		if (!user) return unauthorized(request, config);
 
+		let parsedBody: unknown;
+		if (request.method === "POST") {
+			try {
+				parsedBody = await readBoundedJsonBody(request);
+			} catch (error) {
+				if (error instanceof RequestBodyTooLargeError) {
+					return withCors(request, Response.json({ error: "request_too_large" }, { status: 413 }));
+				}
+				if (error instanceof InvalidJsonBodyError) {
+					return withCors(request, Response.json({ error: "invalid_json" }, { status: 400 }));
+				}
+				throw error;
+			}
+		}
+
 		const dataSource = new SupabaseFinanceDataSource(
 			config.supabaseUrl,
 			config.supabasePublishableKey,
@@ -133,7 +159,7 @@ export async function handleWorkerRequest(request: Request, env: WorkerEnv): Pro
 			enableJsonResponse: true,
 		});
 		await server.connect(transport);
-		return withCors(request, await transport.handleRequest(request));
+		return withCors(request, await transport.handleRequest(request, { parsedBody }));
 	} catch (error) {
 		// biome-ignore lint/suspicious/noConsole: Cloudflare captures worker errors in its operational logs.
 		console.error("MCP worker request failed", error);

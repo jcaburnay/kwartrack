@@ -3,9 +3,12 @@ import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/
 import {
 	allowedCorsOrigin,
 	bearerToken,
+	declaredRequestIsTooLarge,
+	InvalidJsonBodyError,
 	isAllowedMcpOrigin,
+	maxMcpRequestBytes,
 	protectedResourceMetadata,
-	requestIsTooLarge,
+	RequestBodyTooLargeError,
 	unauthorized,
 } from "./auth.js";
 import { loadConfig } from "./config.js";
@@ -18,6 +21,24 @@ const protectedResourcePaths = new Set([
 	"/.well-known/oauth-protected-resource",
 	"/.well-known/oauth-protected-resource/mcp",
 ]);
+
+async function readNodeJsonBody(request: import("node:http").IncomingMessage) {
+	const chunks: Buffer[] = [];
+	let totalBytes = 0;
+	for await (const value of request) {
+		const chunk = Buffer.isBuffer(value) ? value : Buffer.from(value);
+		totalBytes += chunk.byteLength;
+		if (totalBytes > maxMcpRequestBytes) {
+			throw new RequestBodyTooLargeError("MCP request body exceeds 1 MB");
+		}
+		chunks.push(chunk);
+	}
+	try {
+		return JSON.parse(Buffer.concat(chunks).toString("utf8"));
+	} catch {
+		throw new InvalidJsonBodyError("Request body must be valid JSON");
+	}
+}
 
 function applyCors(
 	request: import("node:http").IncomingMessage,
@@ -79,7 +100,10 @@ const httpServer = createServer(async (request, response) => {
 			response.writeHead(404).end("Not Found");
 			return;
 		}
-		if (request.method === "POST" && requestIsTooLarge(request.headers["content-length"] ?? null)) {
+		if (
+			request.method === "POST" &&
+			declaredRequestIsTooLarge(request.headers["content-length"] ?? null)
+		) {
 			response.writeHead(413, { "Content-Type": "application/json" });
 			response.end(JSON.stringify({ error: "request_too_large" }));
 			return;
@@ -101,6 +125,24 @@ const httpServer = createServer(async (request, response) => {
 			return;
 		}
 
+		let parsedBody: unknown;
+		if (request.method === "POST") {
+			try {
+				parsedBody = await readNodeJsonBody(request);
+			} catch (error) {
+				if (
+					!(error instanceof RequestBodyTooLargeError) &&
+					!(error instanceof InvalidJsonBodyError)
+				) {
+					throw error;
+				}
+				const isTooLarge = error instanceof RequestBodyTooLargeError;
+				response.writeHead(isTooLarge ? 413 : 400, { "Content-Type": "application/json" });
+				response.end(JSON.stringify({ error: isTooLarge ? "request_too_large" : "invalid_json" }));
+				return;
+			}
+		}
+
 		const dataSource = new SupabaseFinanceDataSource(
 			config.supabaseUrl,
 			config.supabasePublishableKey,
@@ -116,7 +158,7 @@ const httpServer = createServer(async (request, response) => {
 			mcpServer.close();
 		});
 		await mcpServer.connect(transport);
-		await transport.handleRequest(request, response);
+		await transport.handleRequest(request, response, parsedBody);
 	} catch (error) {
 		// biome-ignore lint/suspicious/noConsole: production container logs are the MCP service's operational error channel.
 		console.error("MCP request failed", error);
