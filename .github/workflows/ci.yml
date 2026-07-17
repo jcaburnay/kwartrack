@@ -16,6 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       migrations: ${{ steps.filter.outputs.migrations }}
+      mcp: ${{ steps.filter.outputs.mcp }}
     steps:
       - uses: actions/checkout@v4
       - uses: dorny/paths-filter@v3
@@ -24,6 +25,12 @@ jobs:
           filters: |
             migrations:
               - 'supabase/migrations/**'
+            mcp:
+              - 'apps/mcp/**'
+              - 'package.json'
+              - 'pnpm-lock.yaml'
+              - 'pnpm-workspace.yaml'
+              - '.github/workflows/ci.yml'
 
   validate:
     name: Lint, type-check, test, build
@@ -118,3 +125,39 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: pages deploy dist --project-name=kwartrack --branch=main
+
+  deploy_mcp:
+    name: Deploy MCP Worker
+    needs: [validate, changes, deploy_db]
+    if: |
+      !cancelled() &&
+      github.event_name == 'push' && github.ref == 'refs/heads/main' &&
+      needs.changes.outputs.mcp == 'true' &&
+      needs.validate.result == 'success' &&
+      (needs.deploy_db.result == 'success' || needs.deploy_db.result == 'skipped')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Deploy MCP Worker
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_WORKERS_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: apps/mcp
+          command: deploy --config wrangler.jsonc
+
+      - name: Verify MCP health
+        run: curl --fail --retry 5 --retry-all-errors https://mcp.kwartrack.com/health

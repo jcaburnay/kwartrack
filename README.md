@@ -58,7 +58,7 @@ pnpm dev                # Vite dev server at http://localhost:5173
 
 ## Deployment
 
-Production deploys to Cloudflare Pages on every push to `main`, gated by CI:
+Production deploys to Cloudflare on every push to `main`, gated by CI:
 
 ```
 git push main  →  GitHub Actions (.github/workflows/ci.yml)
@@ -70,19 +70,26 @@ git push main  →  GitHub Actions (.github/workflows/ci.yml)
                   ├─ deploy_db            (only when supabase/migrations/** changed)
                   │   └─ supabase db push
                   │
-                  └─ deploy
-                      └─ wrangler pages deploy dist
+                  ├─ deploy
+                  │   └─ wrangler pages deploy dist
+                  │                       ↓
+                  │   Cloudflare Pages → https://kwartrack.com
+                  │
+                  └─ deploy_mcp           (only when MCP/workspace files changed)
+                      ├─ wrangler deploy
+                      └─ verify /health
                                           ↓
-                  Cloudflare Pages → https://kwartrack.com
+                      Cloudflare Worker → https://mcp.kwartrack.com/mcp
 ```
 
-Cloudflare Pages' own auto-build is intentionally paused — CI is the single source of truth for production deploys, so a failing test or lint blocks the deploy.
+Cloudflare's own repository builds are intentionally paused — GitHub Actions is the single source of truth for production deploys, so a failing test or lint blocks both deployments.
 
 ### Required secrets
 
 | Where             | Name                              | Purpose                                          |
 |-------------------|-----------------------------------|--------------------------------------------------|
-| GitHub Actions    | `CLOUDFLARE_API_TOKEN`            | wrangler authentication                          |
+| GitHub Actions    | `CLOUDFLARE_API_TOKEN`            | Cloudflare Pages deployment authentication        |
+| GitHub Actions    | `CLOUDFLARE_WORKERS_API_TOKEN`    | MCP Worker deployment authentication              |
 | GitHub Actions    | `CLOUDFLARE_ACCOUNT_ID`           | wrangler target account                          |
 | GitHub Actions    | `VITE_SUPABASE_URL`               | bundled into the production JS                   |
 | GitHub Actions    | `VITE_SUPABASE_PUBLISHABLE_KEY`   | bundled into the production JS                   |

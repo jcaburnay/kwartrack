@@ -57,18 +57,22 @@ that each bearer token sees only its own accounts.
 
 ## Production deployment
 
-The Worker configuration already declares the `mcp.kwartrack.com` custom domain. Add the two Worker
-secrets from inside `apps/mcp`:
+The Worker configuration declares the `mcp.kwartrack.com` custom domain. Add the two Worker secrets
+once from inside `apps/mcp`:
 
 ```bash
 pnpm exec wrangler secret put SUPABASE_URL
 pnpm exec wrangler secret put SUPABASE_PUBLISHABLE_KEY
-pnpm worker:deploy
 ```
 
 `SUPABASE_PUBLISHABLE_KEY` is safe for user-scoped requests; storing it as a Worker secret simply
 keeps environment configuration in one place. Never add `SUPABASE_SECRET_KEY` or a legacy
 service-role key to the Worker.
+
+After setup, pushes to `main` automatically deploy MCP or workspace changes through
+`.github/workflows/ci.yml`. The deployment runs only after validation and any required database
+migration, preserves the Worker secrets already stored in Cloudflare, and verifies `/health`.
+Manual fallback remains `pnpm worker:deploy` from this directory.
 
 After the first deployment, verify:
 
