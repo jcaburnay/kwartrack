@@ -1,7 +1,7 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { APPROVED_CHATGPT_CLIENT_ID } from "../lib/config";
+import { APPROVED_CHATGPT_CLIENT_ID, isApprovedChatGptRedirect } from "../lib/config";
 import { OAuthAuthorizationPage } from "../pages/OAuthAuthorizationPage";
 
 const mocks = vi.hoisted(() => ({
@@ -113,5 +113,33 @@ describe("OAuthAuthorizationPage", () => {
 		expect(screen.getByText(/https:\/\/attacker.example/i)).toBeVisible();
 		expect(screen.queryByRole("button", { name: "Allow access" })).not.toBeInTheDocument();
 		expect(screen.getByRole("button", { name: "Deny request" })).toBeEnabled();
+	});
+
+	it("blocks an existing grant that redirects outside ChatGPT", async () => {
+		mocks.authState.session = { user: { id: "user-1" } };
+		mocks.getAuthorizationDetails.mockResolvedValue({
+			data: { redirect_url: "https://attacker.example/callback?code=secret" },
+			error: null,
+		});
+
+		render(
+			<MemoryRouter initialEntries={["/oauth/authorize?authorization_id=request-789"]}>
+				<OAuthAuthorizationPage />
+			</MemoryRouter>,
+		);
+
+		await waitFor(() =>
+			expect(screen.getByRole("heading", { name: "Couldn't connect Kwartrack" })).toBeVisible(),
+		);
+		expect(screen.getByText(/redirect to an unapproved application/i)).toBeVisible();
+	});
+
+	it("accepts only HTTPS redirects owned by ChatGPT", () => {
+		expect(isApprovedChatGptRedirect("https://chatgpt.com/connector/oauth/callback?code=ok")).toBe(
+			true,
+		);
+		expect(isApprovedChatGptRedirect("https://chat.openai.com/aip/callback?code=ok")).toBe(true);
+		expect(isApprovedChatGptRedirect("https://chatgpt.com.attacker.example/callback")).toBe(false);
+		expect(isApprovedChatGptRedirect("http://chatgpt.com/callback")).toBe(false);
 	});
 });

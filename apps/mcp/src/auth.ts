@@ -4,6 +4,10 @@ import type { McpConfig } from "./config.js";
 export const oauthScopes = ["openid", "email", "profile"] as const;
 export const maxMcpRequestBytes = 1_000_000;
 
+export class RequestBodyTooLargeError extends Error {}
+
+export class InvalidJsonBodyError extends Error {}
+
 const allowedMcpOrigins = new Set([
 	"https://chatgpt.com",
 	"https://chat.openai.com",
@@ -19,10 +23,45 @@ export function allowedCorsOrigin(origin: string | null) {
 	return origin && allowedMcpOrigins.has(origin) ? origin : null;
 }
 
-export function requestIsTooLarge(contentLength: string | null) {
+export function declaredRequestIsTooLarge(contentLength: string | null) {
 	if (!contentLength) return false;
 	const bytes = Number(contentLength);
 	return !Number.isFinite(bytes) || bytes < 0 || bytes > maxMcpRequestBytes;
+}
+
+export async function readBoundedJsonBody(request: Request): Promise<unknown> {
+	if (!request.body) throw new InvalidJsonBodyError("Request body is required");
+	const reader = request.body.getReader();
+	const chunks: Uint8Array[] = [];
+	let totalBytes = 0;
+
+	try {
+		while (true) {
+			const { done, value } = await reader.read();
+			if (done) break;
+			totalBytes += value.byteLength;
+			if (totalBytes > maxMcpRequestBytes) {
+				await reader.cancel().catch(() => undefined);
+				throw new RequestBodyTooLargeError("MCP request body exceeds 1 MB");
+			}
+			chunks.push(value);
+		}
+	} finally {
+		reader.releaseLock();
+	}
+
+	const body = new Uint8Array(totalBytes);
+	let offset = 0;
+	for (const chunk of chunks) {
+		body.set(chunk, offset);
+		offset += chunk.byteLength;
+	}
+
+	try {
+		return JSON.parse(new TextDecoder().decode(body));
+	} catch {
+		throw new InvalidJsonBodyError("Request body must be valid JSON");
+	}
 }
 
 export function bearerToken(request: IncomingMessage) {

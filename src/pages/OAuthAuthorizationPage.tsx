@@ -2,7 +2,7 @@ import type { OAuthAuthorizationDetails } from "@supabase/supabase-js";
 import { ShieldCheck } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link, useLocation, useSearchParams } from "react-router";
-import { APPROVED_CHATGPT_CLIENT_ID } from "../lib/config";
+import { APPROVED_CHATGPT_CLIENT_ID, isApprovedChatGptRedirect } from "../lib/config";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../providers/AuthProvider";
 
@@ -45,6 +45,11 @@ export function OAuthAuthorizationPage() {
 				return;
 			}
 			if ("redirect_url" in data) {
+				if (!isApprovedChatGptRedirect(data.redirect_url)) {
+					setError("An existing authorization tried to redirect to an unapproved application.");
+					setIsLoading(false);
+					return;
+				}
 				window.location.assign(data.redirect_url);
 				return;
 			}
