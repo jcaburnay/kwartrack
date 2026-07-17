@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, Navigate, useLocation, useNavigate } from "react-router";
 import { useAuth } from "../providers/AuthProvider";
+import { safeAuthNext } from "../utils/authRedirect";
 import { SignInForm } from "./auth/SignInForm";
 import { SignUpForm } from "./auth/SignUpForm";
 
@@ -8,17 +9,18 @@ type Mode = "signin" | "signup";
 
 export function AuthPage() {
 	const { session, isLoading } = useAuth();
-	const { pathname } = useLocation();
+	const { pathname, search } = useLocation();
 	const navigate = useNavigate();
 	const [checkEmail, setCheckEmail] = useState(false);
+	const next = safeAuthNext(search);
 
-	if (!isLoading && session) return <Navigate to="/" replace />;
+	if (!isLoading && session) return <Navigate to={next} replace />;
 
 	const mode: Mode = pathname === "/signup" ? "signup" : "signin";
 
 	function selectMode(next: Mode) {
 		if (next === mode) return;
-		navigate(next === "signup" ? "/signup" : "/signin", { replace: true });
+		navigate(`${next === "signup" ? "/signup" : "/signin"}${search}`, { replace: true });
 	}
 
 	if (checkEmail) {

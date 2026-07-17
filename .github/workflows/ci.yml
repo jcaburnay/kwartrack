@@ -50,10 +50,15 @@ jobs:
         run: pnpm run ci
 
       - name: Run tests
-        run: pnpm test
+        run: |
+          pnpm test
+          pnpm mcp:test
 
       - name: Type-check and build
-        run: pnpm build
+        run: |
+          pnpm build
+          pnpm mcp:build
+          pnpm mcp:worker:build
 
       - name: Upload build artifact
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'

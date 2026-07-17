@@ -6,6 +6,11 @@
 	"scripts": {
 		"dev": "vite",
 		"build": "tsc -b && vite build",
+		"mcp:build": "pnpm --filter @kwartrack/mcp build",
+		"mcp:dev": "pnpm --filter @kwartrack/mcp dev",
+		"mcp:test": "pnpm --filter @kwartrack/mcp test",
+		"mcp:worker:build": "pnpm --filter @kwartrack/mcp worker:build",
+		"mcp:worker:dev": "pnpm --filter @kwartrack/mcp worker:dev",
 		"preview": "vite preview",
 		"check": "biome check --write .",
 		"ci": "biome ci .",
@@ -17,7 +22,7 @@
 		"types:gen": "supabase gen types typescript --local | grep -vE '^(Initialising|<claude-code-hint)' > src/types/supabase.ts"
 	},
 	"dependencies": {
-		"@supabase/supabase-js": "^2.104.1",
+		"@supabase/supabase-js": "^2.110.7",
 		"daisyui": "^5.5.19",
 		"lucide-react": "^1.11.0",
 		"react": "^19.2.4",

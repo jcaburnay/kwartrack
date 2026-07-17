@@ -1,2 +1,16 @@
+packages:
+  - "apps/*"
+
 allowBuilds:
+  esbuild: true
+  sharp: true
   supabase: true
+  workerd: true
+
+minimumReleaseAgeExclude:
+  - '@supabase/auth-js@2.110.7'
+  - '@supabase/functions-js@2.110.7'
+  - '@supabase/postgrest-js@2.110.7'
+  - '@supabase/realtime-js@2.110.7'
+  - '@supabase/storage-js@2.110.7'
+  - '@supabase/supabase-js@2.110.7'

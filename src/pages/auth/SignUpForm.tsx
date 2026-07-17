@@ -1,9 +1,10 @@
 import { Lock, Mail, User } from "lucide-react";
 import { useState } from "react";
 import { type SubmitHandler, useForm } from "react-hook-form";
-import { useNavigate } from "react-router";
+import { useLocation, useNavigate } from "react-router";
 import { supabase } from "../../lib/supabase";
 import { useAuth } from "../../providers/AuthProvider";
+import { safeAuthNext } from "../../utils/authRedirect";
 import { SocialAuthButtons } from "./SocialAuthButtons";
 
 type SignUpFormValues = {
@@ -47,6 +48,8 @@ type Props = {
 export function SignUpForm({ onCheckEmail }: Props) {
 	const { setSessionOptimistically } = useAuth();
 	const navigate = useNavigate();
+	const { search } = useLocation();
+	const next = safeAuthNext(search);
 	const [submitError, setSubmitError] = useState<string | null>(null);
 
 	const {
@@ -79,7 +82,7 @@ export function SignUpForm({ onCheckEmail }: Props) {
 
 		if (data.session) {
 			setSessionOptimistically(data.session);
-			navigate("/", { replace: true });
+			navigate(next, { replace: true });
 			return;
 		}
 
@@ -89,7 +92,7 @@ export function SignUpForm({ onCheckEmail }: Props) {
 
 	return (
 		<form className="flex flex-col gap-4" onSubmit={handleSubmit(onSubmit)} noValidate>
-			<SocialAuthButtons setError={setSubmitError} />
+			<SocialAuthButtons setError={setSubmitError} redirectPath={next} />
 			<div className="flex flex-col gap-1">
 				<label className="floating-label relative">
 					<span>Display name</span>

@@ -1,9 +1,10 @@
 import { Lock, Mail } from "lucide-react";
 import { useState } from "react";
 import { type SubmitHandler, useForm } from "react-hook-form";
-import { useNavigate } from "react-router";
+import { useLocation, useNavigate } from "react-router";
 import { supabase } from "../../lib/supabase";
 import { useAuth } from "../../providers/AuthProvider";
+import { safeAuthNext } from "../../utils/authRedirect";
 import { SocialAuthButtons } from "./SocialAuthButtons";
 
 type SignInFormValues = {
@@ -31,6 +32,8 @@ function mapAuthError(message: string): string {
 export function SignInForm() {
 	const { setSessionOptimistically } = useAuth();
 	const navigate = useNavigate();
+	const { search } = useLocation();
+	const next = safeAuthNext(search);
 	const [submitError, setSubmitError] = useState<string | null>(null);
 
 	const {
@@ -57,13 +60,13 @@ export function SignInForm() {
 
 		if (data.session) {
 			setSessionOptimistically(data.session);
-			navigate("/", { replace: true });
+			navigate(next, { replace: true });
 		}
 	};
 
 	return (
 		<form className="flex flex-col gap-4" onSubmit={handleSubmit(onSubmit)} noValidate>
-			<SocialAuthButtons setError={setSubmitError} />
+			<SocialAuthButtons setError={setSubmitError} redirectPath={next} />
 			<div className="flex flex-col gap-1">
 				<label className="floating-label relative">
 					<span>Email</span>
