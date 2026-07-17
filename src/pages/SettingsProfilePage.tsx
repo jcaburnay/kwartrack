@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { DeleteAccountDialog } from "../components/settings/DeleteAccountDialog";
+import { OAuthConnections } from "../components/settings/OAuthConnections";
 import { SettingsSection } from "../components/settings/SettingsSection";
 import { TimezonePicker } from "../components/settings/TimezonePicker";
 import { useProfile } from "../hooks/useProfile";
@@ -223,6 +224,8 @@ export function SettingsProfilePage() {
 					</button>
 				</Row>
 			</div>
+
+			<OAuthConnections />
 
 			{/* Danger zone */}
 			<div className="rounded-box border border-error/30 bg-base-100 p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-2">

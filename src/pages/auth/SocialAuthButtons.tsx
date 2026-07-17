@@ -13,9 +13,10 @@ type Props = {
 	/** Hook back into the parent form's submitError state so the same alert
 	 *  box used for email/password errors also surfaces OAuth failures. */
 	setError: (message: string | null) => void;
+	redirectPath?: string;
 };
 
-export function SocialAuthButtons({ setError }: Props) {
+export function SocialAuthButtons({ setError, redirectPath = "/" }: Props) {
 	const [isLoading, setIsLoading] = useState(false);
 
 	async function handleGoogle() {
@@ -23,7 +24,7 @@ export function SocialAuthButtons({ setError }: Props) {
 		setIsLoading(true);
 		const { error } = await supabase.auth.signInWithOAuth({
 			provider: "google",
-			options: { redirectTo: `${window.location.origin}/` },
+			options: { redirectTo: `${window.location.origin}${redirectPath}` },
 		});
 		if (error) {
 			// biome-ignore lint/suspicious/noConsole: keep raw Supabase message for debugging while showing a friendly mapped error to the user.

@@ -1,0 +1,20 @@
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "kwartrack-mcp",
+	"main": "src/worker.ts",
+	"compatibility_date": "2026-07-17",
+	"compatibility_flags": ["nodejs_compat"],
+	"workers_dev": true,
+	"routes": [
+		{
+			"pattern": "mcp.kwartrack.com",
+			"custom_domain": true
+		}
+	],
+	"vars": {
+		"MCP_PUBLIC_URL": "https://mcp.kwartrack.com"
+	},
+	"observability": {
+		"enabled": true
+	}
+}

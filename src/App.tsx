@@ -4,6 +4,9 @@ import { ProtectedRoute } from "./components/ProtectedRoute";
 import { JigsawPage } from "./pages/JigsawPage";
 
 const AuthPage = lazy(() => import("./pages/AuthPage").then((m) => ({ default: m.AuthPage })));
+const OAuthAuthorizationPage = lazy(() =>
+	import("./pages/OAuthAuthorizationPage").then((m) => ({ default: m.OAuthAuthorizationPage })),
+);
 const SettingsPage = lazy(() =>
 	import("./pages/SettingsPage").then((m) => ({ default: m.SettingsPage })),
 );
@@ -82,6 +85,7 @@ const router = createBrowserRouter([
 	},
 	{ path: "/signin", element: lazyRoute(<AuthPage />) },
 	{ path: "/signup", element: lazyRoute(<AuthPage />) },
+	{ path: "/oauth/authorize", element: lazyRoute(<OAuthAuthorizationPage />) },
 ]);
 
 export function App() {
