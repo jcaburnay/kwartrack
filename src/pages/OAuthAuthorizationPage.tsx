@@ -2,6 +2,7 @@ import type { OAuthAuthorizationDetails } from "@supabase/supabase-js";
 import { ShieldCheck } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link, useLocation, useSearchParams } from "react-router";
+import { APPROVED_CHATGPT_CLIENT_ID } from "../lib/config";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../providers/AuthProvider";
 
@@ -10,6 +11,14 @@ const scopeDescriptions: Record<string, string> = {
 	email: "See the email address on your account",
 	profile: "See your basic Kwartrack profile",
 };
+
+function displayOrigin(value: string) {
+	try {
+		return new URL(value).origin;
+	} catch {
+		return "an unverified destination";
+	}
+}
 
 export function OAuthAuthorizationPage() {
 	const { session, isLoading: isAuthLoading } = useAuth();
@@ -104,7 +113,31 @@ export function OAuthAuthorizationPage() {
 		);
 	}
 
+	if (details.client.id !== APPROVED_CHATGPT_CLIENT_ID) {
+		return (
+			<AuthorizationMessage
+				title="Unapproved application"
+				message={`${details.client.name || "An unknown application"} is not approved to read Kwartrack data. Its registered redirect destination is ${displayOrigin(details.redirect_uri)}.`}
+			>
+				<button
+					type="button"
+					className="btn btn-primary"
+					disabled={decision !== null}
+					onClick={() => decide("deny")}
+				>
+					{decision === "deny" ? (
+						<span className="loading loading-spinner loading-sm" />
+					) : (
+						"Deny request"
+					)}
+				</button>
+			</AuthorizationMessage>
+		);
+	}
+
 	const scopes = details.scope.split(/\s+/).filter(Boolean);
+	const clientOrigin = displayOrigin(details.client.uri);
+	const redirectOrigin = displayOrigin(details.redirect_uri);
 	return (
 		<main className="flex min-h-dvh items-center justify-center bg-base-200 p-6">
 			<div className="card w-full max-w-md bg-base-100 shadow-md">
@@ -117,6 +150,9 @@ export function OAuthAuthorizationPage() {
 							<h1 className="card-title">Connect {details.client.name || "ChatGPT"}</h1>
 							<p className="mt-1 text-sm text-base-content/65">
 								Review the access requested for {details.user.email}.
+							</p>
+							<p className="mt-1 text-xs text-base-content/50">
+								Requested by {clientOrigin} · Returns to {redirectOrigin}
 							</p>
 						</div>
 					</div>

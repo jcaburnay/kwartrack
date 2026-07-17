@@ -3,6 +3,7 @@ export type McpConfig = {
 	publicUrl: URL;
 	supabaseUrl: string;
 	supabasePublishableKey: string;
+	allowedOAuthClientId: string;
 };
 
 function requiredEnv(primary: string, fallback?: string) {
@@ -32,5 +33,6 @@ export function loadConfig(): McpConfig {
 			"SUPABASE_PUBLISHABLE_KEY",
 			"VITE_SUPABASE_PUBLISHABLE_KEY",
 		),
+		allowedOAuthClientId: requiredEnv("MCP_ALLOWED_OAUTH_CLIENT_ID"),
 	};
 }

@@ -3,3 +3,5 @@ https://kwartrack.com/*
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: camera=(), microphone=(), geolocation=()
+  Strict-Transport-Security: max-age=31536000
+  Content-Security-Policy: default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://zotqoxzqnyfqtkwceahw.supabase.co wss://zotqoxzqnyfqtkwceahw.supabase.co; form-action 'self'; upgrade-insecure-requests

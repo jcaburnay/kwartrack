@@ -1,6 +1,13 @@
 import { createServer } from "node:http";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
-import { bearerToken, protectedResourceMetadata, unauthorized } from "./auth.js";
+import {
+	allowedCorsOrigin,
+	bearerToken,
+	isAllowedMcpOrigin,
+	protectedResourceMetadata,
+	requestIsTooLarge,
+	unauthorized,
+} from "./auth.js";
 import { loadConfig } from "./config.js";
 import { SupabaseFinanceDataSource, validateAccessToken } from "./supabase.js";
 import { createKwartrackServer } from "./tools.js";
@@ -12,11 +19,16 @@ const protectedResourcePaths = new Set([
 	"/.well-known/oauth-protected-resource/mcp",
 ]);
 
-function applyCors(response: import("node:http").ServerResponse) {
-	response.setHeader("Access-Control-Allow-Origin", "*");
+function applyCors(
+	request: import("node:http").IncomingMessage,
+	response: import("node:http").ServerResponse,
+) {
+	const origin = allowedCorsOrigin(request.headers.origin ?? null);
+	if (origin) response.setHeader("Access-Control-Allow-Origin", origin);
+	response.setHeader("Vary", "Origin");
 	response.setHeader(
 		"Access-Control-Allow-Headers",
-		"authorization, content-type, last-event-id, mcp-protocol-version, mcp-session-id",
+		"authorization, content-type, last-event-id, mcp-method, mcp-name, mcp-protocol-version, mcp-session-id",
 	);
 	response.setHeader(
 		"Access-Control-Expose-Headers",
@@ -31,7 +43,12 @@ const httpServer = createServer(async (request, response) => {
 			return;
 		}
 		const url = new URL(request.url, `http://${request.headers.host ?? "localhost"}`);
-		applyCors(response);
+		applyCors(request, response);
+		if (!isAllowedMcpOrigin(request.headers.origin ?? null)) {
+			response.writeHead(403, { "Content-Type": "application/json" });
+			response.end(JSON.stringify({ error: "invalid_origin" }));
+			return;
+		}
 
 		if (request.method === "OPTIONS") {
 			response.writeHead(204, { "Access-Control-Allow-Methods": "GET, POST, DELETE, OPTIONS" });
@@ -62,6 +79,11 @@ const httpServer = createServer(async (request, response) => {
 			response.writeHead(404).end("Not Found");
 			return;
 		}
+		if (request.method === "POST" && requestIsTooLarge(request.headers["content-length"] ?? null)) {
+			response.writeHead(413, { "Content-Type": "application/json" });
+			response.end(JSON.stringify({ error: "request_too_large" }));
+			return;
+		}
 
 		const accessToken = bearerToken(request);
 		if (!accessToken) {
@@ -72,6 +94,7 @@ const httpServer = createServer(async (request, response) => {
 			config.supabaseUrl,
 			config.supabasePublishableKey,
 			accessToken,
+			config.allowedOAuthClientId,
 		);
 		if (!user) {
 			unauthorized(response, config);

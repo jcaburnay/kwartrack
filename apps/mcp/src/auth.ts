@@ -2,6 +2,28 @@ import type { IncomingMessage, ServerResponse } from "node:http";
 import type { McpConfig } from "./config.js";
 
 export const oauthScopes = ["openid", "email", "profile"] as const;
+export const maxMcpRequestBytes = 1_000_000;
+
+const allowedMcpOrigins = new Set([
+	"https://chatgpt.com",
+	"https://chat.openai.com",
+	"https://kwartrack.com",
+]);
+
+export function isAllowedMcpOrigin(origin: string | null) {
+	if (!origin) return true;
+	return allowedMcpOrigins.has(origin);
+}
+
+export function allowedCorsOrigin(origin: string | null) {
+	return origin && allowedMcpOrigins.has(origin) ? origin : null;
+}
+
+export function requestIsTooLarge(contentLength: string | null) {
+	if (!contentLength) return false;
+	const bytes = Number(contentLength);
+	return !Number.isFinite(bytes) || bytes < 0 || bytes > maxMcpRequestBytes;
+}
 
 export function bearerToken(request: IncomingMessage) {
 	const header = request.headers.authorization;
