@@ -9,6 +9,7 @@ const pkg = JSON.parse(
 ) as { version: string };
 
 export default defineConfig({
+	envDir: fileURLToPath(new URL("../..", import.meta.url)),
 	plugins: [react(), tailwindcss()],
 	define: {
 		__APP_VERSION__: JSON.stringify(pkg.version),

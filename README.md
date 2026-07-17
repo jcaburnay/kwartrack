@@ -20,6 +20,15 @@ Manage everyday money flow without the overhead of a full bookkeeping app: log t
 
 The full feature model and data design lives in [`specs_v2.md`](specs_v2.md).
 
+## Repository layout
+
+```text
+apps/web/     React/Vite application deployed to kwartrack.com
+apps/mcp/     MCP Worker deployed to mcp.kwartrack.com
+supabase/     Shared database configuration and migrations
+scripts/      Repository-level automation
+```
+
 ## Stack
 
 React 19 + TypeScript + Vite · Supabase (Auth + Postgres + Realtime + Storage) · Tailwind v4 + DaisyUI v5 · Biome · Vitest · pnpm.
@@ -54,7 +63,7 @@ pnpm dev                # Vite dev server at http://localhost:5173
 | `pnpm check`       | Biome format + lint (auto-fix)                             |
 | `pnpm run ci`      | Biome CI check (no autofix) — `pnpm ci` is reserved        |
 | `pnpm build`       | `tsc -b && vite build`                                     |
-| `pnpm types:gen`   | Regenerate `src/types/supabase.ts` from local schema       |
+| `pnpm types:gen`   | Regenerate `apps/web/src/types/supabase.ts`                |
 
 ## Deployment
 

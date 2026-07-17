@@ -32,21 +32,16 @@ pnpm supabase:stop      # tear down local stack
 ## Project Structure
 
 ```
-src/
-  main.tsx              # entry
-  App.tsx               # app shell + router
-  index.css             # tailwind + daisyui imports
-  components/           # UI grouped by feature
-  hooks/                # data hooks
-  lib/supabase.ts       # supabase client
-  pages/                # route components
-  providers/            # AuthProvider etc.
-  types/                # generated supabase types
-  utils/                # helpers
-  __tests__/            # vitest (jsdom)
+apps/
+  web/
+    src/                 # React app, routes, components, and tests
+    public/              # static assets and Cloudflare Pages headers
+    vite.config.ts       # web build configuration
+  mcp/                   # MCP server and Cloudflare Worker
 supabase/
   config.toml           # local CLI config
   migrations/           # schema migrations (auto-applied by CI on push to main)
+scripts/                 # repository-level automation
 ```
 
 See `specs_v2.md` for the full feature model.
@@ -68,11 +63,11 @@ When you change the schema:
 1. supabase migration new <name>     # creates supabase/migrations/<ts>_<name>.sql
 2. (write the SQL)
 3. pnpm exec supabase db reset       # re-applies all migrations to local DB
-4. pnpm types:gen                    # regen src/types/supabase.ts from local
+4. pnpm types:gen                    # regen apps/web/src/types/supabase.ts from local
 5. (verify; commit)
 ```
 
-Integration tests under `src/__tests__/*.integration.test.ts` use the **local** service-role key (`SUPABASE_SECRET_KEY` in `.env.local`, copied from `pnpm supabase:status`) to seed/clean test data. They auto-skip when the key isn't present, so the unit suite still runs without it.
+Integration tests under `apps/web/src/__tests__/*.integration.test.ts` use the **local** service-role key (`SUPABASE_SECRET_KEY` in `.env.local`, copied from `pnpm supabase:status`) to seed/clean test data. They auto-skip when the key isn't present, so the unit suite still runs without it.
 
 ## Deployment
 
@@ -86,7 +81,7 @@ Implications when writing changes:
 
 ## TypeScript
 
-`strict: true` in `tsconfig.app.json`. Additionally:
+`strict: true` in `apps/web/tsconfig.app.json`. Additionally:
 - No explicit `any` — use `unknown` + narrowing.
 - No `@ts-ignore` — fix the underlying type issue.
 - Prefer inference over verbose annotations where obvious.
@@ -108,10 +103,10 @@ refactor(transactions): extract balance-delta helper
 
 ## Tailwind / DaisyUI
 
-- Tailwind v4: config lives in `vite.config.ts` via `@tailwindcss/vite` and `src/index.css` via `@plugin "daisyui"`. There is no `tailwind.config.js`.
+- Tailwind v4: config lives in `apps/web/vite.config.ts` via `@tailwindcss/vite` and `apps/web/src/index.css` via `@plugin "daisyui"`. There is no `tailwind.config.js`.
 - Prefer DaisyUI component classes (`btn`, `modal`, `card`, `badge`, etc.) before writing custom utility stacks.
 
 ## Assets
 
-- `public/` — referenced by URL (favicons, `_headers`, `_redirects`).
-- `src/assets/` — imported directly in components.
+- `apps/web/public/` — referenced by URL (favicons, `_headers`, `_redirects`).
+- `apps/web/src/assets/` — imported directly in components.
