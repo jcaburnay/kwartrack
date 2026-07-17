@@ -76,11 +76,12 @@ Integration tests under `src/__tests__/*.integration.test.ts` use the **local** 
 
 ## Deployment
 
-`main` auto-deploys via `.github/workflows/ci.yml`. A push runs **lint → test → build**, then (if any `supabase/migrations/*.sql` changed) **`supabase db push`**, then ships the bundle to Cloudflare Pages at <https://kwartrack.com>. Any failing step blocks the deploy.
+`main` auto-deploys via `.github/workflows/ci.yml`. A push runs **lint → test → build**, then (if any `supabase/migrations/*.sql` changed) **`supabase db push`**, then ships the web bundle to Cloudflare Pages at <https://kwartrack.com>. Changes affecting `apps/mcp` deploy the Worker to <https://mcp.kwartrack.com/mcp> after validation and any required migration complete. Any failing step blocks the affected deploys.
 
 Implications when writing changes:
 - **Migrations land in prod automatically.** Keep them additive: new tables, new columns, new policies. Avoid renames, type changes, and drops. When unavoidable, do a multi-step add-then-remove rollout coordinated with the app code.
 - **App env vars are baked at CI build time** from repo secrets (`VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`). Adding a new `VITE_*` requires a matching repo secret and a `validate` job env-var line.
+- **Worker secrets persist in Cloudflare.** CI deploys the Worker configuration and bundle without copying Supabase values through GitHub. Add or rotate Worker secrets with `wrangler secret put`.
 - **Manual fallback for migrations** is `pnpm exec supabase db push` (CI does this on every push when migrations change).
 
 ## TypeScript
