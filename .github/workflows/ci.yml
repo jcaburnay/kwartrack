@@ -158,14 +158,3 @@ jobs:
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           workingDirectory: apps/mcp
           command: deploy --config wrangler.jsonc
-
-      - name: Verify MCP health
-        # Cloudflare edge security can reject GitHub-hosted runner traffic even
-        # when the public Worker is healthy. Keep the probe visible as a warning
-        # without failing an otherwise successful Wrangler deployment.
-        continue-on-error: true
-        run: >-
-          curl --fail --show-error --silent
-          --retry 12 --retry-all-errors --retry-delay 5 --retry-max-time 90
-          --connect-timeout 10 --max-time 15
-          https://mcp.kwartrack.com/health

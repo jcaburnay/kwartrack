@@ -71,8 +71,9 @@ service-role key to the Worker.
 
 After setup, pushes to `main` automatically deploy MCP or workspace changes through
 `.github/workflows/ci.yml`. The deployment runs only after validation and any required database
-migration, preserves the Worker secrets already stored in Cloudflare, and verifies `/health`.
-Manual fallback remains `pnpm worker:deploy` from this directory.
+migration and preserves the Worker secrets already stored in Cloudflare. Health verification is
+manual because Cloudflare edge security may reject GitHub-hosted runner traffic. Manual fallback
+remains `pnpm worker:deploy` from this directory.
 
 After the first deployment, verify:
 

@@ -76,8 +76,7 @@ git push main  →  GitHub Actions (.github/workflows/ci.yml)
                   │   Cloudflare Pages → https://kwartrack.com
                   │
                   └─ deploy_mcp           (only when MCP/workspace files changed)
-                      ├─ wrangler deploy
-                      └─ verify /health
+                      └─ wrangler deploy
                                           ↓
                       Cloudflare Worker → https://mcp.kwartrack.com/mcp
 ```
