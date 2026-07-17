@@ -88,8 +88,7 @@ Cloudflare's own repository builds are intentionally paused — GitHub Actions i
 
 | Where             | Name                              | Purpose                                          |
 |-------------------|-----------------------------------|--------------------------------------------------|
-| GitHub Actions    | `CLOUDFLARE_API_TOKEN`            | Cloudflare Pages deployment authentication        |
-| GitHub Actions    | `CLOUDFLARE_WORKERS_API_TOKEN`    | MCP Worker deployment authentication              |
+| GitHub Actions    | `CLOUDFLARE_API_TOKEN`            | Cloudflare Pages and MCP Worker deployments       |
 | GitHub Actions    | `CLOUDFLARE_ACCOUNT_ID`           | wrangler target account                          |
 | GitHub Actions    | `VITE_SUPABASE_URL`               | bundled into the production JS                   |
 | GitHub Actions    | `VITE_SUPABASE_PUBLISHABLE_KEY`   | bundled into the production JS                   |
