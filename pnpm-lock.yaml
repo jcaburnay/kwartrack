@@ -7,6 +7,43 @@ settings:
 importers:
 
   .:
+    devDependencies:
+      '@biomejs/biome':
+        specifier: 2.4.10
+        version: 2.4.10
+      supabase:
+        specifier: ^2.98.0
+        version: 2.98.0
+
+  apps/mcp:
+    dependencies:
+      '@modelcontextprotocol/sdk':
+        specifier: ^1.29.0
+        version: 1.29.0(zod@4.4.3)
+      '@supabase/supabase-js':
+        specifier: ^2.110.7
+        version: 2.110.7
+      zod:
+        specifier: ^4.4.3
+        version: 4.4.3
+    devDependencies:
+      '@types/node':
+        specifier: ^25.5.0
+        version: 25.6.0
+      tsx:
+        specifier: ^4.20.6
+        version: 4.23.1
+      typescript:
+        specifier: ~6.0.2
+        version: 6.0.3
+      vitest:
+        specifier: ^4.1.2
+        version: 4.1.2(@types/node@25.6.0)(jsdom@29.0.2)(vite@8.0.3(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0)(@types/node@25.6.0)(jiti@2.6.1)(tsx@4.23.1))
+      wrangler:
+        specifier: ^4.111.0
+        version: 4.111.0
+
+  apps/web:
     dependencies:
       '@supabase/supabase-js':
         specifier: ^2.110.7
@@ -36,9 +73,6 @@ importers:
         specifier: 4.2.2
         version: 4.2.2
     devDependencies:
-      '@biomejs/biome':
-        specifier: 2.4.10
-        version: 2.4.10
       '@tailwindcss/vite':
         specifier: 4.2.2
         version: 4.2.2(vite@8.0.3(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0)(@types/node@25.6.0)(jiti@2.6.1)(tsx@4.23.1))
@@ -66,9 +100,6 @@ importers:
       jsdom:
         specifier: ^29.0.1
         version: 29.0.2
-      supabase:
-        specifier: ^2.98.0
-        version: 2.98.0
       typescript:
         specifier: ~6.0.2
         version: 6.0.3
@@ -78,34 +109,6 @@ importers:
       vitest:
         specifier: 4.1.2
         version: 4.1.2(@types/node@25.6.0)(jsdom@29.0.2)(vite@8.0.3(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0)(@types/node@25.6.0)(jiti@2.6.1)(tsx@4.23.1))
-
-  apps/mcp:
-    dependencies:
-      '@modelcontextprotocol/sdk':
-        specifier: ^1.29.0
-        version: 1.29.0(zod@4.4.3)
-      '@supabase/supabase-js':
-        specifier: ^2.110.7
-        version: 2.110.7
-      zod:
-        specifier: ^4.4.3
-        version: 4.4.3
-    devDependencies:
-      '@types/node':
-        specifier: ^25.5.0
-        version: 25.6.0
-      tsx:
-        specifier: ^4.20.6
-        version: 4.23.1
-      typescript:
-        specifier: ~6.0.2
-        version: 6.0.3
-      vitest:
-        specifier: ^4.1.2
-        version: 4.1.2(@types/node@25.6.0)(jsdom@29.0.2)(vite@8.0.3(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0)(@types/node@25.6.0)(jiti@2.6.1)(tsx@4.23.1))
-      wrangler:
-        specifier: ^4.111.0
-        version: 4.111.0
 
 packages:
 
@@ -1953,10 +1956,6 @@ packages:
   undici-types@7.19.2:
     resolution: {integrity: sha512-qYVnV5OEm2AW8cJMCpdV20CDyaN3g0AjDlOGf1OW4iaDEx8MwdtChUp4zu4H0VP3nDRF/8RKWH+IPp9uW0YGZg==}
 
-  undici@7.25.0:
-    resolution: {integrity: sha512-xXnp4kTyor2Zq+J1FfPI6Eq3ew5h6Vl0F/8d9XU5zZQf1tX9s2Su1/3PiMmUANFULpmksxkClamIZcaUqryHsQ==}
-    engines: {node: '>=20.18.1'}
-
   undici@7.28.0:
     resolution: {integrity: sha512-cRZYrTDwWznlnRiPjggAGxZXanty6M8RV1ff8Wm4LWXBp7/IG8v5DnOm74DtUBp9OONpK75YlPnIjQqX0dBDtA==}
     engines: {node: '>=20.18.1'}
@@ -3258,7 +3257,7 @@ snapshots:
       saxes: 6.0.0
       symbol-tree: 3.2.4
       tough-cookie: 6.0.1
-      undici: 7.25.0
+      undici: 7.28.0
       w3c-xmlserializer: 5.0.0
       webidl-conversions: 8.0.1
       whatwg-mimetype: 5.0.0
@@ -3758,8 +3757,6 @@ snapshots:
   typescript@6.0.3: {}
 
   undici-types@7.19.2: {}
-
-  undici@7.25.0: {}
 
   undici@7.28.0: {}
 
