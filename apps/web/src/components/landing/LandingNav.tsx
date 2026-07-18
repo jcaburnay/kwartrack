@@ -1,7 +1,8 @@
-import { Code, Moon, Sun } from "lucide-react";
+import { Moon, Sun } from "lucide-react";
 import { Link } from "react-router";
 import { resolveTheme, useTheme } from "../../hooks/useTheme";
 import { GITHUB_URL } from "./content";
+import { GithubIcon } from "./GithubIcon";
 
 const DARK_THEMES = new Set(["dark", "business", "night", "dim"]);
 
@@ -30,7 +31,7 @@ export function LandingNav() {
 						className="btn btn-ghost btn-sm"
 						aria-label="GitHub repository"
 					>
-						<Code className="size-4" />
+						<GithubIcon className="size-4" />
 					</a>
 					<button
 						type="button"
