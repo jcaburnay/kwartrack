@@ -14,7 +14,9 @@ function renderHero() {
 describe("Hero", () => {
 	it("renders the headline and trust line", () => {
 		renderHero();
-		expect(screen.getByRole("heading", { name: "Every peso, clearly tracked." })).toBeInTheDocument();
+		expect(
+			screen.getByRole("heading", { name: "Every peso, clearly tracked." }),
+		).toBeInTheDocument();
 		expect(screen.getByText(/No ads, no data selling/)).toBeInTheDocument();
 	});
 
