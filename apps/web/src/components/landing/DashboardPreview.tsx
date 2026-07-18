@@ -19,7 +19,7 @@ const SPARK_POINTS =
 
 export function DashboardPreview() {
 	return (
-		<div className="card bg-base-100 border border-base-300 shadow-xl w-full">
+		<div className="card bg-base-100 border border-base-300 shadow-xl w-full" aria-hidden="true">
 			<div className="card-body gap-4 p-4 sm:p-6">
 				<div className="grid grid-cols-3 gap-2 text-center">
 					{STATS.map((stat) => (

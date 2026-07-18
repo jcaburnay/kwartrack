@@ -2,7 +2,7 @@ import type { LucideIcon } from "lucide-react";
 import { MoonStar, PiggyBank, Repeat, Target, Users, Wallet } from "lucide-react";
 
 export const GITHUB_URL = "https://github.com/jcaburnay/kwartrack";
-export const DOCS_URL = `${GITHUB_URL}/blob/main/docs/product.md`;
+export const DOCS_URL = `${GITHUB_URL}/blob/main/specs_v2.md`;
 export const SELF_HOST_URL = `${GITHUB_URL}#self-hosting`;
 
 export const HEADLINE = "Every peso, clearly tracked.";

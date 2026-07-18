@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { FEATURES, GITHUB_URL, SELF_HOST_URL } from "../components/landing/content";
+import {
+	DOCS_URL,
+	FEATURES,
+	GITHUB_URL,
+	HEADLINE,
+	SELF_HOST_URL,
+} from "../components/landing/content";
 
 describe("landing content", () => {
 	it("points at the public repo", () => {
@@ -17,5 +23,10 @@ describe("landing content", () => {
 			expect(feature.body.length).toBeGreaterThan(0);
 			expect(typeof feature.icon).toBe("object");
 		}
+	});
+
+	it("pins the docs link and headline", () => {
+		expect(DOCS_URL).toBe("https://github.com/jcaburnay/kwartrack/blob/main/specs_v2.md");
+		expect(HEADLINE).toBe("Every peso, clearly tracked.");
 	});
 });
