@@ -2,6 +2,7 @@
 
 [![CI](https://github.com/jcaburnay/kwartrack/actions/workflows/ci.yml/badge.svg)](https://github.com/jcaburnay/kwartrack/actions/workflows/ci.yml)
 [![Live](https://img.shields.io/badge/live-kwartrack.com-22c55e)](https://kwartrack.com)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
 A personal finance tracker, built single-user, ₱-first.
 
@@ -19,6 +20,33 @@ Manage everyday money flow without the overhead of a full bookkeeping app: log t
 - **Light/dark themes** — system-adaptive
 
 The full feature model and data design lives in [`specs_v2.md`](specs_v2.md).
+
+## Self-hosting
+
+Kwartrack is a static SPA plus a Supabase backend, so you can run your own
+instance on free tiers.
+
+**Prerequisites:** Node 24+, pnpm 10+, and a free [Supabase](https://supabase.com)
+project.
+
+1. **Create a Supabase project** and copy its API URL and publishable key.
+2. **Apply the schema** — link the CLI to your project and push migrations:
+   ```bash
+   pnpm exec supabase link --project-ref <your-project-ref>
+   pnpm exec supabase db push
+   ```
+3. **Configure env** — set `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY`
+   to your project's values (see `.env.example`).
+4. **Build the web app:**
+   ```bash
+   pnpm build
+   ```
+5. **Deploy** `apps/web/dist/` to any static host (Cloudflare Pages, Vercel,
+   Netlify, or your own). Ensure SPA routing rewrites all paths to
+   `index.html` (see `apps/web/public/_redirects`).
+
+The MCP server (`apps/mcp`) is optional and only needed for the ChatGPT/MCP
+integration; see `apps/mcp/README.md`.
 
 ## Repository layout
 
