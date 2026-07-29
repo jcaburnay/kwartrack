@@ -1,10 +1,12 @@
 # Kwartrack MCP server
 
-Read-only ChatGPT integration for Kwartrack. It exposes five MCP tools over Streamable HTTP:
+ChatGPT integration for Kwartrack. It exposes five read tools and one narrowly scoped write tool
+over Streamable HTTP:
 
 - `get_financial_summary`
 - `list_accounts`
 - `search_transactions`
+- `create_transaction` — records a user-confirmed receipt as an expense
 - `get_budget_status`
 - `list_upcoming`
 
@@ -19,7 +21,8 @@ site remains a separate Cloudflare Pages deployment.
 3. ChatGPT sends the resulting Supabase access token to the MCP Worker.
 4. The Worker validates the token and creates a Supabase client with that exact bearer token.
 5. Existing RLS limits every query to `auth.uid()`.
-6. Restrictive database policies reject all writes from JWTs containing an OAuth `client_id` claim.
+6. Restrictive database policies reject direct writes from JWTs containing an OAuth `client_id`
+   claim. The only exception is the validated, idempotent `mcp_create_expense` RPC.
 7. Restrictive SELECT policies allow first-party sessions and only Kwartrack's registered ChatGPT
    `client_id`; every other OAuth client is denied.
 
@@ -109,8 +112,10 @@ Once the frontend, migration, Worker, and OAuth settings are live:
 1. Open ChatGPT settings and enable developer mode.
 2. Create/connect an app using `https://mcp.kwartrack.com/mcp`.
 3. Choose the OAuth dynamic-registration flow when prompted.
-4. Sign in to Kwartrack and approve the read-only consent screen.
-5. Test all five tools with explicit dates and known account values.
+4. Sign in to Kwartrack and approve the limited-access consent screen.
+5. Test all six tools with explicit dates and known account values. Confirm that
+   `create_transaction` prompts for manual approval and that retrying its idempotency key does not
+   duplicate the expense.
 6. Revoke the connection from Kwartrack Settings → Profile and confirm ChatGPT can no longer query.
 
 Public submission should happen only after developer-mode testing and review of the current

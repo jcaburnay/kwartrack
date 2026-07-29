@@ -43,6 +43,24 @@ export type TransactionResult = {
 	totalCount: number;
 };
 
+export type CreateExpenseInput = {
+	idempotencyKey: string;
+	amountCentavos: number;
+	date: string;
+	accountName: string;
+	tagName: string;
+	description?: string;
+};
+
+export type CreateExpenseResult = {
+	wasDuplicate: boolean;
+	amountCentavos: number;
+	date: string;
+	description: string | null;
+	accountName: string;
+	tagName: string;
+};
+
 export type BudgetStatus = {
 	month: string;
 	overallBudgetCentavos: number;
@@ -73,6 +91,7 @@ export interface FinanceDataSource {
 	): Promise<{ incomeCentavos: number; expenseCentavos: number; netCentavos: number }>;
 	listAccounts(options: { includeArchived: boolean; type?: AccountType }): Promise<Account[]>;
 	searchTransactions(filters: TransactionSearch): Promise<TransactionResult[]>;
+	createExpense(input: CreateExpenseInput): Promise<CreateExpenseResult>;
 	getBudgetStatus(month: string): Promise<BudgetStatus>;
 	listUpcoming(options: {
 		from: string;

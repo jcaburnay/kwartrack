@@ -51,7 +51,7 @@ describe("OAuthAuthorizationPage", () => {
 		expect(mocks.getAuthorizationDetails).not.toHaveBeenCalled();
 	});
 
-	it("shows the requesting client and makes the read-only boundary explicit", async () => {
+	it("shows the requesting client and makes the narrow write boundary explicit", async () => {
 		mocks.authState.session = { user: { id: "user-1" } };
 		mocks.getAuthorizationDetails.mockResolvedValue({
 			data: {
@@ -78,7 +78,8 @@ describe("OAuthAuthorizationPage", () => {
 		await waitFor(() =>
 			expect(screen.getByRole("heading", { name: "Connect ChatGPT" })).toBeVisible(),
 		);
-		expect(screen.getByText(/integration is read-only/i)).toBeVisible();
+		expect(screen.getByText(/can only create receipt expenses/i)).toBeVisible();
+		expect(screen.getByText(/record a receipt as a new expense/i)).toBeVisible();
 		expect(screen.getByText(/requested by https:\/\/chatgpt.com/i)).toBeVisible();
 		expect(screen.getByRole("button", { name: "Allow access" })).toBeEnabled();
 	});

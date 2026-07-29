@@ -3,6 +3,8 @@ import type {
 	Account,
 	AccountType,
 	BudgetStatus,
+	CreateExpenseInput,
+	CreateExpenseResult,
 	FinanceDataSource,
 	Profile,
 	TransactionResult,
@@ -38,6 +40,15 @@ type TransactionRow = {
 	to_account_id: string | null;
 	recurring_id: string | null;
 	total_count: number | string;
+};
+
+type CreateExpenseRow = {
+	was_duplicate: boolean;
+	amount_centavos: number | string;
+	transaction_date: string;
+	transaction_description: string | null;
+	account_name: string;
+	tag_name: string;
 };
 
 type BudgetAllocationRow = {
@@ -267,6 +278,28 @@ export class SupabaseFinanceDataSource implements FinanceDataSource {
 			isRecurring: row.recurring_id !== null,
 			totalCount: numberValue(row.total_count),
 		}));
+	}
+
+	async createExpense(input: CreateExpenseInput): Promise<CreateExpenseResult> {
+		const { data, error } = await this.client.rpc("mcp_create_expense", {
+			p_idempotency_key: input.idempotencyKey,
+			p_amount_centavos: input.amountCentavos,
+			p_date: input.date,
+			p_account_name: input.accountName,
+			p_tag_name: input.tagName,
+			p_description: input.description?.trim() || null,
+		});
+		throwOnError(error);
+		const row = rows<CreateExpenseRow>(data)[0];
+		if (!row) throw new Error("Kwartrack did not return the recorded transaction");
+		return {
+			wasDuplicate: row.was_duplicate,
+			amountCentavos: numberValue(row.amount_centavos),
+			date: row.transaction_date,
+			description: row.transaction_description,
+			accountName: row.account_name,
+			tagName: row.tag_name,
+		};
 	}
 
 	async getBudgetStatus(month: string): Promise<BudgetStatus> {

@@ -21,6 +21,12 @@ const annotations = {
 	destructiveHint: false,
 } as const;
 
+const createAnnotations = {
+	readOnlyHint: false,
+	openWorldHint: false,
+	destructiveHint: false,
+} as const;
+
 function nextMonth(month: string) {
 	const [yearText, monthText] = month.split("-");
 	const year = Number(yearText);
@@ -33,6 +39,18 @@ function toolResult(structuredContent: Record<string, unknown>, summary: string)
 	return {
 		structuredContent,
 		content: [{ type: "text" as const, text: summary }],
+	};
+}
+
+function toolError(error: unknown) {
+	return {
+		isError: true,
+		content: [
+			{
+				type: "text" as const,
+				text: error instanceof Error ? error.message : "The transaction could not be recorded.",
+			},
+		],
 	};
 }
 
@@ -57,7 +75,7 @@ export function createKwartrackServer(dataSource: FinanceDataSource) {
 		{ name: "kwartrack", version: "0.1.0" },
 		{
 			instructions:
-				"Kwartrack contains the signed-in user's private PHP-denominated personal finance data. All tools are read-only. Use exact date ranges when the user provides them, do not imply that account balances are historical, and never expose internal IDs unless needed to disambiguate results.",
+				"Kwartrack contains the signed-in user's private PHP-denominated personal finance data. Only create_transaction changes data, and it records a receipt as an expense. Call it only after the user has reviewed and confirmed the amount, date, account, tag, and description. Use a new idempotency key for each distinct receipt and reuse the same key only when retrying that receipt. All other tools are read-only. Use exact date ranges when the user provides them, do not imply that account balances are historical, and never expose internal IDs unless needed to disambiguate results.",
 		},
 	);
 
@@ -228,6 +246,82 @@ export function createKwartrackServer(dataSource: FinanceDataSource) {
 				{ transactions, returnedCount: results.length, totalCount },
 				`Returned ${results.length} of ${totalCount} matching transactions.`,
 			);
+		},
+	);
+
+	server.registerTool(
+		"create_transaction",
+		{
+			title: "Record receipt expense",
+			description:
+				"Record one confirmed receipt as a Kwartrack expense. Call only after the user has reviewed and confirmed the extracted amount, transaction date, active source account, expense tag, and description. Account and tag names must already exist; this tool never creates them. Use a fresh UUID for each distinct receipt and reuse it only to retry the same receipt.",
+			inputSchema: {
+				idempotencyKey: z
+					.uuid()
+					.describe(
+						"A fresh UUID for this receipt; reuse it only when retrying this same receipt.",
+					),
+				amountCentavos: z
+					.number()
+					.int()
+					.positive()
+					.max(9_000_000_000_000)
+					.describe("The exact total in integer centavos. For example, ₱1,299.00 is 129900."),
+				date: dateSchema.describe("The transaction date printed on the receipt, in YYYY-MM-DD."),
+				accountName: z
+					.string()
+					.trim()
+					.min(1)
+					.max(50)
+					.describe("The exact name of an existing, active Kwartrack account."),
+				tagName: z
+					.string()
+					.trim()
+					.min(1)
+					.max(50)
+					.describe("The exact name of an existing, non-system expense tag."),
+				description: z
+					.string()
+					.trim()
+					.max(200)
+					.optional()
+					.describe("A concise merchant or receipt description, without sensitive card details."),
+			},
+			outputSchema: {
+				type: z.literal("expense"),
+				wasDuplicate: z.boolean(),
+				amountCentavos: z.number().int(),
+				amount: z.string(),
+				date: dateSchema,
+				accountName: z.string(),
+				tagName: z.string(),
+				description: z.string().nullable(),
+			},
+			annotations: createAnnotations,
+		},
+		async (input) => {
+			try {
+				const result = await dataSource.createExpense(input);
+				const structuredContent = {
+					type: "expense" as const,
+					wasDuplicate: result.wasDuplicate,
+					amountCentavos: result.amountCentavos,
+					amount: formatPhp(result.amountCentavos),
+					date: result.date,
+					accountName: result.accountName,
+					tagName: result.tagName,
+					description: result.description,
+				};
+				const prefix = result.wasDuplicate
+					? "This receipt was already recorded"
+					: "Recorded expense";
+				return toolResult(
+					structuredContent,
+					`${prefix}: ${structuredContent.amount} from ${result.accountName} on ${result.date}, tagged ${result.tagName}.`,
+				);
+			} catch (error) {
+				return toolError(error);
+			}
 		},
 	);
 

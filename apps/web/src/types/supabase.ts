@@ -279,6 +279,35 @@ export type Database = {
 					},
 				];
 			};
+			mcp_transaction_request: {
+				Row: {
+					created_at: string;
+					idempotency_key: string;
+					transaction_id: string;
+					user_id: string;
+				};
+				Insert: {
+					created_at?: string;
+					idempotency_key: string;
+					transaction_id: string;
+					user_id: string;
+				};
+				Update: {
+					created_at?: string;
+					idempotency_key?: string;
+					transaction_id?: string;
+					user_id?: string;
+				};
+				Relationships: [
+					{
+						foreignKeyName: "mcp_transaction_request_transaction_id_fkey";
+						columns: ["transaction_id"];
+						isOneToOne: false;
+						referencedRelation: "transaction";
+						referencedColumns: ["id"];
+					},
+				];
+			};
 			person: {
 				Row: {
 					created_at: string;
@@ -738,6 +767,26 @@ export type Database = {
 			enforce_budget_cap: {
 				Args: { p_month: string; p_user_id: string };
 				Returns: undefined;
+			};
+			is_approved_data_reader: { Args: never; Returns: boolean };
+			is_oauth_access_token: { Args: never; Returns: boolean };
+			mcp_create_expense: {
+				Args: {
+					p_account_name: string;
+					p_amount_centavos: number;
+					p_date: string;
+					p_description?: string;
+					p_idempotency_key: string;
+					p_tag_name: string;
+				};
+				Returns: {
+					account_name: string;
+					amount_centavos: number;
+					tag_name: string;
+					transaction_date: string;
+					transaction_description: string;
+					was_duplicate: boolean;
+				}[];
 			};
 			recompute_split_user_share: {
 				Args: { p_split_id: string };

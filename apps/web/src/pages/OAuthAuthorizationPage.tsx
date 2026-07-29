@@ -179,11 +179,18 @@ export function OAuthAuthorizationPage() {
 								</span>
 								<span>Read your accounts, transactions, budgets, recurrings, and debts</span>
 							</li>
+							<li className="flex gap-2">
+								<span aria-hidden="true" className="text-success">
+									✓
+								</span>
+								<span>Record a receipt as a new expense after you confirm its details</span>
+							</li>
 						</ul>
 					</div>
 
 					<p className="text-xs text-base-content/55">
-						This integration is read-only. It cannot create, edit, or delete financial data.
+						This integration can only create receipt expenses. It cannot edit or delete financial
+						data, or change accounts, budgets, recurrings, debts, tags, or contacts.
 					</p>
 					{error && <div className="alert alert-error text-sm">{error}</div>}
 					<div className="card-actions grid grid-cols-2 gap-3">

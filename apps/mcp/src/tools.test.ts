@@ -6,6 +6,8 @@ import type {
 	Account,
 	AccountType,
 	BudgetStatus,
+	CreateExpenseInput,
+	CreateExpenseResult,
 	FinanceDataSource,
 	TransactionResult,
 	TransactionSearch,
@@ -13,6 +15,8 @@ import type {
 } from "./types.js";
 
 class FakeFinanceDataSource implements FinanceDataSource {
+	createdExpenses: CreateExpenseInput[] = [];
+
 	accounts: Account[] = [
 		{
 			id: "cash-1",
@@ -72,6 +76,18 @@ class FakeFinanceDataSource implements FinanceDataSource {
 		];
 	}
 
+	async createExpense(input: CreateExpenseInput): Promise<CreateExpenseResult> {
+		this.createdExpenses.push(input);
+		return {
+			wasDuplicate: false,
+			amountCentavos: input.amountCentavos,
+			date: input.date,
+			description: input.description ?? null,
+			accountName: input.accountName,
+			tagName: input.tagName,
+		};
+	}
+
 	async getBudgetStatus(month: string): Promise<BudgetStatus> {
 		return {
 			month,
@@ -100,10 +116,12 @@ class FakeFinanceDataSource implements FinanceDataSource {
 describe("Kwartrack MCP tools", () => {
 	let client: Client;
 	let server: ReturnType<typeof createKwartrackServer>;
+	let dataSource: FakeFinanceDataSource;
 
 	beforeEach(async () => {
 		const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
-		server = createKwartrackServer(new FakeFinanceDataSource());
+		dataSource = new FakeFinanceDataSource();
+		server = createKwartrackServer(dataSource);
 		client = new Client({ name: "kwartrack-test", version: "1.0.0" });
 		await server.connect(serverTransport);
 		await client.connect(clientTransport);
@@ -114,22 +132,28 @@ describe("Kwartrack MCP tools", () => {
 		await server.close();
 	});
 
-	it("publishes only explicitly read-only tools", async () => {
+	it("publishes five read tools and one private write tool", async () => {
 		const { tools } = await client.listTools();
 		expect(tools.map((tool) => tool.name)).toEqual([
 			"get_financial_summary",
 			"list_accounts",
 			"search_transactions",
+			"create_transaction",
 			"get_budget_status",
 			"list_upcoming",
 		]);
-		for (const tool of tools) {
+		for (const tool of tools.filter((candidate) => candidate.name !== "create_transaction")) {
 			expect(tool.annotations).toMatchObject({
 				readOnlyHint: true,
 				openWorldHint: false,
 				destructiveHint: false,
 			});
 		}
+		expect(tools.find((tool) => tool.name === "create_transaction")?.annotations).toMatchObject({
+			readOnlyHint: false,
+			openWorldHint: false,
+			destructiveHint: false,
+		});
 	});
 
 	it("returns a finance summary with current balances and monthly values", async () => {
@@ -164,6 +188,33 @@ describe("Kwartrack MCP tools", () => {
 				},
 			],
 		});
+	});
+
+	it("records a confirmed receipt expense without exposing internal IDs", async () => {
+		const input = {
+			idempotencyKey: "3d813cbb-77bb-4e6d-a266-a2e501a38c41",
+			amountCentavos: 129_900,
+			date: "2026-07-29",
+			accountName: "Visa",
+			tagName: "grocery",
+			description: "SM Supermarket",
+		};
+		const result = await client.callTool({
+			name: "create_transaction",
+			arguments: input,
+		});
+		expect(result.isError).not.toBe(true);
+		expect(result.structuredContent).toEqual({
+			type: "expense",
+			wasDuplicate: false,
+			amountCentavos: 129_900,
+			amount: "₱1,299.00",
+			date: "2026-07-29",
+			accountName: "Visa",
+			tagName: "grocery",
+			description: "SM Supermarket",
+		});
+		expect(dataSource.createdExpenses).toEqual([input]);
 	});
 
 	it("reports per-tag and overall budget status", async () => {

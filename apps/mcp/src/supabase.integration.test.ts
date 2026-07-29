@@ -67,4 +67,27 @@ runOrSkip("SupabaseFinanceDataSource RLS", () => {
 		expect(firstAccounts.map((account) => account.name)).toEqual(["First Wallet"]);
 		expect(secondAccounts.map((account) => account.name)).toEqual(["Second Wallet"]);
 	});
+
+	it("records a receipt expense once when the same idempotency key is retried", async () => {
+		const source = new SupabaseFinanceDataSource(supabaseUrl!, publishableKey!, accessTokens[0]!);
+		const idempotencyKey = crypto.randomUUID();
+		const input = {
+			idempotencyKey,
+			amountCentavos: 123,
+			date: "2026-07-29",
+			accountName: "First Wallet",
+			tagName: "grocery",
+			description: "Integration test receipt",
+		};
+
+		const first = await source.createExpense(input);
+		const retry = await source.createExpense(input);
+		const accounts = await source.listAccounts({ includeArchived: false });
+
+		expect(first).toMatchObject({ wasDuplicate: false, amountCentavos: 123 });
+		expect(retry).toMatchObject({ wasDuplicate: true, amountCentavos: 123 });
+		expect(accounts.find((account) => account.name === "First Wallet")?.balanceCentavos).toBe(
+			9_877,
+		);
+	});
 });
