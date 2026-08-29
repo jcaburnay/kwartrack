@@ -34,16 +34,16 @@ describe("LandingNav", () => {
 		expect(screen.getByRole("link", { name: "Get started" })).toHaveAttribute("href", "/signup");
 	});
 
-	it("switches to dark when currently light", () => {
+	it("switches to the business theme when currently light", () => {
 		renderNav();
 		screen.getByRole("button", { name: /theme/i }).click();
-		expect(mocks.setTheme).toHaveBeenCalledWith("dark");
+		expect(mocks.setTheme).toHaveBeenCalledWith("business");
 	});
 
-	it("switches to light when currently dark", () => {
+	it("switches to the corporate theme when currently dark", () => {
 		mocks.theme = "business";
 		renderNav();
 		screen.getByRole("button", { name: /theme/i }).click();
-		expect(mocks.setTheme).toHaveBeenCalledWith("light");
+		expect(mocks.setTheme).toHaveBeenCalledWith("corporate");
 	});
 });
