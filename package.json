@@ -1,7 +1,20 @@
 {
 	"name": "kwartrack-workspace",
+	"description": "A calm, self-hostable personal finance tracker built with React and Supabase.",
 	"private": true,
+	"license": "MIT",
+	"homepage": "https://kwartrack.com",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/jcaburnay/kwartrack.git"
+	},
+	"engines": {
+		"node": ">=24 <25",
+		"pnpm": "10.34.5"
+	},
+	"packageManager": "pnpm@10.34.5",
 	"scripts": {
+		"bootstrap": "node scripts/setup.mjs",
 		"dev": "pnpm --filter @kwartrack/web dev",
 		"build": "pnpm --filter @kwartrack/web build",
 		"preview": "pnpm --filter @kwartrack/web preview",
@@ -15,12 +28,13 @@
 		"check": "biome check --write .",
 		"ci": "biome ci .",
 		"supabase:start": "supabase start",
+		"supabase:reset": "supabase db reset --local",
 		"supabase:stop": "supabase stop",
 		"supabase:status": "supabase status",
 		"types:gen": "supabase gen types typescript --local | grep -vE '^(Initialising|<claude-code-hint)' > apps/web/src/types/supabase.ts"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "2.4.10",
-		"supabase": "^2.98.0"
+		"supabase": "2.116.0"
 	}
 }

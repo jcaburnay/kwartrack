@@ -55,11 +55,11 @@ and [Supabase MCP authentication guide](https://supabase.com/docs/guides/auth/oa
 
 ## Local development
 
-Start the local Supabase stack and frontend as usual. Copy `.dev.vars.example` to `.dev.vars`, then
-replace the publishable-key placeholder with the local key from `pnpm supabase:status`.
+Bootstrap the local Supabase stack and frontend as usual. Copy `.dev.vars.example` to `.dev.vars`,
+then replace the publishable-key placeholder with the local key from `pnpm supabase:status`.
 
 ```bash
-pnpm supabase:start
+pnpm bootstrap
 pnpm dev
 pnpm mcp:worker:dev
 ```

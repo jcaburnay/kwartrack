@@ -96,7 +96,7 @@ openai_api_key = "env(OPENAI_API_KEY)"
 
 # Email testing server. Emails sent with the local dev setup are not actually sent - rather, they
 # are monitored, and you can view the emails that would have been sent from the web interface.
-[inbucket]
+[local_smtp]
 enabled = true
 # Port to use for the email testing server web interface.
 port = 54324
@@ -328,15 +328,13 @@ skip_nonce_check = false
 # If enabled, it will allow the user to successfully authenticate when the provider does not return an email address.
 email_optional = false
 
-# Google OAuth. Add these to .env.local before running `pnpm supabase:start`:
-#   SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID=...
-#   SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET=...
-# Production config lives in Supabase Dashboard → Authentication → Providers;
-# this block has no effect on the deployed app.
+# Google OAuth is intentionally disabled for zero-config local setup. Production
+# configuration lives in Supabase Dashboard → Authentication → Providers; this
+# block has no effect on the deployed app.
 [auth.external.google]
-enabled = true
-client_id = "env(SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID)"
-secret = "env(SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET)"
+enabled = false
+client_id = ""
+secret = ""
 # Must be set explicitly — GoTrue does not auto-default and will reject the
 # authorize request with "missing redirect URI" if this is empty.
 redirect_uri = "http://127.0.0.1:54321/auth/v1/callback"
