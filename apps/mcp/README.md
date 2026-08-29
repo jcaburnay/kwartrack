@@ -10,6 +10,28 @@ over Streamable HTTP:
 - `get_budget_status`
 - `list_upcoming`
 
+## Web app feature coverage
+
+This table compares the major web app features defined in [`specs_v2.md`](../../specs_v2.md) with
+the tools currently registered by the MCP server. **Partial** means ChatGPT can access only the
+listed subset of the web feature; it does not imply full CRUD support.
+
+| Web app feature | Web app capabilities | Current MCP action | Coverage and limitations |
+| --- | --- | --- | --- |
+| Overview | Current assets, liabilities, net worth, monthly cash flow, budget progress, spend trend, and upcoming items | `get_financial_summary`, `get_budget_status`, `list_upcoming` | **Partial.** Returns the headline values, detailed budget status, upcoming recurrings, and unsettled debts. It does not reproduce charts, the 12-month trend, or UI drill-downs. |
+| Accounts | List, create, edit, archive, delete, group, and inspect account-type details | `list_accounts`, `get_financial_summary` | **Partial, read-only.** Lists current balances and selected type-specific fields, with optional type and archived-account filters. It cannot create, edit, archive, delete, or regroup accounts. |
+| Transactions | Search and filter expenses, income, and transfers; create, edit, and delete transactions | `search_transactions`, `create_transaction` | **Partial.** Search supports date, type, account, tag, text, and sort filters. The only write action records one user-confirmed receipt as an idempotent expense. It cannot create income or transfers, or edit or delete any transaction. |
+| Recurring transactions | List, filter, create, edit, pause, resume, and automatically fire recurring entries | `list_upcoming` | **Partial, read-only.** Returns active recurrings due within a requested future window. It cannot list all recurring definitions or create, edit, pause, resume, or fire them. |
+| Budget | View monthly overall and per-tag progress; set the overall cap and tag allocations | `get_budget_status`, `get_financial_summary` | **Partial, read-only.** Returns overall and per-tag budget versus actual spending, remaining amounts, over-budget flags, and unbudgeted spending. It cannot change caps or allocations. |
+| Debts | List, filter, create, edit, delete, and settle owed or loaned debts | `list_upcoming` | **Partial, read-only.** Returns currently unsettled debts alongside upcoming recurrings. It cannot show the complete debt-management view or create, edit, delete, or settle debts. |
+| Splits | List and inspect split details; create, edit, delete, and settle participant shares | None | **Not available.** |
+| Tags | List and manage expense, income, transfer, and system tags | None | **Not available as a standalone action.** `search_transactions` can filter by an exact tag name, and `create_transaction` requires an existing non-system expense tag. |
+| Contacts | List and manage people used by debts and splits | None | **Not available.** |
+| Account groups | List and manage account groups and memberships | `list_accounts` | **Partial, read-only.** Account results include the group name, but groups and memberships cannot be managed. |
+| Profile and appearance | Edit profile, timezone, password, and theme | None | **Not available.** The MCP server reads the profile timezone internally for date calculations but does not expose profile-management actions. |
+| Data export | Download full JSON or per-entity CSV exports | None | **Not available.** |
+| Help, onboarding, and web navigation | First-run guidance, empty states, app navigation, and help/about information | None | **Web-only.** |
+
 The production target is a Cloudflare Worker at `https://mcp.kwartrack.com/mcp`. The existing React
 site remains a separate Cloudflare Pages deployment.
 
