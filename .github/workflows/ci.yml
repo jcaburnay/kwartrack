@@ -55,7 +55,9 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Lint and format check
-        run: pnpm run ci
+        run: |
+          pnpm release:check
+          pnpm run ci
 
       - name: Run tests
         run: |
@@ -159,3 +161,43 @@ jobs:
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           workingDirectory: apps/mcp
           command: deploy --config wrangler.jsonc
+
+  release:
+    name: Publish GitHub Release
+    needs: [validate, deploy, deploy_mcp]
+    if: |
+      !cancelled() &&
+      github.event_name == 'push' && github.ref == 'refs/heads/main' &&
+      needs.validate.result == 'success' &&
+      needs.deploy.result == 'success' &&
+      (needs.deploy_mcp.result == 'success' || needs.deploy_mcp.result == 'skipped')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Verify release version
+        run: node scripts/check-release-version.mjs
+
+      - name: Publish release if version is new
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_SHA: ${{ github.sha }}
+        run: |
+          version="$(node -p "require('./package.json').version")"
+          tag="v${version}"
+
+          if gh release view "$tag" >/dev/null 2>&1; then
+            echo "Release $tag already exists; nothing to publish."
+            exit 0
+          fi
+
+          gh release create "$tag" \
+            --target "$RELEASE_SHA" \
+            --title "Kwartrack ${version}" \
+            --generate-notes

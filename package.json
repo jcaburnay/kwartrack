@@ -16,6 +16,7 @@
 	"packageManager": "pnpm@10.34.5",
 	"scripts": {
 		"bootstrap": "node scripts/setup.mjs",
+		"release:check": "node scripts/check-release-version.mjs",
 		"dev": "pnpm --filter @kwartrack/web dev",
 		"build": "pnpm --filter @kwartrack/web build",
 		"preview": "pnpm --filter @kwartrack/web preview",

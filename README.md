@@ -167,9 +167,12 @@ Cloudflare's own repository builds are intentionally paused — GitHub Actions i
 Kwartrack uses [Semantic Versioning](https://semver.org/) starting at `1.0.0`.
 The workspace, web app, and MCP package advance together under tags such as
 `v1.0.0`; release notes are published through
-[GitHub Releases](https://github.com/jcaburnay/kwartrack/releases). The historical
-`v1-final` tag is an archive of the retired SpacetimeDB and Clerk implementation,
-not part of the current release sequence.
+[GitHub Releases](https://github.com/jcaburnay/kwartrack/releases). After a
+version change reaches `main`, CI publishes the release automatically once the
+production deployment succeeds. Subsequent commits at the same version do not
+create duplicate releases. The historical `v1-final` tag is an archive of the
+retired SpacetimeDB and Clerk implementation, not part of the current release
+sequence.
 
 ### Required secrets
 
