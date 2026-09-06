@@ -5,8 +5,8 @@ integrity, authentication, authorization, or data isolation are taken seriously.
 
 ## Supported version
 
-Security fixes are applied to the latest commit on `main`. Older releases and the
-legacy `v1-final` tag are not supported.
+Security fixes are applied to the latest release and the latest commit on `main`.
+Older releases and the legacy `v1-final` tag are not supported.
 
 ## Reporting a vulnerability
 

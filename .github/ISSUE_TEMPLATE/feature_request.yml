@@ -28,5 +28,5 @@ body:
     attributes:
       label: Product fit
       options:
-        - label: I checked `specs_v2.md` and existing issues for related work.
+        - label: I checked `specs.md` and existing issues for related work.
           required: true

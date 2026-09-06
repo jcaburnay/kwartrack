@@ -129,11 +129,11 @@ beforeEach(async () => {
 });
 
 runOrSkip("td_account_after_insert trigger", () => {
-	it("creates a linked recurring with v1-parity amount for monthly TDs", async () => {
+	it("creates a linked recurring with the legacy-parity amount for monthly TDs", async () => {
 		const td = await createTd({ name: "Monthly TD" });
 		expect(td.interest_recurring_id).not.toBeNull();
 		const rec = await getRecurring(td.interest_recurring_id!);
-		// v1 parity: ₱100,000 × 6% / 12 × 0.80 = ₱400.00
+		// Legacy parity: ₱100,000 × 6% / 12 × 0.80 = ₱400.00
 		expect(rec.amount_centavos).toBe(400_00);
 		expect(rec.type).toBe("income");
 		expect(rec.interval).toBe("monthly");

@@ -1,6 +1,9 @@
-# kwartrack — v2 Spec
+# Kwartrack Product Specification
 
-Personal finance tracker. This spec defines v2, a clean rebuild of the current app (v1) on a new stack. v2 is a **fresh start**, not a refinement of the in-progress Supabase migration — the partial migration work is discarded. No data migration from v1; users start fresh on v2.
+Kwartrack is a personal finance tracker built on Supabase. This document is the
+authoritative product, data-model, and UX specification for the current app. The
+earlier SpacetimeDB and Clerk implementation is preserved separately at the
+`v1-final` tag; no data migration from that implementation is supported.
 
 ## Stack
 
@@ -17,7 +20,7 @@ Personal finance tracker. This spec defines v2, a clean rebuild of the current a
 1. Supabase
     1. Auth
     2. Database
-    3. Realtime (nice-to-have for v2.0 — not a hard requirement for MVP)
+    3. Realtime (nice-to-have for 1.0.0 — not a hard requirement for MVP)
     4. Storage
 
 ### Tools
@@ -31,25 +34,37 @@ Personal finance tracker. This spec defines v2, a clean rebuild of the current a
     2. Workers & Pages Free Plan
 2. Supabase Free Plan
 
-## Assumptions & non-goals (v2.0)
+## Assumptions & non-goals (1.0.0)
 
-- **Single-currency:** PHP only. Multi-currency is out of scope for v2.0 — **planned for v2.x** as *per-account currency with deferred FX*: each account has its own currency, balances display in their native currency (no auto-conversion), net worth shows side-by-side totals per currency rather than a single aggregated number. That approach avoids the FX-rates problem entirely and is the pragmatic middle ground between "PHP only" and full multi-currency support.
+- **Single-currency:** PHP only. Multi-currency is out of scope for 1.0.0 — **planned for 1.x** as *per-account currency with deferred FX*: each account has its own currency, balances display in their native currency (no auto-conversion), net worth shows side-by-side totals per currency rather than a single aggregated number. That approach avoids the FX-rates problem entirely and is the pragmatic middle ground between "PHP only" and full multi-currency support.
 - **Single-user:** per-user data only, no sharing/collaboration.
 - **Realtime:** nice-to-have. MVP can ship with fetch-on-mount + refetch-on-action and upgrade to live subscriptions later.
 - **Mobile:** tables are horizontally scrollable on narrow screens. No separate card fallback; revisit if the scroll UX feels bad.
-- **No v1 → v2 data migration.** Everyone starts fresh.
+- **No legacy data migration.** Existing users of the archived implementation
+  start fresh on the current app.
 
-**Version convention used in this spec:**
+**Release convention used in this spec:**
 
-- **v2.0** — the initial v2 release scope; everything this document describes unless marked otherwise.
-- **v2.1** — specifically-planned next minor. Used for deferrals with a concrete target (bulk CSV import, account icons, drag-to-reorder, credit-card statement tracking).
-- **v2.x** — "some later version, TBD." Used for features we're committing to eventually but haven't sequenced (multi-currency, keyboard shortcuts, tag emoji/color, custom tag ordering, net-worth-over-time chart).
+- **1.0.0** — the first stable release; everything this document describes
+  unless marked otherwise.
+- **1.1.0** — the next planned minor release. Used for deferrals with a concrete
+  target (bulk CSV import, account icons, drag-to-reorder, and credit-card
+  statement tracking).
+- **1.x** — a later backward-compatible release that has not been sequenced.
+  Used for planned work such as multi-currency, keyboard shortcuts, tag
+  emoji/color, custom tag ordering, and a net-worth-over-time chart.
 
-## v1 → v2 simplifications (intentional)
+## Simplifications from the legacy implementation
 
-Things v1 had that v2 does **not**:
+Things the archived implementation had that the current app intentionally does
+**not**:
 
-- **Two-level account hierarchy flattened.** v1 modelled `account` (institution, e.g. "Maya") with child `sub_account` rows (the actual funded container, e.g. "Maya Wallet"). v2 flattens this: an `account` *is* the funded container, and an optional `group` takes over the institution-grouping role. Sub-accounts never drove budgeting in v1 — they modelled physical money pools — so the budget feature is unaffected by this change.
+- **Two-level account hierarchy flattened.** The legacy model used `account`
+  (institution, e.g. "Maya") with child `sub_account` rows (the actual funded
+  container, e.g. "Maya Wallet"). The current model makes an `account` the
+  funded container, while an optional `group` handles institution grouping.
+  Sub-accounts never drove budgeting; they modelled physical money pools, so
+  the budget feature is unaffected by this change.
 
 ---
 
@@ -57,12 +72,12 @@ Things v1 had that v2 does **not**:
 
 ### Overview (dashboard)
 
-Redesigned from v1. Acts as the landing route. Layout:
+Redesigned from the legacy implementation. Acts as the landing route. Layout:
 
 - **Hero strip** — three numbers side-by-side: **Total Assets**, **Total Liabilities**, **Net Worth** (see [Account types](#account-types) under Accounts for the Assets / Liabilities / Net Worth math). Drill-in behavior:
     - **Total Assets** → Accounts page, no filter.
     - **Total Liabilities** → Accounts page filtered to `credit` type accounts.
-    - **Net Worth** → Accounts page, no filter. (A dedicated net-worth-over-time chart is a v2.x nice-to-have; skipped for v2.0.)
+    - **Net Worth** → Accounts page, no filter. (A dedicated net-worth-over-time chart is a 1.x nice-to-have; skipped for 1.0.0.)
 
 - **Monthly spend trend** — Recharts `LineChart`. Rolling last 12 months on the X-axis; total monthly `expense` amount (PHP) on the Y-axis. Single line. Tooltip on hover shows exact amount + month. Clicking a point drills to the Transactions page filtered to that month.
 
@@ -138,7 +153,7 @@ Grouped example:
 - Accounts are sorted by group first: **ungrouped accounts appear at the top**, followed by each group in alphabetical order.
 - Within each section (ungrouped or a specific group), accounts sort **alphabetically by `name`**.
 - Archived accounts are hidden from the table by default and do not participate in sort.
-- Manual drag-to-reorder is a v2.1 refinement.
+- Manual drag-to-reorder is a 1.1.0 refinement.
 
 #### Account types
 
@@ -150,9 +165,9 @@ Every account has a `type` that drives behavior:
 | `e-wallet` (default) | E-wallet / mobile money (Maya, GCash, etc.). Counted as an **asset**. |
 | `savings` | Bank savings account. Counted as an **asset**. |
 | `credit` | Credit card. Has `creditLimit`. Balance is outstanding debt — counted as a **liability**. See [Credit accounts](#credit-accounts) below. |
-| `time-deposit` | Locked deposit. Has principal, interest rate, maturity date. Ported from v1. Counted as an **asset**. See [Time-deposit accounts](#time-deposit-accounts) below. |
+| `time-deposit` | Locked deposit. Has principal, interest rate, maturity date. Ported from the legacy implementation. Counted as an **asset**. See [Time-deposit accounts](#time-deposit-accounts) below. |
 
-**Assets, Liabilities, and Net Worth.** v2 reports three numbers, not one:
+**Assets, Liabilities, and Net Worth.** Kwartrack reports three numbers, not one:
 
 - **Total Assets** = sum of balances across all non-credit accounts (`cash`, `e-wallet`, `savings`, `time-deposit`). Always ≥ 0.
 - **Total Liabilities** = sum of balances across all `credit` accounts, displayed as a positive number (e.g. "you owe ₱150,000").
@@ -218,7 +233,7 @@ Archive is a reversible toggle (`isArchived` boolean on the account). Users hit 
 
 - *Accounts table.* Balance rendered with debt styling (red, or `(owed)` suffix). Compact utilization bar next to the balance.
 - *Detail strip (when selected).* Shown between the accounts table and the transactions table: current balance, available credit, utilization bar. A **"Pay this card"** button opens a `New Transaction` modal pre-filled with `type = transfer`, `to = this card`; amount is left blank for the user to type.
-- *No statement/due-date UI in v2.0.* Actual cut and due dates drift month-to-month (weekends, holidays, bank processing), so any derivation from a fixed day-of-month would be unreliable. Statement cycle tracking is deferred to v2.1 (manual SOA logging, if needed).
+- *No statement/due-date UI in 1.0.0.* Actual cut and due dates drift month-to-month (weekends, holidays, bank processing), so any derivation from a fixed day-of-month would be unreliable. Statement cycle tracking is deferred to 1.1.0 (manual SOA logging, if needed).
 
 **How transactions interact with a credit account:**
 
@@ -232,7 +247,7 @@ Archive is a reversible toggle (`isArchived` boolean on the account). Users hit 
 
 ##### Time-deposit accounts
 
-Ported from v1's `time_deposit_metadata` model largely unchanged.
+Ported from the legacy implementation's `time_deposit_metadata` model largely unchanged.
 
 **Stored fields (beyond `name`):**
 
@@ -244,7 +259,8 @@ Ported from v1's `time_deposit_metadata` model largely unchanged.
 | `interestPostingInterval` | yes | How often interest is credited. Values: `monthly \| quarterly \| semi-annual \| annual \| at-maturity`. Default: `monthly`. `at-maturity` posts a single interest transaction when `maturityDate` passes. |
 | `isMatured` | flag, auto-managed | Flipped `false → true` by a scheduled job when `maturityDate` passes. |
 
-**Validation at creation** (ported from `validateTimeDepositCreation` in v1's `server/src/helpers.ts`):
+**Validation at creation** (ported from the legacy implementation's
+`validateTimeDepositCreation` helper):
 
 - `principalCentavos > 0`
 - `interestRateBps > 0`
@@ -252,9 +268,9 @@ Ported from v1's `time_deposit_metadata` model largely unchanged.
 
 **Balance behavior.** `balance` starts at `principalCentavos` and grows via periodic interest postings. Counted as an asset (same as e-wallet/savings). The delta `balance − principalCentavos` equals accrued interest to date.
 
-**Interest accrual.** Ports v1's mechanism: a linked scheduled recurring generates `income` transactions tagged `interest-earned` with `to = this time deposit` at the `interestPostingInterval`. No on-the-fly balance extrapolation — every centavo of interest is an actual ledger entry, which keeps transaction history honest. For `at-maturity`, the scheduled job posts a single interest transaction on the day `maturityDate` passes.
+**Interest accrual.** Ports the legacy mechanism: a linked scheduled recurring generates `income` transactions tagged `interest-earned` with `to = this time deposit` at the `interestPostingInterval`. No on-the-fly balance extrapolation — every centavo of interest is an actual ledger entry, which keeps transaction history honest. For `at-maturity`, the scheduled job posts a single interest transaction on the day `maturityDate` passes.
 
-**Maturity handling.** A scheduled job (pg_cron in v2) runs daily, finds time deposits whose `maturityDate` has passed, flips `isMatured`, and stops future interest postings. The matured balance stays in the account until the user transfers it out via a normal transfer.
+**Maturity handling.** A scheduled `pg_cron` job runs daily, finds time deposits whose `maturityDate` has passed, flips `isMatured`, and stops future interest postings. The matured balance stays in the account until the user transfers it out via a normal transfer.
 
 **Derived on the fly, no storage:**
 
@@ -267,9 +283,9 @@ Ported from v1's `time_deposit_metadata` model largely unchanged.
 - *Accounts table.* Show `balance` as current value. Subtle "Matured" badge when `isMatured` is true.
 - *Detail strip (when selected).* Shown between the accounts table and the transactions table: a hero strip with current value, accrued interest (green), days-to-maturity, maturity date. Secondary row shows principal, interest rate (formatted as `6.00% p.a.`), interest posting cadence (e.g. "Posts monthly"), estimated value at maturity. No "Pay this card"-style action — time deposits are passive.
 
-**Deliberately skipped for v2.0:**
+**Deliberately skipped for 1.0.0:**
 
-- Compounding frequency control (monthly vs daily compounding). v1's model is simple periodic posting; v2 ports the same. Can refine later if real-use reveals the need.
+- Compounding frequency control (monthly vs daily compounding). The legacy model uses simple periodic posting; the current app ports the same behavior. This can be refined later if real-world use reveals the need.
 - Early-withdrawal penalty math. If it matters, the user records the penalty as a normal `expense` when it posts.
 
 #### New Account (two-step flow, launched from FAB)
@@ -294,10 +310,10 @@ Clicking a group pinned-row header selects the whole group: transactions filter 
 
 **URL state.** Selection is reflected as a query param: `?account=<slug>` or `?group=<slug>`. Same page, but bookmarkable and shareable.
 
-#### Deferred to v2.1
+#### Deferred to 1.1.0
 
-- **Account icons / colors.** v1 supports per-account icons (`docs/superpowers/specs/2026-04-09-account-icons-design.md`). v2.0 relies on name + balance + type-specific visual cues (debt styling, utilization bars, matured badge) and does not port icons. Revisit if the accounts table feels visually flat in real use.
-- **Drag-to-reorder.** v1 supports reordering sub-accounts. v2.0 uses a default sort (see [Ordering](#ordering) above); manual reorder is a v2.1 refinement.
+- **Account icons / colors.** The legacy implementation supports per-account icons (`docs/superpowers/specs/2026-04-09-account-icons-design.md`). 1.0.0 relies on name + balance + type-specific visual cues (debt styling, utilization bars, matured badge) and does not port icons. Revisit if the accounts table feels visually flat in real use.
+- **Drag-to-reorder.** The legacy implementation supports reordering sub-accounts. 1.0.0 uses a default sort (see [Ordering](#ordering) above); manual reorder is a 1.1.0 refinement.
 
 #### Transactions table
 
@@ -338,7 +354,7 @@ Filter bar axes (compose on top of any implicit account/group filter from the ro
 - On `transfer`, `from` and `to` must be different accounts.
 - Credit accounts are allowed on either side of a transfer (card-to-card balance transfers are a real use case).
 - `date` can be anywhere in the past or future. No cap either direction — users may backfill long history or record a future-posting transaction ("I paid rent, posts tomorrow").
-- Future-dated transactions **apply their balance effect immediately** (match v1 behavior). The `date` is informational, not scheduled.
+- Future-dated transactions **apply their balance effect immediately** (matching legacy behavior). The `date` is informational, not scheduled.
 
 **Pre-fill from context.** The `New Transaction` modal takes hints from whatever the user is looking at when they tap the FAB:
 
@@ -384,10 +400,10 @@ When a transfer transaction has a non-zero `fee`, a **paired expense transaction
 - Fees show up as their own line in Budget (under the `transfer-fees` tag) and in Overview reports.
 - Deleting the original transfer also removes the paired fee transaction.
 
-#### Deferred to v2.1
+#### Deferred to 1.1.0
 
-- **Bulk import** — CSV / bank statement import (e.g. pasting a BPI / Maya / UnionBank statement). Users manually enter transactions in v2.0.
-- **Attachments** — per-transaction receipt images or files. v1 doesn't have this; v2.0 keeps parity.
+- **Bulk import** — CSV / bank statement import (e.g. pasting a BPI / Maya / UnionBank statement). Users manually enter transactions in 1.0.0.
+- **Attachments** — per-transaction receipt images or files. The legacy implementation does not have this; 1.0.0 keeps parity.
 
 ### Recurring
 
@@ -505,12 +521,12 @@ When an installment's `remaining-occurrences` reaches `0`, the recurring is mark
 
 ### Budget
 
-Per-tag, per-calendar-month, report-only. Monthly is the only granularity in v2.0 — no weekly or annual budgets. Users who want week-level or year-level views drill into the Transactions table with date filters. Two levels:
+Per-tag, per-calendar-month, report-only. Monthly is the only granularity in 1.0.0 — no weekly or annual budgets. Users who want week-level or year-level views drill into the Transactions table with date filters. Two levels:
 
 - **Overall cap** — a single monthly total across all expense transactions.
 - **Per-tag allocations** — one cap per tag; actual spend for a tag is computed by summing that month's `expense` transactions carrying that tag. **Special rule for split-linked expenses:** if an expense has `splitId IS NOT NULL`, it contributes only the user's share (`totalAmount − Σ(participant_shares)`), not the full amount. This keeps the Budget true to personal spending — a ₱4,800 group dinner where the user's share is ₱960 contributes ₱960 to the tag's actual, not ₱4,800. See [Splits ↔ Accounts integration](#splits--accounts-integration-auto-ledger) under Debts & Splits.
 
-**Expense-only.** Budget in v2.0 targets `expense` transactions exclusively. Income is not budgeted. Users who want to see income trends look at Overview (monthly trend chart) or filter the Transactions table.
+**Expense-only.** Budget in 1.0.0 targets `expense` transactions exclusively. Income is not budgeted. Users who want to see income trends look at Overview (monthly trend chart) or filter the Transactions table.
 
 **Unbudgeted tags ("Others").** Users aren't required to allocate every tag. Expenses tagged with a tag that has no allocation for the current month aggregate into a synthetic **"Others"** row at the bottom of the per-tag table:
 
@@ -522,9 +538,9 @@ Per-tag, per-calendar-month, report-only. Monthly is the only granularity in v2.
 
 **Strict: sum of per-tag allocations must not exceed Overall.** At save time, `Σ(tag_allocations) ≤ overall_cap` is enforced. If a user tries to save a set of allocations that sum beyond the Overall cap, the save is blocked with an error (e.g. *"Tag allocations total ₱22,000 but Overall is ₱20,000. Increase Overall or reduce a tag."*). Equal is allowed (fully allocated); less-than is allowed (remaining capacity flows to "Others" at the category level).
 
-Budgets don't block or prevent overspending at transaction time — they are purely a reporting view. Overages are shown in red on the Budget page. Essentially a port of v1's model (`budget_config` + `budget_allocation` tables).
+Budgets don't block or prevent overspending at transaction time — they are purely a reporting view. Overages are shown in red on the Budget page. This is a port of the legacy `budget_config` and `budget_allocation` model.
 
-**No rollover in v2.0.** Each month is a fresh slate. Leftover allocation (or overage) in a period does not carry to the next. Keeps the model simple and easy to explain; per-tag rollover toggles can be revisited in v2.1 if real use reveals the need.
+**No rollover in 1.0.0.** Each month is a fresh slate. Leftover allocation (or overage) in a period does not carry to the next. Keeps the model simple and easy to explain; per-tag rollover toggles can be revisited in 1.1.0 if real use reveals the need.
 
 **Historical view.** The Budget page has a **month-picker** at the top. Users can navigate to any past (or future) month and see its Budget / Actual / Remaining. Allocations are **snapshotted per-month**: the data model includes a `month` column on both the overall cap and the per-tag allocation rows (`YYYY-MM` granularity). Editing April's budget does not change what March's page shows; March stays as what the user set at that time.
 
@@ -563,11 +579,11 @@ The table header row shows the running total above: *"Per-tag allocation — Tot
 
 **Drill-in.** Clicking a tag row (or the hero card) opens the list of that tag's `expense` transactions for the selected month. "Others" drills into all unallocated-tag expenses.
 
-**Overage indicator.** When any per-tag actual exceeds its budget for the current month (including the Overall cap), a small red badge appears on the Budget nav link in the sidebar. Tapping the badge takes the user to the Budget page where the specific over-budget rows are visibly red. No toasts, push notifications, or emails in v2.0 — the in-page coloring + nav badge combination is enough for awareness without being intrusive.
+**Overage indicator.** When any per-tag actual exceeds its budget for the current month (including the Overall cap), a small red badge appears on the Budget nav link in the sidebar. Tapping the badge takes the user to the Budget page where the specific over-budget rows are visibly red. No toasts, push notifications, or emails in 1.0.0 — the in-page coloring + nav badge combination is enough for awareness without being intrusive.
 
 ### Debts & Splits
 
-Ports v1's Splitwise-style model (`split_event`, `split_participant`, `debt`) with one meaningful upgrade: participants are normalized into a **Person** entity (per-user contacts list) rather than plain name strings. Solo-use single-user; no multi-user auth or invitation flow — a Person is just a named contact in your list.
+Ports the legacy Splitwise-style model (`split_event`, `split_participant`, `debt`) with one meaningful upgrade: participants are normalized into a **Person** entity (per-user contacts list) rather than plain name strings. Solo-use single-user; no multi-user auth or invitation flow — a Person is just a named contact in your list.
 
 Balance summary strip, pinned above the tables:
 
@@ -579,7 +595,7 @@ Computed client-side from all unsettled `debt` rows.
 
 #### Person entity (contacts list)
 
-Per-user. Stored as a `person` table with just `{ id, name, createdAt }` for v2.0 (no phone / email / avatar — kept minimal).
+Per-user. Stored as a `person` table with just `{ id, name, createdAt }` for 1.0.0 (no phone / email / avatar — kept minimal).
 
 - **Where it's referenced:** `split_participant.personId` (FK) and `debt.personId` (FK).
 - **Creation:** participants are picked from the contacts list via a typeahead in the New Split / New Debt forms. A "+ New person" option at the bottom of the picker creates a new `person` row inline without leaving the form.
@@ -640,7 +656,7 @@ Reference for the underlying model: `docs/superpowers/specs/2026-04-14-splitwise
 - Standalone debts set their own tag (optional).
 - Settlement transactions are auto-tagged `debt-settlement` (system tag, excluded from budgets).
 
-**Editing a split with partial settlements** (ports v1's rule):
+**Editing a split with partial settlements** (ports the legacy rule):
 - Existing participants' `settledAmount` is preserved on save. Only `shareAmount` updates.
 - Removing a participant on edit deletes that `split_participant` row and its linked `debt` — even if partially settled. Any settlement transactions for that participant stay in the Transactions table, retagged `debt-settlement-orphan`.
 - Adding a participant on edit inserts new `split_participant` + `debt` rows; `settledAmount` starts at 0.
@@ -703,19 +719,19 @@ This keeps the Budget showing true personal spending: Mama Lou's at ₱4,800 tot
 
 #### Profile
 
-- **Avatar** — default generated from the display name (DaisyUI avatar with initials, or generic user icon fallback). No upload, no URL storage in v2.0.
+- **Avatar** — default generated from the display name (DaisyUI avatar with initials, or generic user icon fallback). No upload, no URL storage in 1.0.0.
 - **Display name** — editable text field, 1–50 chars. No uniqueness constraint (personal app).
-- **Email** — read-only, shows the Supabase auth email. Changes to email go through Supabase's email-change flow (re-verification required); v2.0 surfaces this as a link rather than an in-app form.
+- **Email** — read-only, shows the Supabase auth email. Changes to email go through Supabase's email-change flow (re-verification required); 1.0.0 surfaces this as a link rather than an in-app form.
 - **Change password** — link that triggers Supabase's password-reset email flow. No in-app password form.
 - **Timezone** — searchable combobox of IANA timezone identifiers (typing `manila` or `+08` both surface `Asia/Manila (UTC+08:00)`). Default auto-detected at signup from `Intl.DateTimeFormat().resolvedOptions().timeZone`; editable here. Changing it affects where "midnight" lands for recurring firings and which calendar month a near-midnight transaction falls under for Budget. **No retroactive recomputation** — past transactions stay dated as they were stored. Helper text: *"Used to fire recurring transactions at midnight local time. Auto-detected at signup; change if it's wrong."*
 - **Sign out** — signs out of the current device.
 - **Delete account** — opens a confirmation dialog that requires typing the user's email (or display name) before the Delete button activates. On confirm: **immediate hard-delete** of the auth record and all user-owned rows (accounts, transactions, recurrings, budget config/allocations, debts, splits, participants, persons, tags). No grace period, no soft-delete. Users who want a backup are expected to export first.
-- **Two-factor auth** — skipped for v2.0. Users who need it can enable it at the Supabase level directly.
+- **Two-factor auth** — skipped for 1.0.0. Users who need it can enable it at the Supabase level directly.
 
 #### Appearance
 
 - **Theme** — stored as a string on the user profile. Applied by setting the root `data-theme` attribute that DaisyUI reads.
-- **Curated list for v2.0:** `system` (default — follows OS), `light`, `dark`, `corporate`, `business`, `emerald`, `cupcake`, `lemonade`, `winter`, `night`, `dim`. All DaisyUI-native.
+- **Curated list for 1.0.0:** `system` (default — follows OS), `light`, `dark`, `corporate`, `business`, `emerald`, `cupcake`, `lemonade`, `winter`, `night`, `dim`. All DaisyUI-native.
 - **Picker UI:** simple dropdown with a small preview swatch (primary + secondary color chips) next to each theme name. No live preview of the whole UI — just swap on select.
 - Semantic colors (red = over-budget, orange = near cap, green = under) map to DaisyUI's `error` / `warning` / `success` tokens, which every theme defines — so the color semantics we rely on work across all choices.
 - If 11 options proves too narrow in real use, adding more DaisyUI themes is a single-line config change per theme.
@@ -757,13 +773,13 @@ Two formats available:
 
 **Delivery:** direct browser download. One button per format.
 
-**What it's *not* in v2.0:** not a round-trip format. There's no "import from JSON" flow — data export is a safety-valve backup, not a migration path. Import lives alongside bulk CSV import in v2.1.
+**What it's *not* in 1.0.0:** not a round-trip format. There's no "import from JSON" flow — data export is a safety-valve backup, not a migration path. Import lives alongside bulk CSV import in 1.1.0.
 
 #### Help & About
 
 Small footer section at the bottom of Settings.
 
-- **Version** — shown as text (e.g. `kwartrack v2.0.3`). Sourced from the app's build metadata so it's always current.
+- **Version** — shown as text (e.g. `kwartrack v1.0.0`). Sourced from the app's build metadata so it's always current.
 - **What's new** — link to the changelog (external page or modal with the latest release notes).
 - **Feedback** — link (mailto or external issue tracker) so users have a clear path to report bugs / suggest features.
 
@@ -802,7 +818,7 @@ Rationale: since the FAB sits at the bottom-right and the stack expands upward, 
 
 **Where FAB is shown:** Overview, Accounts (+ Transactions), Recurring, Budget, Debts & Splits, and any inline-expanded views within them.
 
-**Keyboard shortcuts:** deferred to v2.x. `N` → open menu; letter keys for each option (T/S/D/R/A) to pick. Not in v2.0.
+**Keyboard shortcuts:** deferred to 1.x. `N` → open menu; letter keys for each option (T/S/D/R/A) to pick. Not in 1.0.0.
 
 ### Onboarding / first-run
 
@@ -880,11 +896,11 @@ System tags (`transfer-fees`, `debt-settlement`, `debt-settlement-orphan`) are s
 
 **Deletion.** Deleting a tag is **blocked when it's in use** — if any transaction, recurring, budget allocation, split, or debt references the tag, the delete action is disabled with an error (*"This tag is used by N transactions. Retag them before deleting."*). Hard constraint, no soft-delete, no cascade-null. Matches the pattern for Person, Group, and Account deletion. System tags can't be deleted at all (see System tags above).
 
-**Ordering.** Tags sort alphabetically within their type bucket. User-configurable ordering (drag-to-reorder) is deferred to v2.x.
+**Ordering.** Tags sort alphabetically within their type bucket. User-configurable ordering (drag-to-reorder) is deferred to 1.x.
 
-**Deferred to v2.x:**
+**Deferred to 1.x:**
 
-- **Emoji / color per tag** — visual richness in the tag picker and Budget rows. Low priority for v2.0.
+- **Emoji / color per tag** — visual richness in the tag picker and Budget rows. Low priority for 1.0.0.
 - **Custom tag ordering** — drag-to-reorder in Settings → Tag Management.
 
 ### Default tags

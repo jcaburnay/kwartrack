@@ -25,8 +25,8 @@ function isTheme(value: unknown): value is Theme {
 }
 
 // `system` resolves to a daisyUI theme based on the OS preference. Corporate/
-// business were the v1 defaults, so we keep them as the system-resolved themes
-// to preserve the brand palette for users who never explicitly choose.
+// business are the default system-resolved themes, preserving the brand palette
+// for users who never explicitly choose.
 export function resolveTheme(theme: Theme): string {
 	if (theme !== "system") return theme;
 	const prefersDark =

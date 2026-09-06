@@ -19,7 +19,7 @@ Manage everyday money flow without the overhead of a full bookkeeping app: log t
 - **Real-time sync** — multiple tabs/devices stay in sync via Supabase Realtime
 - **Light/dark themes** — system-adaptive
 
-The full feature model and data design lives in [`specs_v2.md`](specs_v2.md).
+The full feature model and data design lives in [`specs.md`](specs.md).
 
 ## Self-hosting
 
@@ -162,6 +162,15 @@ git push main  →  GitHub Actions (.github/workflows/ci.yml)
 
 Cloudflare's own repository builds are intentionally paused — GitHub Actions is the single source of truth for production deploys, so a failing test or lint blocks both deployments.
 
+### Releases
+
+Kwartrack uses [Semantic Versioning](https://semver.org/) starting at `1.0.0`.
+The workspace, web app, and MCP package advance together under tags such as
+`v1.0.0`; release notes are published through
+[GitHub Releases](https://github.com/jcaburnay/kwartrack/releases). The historical
+`v1-final` tag is an archive of the retired SpacetimeDB and Clerk implementation,
+not part of the current release sequence.
+
 ### Required secrets
 
 | Where             | Name                              | Purpose                                          |
@@ -188,11 +197,12 @@ Because migrations land in production automatically, **keep them additive** — 
 
 ## Repository pointers
 
-- [`specs_v2.md`](specs_v2.md) — authoritative feature spec and data model
+- [`specs.md`](specs.md) — authoritative feature spec and data model
 - [`AGENTS.md`](AGENTS.md) — canonical conventions for AI coding agents
 - [`CLAUDE.md`](CLAUDE.md) — Claude Code compatibility import of `AGENTS.md`
 - [`.impeccable.md`](.impeccable.md) — canonical design context
-- `v1-final` git tag — the previous SpacetimeDB + Clerk implementation, preserved for archaeology
+- [GitHub Releases](https://github.com/jcaburnay/kwartrack/releases) — current release history and notes
+- `v1-final` git tag — archived SpacetimeDB + Clerk implementation
 
 ## Contributing and security
 

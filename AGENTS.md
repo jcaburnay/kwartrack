@@ -12,7 +12,7 @@ preserved at the `v1-final` tag.
 
 Before working on any task, read:
 
-1. [`specs_v2.md`](specs_v2.md) — authoritative features, data model, and UX.
+1. [`specs.md`](specs.md) — authoritative features, data model, and UX.
 2. This file — engineering workflow and repository conventions.
 3. [`.impeccable.md`](.impeccable.md) — canonical design context for UI work.
 

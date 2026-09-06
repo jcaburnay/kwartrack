@@ -12,7 +12,7 @@ over Streamable HTTP:
 
 ## Web app feature coverage
 
-This table compares the major web app features defined in [`specs_v2.md`](../../specs_v2.md) with
+This table compares the major web app features defined in [`specs.md`](../../specs.md) with
 the tools currently registered by the MCP server. **Partial** means ChatGPT can access only the
 listed subset of the web feature; it does not imply full CRUD support.
 
