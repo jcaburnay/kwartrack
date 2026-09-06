@@ -6,7 +6,7 @@ trustworthy, and minimal approach to personal finance.
 ## Before you start
 
 - Read [`specs_v2.md`](specs_v2.md); it is the authoritative product and data-model spec.
-- Read [`CLAUDE.md`](CLAUDE.md) for TypeScript, UI, database, and commit conventions.
+- Read [`AGENTS.md`](AGENTS.md) for TypeScript, UI, database, and commit conventions.
 - Search existing issues before opening a new one.
 - For security problems, follow [`SECURITY.md`](SECURITY.md) instead of filing a public issue.
 
