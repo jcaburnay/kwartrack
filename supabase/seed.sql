@@ -11,7 +11,7 @@ declare
   wallet_id constant uuid := '20000000-0000-4000-8000-000000000001';
   savings_id constant uuid := '20000000-0000-4000-8000-000000000002';
   credit_id constant uuid := '20000000-0000-4000-8000-000000000003';
-  current_month text := to_char(current_date, 'YYYY-MM');
+  current_month text := to_char((now() at time zone 'Asia/Manila')::date, 'YYYY-MM');
   foods_tag_id uuid;
   subscriptions_tag_id uuid;
   salary_tag_id uuid;

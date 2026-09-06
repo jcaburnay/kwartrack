@@ -33,10 +33,10 @@ describe("RootRoute", () => {
 		expect(screen.queryByText("APP")).not.toBeInTheDocument();
 	});
 
-	it("shows the app for logged-in users", () => {
+	it("shows the app for logged-in users", async () => {
 		mocks.authState.session = { user: { id: "u1" } };
 		renderRoot();
-		expect(screen.getByText("APP")).toBeInTheDocument();
+		expect(await screen.findByText("APP")).toBeInTheDocument();
 		expect(screen.queryByText("LANDING")).not.toBeInTheDocument();
 	});
 

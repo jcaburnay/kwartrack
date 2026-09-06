@@ -16,5 +16,12 @@ Commits while the release process is being established.
 
 - Updated web and MCP dependencies to versions without known production vulnerabilities.
 
+### Fixed
+
+- Made synthetic budget seeding use the demo user's Manila timezone.
+- Hid Google authentication unless the provider is explicitly enabled.
+- Kept the authenticated dashboard out of the logged-out landing bundle.
+- Documented the Supabase Auth redirect settings required by self-hosted deployments.
+
 The earlier SpacetimeDB and Clerk implementation remains available at the
 `v1-final` tag.

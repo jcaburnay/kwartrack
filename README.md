@@ -42,13 +42,21 @@ project. The repository pins pnpm 10.34.5 through `package.json`.
    pnpm exec supabase link --project-ref <your-project-ref>
    pnpm exec supabase db push
    ```
-4. **Configure env** — set `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY`
-   to your project's values (see `.env.example`).
-5. **Build the web app:**
+4. **Configure Auth URLs** in Supabase Dashboard → Authentication → URL
+   Configuration. Set **Site URL** to your deployed origin (for example,
+   `https://finance.example.com`) and add `https://finance.example.com/**` to
+   **Redirect URLs**. Add `http://localhost:5173/**` too if you will run the web
+   app locally. Email confirmation and OAuth redirects will fail if these origins
+   are omitted.
+5. **Configure env** — set `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY`
+   to your project's values (see `.env.example`). Google authentication is hidden
+   by default; set `VITE_GOOGLE_AUTH_ENABLED=true` only after enabling and
+   configuring Google in Supabase Dashboard → Authentication → Providers.
+6. **Build the web app:**
    ```bash
    pnpm build
    ```
-6. **Deploy** `apps/web/dist/` to any static host (Cloudflare Pages, Vercel,
+7. **Deploy** `apps/web/dist/` to any static host (Cloudflare Pages, Vercel,
    Netlify, or your own). Ensure SPA routing rewrites all paths to
    `index.html` (see `apps/web/public/_redirects`).
 

@@ -18,6 +18,7 @@ type Props = {
 
 export function SocialAuthButtons({ setError, redirectPath = "/" }: Props) {
 	const [isLoading, setIsLoading] = useState(false);
+	const isGoogleAuthEnabled = import.meta.env.VITE_GOOGLE_AUTH_ENABLED === "true";
 
 	async function handleGoogle() {
 		setError(null);
@@ -37,6 +38,8 @@ export function SocialAuthButtons({ setError, redirectPath = "/" }: Props) {
 		// further to do — when we return, AuthProvider picks up the session via
 		// onAuthStateChange and AuthPage redirects to "/".
 	}
+
+	if (!isGoogleAuthEnabled) return null;
 
 	return (
 		<>
