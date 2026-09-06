@@ -1,7 +1,8 @@
 # Kwartrack — Agent Guide
 
-This is the canonical repository guide for every coding agent. `CLAUDE.md` is a
-compatibility pointer to this file and must not duplicate these instructions.
+This is the canonical repository guide for every coding agent. Tool-specific
+instruction files should reference this file instead of duplicating its
+contents.
 
 Kwartrack is a personal finance tracker on Supabase, deployed at
 <https://kwartrack.com>. The earlier SpacetimeDB + Clerk implementation is
