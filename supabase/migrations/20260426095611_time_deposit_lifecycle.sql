@@ -11,7 +11,7 @@
 --      has passed and either pauses the linked recurring (periodic intervals)
 --      or posts the lump-sum income (`at-maturity` interval).
 --
--- Withholding-tax math is ported verbatim from v1's
+-- Withholding-tax math is ported verbatim from the legacy implementation's
 -- `computeMonthlyNetInterestCentavos`:
 --     net = principal × bps × 80 / (10000 × postings_per_year × 100)
 -- All integer arithmetic — no float drift over long-running deposits.

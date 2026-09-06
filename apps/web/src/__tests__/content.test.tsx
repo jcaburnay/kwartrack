@@ -26,7 +26,7 @@ describe("landing content", () => {
 	});
 
 	it("pins the docs link and headline", () => {
-		expect(DOCS_URL).toBe("https://github.com/jcaburnay/kwartrack/blob/main/specs_v2.md");
+		expect(DOCS_URL).toBe("https://github.com/jcaburnay/kwartrack/blob/main/specs.md");
 		expect(HEADLINE).toBe("Every peso, clearly tracked.");
 	});
 });

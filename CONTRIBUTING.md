@@ -5,7 +5,7 @@ trustworthy, and minimal approach to personal finance.
 
 ## Before you start
 
-- Read [`specs_v2.md`](specs_v2.md); it is the authoritative product and data-model spec.
+- Read [`specs.md`](specs.md); it is the authoritative product and data-model spec.
 - Read [`AGENTS.md`](AGENTS.md) for TypeScript, UI, database, and commit conventions.
 - Search existing issues before opening a new one.
 - For security problems, follow [`SECURITY.md`](SECURITY.md) instead of filing a public issue.
@@ -55,5 +55,13 @@ Database integration tests run when the local stack is active and
 - Include screenshots for visual changes in both light and dark modes.
 - Call out migrations, new environment variables, or deployment changes.
 - Keep unrelated refactors out of the pull request.
+
+## Releases
+
+Maintainers publish releases from `main` after CI and deployment succeed. Keep
+the versions in the root, web, and MCP `package.json` files aligned, move the
+completed notes from `Unreleased` into a dated `CHANGELOG.md` section, then
+create a GitHub Release named `v<version>` targeting the deployed commit. The
+legacy `v1-final` tag is archival and must not be moved or reused.
 
 By participating, you agree to follow the [Code of Conduct](CODE_OF_CONDUCT.md).

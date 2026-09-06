@@ -153,7 +153,7 @@ runOrSkip("update_split", () => {
 		// Edit description; same shares.
 		const { error: updErr } = await user.rpc("update_split", {
 			p_split_id: id,
-			p_description: "lunch v2",
+			p_description: "team lunch",
 			p_total_centavos: 30000,
 			p_date: "2026-04-26",
 			p_paid_from_account_id: mayaId,

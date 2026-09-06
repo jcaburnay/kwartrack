@@ -110,7 +110,7 @@ runOrSkip("split_event auto-expense trigger", () => {
 			.from("split_event")
 			.update({
 				total_centavos: 45000,
-				description: "lunch v2",
+				description: "team lunch",
 				date: "2026-04-27",
 			})
 			.eq("id", split!.id);
@@ -121,7 +121,7 @@ runOrSkip("split_event auto-expense trigger", () => {
 			.eq("split_id", split!.id)
 			.single();
 		expect(tx!.amount_centavos).toBe(45000);
-		expect(tx!.description).toBe("lunch v2");
+		expect(tx!.description).toBe("team lunch");
 		expect(tx!.date).toBe("2026-04-27");
 	});
 });

@@ -2,9 +2,11 @@
 
 Notable changes to Kwartrack are documented here. The project follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and uses Conventional
-Commits while the release process is being established.
+Commits. Published versions follow Semantic Versioning.
 
 ## Unreleased
+
+## [1.0.0] - 2026-09-06
 
 ### Added
 
@@ -25,3 +27,6 @@ Commits while the release process is being established.
 
 The earlier SpacetimeDB and Clerk implementation remains available at the
 `v1-final` tag.
+
+[1.0.0]: https://github.com/jcaburnay/kwartrack/releases/tag/v1.0.0
+[Unreleased]: https://github.com/jcaburnay/kwartrack/compare/v1.0.0...HEAD
