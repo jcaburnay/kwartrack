@@ -12,5 +12,9 @@ Commits while the release process is being established.
 - MIT license and open-source community documentation.
 - Reproducible local setup with synthetic demo data.
 
+### Security
+
+- Updated web and MCP dependencies to versions without known production vulnerabilities.
+
 The earlier SpacetimeDB and Clerk implementation remains available at the
 `v1-final` tag.
