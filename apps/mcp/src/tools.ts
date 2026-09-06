@@ -72,7 +72,7 @@ function accountOutput(account: Awaited<ReturnType<FinanceDataSource["listAccoun
 
 export function createKwartrackServer(dataSource: FinanceDataSource) {
 	const server = new McpServer(
-		{ name: "kwartrack", version: "1.0.0" },
+		{ name: "kwartrack", version: "1.0.1" },
 		{
 			instructions:
 				"Kwartrack contains the signed-in user's private PHP-denominated personal finance data. Only create_transaction changes data, and it records a receipt as an expense. Call it only after the user has reviewed and confirmed the amount, date, account, tag, and description. Use a new idempotency key for each distinct receipt and reuse the same key only when retrying that receipt. All other tools are read-only. Use exact date ranges when the user provides them, do not imply that account balances are historical, and never expose internal IDs unless needed to disambiguate results.",

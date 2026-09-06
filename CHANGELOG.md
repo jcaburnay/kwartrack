@@ -6,6 +6,12 @@ Commits. Published versions follow Semantic Versioning.
 
 ## Unreleased
 
+## [1.0.1] - 2026-09-07
+
+### Fixed
+
+- Made `CLAUDE.md` a symbolic link to the canonical `AGENTS.md` agent guide.
+
 ## [1.0.0] - 2026-09-06
 
 ### Added
@@ -28,5 +34,6 @@ Commits. Published versions follow Semantic Versioning.
 The earlier SpacetimeDB and Clerk implementation remains available at the
 `v1-final` tag.
 
+[1.0.1]: https://github.com/jcaburnay/kwartrack/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/jcaburnay/kwartrack/releases/tag/v1.0.0
-[Unreleased]: https://github.com/jcaburnay/kwartrack/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/jcaburnay/kwartrack/compare/v1.0.1...HEAD
