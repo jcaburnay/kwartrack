@@ -32,6 +32,7 @@ and [`CONTRIBUTING.md`](CONTRIBUTING.md).
 
 ```bash
 pnpm bootstrap          # install, start local Supabase, generate .env.local
+pnpm release:check      # verify release versions are aligned
 pnpm dev                # Vite development server
 pnpm preview            # preview the production web build
 pnpm test               # web Vitest suite

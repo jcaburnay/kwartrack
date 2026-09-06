@@ -58,10 +58,12 @@ Database integration tests run when the local stack is active and
 
 ## Releases
 
-Maintainers publish releases from `main` after CI and deployment succeed. Keep
-the versions in the root, web, and MCP `package.json` files aligned, move the
-completed notes from `Unreleased` into a dated `CHANGELOG.md` section, then
-create a GitHub Release named `v<version>` targeting the deployed commit. The
-legacy `v1-final` tag is archival and must not be moved or reused.
+Releases are automated from `main`. Keep the versions in the root, web, and MCP
+`package.json` files and the MCP server metadata aligned, move completed notes
+from `Unreleased` into a dated `CHANGELOG.md` section, and run
+`pnpm release:check`. After the change merges, CI deploys it and publishes the
+corresponding `v<version>` GitHub Release. Commits that do not change the version
+do not create another release. The legacy `v1-final` tag is archival and must
+not be moved or reused.
 
 By participating, you agree to follow the [Code of Conduct](CODE_OF_CONDUCT.md).
