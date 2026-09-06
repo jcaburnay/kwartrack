@@ -190,7 +190,7 @@ Because migrations land in production automatically, **keep them additive** — 
 
 - [`specs_v2.md`](specs_v2.md) — authoritative feature spec and data model
 - [`AGENTS.md`](AGENTS.md) — canonical conventions for AI coding agents
-- [`CLAUDE.md`](CLAUDE.md) — compatibility pointer for Claude-based tools
+- [`CLAUDE.md`](CLAUDE.md) — Claude Code compatibility import of `AGENTS.md`
 - [`.impeccable.md`](.impeccable.md) — canonical design context
 - `v1-final` git tag — the previous SpacetimeDB + Clerk implementation, preserved for archaeology
 
