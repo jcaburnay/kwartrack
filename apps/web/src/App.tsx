@@ -1,7 +1,7 @@
 import { lazy, Suspense } from "react";
 import { createBrowserRouter, Navigate, RouterProvider, useSearchParams } from "react-router";
 import { ProtectedRoute } from "./components/ProtectedRoute";
-import { JigsawPage } from "./pages/JigsawPage";
+import { RootRoute } from "./components/RootRoute";
 
 const AuthPage = lazy(() => import("./pages/AuthPage").then((m) => ({ default: m.AuthPage })));
 const OAuthAuthorizationPage = lazy(() =>
@@ -54,11 +54,7 @@ function RecurringRedirect() {
 const router = createBrowserRouter([
 	{
 		path: "/",
-		element: (
-			<ProtectedRoute>
-				<JigsawPage />
-			</ProtectedRoute>
-		),
+		element: <RootRoute />,
 	},
 	// Legacy per-feature routes redirect to the jigsaw
 	{ path: "/accounts", element: <Navigate to="/" replace /> },

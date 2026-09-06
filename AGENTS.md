@@ -10,12 +10,14 @@ For any task, start here:
 Commands:
 
 ```bash
+pnpm bootstrap          # install, start local Supabase, generate .env.local
 pnpm dev                # vite dev server
 pnpm test               # vitest run
 pnpm check              # biome check --write .
 pnpm run ci             # biome ci . (no autofix) — must use `run`, `pnpm ci` is reserved
 pnpm build              # tsc -b && vite build
 pnpm supabase:start     # local Supabase stack (Docker required)
+pnpm supabase:reset     # rebuild local DB and load synthetic demo data
 pnpm supabase:status    # list local service URLs
 pnpm supabase:stop      # tear down local stack
 ```
@@ -33,7 +35,7 @@ Personal finance tracker built for personal use today, designed to be legible to
 Finance carries anxiety — the app should project stability and clarity, never urgency or noise. Every design decision should make the user feel *in control*. Personality expressed through precision and restraint, not decoration.
 
 ### Aesthetic Direction
-- **Theme**: System-adaptive — light and dark are both first-class. Use DaisyUI semantic tokens throughout (`base-100`, `primary`, `error`, etc.). Starting themes: `silk` (light) + `dim` (dark).
+- **Theme**: System-adaptive — light and dark are both first-class. Use DaisyUI semantic tokens throughout (`base-100`, `primary`, `error`, etc.). Default pair: `corporate` (light) + `business` (dark).
 - **Color**: Restrained. Reserve `error`/red for genuinely negative states (over-budget, overdrawn). Avoid color as decoration.
 - **Density**: Moderate — denser than a marketing page, not a spreadsheet. Tables use compact rows with comfortable horizontal padding.
 - **Shape**: Slightly rounded (`rounded-lg`/`rounded-xl`), consistent with DaisyUI defaults.

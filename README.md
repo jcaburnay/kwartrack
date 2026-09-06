@@ -2,6 +2,7 @@
 
 [![CI](https://github.com/jcaburnay/kwartrack/actions/workflows/ci.yml/badge.svg)](https://github.com/jcaburnay/kwartrack/actions/workflows/ci.yml)
 [![Live](https://img.shields.io/badge/live-kwartrack.com-22c55e)](https://kwartrack.com)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
 A personal finance tracker, built single-user, ₱-first.
 
@@ -20,6 +21,48 @@ Manage everyday money flow without the overhead of a full bookkeeping app: log t
 
 The full feature model and data design lives in [`specs_v2.md`](specs_v2.md).
 
+## Self-hosting
+
+Kwartrack is a static SPA plus a Supabase backend, so you can run your own
+instance on free tiers.
+
+**Prerequisites:** Node 24.x, Corepack, and a free [Supabase](https://supabase.com)
+project. The repository pins pnpm 10.34.5 through `package.json`.
+
+1. **Clone and install:**
+   ```bash
+   git clone https://github.com/jcaburnay/kwartrack.git
+   cd kwartrack
+   corepack enable
+   pnpm install --frozen-lockfile
+   ```
+2. **Create a Supabase project** and copy its API URL and publishable key.
+3. **Apply the schema** — link the CLI to your project and push migrations:
+   ```bash
+   pnpm exec supabase link --project-ref <your-project-ref>
+   pnpm exec supabase db push
+   ```
+4. **Configure Auth URLs** in Supabase Dashboard → Authentication → URL
+   Configuration. Set **Site URL** to your deployed origin (for example,
+   `https://finance.example.com`) and add `https://finance.example.com/**` to
+   **Redirect URLs**. Add `http://localhost:5173/**` too if you will run the web
+   app locally. Email confirmation and OAuth redirects will fail if these origins
+   are omitted.
+5. **Configure env** — set `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY`
+   to your project's values (see `.env.example`). Google authentication is hidden
+   by default; set `VITE_GOOGLE_AUTH_ENABLED=true` only after enabling and
+   configuring Google in Supabase Dashboard → Authentication → Providers.
+6. **Build the web app:**
+   ```bash
+   pnpm build
+   ```
+7. **Deploy** `apps/web/dist/` to any static host (Cloudflare Pages, Vercel,
+   Netlify, or your own). Ensure SPA routing rewrites all paths to
+   `index.html` (see `apps/web/public/_redirects`).
+
+The MCP server (`apps/mcp`) is optional and only needed for the ChatGPT/MCP
+integration; see `apps/mcp/README.md`.
+
 ## Repository layout
 
 ```text
@@ -35,34 +78,61 @@ React 19 + TypeScript + Vite · Supabase (Auth + Postgres + Realtime + Storage) 
 
 ## Local development
 
-Requires Node 24+, pnpm 10+, Docker Desktop (for local Supabase).
+Requires Node 24.x, Corepack, and Docker Desktop (or another Docker-compatible
+daemon). Node 25 and newer are not currently supported.
 
 ```bash
-git clone git@github.com:jcaburnay/kwartrack.git
+git clone https://github.com/jcaburnay/kwartrack.git
 cd kwartrack
-pnpm install
-cp .env.example .env.local
-
-pnpm supabase:start     # boot local Postgres + Auth + Studio (http://127.0.0.1:54323)
-pnpm supabase:status    # print live service URLs & keys
+corepack enable
+pnpm bootstrap
+pnpm dev
 ```
 
-Paste the `API URL` and publishable key from `supabase:status` into `.env.local`, then:
+`pnpm bootstrap` installs the locked dependencies, starts the local Supabase stack,
+and writes its generated local credentials to the gitignored `.env.local` file.
+The first start also loads synthetic demo data. Sign in with:
+
+- Email: `demo@kwartrack.local`
+- Password: `demo-password`
+
+The app runs at <http://localhost:5173> and Supabase Studio at
+<http://127.0.0.1:54323>. Create a separate account if you prefer to start empty.
+
+Local Supabase services use well-known development keys and may be reachable on
+your local network. Do not expose their ports to the public internet or reuse
+their credentials in production.
+
+### Resetting local data
 
 ```bash
-pnpm dev                # Vite dev server at http://localhost:5173
+pnpm supabase:reset
 ```
+
+This deletes the local database, reapplies every migration, and reloads only the
+synthetic demo data in `supabase/seed.sql`. It never reads from a hosted project.
+
+If another clone left stale `supabase_*_kwartrack` containers behind, first
+confirm that you do not need their local data, then run
+`pnpm supabase:stop --no-backup` before retrying setup. The command permanently
+removes that local stack's database.
+
+Google OAuth is disabled in the checked-in local configuration so setup needs no
+provider secrets. Email/password authentication works out of the box. Production
+OAuth is configured independently in the Supabase dashboard.
 
 ### Commands
 
 | Command            | Description                                                |
 |--------------------|------------------------------------------------------------|
+| `pnpm bootstrap`   | Install dependencies, start Supabase, and generate local env |
 | `pnpm dev`         | Vite dev server                                            |
 | `pnpm test`        | Vitest run                                                 |
 | `pnpm test:watch`  | Vitest watch mode                                          |
 | `pnpm check`       | Biome format + lint (auto-fix)                             |
 | `pnpm run ci`      | Biome CI check (no autofix) — `pnpm ci` is reserved        |
 | `pnpm build`       | `tsc -b && vite build`                                     |
+| `pnpm supabase:reset` | Rebuild the local database with synthetic demo data     |
 | `pnpm types:gen`   | Regenerate `apps/web/src/types/supabase.ts`                |
 
 ## Deployment
@@ -121,3 +191,12 @@ Because migrations land in production automatically, **keep them additive** — 
 - [`specs_v2.md`](specs_v2.md) — authoritative feature spec and data model
 - [`CLAUDE.md`](CLAUDE.md), [`AGENTS.md`](AGENTS.md) — conventions for AI coding agents working in the repo
 - `v1-final` git tag — the previous SpacetimeDB + Clerk implementation, preserved for archaeology
+
+## Contributing and security
+
+Contributions are welcome. Read [`CONTRIBUTING.md`](CONTRIBUTING.md) for the
+development workflow and [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md) for community
+expectations. Please report vulnerabilities privately as described in
+[`SECURITY.md`](SECURITY.md), not in a public issue.
+
+Kwartrack is released under the [MIT License](LICENSE).

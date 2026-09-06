@@ -1,0 +1,41 @@
+name: Bug report
+description: Report reproducible behavior that is not working as expected.
+title: "bug: "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: Thanks for taking the time to report a problem. Never include real financial data or credentials.
+  - type: textarea
+    id: summary
+    attributes:
+      label: What happened?
+      description: Describe the problem and what you expected instead.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Go to …
+        2. Select …
+        3. Observe …
+    validations:
+      required: true
+  - type: input
+    id: commit
+    attributes:
+      label: Version or commit
+      description: Include the commit SHA or deployment version if known.
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: Browser, operating system, Node version, and device size when relevant.
+  - type: textarea
+    id: logs
+    attributes:
+      label: Sanitized logs or screenshots
+      description: Remove personal finance data, tokens, passwords, and Supabase keys first.

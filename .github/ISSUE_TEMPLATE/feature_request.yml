@@ -1,0 +1,32 @@
+name: Feature request
+description: Suggest an improvement that fits Kwartrack's product direction.
+title: "feat: "
+labels:
+  - enhancement
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What user problem would this solve?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: Describe the smallest useful outcome, not only an implementation.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: What workarounds or other approaches have you tried?
+  - type: checkboxes
+    id: scope
+    attributes:
+      label: Product fit
+      options:
+        - label: I checked `specs_v2.md` and existing issues for related work.
+          required: true

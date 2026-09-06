@@ -18,6 +18,7 @@ Other runtime dependencies: React Router, React Hook Form, Recharts, `@supabase/
 ## Commands
 
 ```bash
+pnpm bootstrap          # install, start local Supabase, generate .env.local
 pnpm dev                # start dev server
 pnpm test               # run tests (vitest run)
 pnpm test:watch         # watch mode
@@ -25,6 +26,7 @@ pnpm check              # biome format + lint (auto-fix)
 pnpm run ci             # biome ci (no autofix) — must use `run` because `pnpm ci` is reserved
 pnpm build              # tsc -b && vite build
 pnpm supabase:start     # boot local Supabase stack (requires Docker)
+pnpm supabase:reset     # rebuild local DB and load synthetic demo data
 pnpm supabase:status    # list local service URLs
 pnpm supabase:stop      # tear down local stack
 ```
@@ -48,14 +50,18 @@ See `specs_v2.md` for the full feature model.
 
 ## Local development
 
-The dev workflow runs against a **self-hosted Supabase stack**, not the cloud project. `.env.local` is gitignored and must point at `http://127.0.0.1:54321` — never paste production URLs there.
+The dev workflow runs against a **self-hosted Supabase stack**, not the cloud project. `.env.local` is gitignored and must point at `http://127.0.0.1:54321` — never paste production URLs there. A fresh clone should run `pnpm bootstrap` once; it installs dependencies, starts Supabase, and writes the generated local credentials.
 
 ```
-1. pnpm supabase:start      # Docker stack up: Postgres@54322, Auth/API@54321, Studio@54323
+1. pnpm bootstrap           # first run only: install + Supabase + .env.local
 2. pnpm dev                 # Vite reads .env.local, app talks to local
    ...                      # write code, test
 3. pnpm supabase:stop       # tear down at end of session
 ```
+
+`pnpm supabase:reset` destroys only the local database, reapplies all migrations,
+and loads the synthetic fixture in `supabase/seed.sql`. Never add production data,
+production connection strings, or copied password hashes to repository fixtures.
 
 When you change the schema:
 
