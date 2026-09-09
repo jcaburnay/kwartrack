@@ -6,5 +6,6 @@ export const chartTooltipProps = {
 		color: "var(--color-base-content)",
 	},
 	labelStyle: { color: "var(--color-base-content)" },
+	itemStyle: { color: "var(--color-base-content)" },
 	cursor: { fill: "var(--color-base-content)", fillOpacity: 0.08 },
 } as const;
