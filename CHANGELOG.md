@@ -6,6 +6,12 @@ Commits. Published versions follow Semantic Versioning.
 
 ## Unreleased
 
+## [1.0.2] - 2026-09-10
+
+### Fixed
+
+- Improved chart tooltip contrast across light and dark themes.
+
 ## [1.0.1] - 2026-09-07
 
 ### Fixed
@@ -34,6 +40,7 @@ Commits. Published versions follow Semantic Versioning.
 The earlier SpacetimeDB and Clerk implementation remains available at the
 `v1-final` tag.
 
+[1.0.2]: https://github.com/jcaburnay/kwartrack/compare/v1.0.1...v1.0.2
 [1.0.1]: https://github.com/jcaburnay/kwartrack/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/jcaburnay/kwartrack/releases/tag/v1.0.0
-[Unreleased]: https://github.com/jcaburnay/kwartrack/compare/v1.0.1...HEAD
+[Unreleased]: https://github.com/jcaburnay/kwartrack/compare/v1.0.2...HEAD
