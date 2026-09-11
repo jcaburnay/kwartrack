@@ -46,7 +46,7 @@ export function SettingsAboutPage() {
 				<Row label="Feedback" helper="Bugs, feature ideas, or anything in between.">
 					<a
 						className="btn btn-ghost btn-sm"
-						href={`mailto:${SUPPORT_EMAIL}?subject=Kwartrack%20feedback`}
+						href={`mailto:${SUPPORT_EMAIL}?subject=kwartrack%20feedback`}
 					>
 						Email
 						<ExternalLink className="size-3.5" aria-hidden />

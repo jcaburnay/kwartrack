@@ -1,13 +1,16 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="kwartrack">
   <style>
-    rect { fill: white; }
-    text { fill: black; }
+    .mark { color: #000; }
     @media (prefers-color-scheme: dark) {
-      rect { fill: black; }
-      text { fill: white; }
+      .mark { color: #fff; }
     }
   </style>
-  <rect width="32" height="32" rx="6"/>
-  <text x="16" y="23" font-family="Georgia, serif" font-size="22" font-weight="bold"
-        text-anchor="middle">k</text>
+  <g class="mark">
+    <!-- Lowercase k set in IBM Plex Sans Bold and converted to a vector outline. -->
+    <path
+      d="M22.002 54V11.08H30.586V36.426H30.934L34.704 30.8L40.794 23.55H50.306L40.156 35.208L51.466 54H41.258L34.414 41.124L30.586 45.416V54H22.002Z"
+      fill="currentColor"
+    />
+    <path d="M13 25H39" fill="none" stroke="currentColor" stroke-width="6"/>
+  </g>
 </svg>

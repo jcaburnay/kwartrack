@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { NavLink } from "react-router";
 import { useAuth } from "../providers/AuthProvider";
 import { initialsFrom } from "../utils/initials";
+import { BrandMark } from "./BrandMark";
 import { GlobalFab } from "./GlobalFab";
 import { MobileDock } from "./MobileDock";
 
@@ -32,11 +33,14 @@ export function Header() {
 					<NavLink
 						to="/"
 						aria-label="Go to home"
-						className={`text-xl font-medium px-2 rounded transition-all duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
+						className={`flex items-center gap-2 text-xl font-medium px-2 rounded transition-all duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
 							scrolled ? "max-lg:!text-base" : ""
 						}`}
 					>
-						kwartrack
+						<BrandMark
+							className={`transition-all duration-200 ${scrolled ? "size-5" : "size-7"}`}
+						/>
+						<span>kwartrack</span>
 					</NavLink>
 				</div>
 
