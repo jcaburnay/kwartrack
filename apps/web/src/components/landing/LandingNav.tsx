@@ -1,6 +1,7 @@
 import { Moon, Sun } from "lucide-react";
 import { Link } from "react-router";
 import { resolveTheme, useTheme } from "../../hooks/useTheme";
+import { BrandMark } from "../BrandMark";
 import { GITHUB_URL } from "./content";
 import { GithubIcon } from "./GithubIcon";
 
@@ -13,8 +14,9 @@ export function LandingNav() {
 	return (
 		<header className="sticky top-0 z-30 border-b border-base-300 bg-base-100/80 backdrop-blur">
 			<nav className="mx-auto flex max-w-6xl items-center gap-2 px-4 py-3 sm:gap-3">
-				<Link to="/" className="shrink-0 font-semibold text-lg">
-					<span className="text-primary">₱</span> Kwartrack
+				<Link to="/" className="flex shrink-0 items-center gap-2 font-semibold text-lg">
+					<BrandMark className="size-7" />
+					<span>kwartrack</span>
 				</Link>
 
 				<div className="ml-auto flex min-w-0 items-center gap-1 sm:gap-2">

@@ -39,7 +39,7 @@ export function OAuthConnections() {
 			<div className="border-b border-base-300 p-4">
 				<h3 className="text-sm font-semibold">Connected apps</h3>
 				<p className="mt-1 text-xs text-base-content/60">
-					Apps you allowed to read your Kwartrack data. Revoke access at any time.
+					Apps you allowed to read your kwartrack data. Revoke access at any time.
 				</p>
 			</div>
 			{isLoading ? (

@@ -130,7 +130,7 @@ describe("OAuthAuthorizationPage", () => {
 		);
 
 		await waitFor(() =>
-			expect(screen.getByRole("heading", { name: "Couldn't connect Kwartrack" })).toBeVisible(),
+			expect(screen.getByRole("heading", { name: "Couldn't connect kwartrack" })).toBeVisible(),
 		);
 		expect(screen.getByText(/redirect to an unapproved application/i)).toBeVisible();
 	});

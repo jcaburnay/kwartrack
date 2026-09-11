@@ -7,9 +7,9 @@ import { supabase } from "../lib/supabase";
 import { useAuth } from "../providers/AuthProvider";
 
 const scopeDescriptions: Record<string, string> = {
-	openid: "Verify your Kwartrack identity",
+	openid: "Verify your kwartrack identity",
 	email: "See the email address on your account",
-	profile: "See your basic Kwartrack profile",
+	profile: "See your basic kwartrack profile",
 };
 
 function displayOrigin(value: string) {
@@ -99,8 +99,8 @@ export function OAuthAuthorizationPage() {
 		const next = `${location.pathname}${location.search}`;
 		return (
 			<AuthorizationMessage
-				title="Connect Kwartrack"
-				message="Sign in to review ChatGPT's request to access your Kwartrack data."
+				title="Connect kwartrack"
+				message="Sign in to review ChatGPT's request to access your kwartrack data."
 			>
 				<Link className="btn btn-primary" to={`/signin?next=${encodeURIComponent(next)}`}>
 					Sign in to continue
@@ -112,7 +112,7 @@ export function OAuthAuthorizationPage() {
 	if (error || !details) {
 		return (
 			<AuthorizationMessage
-				title="Couldn't connect Kwartrack"
+				title="Couldn't connect kwartrack"
 				message={error ?? "This authorization request is no longer valid."}
 			/>
 		);
@@ -122,7 +122,7 @@ export function OAuthAuthorizationPage() {
 		return (
 			<AuthorizationMessage
 				title="Unapproved application"
-				message={`${details.client.name || "An unknown application"} is not approved to read Kwartrack data. Its registered redirect destination is ${displayOrigin(details.redirect_uri)}.`}
+				message={`${details.client.name || "An unknown application"} is not approved to read kwartrack data. Its registered redirect destination is ${displayOrigin(details.redirect_uri)}.`}
 			>
 				<button
 					type="button"
