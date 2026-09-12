@@ -36,7 +36,7 @@
 		"types:gen": "supabase gen types typescript --local | grep -vE '^(Initialising|<claude-code-hint)' > apps/web/src/types/supabase.ts"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "2.4.10",
-		"supabase": "2.116.0"
+		"@biomejs/biome": "2.5.12",
+		"supabase": "2.117.0"
 	}
 }
