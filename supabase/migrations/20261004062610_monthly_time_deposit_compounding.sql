@@ -141,8 +141,9 @@ begin
           (user_id, type, tag_id, to_account_id, amount_centavos, date, description, recurring_id,
            is_installment_portion)
         values (a.user_id, 'income', v_tag, a.id, v_amount, v_end,
-          format('Interest %s to %s (ACT/365, net of 20%% tax)',
-            v_start, v_end - 1), a.interest_recurring_id, v_remaining is not null);
+          case when nullif(btrim(v_rec.description), '') is not null then v_rec.description
+            else format('Interest %s to %s (ACT/365, net of 20%% tax)', v_start, v_end - 1) end,
+          a.interest_recurring_id, v_remaining is not null);
         v_count := v_count + 1;
         if v_remaining is not null then
           v_remaining := v_remaining - 1;
@@ -457,6 +458,18 @@ begin
       where account_id = a.id;
     return new;
   end if;
+  if old.is_archived and not a.is_archived then
+    -- The account archive may have succeeded while a separate recurring pause
+    -- request failed. Skip completed archived periods even without a pause flip
+    -- or a surviving schedule, and preserve independent manual pause flags.
+    select coalesce(timezone, 'Asia/Manila') into v_tz
+      from public.user_profile where id = a.user_id;
+    v_start := greatest(public.td_monthly_period_start(a),
+      date_trunc('month', now() at time zone coalesce(v_tz, 'Asia/Manila'))::date);
+    insert into public.td_monthly_interest_state(account_id, accrued_through, tag_id)
+      values (a.id, v_start, public.td_interest_tag_id(a))
+      on conflict (account_id) do update set accrued_through = excluded.accrued_through;
+  end if;
   if a.interest_recurring_id is null then return new; end if;
   if exists (select 1 from public.recurring
     where id = a.interest_recurring_id and is_completed) then return new; end if;
@@ -490,7 +503,7 @@ begin
 end;
 $$;
 create trigger td_monthly_refresh_schedule_trg
-  after update of interest_rate_bps, interest_posting_interval, maturity_date, interest_recurring_id, balance_centavos, is_matured
+  after update of interest_rate_bps, interest_posting_interval, maturity_date, interest_recurring_id, balance_centavos, is_matured, is_archived
   on public.account for each row execute function public.td_monthly_refresh_schedule();
 
 -- Resume skips completed calendar periods during an intentional pause. The

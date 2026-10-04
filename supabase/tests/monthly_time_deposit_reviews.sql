@@ -1,7 +1,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 set search_path = public, extensions;
-select plan(31);
+select plan(41);
 
 insert into auth.users(id, email, raw_user_meta_data)
 values ('00000000-0000-4000-8000-000000000501', 'monthly-review@example.invalid',
@@ -208,6 +208,82 @@ select is((select amount_centavos from public.transaction where to_account_id = 
   and date = '2020-10-01'), 69041::bigint, 'Maturity job processes due ledger before final interest');
 select ok((select is_matured from public.account where id = '00000000-0000-4000-8000-000000000513'),
   'Maturity closes the account after due ledger and final interest are posted');
+-- Saved descriptions apply to new generated postings, without rewriting history.
+insert into public.account(id, user_id, name, type, initial_balance_centavos,
+  principal_centavos, interest_rate_bps, maturity_date, interest_posting_interval, created_at)
+values ('00000000-0000-4000-8000-000000000514', '00000000-0000-4000-8000-000000000501',
+  'Editable description', 'time-deposit', 15000000, 15000000, 600, '2099-11-01', 'monthly',
+  '2020-09-01T00:00:00+08:00');
+update public.recurring set description = 'Saved monthly interest note', remaining_occurrences = 1
+where id = (select interest_recurring_id from public.account where id = '00000000-0000-4000-8000-000000000514');
+select public.recurring_fire_due();
+select is((select description from public.transaction where to_account_id = '00000000-0000-4000-8000-000000000514'
+  and date = '2020-10-01'), 'Saved monthly interest note', 'Monthly posting uses the saved recurring description');
+update public.recurring set description = 'Updated monthly interest note', remaining_occurrences = 1,
+  is_completed = false, completed_at = null
+where id = (select interest_recurring_id from public.account where id = '00000000-0000-4000-8000-000000000514');
+select public.recurring_fire_due();
+select is((select description from public.transaction where to_account_id = '00000000-0000-4000-8000-000000000514'
+  and date = '2020-11-01'), 'Updated monthly interest note', 'An edited description applies to the next interest posting');
+select is((select description from public.transaction where to_account_id = '00000000-0000-4000-8000-000000000514'
+  and date = '2020-10-01'), 'Saved monthly interest note', 'Description edits leave already generated history untouched');
+insert into public.account(id, user_id, name, type, initial_balance_centavos,
+  principal_centavos, interest_rate_bps, maturity_date, interest_posting_interval, created_at)
+values ('00000000-0000-4000-8000-000000000515', '00000000-0000-4000-8000-000000000501',
+  'Default description', 'time-deposit', 100, 100, 600, '2020-11-01', 'monthly', '2020-10-01T00:00:00+08:00');
+update public.recurring set description = '   ' where id = (select interest_recurring_id from public.account
+  where id = '00000000-0000-4000-8000-000000000515');
+select public.recurring_fire_due();
+select is((select description from public.transaction where to_account_id = '00000000-0000-4000-8000-000000000515'),
+  'Interest 2020-10-01 to 2020-10-31 (ACT/365, net of 20% tax)',
+  'A blank saved description falls back to the calculated period description');
+-- A public account archive can succeed without the separate recurring pause request.
+insert into public.account(id, user_id, name, type, initial_balance_centavos,
+  principal_centavos, interest_rate_bps, maturity_date, interest_posting_interval, created_at)
+values ('00000000-0000-4000-8000-000000000516', '00000000-0000-4000-8000-000000000501',
+  'Archive without pause', 'time-deposit', 15000000, 15000000, 600, '2099-11-01', 'monthly',
+  (date_trunc('month', now() at time zone 'Asia/Manila') - interval '2 months') at time zone 'Asia/Manila');
+update public.account set is_archived = true where id = '00000000-0000-4000-8000-000000000516';
+select public.recurring_fire_due();
+select is((select count(*) from public.transaction where to_account_id = '00000000-0000-4000-8000-000000000516'),
+  0::bigint, 'Archived deposits skip posting even when recurring pause never succeeded');
+update public.account set is_archived = false where id = '00000000-0000-4000-8000-000000000516';
+-- The UI resume request may write false to an already-false pause flag.
+update public.recurring set is_paused = false where id = (select interest_recurring_id from public.account
+  where id = '00000000-0000-4000-8000-000000000516');
+select public.recurring_fire_due();
+select is((select count(*) from public.transaction where to_account_id = '00000000-0000-4000-8000-000000000516'),
+  0::bigint, 'Unarchive does not backfill archived months when the pause flag was already false');
+select is((select accrued_through from public.td_monthly_interest_state
+  where account_id = '00000000-0000-4000-8000-000000000516'), date_trunc('month', now() at time zone 'Asia/Manila')::date,
+  'Unarchive records skipped completed calendar periods independently of recurring resume');
+select is((select (next_occurrence_at at time zone 'Asia/Manila')::date from public.recurring
+  where id = (select interest_recurring_id from public.account where id = '00000000-0000-4000-8000-000000000516')),
+  (date_trunc('month', now() at time zone 'Asia/Manila') + interval '1 month')::date,
+  'Unarchive schedules the next calendar posting after skipped archived periods');
+insert into public.account(id, user_id, name, type, initial_balance_centavos,
+  principal_centavos, interest_rate_bps, maturity_date, interest_posting_interval, created_at)
+values ('00000000-0000-4000-8000-000000000517', '00000000-0000-4000-8000-000000000501',
+  'Manual pause survives archive', 'time-deposit', 15000000, 15000000, 600, '2099-11-01', 'monthly',
+  (date_trunc('month', now() at time zone 'Asia/Manila') - interval '2 months') at time zone 'Asia/Manila');
+update public.recurring set is_paused = true where id = (select interest_recurring_id from public.account
+  where id = '00000000-0000-4000-8000-000000000517');
+update public.account set is_archived = true where id = '00000000-0000-4000-8000-000000000517';
+update public.account set is_archived = false where id = '00000000-0000-4000-8000-000000000517';
+select ok((select is_paused from public.recurring where id = (select interest_recurring_id from public.account
+  where id = '00000000-0000-4000-8000-000000000517')), 'Account unarchive leaves an independently paused recurring paused');
+insert into public.account(id, user_id, name, type, initial_balance_centavos,
+  principal_centavos, interest_rate_bps, maturity_date, interest_posting_interval, created_at)
+values ('00000000-0000-4000-8000-000000000518', '00000000-0000-4000-8000-000000000501',
+  'Archive missing schedule', 'time-deposit', 15000000, 15000000, 600, '2099-11-01', 'monthly',
+  (date_trunc('month', now() at time zone 'Asia/Manila') - interval '2 months') at time zone 'Asia/Manila');
+update public.account set is_archived = true where id = '00000000-0000-4000-8000-000000000518';
+delete from public.recurring where id = (select interest_recurring_id from public.account
+  where id = '00000000-0000-4000-8000-000000000518');
+update public.account set is_archived = false where id = '00000000-0000-4000-8000-000000000518';
+select public.recurring_fire_due();
+select is((select count(*) from public.transaction where to_account_id = '00000000-0000-4000-8000-000000000518'),
+  0::bigint, 'Unarchive skips archived months even when the generated schedule must be repaired');
 -- Remove the remaining visible references, as a user can do before deleting a tag.
 delete from public.recurring where user_id = '00000000-0000-4000-8000-000000000501';
 delete from public.transaction where user_id = '00000000-0000-4000-8000-000000000501';
