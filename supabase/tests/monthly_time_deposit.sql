@@ -1,7 +1,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 set search_path = public, extensions;
-select plan(32);
+select plan(43);
 
 -- All fixtures are synthetic and rolled back. Dates deliberately remain in
 -- the past so the real cron entrypoints can exercise catch-up deterministically.
@@ -113,13 +113,13 @@ select is((select count(*) from public.transaction where to_account_id = '000000
 update public.recurring set is_paused = false where to_account_id = '00000000-0000-4000-8000-000000000306';
 select public.recurring_fire_due();
 select is((select count(*) from public.transaction where to_account_id = '00000000-0000-4000-8000-000000000306'),
-  2::bigint, 'Resume catches up despite generic recurring schedule being advanced');
+  1::bigint, 'Resume skips periods intentionally paused instead of backfilling');
 select is((select amount_centavos from public.transaction where to_account_id =
   '00000000-0000-4000-8000-000000000306' and date = '2020-10-01'), 60000::bigint,
   'Historical interest is preserved without recalculation');
-select is((select amount_centavos from public.transaction where to_account_id =
-  '00000000-0000-4000-8000-000000000306' and date = '2020-11-01'), 61395::bigint,
-  'New calculation compounds the actual preserved historical interest');
+select is(public.td_monthly_net_interest_centavos(a, '2020-10-01', '2020-11-01'),
+  61395::bigint, 'Calculation compounds actual preserved historical interest')
+  from public.account a where id = '00000000-0000-4000-8000-000000000306';
 
 insert into public.account(id, user_id, name, type, initial_balance_centavos,
   principal_centavos, interest_rate_bps, maturity_date, interest_posting_interval, created_at)
@@ -160,17 +160,82 @@ delete from public.transaction where to_account_id = '00000000-0000-4000-8000-00
   and date = '2020-10-01';
 select public.recurring_fire_due();
 select is((select count(*) from public.transaction where to_account_id = '00000000-0000-4000-8000-000000000306'),
-  1::bigint, 'Deleting an interest transaction does not cause it to be posted again');
+  0::bigint, 'Deleting an interest transaction does not cause it to be posted again');
 select is((select accrued_through from public.td_monthly_interest_state where account_id =
-  '00000000-0000-4000-8000-000000000306'), '2020-11-01'::date,
+  '00000000-0000-4000-8000-000000000306'),
+  date_trunc('month', now() at time zone 'Asia/Manila')::date,
   'Processed cursor survives transaction deletion');
-insert into public.td_monthly_interest_state values ('00000000-0000-4000-8000-000000000307', '2020-09-01');
+insert into public.td_monthly_interest_state(account_id, accrued_through, tag_id)
+select '00000000-0000-4000-8000-000000000307', '2020-09-01', id from public.tag
+where user_id = '00000000-0000-4000-8000-000000000301' and name = 'interest-earned';
 insert into public.transaction(user_id, type, tag_id, to_account_id, amount_centavos, date)
 select '00000000-0000-4000-8000-000000000301', 'income', id,
   '00000000-0000-4000-8000-000000000307', 50000, '2020-10-01'
 from public.tag where user_id = '00000000-0000-4000-8000-000000000301' and name = 'interest-earned';
-select is(public.td_monthly_period_start(a), '2020-10-01'::date,
-  'Newer interest from another cadence advances beyond the old monthly cursor')
+select is(public.td_monthly_period_start(a), '2020-09-01'::date,
+  'Manual interest entries cannot advance an existing monthly cursor')
   from public.account a where id = '00000000-0000-4000-8000-000000000307';
+
+update public.account set interest_posting_interval = 'quarterly'
+  where id = '00000000-0000-4000-8000-000000000307';
+update public.account set interest_posting_interval = 'monthly'
+  where id = '00000000-0000-4000-8000-000000000307';
+select is(public.td_monthly_period_start(a), '2020-10-01'::date,
+  'Explicit cadence transition deliberately adopts historical interest')
+  from public.account a where id = '00000000-0000-4000-8000-000000000307';
+
+insert into public.account(id, user_id, name, type, initial_balance_centavos,
+  principal_centavos, interest_rate_bps, maturity_date, interest_posting_interval, created_at)
+values ('00000000-0000-4000-8000-000000000309', '00000000-0000-4000-8000-000000000301',
+  'Rename regression', 'time-deposit', 15000000, 15000000, 600, '2099-11-01', 'monthly',
+  (date_trunc('month', now() at time zone 'Asia/Manila') - interval '1 month') at time zone 'Asia/Manila');
+update public.tag set name = 'deposit-yield'
+  where user_id = '00000000-0000-4000-8000-000000000301' and name = 'interest-earned';
+insert into public.recurring(user_id, service, amount_centavos, type, tag_id, to_account_id,
+  interval, first_occurrence_date, next_occurrence_at, remaining_occurrences)
+select '00000000-0000-4000-8000-000000000301', 'Unrelated recurring', 12345, 'income', id,
+  '00000000-0000-4000-8000-000000000309', 'monthly', (now() at time zone 'Asia/Manila')::date, now(), 1
+from public.tag where user_id = '00000000-0000-4000-8000-000000000301' and name = 'bonus';
+select lives_ok('select public.recurring_fire_due()', 'Renaming interest tag does not fail hourly cron');
+select is((select count(*) from public.transaction t join public.tag g on g.id = t.tag_id
+  where t.to_account_id = '00000000-0000-4000-8000-000000000309' and g.name = 'deposit-yield'),
+  1::bigint, 'Monthly posting uses linked recurring stable tag ID after rename');
+select is((select count(*) from public.transaction where to_account_id =
+  '00000000-0000-4000-8000-000000000309' and amount_centavos = 12345), 1::bigint,
+  'Unrelated due recurring still fires after interest tag rename');
+delete from public.recurring where to_account_id = '00000000-0000-4000-8000-000000000309';
+select lives_ok('select public.recurring_fire_due()', 'Missing schedule repairs using saved renamed tag ID');
+select is((select count(*) from public.recurring r join public.tag g on g.id = r.tag_id
+  where r.to_account_id = '00000000-0000-4000-8000-000000000309' and g.name = 'deposit-yield'),
+  1::bigint, 'Repair reuses saved tag without depending on the editable name');
+-- A manually edited posting date cannot move the persisted monthly cursor.
+update public.transaction set date = date + 5 where to_account_id =
+  '00000000-0000-4000-8000-000000000309' and tag_id in (select id from public.tag
+    where user_id = '00000000-0000-4000-8000-000000000301' and name = 'deposit-yield');
+select is(public.td_monthly_period_start(a), date_trunc('month', now() at time zone 'Asia/Manila')::date,
+  'Editing generated interest date cannot move the protected cursor')
+  from public.account a where id = '00000000-0000-4000-8000-000000000309';
+select is((select count(*) from public.tag where user_id = '00000000-0000-4000-8000-000000000301'
+  and name = 'interest-earned'), 0::bigint, 'Renamed linked tags do not cause replacement tags to be created');
+
+-- Simulate a pause spanning completed periods without relying on the hourly
+-- job running during the pause. Resume itself must discard missed periods.
+insert into public.account(id, user_id, name, type, initial_balance_centavos,
+  principal_centavos, interest_rate_bps, maturity_date, interest_posting_interval, created_at)
+values ('00000000-0000-4000-8000-000000000310', '00000000-0000-4000-8000-000000000301',
+  'Resume future', 'time-deposit', 15000000, 15000000, 600, '2099-11-01', 'monthly',
+  (date_trunc('month', now() at time zone 'Asia/Manila') - interval '2 months') at time zone 'Asia/Manila');
+update public.recurring set is_paused = true where to_account_id = '00000000-0000-4000-8000-000000000310';
+update public.recurring set is_paused = false where to_account_id = '00000000-0000-4000-8000-000000000310';
+select public.recurring_fire_due();
+select is((select count(*) from public.transaction where to_account_id = '00000000-0000-4000-8000-000000000310'),
+  0::bigint, 'Resume skips paused months even without cron running during the pause');
+select is((select accrued_through from public.td_monthly_interest_state where account_id =
+  '00000000-0000-4000-8000-000000000310'), date_trunc('month', now() at time zone 'Asia/Manila')::date,
+  'Resume records skipped completed periods in the protected cursor');
+select is((select (next_occurrence_at at time zone 'Asia/Manila')::date from public.recurring where
+  to_account_id = '00000000-0000-4000-8000-000000000310'),
+  (date_trunc('month', now() at time zone 'Asia/Manila') + interval '1 month')::date,
+  'Resumed monthly deposits schedule the next calendar posting');
 select * from finish();
 rollback;

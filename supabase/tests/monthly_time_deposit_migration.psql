@@ -1,7 +1,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 set search_path = public, extensions;
-select plan(7);
+select plan(8);
 
 -- Replay the additive migration against existing synthetic TDs, rather than
 -- only testing newly created accounts after a clean db reset.
@@ -24,8 +24,11 @@ insert into public.transaction(user_id, type, tag_id, to_account_id, amount_cent
 select '00000000-0000-4000-8000-000000000401', 'income', id,
   '00000000-0000-4000-8000-000000000403', 60000, '2020-10-01'
 from public.tag where user_id = '00000000-0000-4000-8000-000000000401' and name = 'interest-earned';
+update public.tag set name = 'renamed-interest' where user_id =
+  '00000000-0000-4000-8000-000000000401' and name = 'interest-earned';
 -- Simulate the schema before this migration; rollback restores all objects.
 drop trigger td_monthly_refresh_schedule_trg on public.account;
+drop trigger zz_td_monthly_resume_schedule_trg on public.recurring;
 drop table public.td_monthly_interest_state;
 \ir ../migrations/20261004062610_monthly_time_deposit_compounding.sql
 
@@ -49,5 +52,8 @@ select public.recurring_fire_due();
 select is((select amount_centavos from public.transaction
   where to_account_id = '00000000-0000-4000-8000-000000000402' and date = '2020-10-01'),
   59178::bigint, 'Next hourly run posts missed interest using the new calculation');
+select is((select g.name from public.td_monthly_interest_state st join public.tag g on g.id = st.tag_id
+  where st.account_id = '00000000-0000-4000-8000-000000000403'), 'renamed-interest',
+  'Migration retains stable tag reference after rename');
 select * from finish();
 rollback;

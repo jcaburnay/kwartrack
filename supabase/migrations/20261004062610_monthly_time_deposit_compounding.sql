@@ -3,7 +3,8 @@
 -- Other posting intervals retain their existing behavior.
 create table public.td_monthly_interest_state (
   account_id uuid primary key references public.account(id) on delete cascade,
-  accrued_through date not null
+  accrued_through date not null,
+  tag_id uuid not null references public.tag(id) on delete restrict
 );
 alter table public.td_monthly_interest_state enable row level security;
 create policy td_monthly_interest_state_select_own
@@ -15,18 +16,30 @@ revoke all on public.td_monthly_interest_state from anon, authenticated;
 grant select on public.td_monthly_interest_state to authenticated;
 grant all on public.td_monthly_interest_state to service_role;
 
+-- Stable references survive user-visible tag renames and missing back-links.
+create or replace function public.td_interest_tag_id(p_account public.account)
+returns uuid language sql stable set search_path = public as $$
+  select coalesce(
+    (select r.tag_id from public.recurring r join public.tag t on t.id = r.tag_id
+      where r.id = p_account.interest_recurring_id and r.user_id = p_account.user_id
+        and t.user_id = p_account.user_id and t.type = 'income'),
+    (select tag_id from public.td_monthly_interest_state where account_id = p_account.id),
+    (select r.tag_id from public.recurring r
+      where r.user_id = p_account.user_id and r.to_account_id = p_account.id
+        and r.type = 'income' and r.service = p_account.name || ' — Interest'
+      order by r.created_at limit 1),
+    (select id from public.tag where user_id = p_account.user_id
+      and name = 'interest-earned' and type = 'income')
+  );
+$$;
+
 create or replace function public.td_monthly_period_start(p_account public.account)
 returns date language sql stable set search_path = public as $$
   select coalesce(
-    -- Preserve processed periods even if their transactions were deleted,
-    -- and recognize newer interest credited while using another cadence.
-    greatest(
-      (select accrued_through from public.td_monthly_interest_state
-        where account_id = p_account.id),
-      (select max(t.date) from public.transaction t join public.tag g on g.id = t.tag_id
-        where t.to_account_id = p_account.id and t.type = 'income'
-          and g.name = 'interest-earned')
-    ),
+    -- Once created, the protected cursor is authoritative. Editable ledger
+    -- dates must never silently mark unprocessed days as credited.
+    (select accrued_through from public.td_monthly_interest_state
+      where account_id = p_account.id),
     case when p_account.initial_balance_centavos = 0 then
       (select min(t.date) from public.transaction t
         where t.to_account_id = p_account.id and t.type in ('income', 'transfer'))
@@ -86,8 +99,7 @@ begin
     if a.interest_recurring_id is null then
       select id into a.interest_recurring_id from public.recurring
         where user_id = a.user_id and to_account_id = a.id and type = 'income'
-          and tag_id in (select id from public.tag
-            where user_id = a.user_id and name = 'interest-earned')
+          and tag_id = public.td_interest_tag_id(a)
         order by created_at limit 1;
       if a.interest_recurring_id is null then
         a.interest_recurring_id := public.td_create_interest_recurring(a);
@@ -97,9 +109,17 @@ begin
     if exists (select 1 from public.recurring where id = a.interest_recurring_id
       and (is_paused or is_completed)) then continue; end if;
 
-    select id into v_tag from public.tag
-      where user_id = a.user_id and name = 'interest-earned' and type = 'income' limit 1;
-    if v_tag is null then raise exception 'Missing interest-earned income tag'; end if;
+    v_tag := public.td_interest_tag_id(a);
+    if v_tag is null then
+      -- No surviving reference: restore the default income tag rather than
+      -- preventing every user's recurring transactions from being processed.
+      insert into public.tag(user_id, name, type) values (a.user_id, 'interest-earned', 'income')
+        on conflict (user_id, name, type) do update set name = excluded.name
+        returning id into v_tag;
+    end if;
+    insert into public.td_monthly_interest_state(account_id, accrued_through, tag_id)
+      values (a.id, v_start, v_tag)
+      on conflict (account_id) do update set tag_id = excluded.tag_id;
     loop
       v_end := least((date_trunc('month', v_start) + interval '1 month')::date, a.maturity_date);
       exit when v_start >= v_end or v_end > v_today;
@@ -113,12 +133,12 @@ begin
         v_count := v_count + 1;
       end if;
       v_start := v_end;
-      insert into public.td_monthly_interest_state(account_id, accrued_through)
-        values (a.id, v_start)
+      insert into public.td_monthly_interest_state(account_id, accrued_through, tag_id)
+        values (a.id, v_start, v_tag)
         on conflict (account_id) do update set accrued_through = excluded.accrued_through;
     end loop;
     -- The recurring amount is an estimate for the next posting, not a fixed
-    -- amount used by the scheduler. Schedule refresh/unpause cannot skip unprocessed periods.
+    -- amount used by the scheduler. Unpause explicitly skips paused periods.
     v_end := least((date_trunc('month', v_start) + interval '1 month')::date, a.maturity_date);
     if v_end > v_start then
       update public.recurring set
@@ -153,12 +173,12 @@ begin
     return null;
   end if;
 
-  select id into v_tag_id
-    from public.tag
-    where user_id = p_account.user_id and name = 'interest-earned'
-    limit 1;
+  v_tag_id := public.td_interest_tag_id(p_account);
   if v_tag_id is null then
-    raise exception 'td_create_interest_recurring: interest-earned tag missing for user %', p_account.user_id;
+    insert into public.tag(user_id, name, type)
+      values (p_account.user_id, 'interest-earned', 'income')
+      on conflict (user_id, name, type) do update set name = excluded.name
+      returning id into v_tag_id;
   end if;
 
   v_amount := public.td_periodic_net_interest_centavos(
@@ -222,9 +242,8 @@ begin
        and not exists (select 1 from public.account a
          where a.id = rec.to_account_id and a.type = 'time-deposit'
            and a.interest_posting_interval = 'monthly'
-           and (a.interest_recurring_id = rec.id or rec.tag_id in (
-             select id from public.tag where user_id = a.user_id and name = 'interest-earned'
-           )))
+           and (a.interest_recurring_id = rec.id
+             or rec.tag_id = public.td_interest_tag_id(a)))
      for update skip locked
   loop
     select timezone into v_tz from public.user_profile where id = r.user_id;
@@ -346,24 +365,35 @@ $$;
 -- Repair and retime all existing monthly TDs. This only creates schedules;
 -- ledger catch-up happens on the next hourly cron, not during migration.
 do $$
-declare a public.account; v_id uuid; v_start date; v_tz text;
+declare a public.account; v_id uuid; v_start date; v_tz text; v_tag uuid;
 begin
   for a in select * from public.account
     where type = 'time-deposit' and interest_posting_interval = 'monthly'
       and not is_matured for update
   loop
     v_start := public.td_monthly_period_start(a);
-    insert into public.td_monthly_interest_state values (a.id, v_start)
-      on conflict (account_id) do nothing;
     v_id := a.interest_recurring_id;
     if v_id is null then
       select id into v_id from public.recurring
         where to_account_id = a.id and user_id = a.user_id and type = 'income'
-          and tag_id in (select id from public.tag where user_id = a.user_id and name = 'interest-earned')
+          and tag_id = public.td_interest_tag_id(a)
         order by created_at limit 1;
       if v_id is null then v_id := public.td_create_interest_recurring(a); end if;
       update public.account set interest_recurring_id = v_id where id = a.id;
     end if;
+    select * into a from public.account where id = a.id;
+    v_tag := public.td_interest_tag_id(a);
+    if v_tag is null then
+      insert into public.tag(user_id, name, type) values (a.user_id, 'interest-earned', 'income')
+        on conflict (user_id, name, type) do update set name = excluded.name
+        returning id into v_tag;
+    end if;
+    -- Deliberate one-time adoption of historical entries. Runtime processing
+    -- never infers cursor changes from editable transaction dates.
+    select greatest(v_start, max(date)) into v_start from public.transaction
+      where to_account_id = a.id and type = 'income' and tag_id = v_tag;
+    insert into public.td_monthly_interest_state(account_id, accrued_through, tag_id)
+      values (a.id, v_start, v_tag) on conflict (account_id) do nothing;
     select coalesce(timezone, 'Asia/Manila') into v_tz from public.user_profile where id = a.user_id;
     update public.recurring set
       next_occurrence_at = least((date_trunc('month', v_start) + interval '1 month')::date,
@@ -375,12 +405,21 @@ end;
 $$;
 
 create or replace function public.td_monthly_refresh_schedule()
-returns trigger language plpgsql set search_path = public as $$
-declare v_start date; v_end date; v_tz text;
+returns trigger language plpgsql security definer set search_path = public as $$
+declare v_start date; v_end date; v_tz text; v_tag uuid;
 begin
   if new.type <> 'time-deposit' or new.interest_posting_interval <> 'monthly'
     or new.is_matured or new.interest_recurring_id is null then return new; end if;
   v_start := public.td_monthly_period_start(new);
+  if old.interest_posting_interval is distinct from new.interest_posting_interval then
+    v_tag := public.td_interest_tag_id(new);
+    select greatest(v_start, max(date)) into v_start from public.transaction
+      where to_account_id = new.id and type = 'income' and tag_id = v_tag;
+    insert into public.td_monthly_interest_state(account_id, accrued_through, tag_id)
+      values (new.id, v_start, v_tag)
+      on conflict (account_id) do update set accrued_through = excluded.accrued_through,
+        tag_id = excluded.tag_id;
+  end if;
   v_end := least((date_trunc('month', v_start) + interval '1 month')::date, new.maturity_date);
   select coalesce(timezone, 'Asia/Manila') into v_tz
     from public.user_profile where id = new.user_id;
@@ -394,3 +433,33 @@ $$;
 create trigger td_monthly_refresh_schedule_trg
   after update of interest_rate_bps, interest_posting_interval, maturity_date, interest_recurring_id, balance_centavos
   on public.account for each row execute function public.td_monthly_refresh_schedule();
+
+-- Resume skips completed calendar periods during an intentional pause. The
+-- trigger runs after recurring_set_next_at and updates only the account linked
+-- to this RLS-validated recurring; users cannot write the cursor directly.
+create or replace function public.td_monthly_resume_schedule()
+returns trigger language plpgsql security definer set search_path = public as $$
+declare a public.account; v_tz text; v_start date; v_end date;
+begin
+  if not old.is_paused or new.is_paused then return new; end if;
+  select * into a from public.account where interest_recurring_id = new.id
+    and user_id = new.user_id and type = 'time-deposit'
+    and interest_posting_interval = 'monthly' and not is_matured;
+  if not found then return new; end if;
+  select coalesce(timezone, 'Asia/Manila') into v_tz from public.user_profile where id = a.user_id;
+  v_tz := coalesce(v_tz, 'Asia/Manila');
+  v_start := greatest(public.td_monthly_period_start(a),
+    date_trunc('month', now() at time zone v_tz)::date);
+  insert into public.td_monthly_interest_state(account_id, accrued_through, tag_id)
+    values (a.id, v_start, new.tag_id)
+    on conflict (account_id) do update set accrued_through = excluded.accrued_through,
+      tag_id = excluded.tag_id;
+  v_end := least((date_trunc('month', v_start) + interval '1 month')::date, a.maturity_date);
+  new.next_occurrence_at := v_end::timestamp at time zone v_tz;
+  new.amount_centavos := greatest(1, public.td_monthly_net_interest_centavos(a, v_start, v_end));
+  return new;
+end;
+$$;
+create trigger zz_td_monthly_resume_schedule_trg
+  before update of is_paused on public.recurring
+  for each row execute function public.td_monthly_resume_schedule();
