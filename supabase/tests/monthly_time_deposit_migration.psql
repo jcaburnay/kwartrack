@@ -1,0 +1,53 @@
+begin;
+create extension if not exists pgtap with schema extensions;
+set search_path = public, extensions;
+select plan(7);
+
+-- Replay the additive migration against existing synthetic TDs, rather than
+-- only testing newly created accounts after a clean db reset.
+insert into auth.users(id, email, raw_user_meta_data)
+values ('00000000-0000-4000-8000-000000000401', 'monthly-migration@example.invalid',
+  '{"display_name":"Migration test","timezone":"Asia/Manila"}');
+insert into public.account(id, user_id, name, type, initial_balance_centavos,
+  principal_centavos, interest_rate_bps, maturity_date, interest_posting_interval, created_at)
+values
+  ('00000000-0000-4000-8000-000000000402', '00000000-0000-4000-8000-000000000401',
+   'Missing monthly', 'time-deposit', 15000000, 15000000, 600, '2020-11-01', 'monthly',
+   '2020-09-01T00:00:00+08:00'),
+  ('00000000-0000-4000-8000-000000000403', '00000000-0000-4000-8000-000000000401',
+   'Existing paused monthly', 'time-deposit', 15000000, 15000000, 600, '2020-11-01', 'monthly',
+   '2020-09-01T00:00:00+08:00');
+delete from public.recurring where to_account_id = '00000000-0000-4000-8000-000000000402';
+update public.recurring set is_paused = true
+  where to_account_id = '00000000-0000-4000-8000-000000000403';
+insert into public.transaction(user_id, type, tag_id, to_account_id, amount_centavos, date)
+select '00000000-0000-4000-8000-000000000401', 'income', id,
+  '00000000-0000-4000-8000-000000000403', 60000, '2020-10-01'
+from public.tag where user_id = '00000000-0000-4000-8000-000000000401' and name = 'interest-earned';
+-- Simulate the schema before this migration; rollback restores all objects.
+drop trigger td_monthly_refresh_schedule_trg on public.account;
+drop table public.td_monthly_interest_state;
+\ir ../migrations/20261004062610_monthly_time_deposit_compounding.sql
+
+select ok((select interest_recurring_id is not null from public.account
+  where id = '00000000-0000-4000-8000-000000000402'), 'Migration restores missing recurring link');
+select is((select count(*) from public.recurring
+  where to_account_id = '00000000-0000-4000-8000-000000000402'), 1::bigint,
+  'Migration creates exactly one replacement schedule');
+select is((select count(*) from public.transaction
+  where to_account_id = '00000000-0000-4000-8000-000000000402'), 0::bigint,
+  'Migration does not post ledger entries during deployment');
+select is((select accrued_through from public.td_monthly_interest_state
+  where account_id = '00000000-0000-4000-8000-000000000403'), '2020-10-01'::date,
+  'Migration adopts the latest existing interest posting without rewriting it');
+select ok((select is_paused from public.recurring
+  where to_account_id = '00000000-0000-4000-8000-000000000403'), 'Migration preserves an intentional pause');
+select is((select (next_occurrence_at at time zone 'Asia/Manila')::date from public.recurring
+  where to_account_id = '00000000-0000-4000-8000-000000000402'), '2020-10-01'::date,
+  'Repair keeps missed first posting due rather than skipping to the future');
+select public.recurring_fire_due();
+select is((select amount_centavos from public.transaction
+  where to_account_id = '00000000-0000-4000-8000-000000000402' and date = '2020-10-01'),
+  59178::bigint, 'Next hourly run posts missed interest using the new calculation');
+select * from finish();
+rollback;

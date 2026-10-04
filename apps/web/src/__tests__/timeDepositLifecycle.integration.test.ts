@@ -43,6 +43,15 @@ function todayInTZ(): string {
 	return fmt.format(new Date());
 }
 
+function expectedMonthlyInterest(principal: number, rateBps: number, nextAt: string) {
+	const start = new Date(`${todayInTZ()}T00:00:00Z`);
+	const endDate = new Intl.DateTimeFormat("en-CA", { timeZone: TZ }).format(new Date(nextAt));
+	const end = new Date(`${endDate}T00:00:00Z`);
+	const days = (end.getTime() - start.getTime()) / 86_400_000;
+	const gross = Math.round((principal * rateBps * days) / (10_000 * 365));
+	return gross - Math.round(gross * 0.2);
+}
+
 async function createTd(over: {
 	name: string;
 	principal_centavos?: number;
@@ -129,12 +138,14 @@ beforeEach(async () => {
 });
 
 runOrSkip("td_account_after_insert trigger", () => {
-	it("creates a linked recurring with the legacy-parity amount for monthly TDs", async () => {
+	it("creates a linked recurring estimating the first calendar-month posting", async () => {
 		const td = await createTd({ name: "Monthly TD" });
 		expect(td.interest_recurring_id).not.toBeNull();
 		const rec = await getRecurring(td.interest_recurring_id!);
-		// Legacy parity: ₱100,000 × 6% / 12 × 0.80 = ₱400.00
-		expect(rec.amount_centavos).toBe(400_00);
+		// The first period contains only the remaining days of the opening month.
+		expect(rec.amount_centavos).toBe(
+			expectedMonthlyInterest(100_000_00, 600, rec.next_occurrence_at),
+		);
 		expect(rec.type).toBe("income");
 		expect(rec.interval).toBe("monthly");
 		expect(rec.tag_id).toBe(interestTagId);
@@ -179,8 +190,9 @@ runOrSkip("td_account_after_update trigger", () => {
 		const td = await createTd({ name: "RateChange TD" });
 		await admin.from("account").update({ interest_rate_bps: 750 }).eq("id", td.id);
 		const rec = await getRecurring(td.interest_recurring_id!);
-		// 100,000 × 7.5% / 12 × 0.80 = ₱500.00
-		expect(rec.amount_centavos).toBe(500_00);
+		expect(rec.amount_centavos).toBe(
+			expectedMonthlyInterest(100_000_00, 750, rec.next_occurrence_at),
+		);
 	});
 
 	it("retunes amount + interval on periodic→periodic transition", async () => {
@@ -212,7 +224,9 @@ runOrSkip("td_account_after_update trigger", () => {
 		expect(reloaded.interest_recurring_id).not.toBeNull();
 		const rec = await getRecurring(reloaded.interest_recurring_id!);
 		expect(rec.interval).toBe("monthly");
-		expect(rec.amount_centavos).toBe(400_00);
+		expect(rec.amount_centavos).toBe(
+			expectedMonthlyInterest(100_000_00, 600, rec.next_occurrence_at),
+		);
 	});
 
 	it("syncs the recurring's service label on account name change", async () => {

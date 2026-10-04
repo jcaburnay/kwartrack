@@ -268,7 +268,11 @@ Ported from the legacy implementation's `time_deposit_metadata` model largely un
 
 **Balance behavior.** `balance` starts at `principalCentavos` and grows via periodic interest postings. Counted as an asset (same as e-wallet/savings). The delta `balance − principalCentavos` equals accrued interest to date.
 
-**Interest accrual.** Ports the legacy mechanism: a linked scheduled recurring generates `income` transactions tagged `interest-earned` with `to = this time deposit` at the `interestPostingInterval`. No on-the-fly balance extrapolation — every centavo of interest is an actual ledger entry, which keeps transaction history honest. For `at-maturity`, the scheduled job posts a single interest transaction on the day `maturityDate` passes.
+**Interest accrual.** A linked scheduled recurring generates `income` transactions tagged `interest-earned` with `to = this time deposit` at the `interestPostingInterval`.
+
+Monthly deposits post on the first calendar day of the following month, using actual eligible days divided by 365 and historical end-of-day ledger balances. Previously credited net interest earns interest in subsequent months. Gross interest and 20% withholding tax are rounded separately to the nearest centavo, using the single configured annual rate (no base/boost fields). The first period begins at funding (or account creation for an externally funded opening balance); accrual excludes the maturity date. A final partial period posts at maturity. Missed periods catch up chronologically without duplicating processed periods, and missing monthly schedules are repaired. Existing interest entries are preserved.
+
+Other periodic intervals retain fixed principal-based postings. No on-the-fly balance extrapolation — every centavo of interest is an actual ledger entry, which keeps transaction history honest. For `at-maturity`, the scheduled job posts a single interest transaction on the day `maturityDate` passes.
 
 **Maturity handling.** A scheduled `pg_cron` job runs daily, finds time deposits whose `maturityDate` has passed, flips `isMatured`, and stops future interest postings. The matured balance stays in the account until the user transfers it out via a normal transfer.
 
@@ -285,7 +289,7 @@ Ported from the legacy implementation's `time_deposit_metadata` model largely un
 
 **Deliberately skipped for 1.0.0:**
 
-- Compounding frequency control (monthly vs daily compounding). The legacy model uses simple periodic posting; the current app ports the same behavior. This can be refined later if real-world use reveals the need.
+- Compounding frequency control (monthly vs daily compounding). Monthly deposits compound on credited net interest; there is no separate frequency control.
 - Early-withdrawal penalty math. If it matters, the user records the penalty as a normal `expense` when it posts.
 
 #### New Account (two-step flow, launched from FAB)
