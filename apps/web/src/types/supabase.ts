@@ -544,17 +544,17 @@ export type Database = {
 				Row: {
 					account_id: string;
 					accrued_through: string;
-					tag_id: string;
+					tag_id: string | null;
 				};
 				Insert: {
 					account_id: string;
 					accrued_through: string;
-					tag_id: string;
+					tag_id?: string | null;
 				};
 				Update: {
 					account_id?: string;
 					accrued_through?: string;
-					tag_id?: string;
+					tag_id?: string | null;
 				};
 				Relationships: [
 					{

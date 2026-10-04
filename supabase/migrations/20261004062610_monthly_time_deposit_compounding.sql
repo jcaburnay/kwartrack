@@ -4,7 +4,7 @@
 create table public.td_monthly_interest_state (
   account_id uuid primary key references public.account(id) on delete cascade,
   accrued_through date not null,
-  tag_id uuid not null references public.tag(id) on delete restrict
+  tag_id uuid references public.tag(id) on delete set null
 );
 alter table public.td_monthly_interest_state enable row level security;
 create policy td_monthly_interest_state_select_own
@@ -77,6 +77,8 @@ create or replace function public.td_post_monthly_interest_due()
 returns int language plpgsql security definer set search_path = public as $$
 declare
   a public.account;
+  v_rec public.recurring;
+  v_remaining int;
   v_start date;
   v_end date;
   v_today date;
@@ -99,15 +101,17 @@ begin
     if a.interest_recurring_id is null then
       select id into a.interest_recurring_id from public.recurring
         where user_id = a.user_id and to_account_id = a.id and type = 'income'
-          and tag_id = public.td_interest_tag_id(a)
+          and service = a.name || ' — Interest'
         order by created_at limit 1;
       if a.interest_recurring_id is null then
         a.interest_recurring_id := public.td_create_interest_recurring(a);
       end if;
       update public.account set interest_recurring_id = a.interest_recurring_id where id = a.id;
     end if;
-    if exists (select 1 from public.recurring where id = a.interest_recurring_id
-      and (is_paused or is_completed)) then continue; end if;
+    select * into v_rec from public.recurring
+      where id = a.interest_recurring_id for update;
+    if v_rec.is_paused or v_rec.is_completed then continue; end if;
+    v_remaining := v_rec.remaining_occurrences;
 
     v_tag := public.td_interest_tag_id(a);
     if v_tag is null then
@@ -126,21 +130,32 @@ begin
       v_amount := public.td_monthly_net_interest_centavos(a, v_start, v_end);
       if v_amount > 0 then
         insert into public.transaction
-          (user_id, type, tag_id, to_account_id, amount_centavos, date, description, recurring_id)
+          (user_id, type, tag_id, to_account_id, amount_centavos, date, description, recurring_id,
+           is_installment_portion)
         values (a.user_id, 'income', v_tag, a.id, v_amount, v_end,
           format('Interest %s to %s (ACT/365, net of 20%% tax)',
-            v_start, v_end - 1), a.interest_recurring_id);
+            v_start, v_end - 1), a.interest_recurring_id, v_remaining is not null);
         v_count := v_count + 1;
+        if v_remaining is not null then
+          v_remaining := v_remaining - 1;
+          update public.recurring set
+            remaining_occurrences = v_remaining,
+            is_completed = v_remaining = 0,
+            completed_at = case when v_remaining = 0 then now() else null end,
+            next_occurrence_at = v_end::timestamp at time zone v_tz
+          where id = a.interest_recurring_id;
+        end if;
       end if;
       v_start := v_end;
       insert into public.td_monthly_interest_state(account_id, accrued_through, tag_id)
         values (a.id, v_start, v_tag)
         on conflict (account_id) do update set accrued_through = excluded.accrued_through;
+      exit when v_remaining = 0;
     end loop;
     -- The recurring amount is an estimate for the next posting, not a fixed
     -- amount used by the scheduler. Unpause explicitly skips paused periods.
     v_end := least((date_trunc('month', v_start) + interval '1 month')::date, a.maturity_date);
-    if v_end > v_start then
+    if v_end > v_start and (v_remaining is null or v_remaining > 0) then
       update public.recurring set
         next_occurrence_at = v_end::timestamp at time zone v_tz,
         amount_centavos = greatest(1, public.td_monthly_net_interest_centavos(a, v_start, v_end))
@@ -242,8 +257,7 @@ begin
        and not exists (select 1 from public.account a
          where a.id = rec.to_account_id and a.type = 'time-deposit'
            and a.interest_posting_interval = 'monthly'
-           and (a.interest_recurring_id = rec.id
-             or rec.tag_id = public.td_interest_tag_id(a)))
+           and a.interest_recurring_id = rec.id)
      for update skip locked
   loop
     select timezone into v_tz from public.user_profile where id = r.user_id;
@@ -376,7 +390,7 @@ begin
     if v_id is null then
       select id into v_id from public.recurring
         where to_account_id = a.id and user_id = a.user_id and type = 'income'
-          and tag_id = public.td_interest_tag_id(a)
+          and service = a.name || ' — Interest'
         order by created_at limit 1;
       if v_id is null then v_id := public.td_create_interest_recurring(a); end if;
       update public.account set interest_recurring_id = v_id where id = a.id;
@@ -408,8 +422,16 @@ create or replace function public.td_monthly_refresh_schedule()
 returns trigger language plpgsql security definer set search_path = public as $$
 declare v_start date; v_end date; v_tz text; v_tag uuid;
 begin
-  if new.type <> 'time-deposit' or new.interest_posting_interval <> 'monthly'
-    or new.is_matured or new.interest_recurring_id is null then return new; end if;
+  if new.type <> 'time-deposit' then return new; end if;
+  if new.interest_posting_interval <> 'monthly' or new.is_matured then
+    -- Retain the processed-period cursor, but retired schedules no longer
+    -- reserve a tag that has no surviving ledger or recurring references.
+    update public.td_monthly_interest_state set tag_id = null where account_id = new.id;
+    return new;
+  end if;
+  if new.interest_recurring_id is null then return new; end if;
+  if exists (select 1 from public.recurring
+    where id = new.interest_recurring_id and is_completed) then return new; end if;
   v_start := public.td_monthly_period_start(new);
   if old.interest_posting_interval is distinct from new.interest_posting_interval then
     v_tag := public.td_interest_tag_id(new);
@@ -431,7 +453,7 @@ begin
 end;
 $$;
 create trigger td_monthly_refresh_schedule_trg
-  after update of interest_rate_bps, interest_posting_interval, maturity_date, interest_recurring_id, balance_centavos
+  after update of interest_rate_bps, interest_posting_interval, maturity_date, interest_recurring_id, balance_centavos, is_matured
   on public.account for each row execute function public.td_monthly_refresh_schedule();
 
 -- Resume skips completed calendar periods during an intentional pause. The
@@ -441,7 +463,7 @@ create or replace function public.td_monthly_resume_schedule()
 returns trigger language plpgsql security definer set search_path = public as $$
 declare a public.account; v_tz text; v_start date; v_end date;
 begin
-  if not old.is_paused or new.is_paused then return new; end if;
+  if not old.is_paused or new.is_paused or new.is_completed then return new; end if;
   select * into a from public.account where interest_recurring_id = new.id
     and user_id = new.user_id and type = 'time-deposit'
     and interest_posting_interval = 'monthly' and not is_matured;
