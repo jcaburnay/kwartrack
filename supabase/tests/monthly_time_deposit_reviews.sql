@@ -1,7 +1,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 set search_path = public, extensions;
-select plan(17);
+select plan(21);
 
 insert into auth.users(id, email, raw_user_meta_data)
 values ('00000000-0000-4000-8000-000000000501', 'monthly-review@example.invalid',
@@ -54,6 +54,22 @@ select ok((select bool_and(is_installment_portion) from public.transaction
 select public.recurring_fire_due();
 select is((select count(*) from public.transaction where to_account_id = '00000000-0000-4000-8000-000000000505'),
   2::bigint, 'Completed monthly interest schedule does not post on later cron runs');
+-- Resetting a completed countdown deliberately resumes exactly the new limit.
+update public.recurring set remaining_occurrences = 1, is_completed = false, completed_at = null
+where id = (select interest_recurring_id from public.account
+  where id = '00000000-0000-4000-8000-000000000505');
+select public.recurring_fire_due();
+select is((select count(*) from public.transaction where to_account_id = '00000000-0000-4000-8000-000000000505'),
+  3::bigint, 'An explicitly reset countdown reactivates the completed monthly schedule');
+delete from public.recurring where id = (select interest_recurring_id from public.account
+  where id = '00000000-0000-4000-8000-000000000505');
+select public.recurring_fire_due();
+select is((select count(*) from public.transaction where to_account_id = '00000000-0000-4000-8000-000000000505'),
+  3::bigint, 'Deleting completed monthly schedule does not resume interest postings');
+select is((select count(*) from public.recurring where to_account_id = '00000000-0000-4000-8000-000000000505'),
+  0::bigint, 'Completed schedule deletion does not create an open-ended replacement');
+select ok((select interest_recurring_id is null from public.account
+  where id = '00000000-0000-4000-8000-000000000505'), 'Deleted completed schedule keeps the account backlink empty');
 insert into public.account(id, user_id, name, type, initial_balance_centavos,
   principal_centavos, interest_rate_bps, maturity_date, interest_posting_interval, created_at)
 values ('00000000-0000-4000-8000-000000000506', '00000000-0000-4000-8000-000000000501',

@@ -1,7 +1,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 set search_path = public, extensions;
-select plan(12);
+select plan(14);
 
 -- Replay the additive migration against existing synthetic TDs, rather than
 -- only testing newly created accounts after a clean db reset.
@@ -43,9 +43,18 @@ insert into public.recurring(id, user_id, service, type, tag_id, to_account_id,
 select '00000000-0000-4000-8000-000000000406', user_id, 'Exact label collision — Interest',
   'income', id, '00000000-0000-4000-8000-000000000405', 12345, 'monthly', '2099-01-01', '2099-01-01'
 from public.tag where user_id = '00000000-0000-4000-8000-000000000401' and name = 'current-interest';
+insert into public.account(id, user_id, name, type, initial_balance_centavos,
+  principal_centavos, interest_rate_bps, maturity_date, interest_posting_interval, created_at)
+values ('00000000-0000-4000-8000-000000000407', '00000000-0000-4000-8000-000000000401',
+  'Previously completed monthly', 'time-deposit', 15000000, 15000000, 600, '2099-11-01', 'monthly',
+  '2020-09-01T00:00:00+08:00');
+update public.recurring set remaining_occurrences = 0, is_completed = true, completed_at = now()
+where id = (select interest_recurring_id from public.account
+  where id = '00000000-0000-4000-8000-000000000407');
 -- Simulate the schema before this migration; rollback restores all objects.
 drop trigger td_monthly_refresh_schedule_trg on public.account;
 drop trigger zz_td_monthly_resume_schedule_trg on public.recurring;
+drop trigger if exists td_monthly_remember_completion_trg on public.recurring;
 drop table public.td_monthly_interest_state;
 \ir ../migrations/20261004062610_monthly_time_deposit_compounding.sql
 
@@ -81,5 +90,12 @@ select is((select amount_centavos from public.recurring where id = '00000000-000
   12345::bigint, 'Migration preserves unrelated exact-label income amount');
 select is((select count(*) from public.transaction where to_account_id = '00000000-0000-4000-8000-000000000403'),
   1::bigint, 'Migration preserves the existing differently tagged linked interest posting');
+delete from public.recurring where id = (select interest_recurring_id from public.account
+  where id = '00000000-0000-4000-8000-000000000407');
+select public.recurring_fire_due();
+select is((select count(*) from public.recurring where to_account_id = '00000000-0000-4000-8000-000000000407'),
+  0::bigint, 'Migration preserves existing completion after the completed row is deleted');
+select is((select count(*) from public.transaction where to_account_id = '00000000-0000-4000-8000-000000000407'),
+  0::bigint, 'Migrated completed schedule deletion does not credit missed periods');
 select * from finish();
 rollback;

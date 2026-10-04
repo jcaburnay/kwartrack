@@ -6,6 +6,7 @@ create table public.td_monthly_interest_state (
   -- Provenance may exist before funding; initialize the cursor on processing.
   accrued_through date,
   recurring_id uuid references public.recurring(id) on delete set null,
+  is_completed boolean not null default false,
   tag_id uuid references public.tag(id) on delete set null
 );
 alter table public.td_monthly_interest_state enable row level security;
@@ -99,6 +100,9 @@ begin
     v_tz := coalesce(v_tz, 'Asia/Manila');
     v_today := (now() at time zone v_tz)::date;
     v_start := public.td_monthly_period_start(a);
+    -- Completed limits survive deletion of the user-visible recurring row.
+    if exists (select 1 from public.td_monthly_interest_state
+      where account_id = a.id and is_completed) then continue; end if;
     -- Editable service labels cannot establish ownership of a schedule.
     -- Only the protected identity may restore a surviving missing backlink.
     if a.interest_recurring_id is null then
@@ -413,8 +417,10 @@ begin
       (select max(date) from public.transaction where to_account_id = a.id
         and type = 'income' and recurring_id is null and tag_id = v_tag)
     )) into v_start;
-    insert into public.td_monthly_interest_state(account_id, accrued_through, tag_id, recurring_id)
-      values (a.id, v_start, v_tag, v_id) on conflict (account_id) do nothing;
+    insert into public.td_monthly_interest_state(account_id, accrued_through, tag_id, recurring_id, is_completed)
+      values (a.id, v_start, v_tag, v_id, coalesce(
+        (select is_completed from public.recurring where id = v_id), false))
+      on conflict (account_id) do nothing;
     select coalesce(timezone, 'Asia/Manila') into v_tz from public.user_profile where id = a.user_id;
     update public.recurring set
       next_occurrence_at = least((date_trunc('month', v_start) + interval '1 month')::date,
@@ -504,3 +510,22 @@ $$;
 create trigger zz_td_monthly_resume_schedule_trg
   before update of is_paused on public.recurring
   for each row execute function public.td_monthly_resume_schedule();
+
+-- Keep completion authoritative after a recurring is removed. Explicitly
+-- resetting a surviving countdown clears completion through the same trigger.
+create or replace function public.td_monthly_remember_completion()
+returns trigger language plpgsql security definer set search_path = public as $$
+begin
+  if tg_op = 'DELETE' then
+    update public.td_monthly_interest_state set is_completed = old.is_completed
+      where recurring_id = old.id;
+    return old;
+  end if;
+  update public.td_monthly_interest_state set is_completed = new.is_completed
+    where recurring_id = new.id;
+  return new;
+end;
+$$;
+create trigger td_monthly_remember_completion_trg
+  before update of is_completed or delete on public.recurring
+  for each row execute function public.td_monthly_remember_completion();

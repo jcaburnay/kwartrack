@@ -67,3 +67,14 @@ it("keeps independent income to the same deposit editable", () => {
 	show({ ...recurring, id: "other" });
 	expect(screen.getByRole("spinbutton", { name: /amount/i })).not.toHaveAttribute("readonly");
 });
+it("makes the calculated monthly interval and schedule read-only", () => {
+	show();
+	expect(screen.getByRole("textbox", { name: "Interval" })).toHaveAttribute("readonly");
+	expect(screen.getByLabelText("Schedule")).toHaveAttribute("readonly");
+	expect(screen.getByText(/first day of the following month/i)).toBeInTheDocument();
+});
+it("keeps independent recurring interval and schedule editable", () => {
+	show({ ...recurring, id: "other" });
+	expect(screen.getByRole("combobox", { name: "Interval" })).not.toBeDisabled();
+	expect(screen.getByLabelText("Schedule")).not.toHaveAttribute("readonly");
+});

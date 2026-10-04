@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { type SubmitHandler, useForm, useWatch } from "react-hook-form";
 import type { Tag, TagScope } from "../../hooks/useTags";
 import type { Account, AccountGroup } from "../../utils/accountBalances";
@@ -62,6 +62,7 @@ export function RecurringForm({
 	onSubmit,
 	onCancel,
 }: Props) {
+	const intervalId = useId();
 	const {
 		register,
 		control,
@@ -309,18 +310,32 @@ export function RecurringForm({
 			</label>
 
 			<div className="grid grid-cols-2 gap-3">
-				<label className="floating-label">
+				<label className="floating-label" htmlFor={intervalId}>
 					<span>Interval</span>
-					<select
-						className="select select-bordered w-full"
-						{...register("interval", { required: true })}
-					>
-						{INTERVALS.map((iv) => (
-							<option key={iv.value} value={iv.value}>
-								{iv.label}
-							</option>
-						))}
-					</select>
+					{calculatedAmount ? (
+						<>
+							<input
+								id={intervalId}
+								type="text"
+								value="Monthly"
+								readOnly
+								className="input input-bordered w-full"
+							/>
+							<input type="hidden" {...register("interval")} />
+						</>
+					) : (
+						<select
+							id={intervalId}
+							className="select select-bordered w-full"
+							{...register("interval", { required: true })}
+						>
+							{INTERVALS.map((iv) => (
+								<option key={iv.value} value={iv.value}>
+									{iv.label}
+								</option>
+							))}
+						</select>
+					)}
 				</label>
 
 				<div>
@@ -328,6 +343,7 @@ export function RecurringForm({
 						<span>Schedule</span>
 						<input
 							type="date"
+							readOnly={calculatedAmount}
 							className="input input-bordered w-full"
 							{...register("firstOccurrenceDate", { required: "Schedule is required" })}
 						/>
@@ -337,6 +353,13 @@ export function RecurringForm({
 					)}
 				</div>
 			</div>
+
+			{calculatedAmount && (
+				<p className="text-xs text-base-content/60">
+					Interest posts on the first day of the following month, with a final posting at maturity.
+					Change the account’s posting cadence or maturity date to adjust the schedule.
+				</p>
+			)}
 
 			<div>
 				<label className="floating-label">
