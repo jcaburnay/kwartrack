@@ -1,7 +1,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 set search_path = public, extensions;
-select plan(21);
+select plan(31);
 
 insert into auth.users(id, email, raw_user_meta_data)
 values ('00000000-0000-4000-8000-000000000501', 'monthly-review@example.invalid',
@@ -119,6 +119,95 @@ select is((select count(*) from public.transaction where to_account_id = '000000
   2::bigint, 'Cadence transition posts only the one remaining period');
 select is((select count(*) from public.transaction where to_account_id = '00000000-0000-4000-8000-000000000508'
   and date = '2020-10-01'), 1::bigint, 'Cadence transition does not repost already credited September');
+-- ACT/365 can round a 31-day period positive even when the old annual/12 helper rounds zero.
+insert into public.account(id, user_id, name, type, initial_balance_centavos,
+  principal_centavos, interest_rate_bps, maturity_date, interest_posting_interval, created_at)
+values ('00000000-0000-4000-8000-000000000509', '00000000-0000-4000-8000-000000000501',
+  'Tiny positive interest', 'time-deposit', 100, 100, 600, '2020-11-01', 'monthly',
+  '2020-10-01T00:00:00+08:00');
+select ok((select interest_recurring_id is not null from public.account
+  where id = '00000000-0000-4000-8000-000000000509'), 'Tiny monthly deposit still has a linked estimate schedule');
+select public.recurring_fire_due();
+select is((select amount_centavos from public.transaction where to_account_id = '00000000-0000-4000-8000-000000000509'),
+  1::bigint, 'A 31-day tiny deposit posts its positive one-centavo ACT/365 interest');
+select ok((select recurring_id is not null from public.transaction
+  where to_account_id = '00000000-0000-4000-8000-000000000509'), 'Tiny positive interest retains generated schedule provenance');
+-- An explicit cadence transition creates a new identity, rather than repairing a deleted completed schedule.
+insert into public.account(id, user_id, name, type, initial_balance_centavos,
+  principal_centavos, interest_rate_bps, maturity_date, interest_posting_interval, created_at)
+values ('00000000-0000-4000-8000-000000000510', '00000000-0000-4000-8000-000000000501',
+  'Restart through cadence', 'time-deposit', 15000000, 15000000, 600, '2099-11-01', 'monthly',
+  '2020-09-01T00:00:00+08:00');
+update public.recurring set remaining_occurrences = 1 where id = (select interest_recurring_id
+  from public.account where id = '00000000-0000-4000-8000-000000000510');
+select public.recurring_fire_due();
+update public.account set interest_posting_interval = 'at-maturity'
+  where id = '00000000-0000-4000-8000-000000000510';
+update public.account set interest_posting_interval = 'monthly'
+  where id = '00000000-0000-4000-8000-000000000510';
+select ok((select not is_completed from public.td_monthly_interest_state
+  where account_id = '00000000-0000-4000-8000-000000000510'), 'Explicit cadence restart clears protected completion');
+update public.recurring set remaining_occurrences = 1 where id = (select interest_recurring_id
+  from public.account where id = '00000000-0000-4000-8000-000000000510');
+select public.recurring_fire_due();
+select is((select count(*) from public.transaction where to_account_id = '00000000-0000-4000-8000-000000000510'),
+  2::bigint, 'Restarted cadence credits the next remaining period');
+-- Generic due ledger entries must exist before historical monthly balance-day calculation.
+insert into public.account(id, user_id, name, type, initial_balance_centavos,
+  principal_centavos, interest_rate_bps, maturity_date, interest_posting_interval, created_at)
+values
+  ('00000000-0000-4000-8000-000000000511', '00000000-0000-4000-8000-000000000501',
+   'Due income before interest', 'time-deposit', 15000000, 15000000, 600, '2020-10-01', 'monthly', '2020-09-01T00:00:00+08:00'),
+  ('00000000-0000-4000-8000-000000000512', '00000000-0000-4000-8000-000000000501',
+   'Due withdrawal before interest', 'time-deposit', 15000000, 15000000, 600, '2020-10-01', 'monthly', '2020-09-01T00:00:00+08:00');
+insert into public.recurring(user_id, service, type, tag_id, to_account_id,
+  amount_centavos, interval, first_occurrence_date, next_occurrence_at, remaining_occurrences)
+select user_id, 'Backdated deposit', 'income', id, '00000000-0000-4000-8000-000000000511',
+  5000000, 'monthly', '2020-09-16', '2020-09-16T00:00:00+08:00', 1
+from public.tag where user_id = '00000000-0000-4000-8000-000000000501' and name = 'interest-earned';
+insert into public.recurring(user_id, service, type, tag_id, from_account_id,
+  amount_centavos, interval, first_occurrence_date, next_occurrence_at, remaining_occurrences)
+select user_id, 'Backdated withdrawal', 'expense', id, '00000000-0000-4000-8000-000000000512',
+  5000000, 'monthly', '2020-09-16', '2020-09-16T00:00:00+08:00', 1
+from public.tag where user_id = '00000000-0000-4000-8000-000000000501' and name = 'foods';
+-- Simulate overdue occurrences after the INSERT trigger chooses its initial schedule.
+update public.recurring set next_occurrence_at = '2020-09-16T00:00:00+08:00'
+where user_id = '00000000-0000-4000-8000-000000000501'
+  and service in ('Backdated deposit', 'Backdated withdrawal');
+-- Legacy edits may have changed even the generated type/destination; its
+-- protected ID still determines which account owns monthly processing.
+update public.recurring set type = 'expense', from_account_id = '00000000-0000-4000-8000-000000000512',
+  to_account_id = null, tag_id = (select id from public.tag
+    where user_id = '00000000-0000-4000-8000-000000000501' and name = 'foods')
+where id = (select interest_recurring_id from public.account
+  where id = '00000000-0000-4000-8000-000000000511');
+-- Clearing only the backlink must not let the protected generated schedule fire generically.
+update public.account set interest_recurring_id = null where id = '00000000-0000-4000-8000-000000000511';
+select public.recurring_fire_due();
+select is((select amount_centavos from public.transaction where to_account_id = '00000000-0000-4000-8000-000000000511'
+  and date = '2020-10-01'), 69041::bigint, 'Monthly interest includes a due midmonth income before advancing cursor');
+select is((select amount_centavos from public.transaction where to_account_id = '00000000-0000-4000-8000-000000000512'
+  and date = '2020-10-01'), 49315::bigint, 'Monthly interest includes a due midmonth withdrawal before advancing cursor');
+select is((select count(*) from public.transaction t join public.account a on a.interest_recurring_id = t.recurring_id
+  where a.id = '00000000-0000-4000-8000-000000000511'), 1::bigint,
+  'Missing-backlink generated schedule posts only through monthly calculation');
+insert into public.account(id, user_id, name, type, initial_balance_centavos,
+  principal_centavos, interest_rate_bps, maturity_date, interest_posting_interval, created_at)
+values ('00000000-0000-4000-8000-000000000513', '00000000-0000-4000-8000-000000000501',
+  'Maturity processes due ledger', 'time-deposit', 15000000, 15000000, 600, '2020-10-01', 'monthly',
+  '2020-09-01T00:00:00+08:00');
+insert into public.recurring(user_id, service, type, tag_id, to_account_id,
+  amount_centavos, interval, first_occurrence_date, next_occurrence_at, remaining_occurrences)
+select user_id, 'Deposit due before maturity', 'income', id, '00000000-0000-4000-8000-000000000513',
+  5000000, 'monthly', '2020-09-16', '2020-09-16T00:00:00+08:00', 1
+from public.tag where user_id = '00000000-0000-4000-8000-000000000501' and name = 'interest-earned';
+update public.recurring set next_occurrence_at = '2020-09-16T00:00:00+08:00'
+where user_id = '00000000-0000-4000-8000-000000000501' and service = 'Deposit due before maturity';
+select public.td_check_maturity_due();
+select is((select amount_centavos from public.transaction where to_account_id = '00000000-0000-4000-8000-000000000513'
+  and date = '2020-10-01'), 69041::bigint, 'Maturity job processes due ledger before final interest');
+select ok((select is_matured from public.account where id = '00000000-0000-4000-8000-000000000513'),
+  'Maturity closes the account after due ledger and final interest are posted');
 -- Remove the remaining visible references, as a user can do before deleting a tag.
 delete from public.recurring where user_id = '00000000-0000-4000-8000-000000000501';
 delete from public.transaction where user_id = '00000000-0000-4000-8000-000000000501';

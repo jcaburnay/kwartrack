@@ -78,3 +78,16 @@ it("keeps independent recurring interval and schedule editable", () => {
 	expect(screen.getByRole("combobox", { name: "Interval" })).not.toBeDisabled();
 	expect(screen.getByLabelText("Schedule")).not.toHaveAttribute("readonly");
 });
+it("locks transaction type and destination for monthly interest", () => {
+	show();
+	for (const name of ["Expense", "Income", "Transfer"]) {
+		expect(screen.getByRole("button", { name })).toBeDisabled();
+	}
+	expect(screen.getByRole("combobox", { name: "To account" })).toBeDisabled();
+	expect(screen.getByText(/always credits this time deposit/i)).toBeInTheDocument();
+});
+it("keeps transaction type and destination editable for independent income", () => {
+	show({ ...recurring, id: "other" });
+	expect(screen.getByRole("button", { name: "Expense" })).not.toBeDisabled();
+	expect(screen.getByRole("combobox", { name: "To account" })).not.toBeDisabled();
+});

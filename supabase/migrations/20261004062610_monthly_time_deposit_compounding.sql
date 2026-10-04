@@ -108,8 +108,7 @@ begin
     if a.interest_recurring_id is null then
       select r.id into a.interest_recurring_id from public.td_monthly_interest_state st
         join public.recurring r on r.id = st.recurring_id
-        where st.account_id = a.id and r.user_id = a.user_id
-          and r.to_account_id = a.id and r.type = 'income';
+        where st.account_id = a.id and r.user_id = a.user_id;
       if a.interest_recurring_id is null then
         a.interest_recurring_id := public.td_create_interest_recurring(a);
       end if;
@@ -208,7 +207,11 @@ begin
   v_amount := public.td_periodic_net_interest_centavos(
     p_account.principal_centavos, p_account.interest_rate_bps, v_pp_year
   );
-  if v_amount <= 0 then
+  if p_account.interest_posting_interval = 'monthly' then
+    -- This is only an estimate; a 31-day ACT/365 period may round positive
+    -- even when the old annual/12 estimate rounds to zero.
+    v_amount := greatest(1, v_amount);
+  elsif v_amount <= 0 then
     -- Rounded to zero (tiny principal × tiny rate). Skip recurring; user can
     -- bump rate or use at-maturity to capture the cents.
     return null;
@@ -257,15 +260,20 @@ declare
   v_completed boolean;
   v_is_installment boolean;
 begin
-  v_fired := public.td_post_monthly_interest_due();
+  -- Restore protected identities before generic processing. Ownership follows
+  -- the generated ID, even if older edits changed its type or destination.
+  update public.account a set interest_recurring_id = st.recurring_id
+    from public.td_monthly_interest_state st join public.recurring rec on rec.id = st.recurring_id
+    where st.account_id = a.id and rec.user_id = a.user_id
+      and a.type = 'time-deposit' and a.interest_posting_interval = 'monthly'
+      and not a.is_matured and a.interest_recurring_id is null;
   for r in
     select * from public.recurring rec
      where is_paused = false
        and is_completed = false
        and next_occurrence_at <= now()
        and not exists (select 1 from public.account a
-         where a.id = rec.to_account_id and a.type = 'time-deposit'
-           and a.interest_posting_interval = 'monthly'
+         where a.type = 'time-deposit' and a.interest_posting_interval = 'monthly'
            and a.interest_recurring_id = rec.id)
      for update skip locked
   loop
@@ -319,6 +327,7 @@ begin
     end if;
   end loop;
 
+  v_fired := v_fired + public.td_post_monthly_interest_due();
   return v_fired;
 end;
 $$;
@@ -338,7 +347,9 @@ declare
   v_tag_id uuid;
   v_count int := 0;
 begin
-  perform public.td_post_monthly_interest_due();
+  -- The daily maturity job must materialize overdue generic ledger entries
+  -- before calculating the final period and retiring the generated schedule.
+  perform public.recurring_fire_due();
   for r in
     select * from public.account
      where type = 'time-deposit'
@@ -461,7 +472,8 @@ begin
     insert into public.td_monthly_interest_state(account_id, accrued_through, tag_id, recurring_id)
       values (a.id, v_start, v_tag, a.interest_recurring_id)
       on conflict (account_id) do update set accrued_through = excluded.accrued_through,
-        tag_id = excluded.tag_id, recurring_id = excluded.recurring_id;
+        tag_id = excluded.tag_id, recurring_id = excluded.recurring_id,
+        is_completed = false;
   else
     insert into public.td_monthly_interest_state(account_id, accrued_through, tag_id, recurring_id)
       values (a.id, null, v_tag, a.interest_recurring_id)

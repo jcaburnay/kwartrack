@@ -181,6 +181,7 @@ export function RecurringForm({
 							key={opt.value}
 							type="button"
 							aria-pressed={active}
+							disabled={calculatedAmount}
 							className={`btn join-item flex-1 border border-base-content/40 ${active ? opt.activeClass : "btn-ghost"}`}
 							onClick={() => setValue("type", opt.value, { shouldDirty: true })}
 						>
@@ -236,6 +237,7 @@ export function RecurringForm({
 			{showFrom && showTo ? (
 				<div className="flex items-center gap-2">
 					<AccountSelect
+						disabled={calculatedAmount}
 						label="From account"
 						placeholder="Select source…"
 						value={fromAccountId}
@@ -248,6 +250,7 @@ export function RecurringForm({
 						→
 					</span>
 					<AccountSelect
+						disabled={calculatedAmount}
 						label="To account"
 						placeholder="Select destination…"
 						value={toAccountId}
@@ -261,6 +264,7 @@ export function RecurringForm({
 				<>
 					{showFrom && (
 						<AccountSelect
+							disabled={calculatedAmount}
 							label="From account"
 							placeholder="Select source…"
 							value={fromAccountId}
@@ -272,6 +276,7 @@ export function RecurringForm({
 
 					{showTo && (
 						<AccountSelect
+							disabled={calculatedAmount}
 							label="To account"
 							placeholder="Select destination…"
 							value={toAccountId}
@@ -281,6 +286,12 @@ export function RecurringForm({
 						/>
 					)}
 				</>
+			)}
+
+			{calculatedAmount && (
+				<p className="text-xs text-base-content/60">
+					Interest always credits this time deposit as income.
+				</p>
 			)}
 
 			{showFee && (
