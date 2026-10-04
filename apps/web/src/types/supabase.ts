@@ -546,6 +546,7 @@ export type Database = {
 					accrued_through: string | null;
 					is_completed: boolean;
 					recurring_id: string | null;
+					remaining_occurrences: number | null;
 					tag_id: string | null;
 				};
 				Insert: {
@@ -553,6 +554,7 @@ export type Database = {
 					accrued_through?: string | null;
 					is_completed?: boolean;
 					recurring_id?: string | null;
+					remaining_occurrences?: number | null;
 					tag_id?: string | null;
 				};
 				Update: {
@@ -560,6 +562,7 @@ export type Database = {
 					accrued_through?: string | null;
 					is_completed?: boolean;
 					recurring_id?: string | null;
+					remaining_occurrences?: number | null;
 					tag_id?: string | null;
 				};
 				Relationships: [

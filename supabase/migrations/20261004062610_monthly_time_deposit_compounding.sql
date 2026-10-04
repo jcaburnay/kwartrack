@@ -7,6 +7,7 @@ create table public.td_monthly_interest_state (
   accrued_through date,
   recurring_id uuid references public.recurring(id) on delete set null,
   is_completed boolean not null default false,
+  remaining_occurrences int check (remaining_occurrences is null or remaining_occurrences >= 0),
   tag_id uuid references public.tag(id) on delete set null
 );
 alter table public.td_monthly_interest_state enable row level security;
@@ -189,6 +190,7 @@ declare
   v_anchor date;
   v_tz text;
   v_new_id uuid;
+  v_remaining int;
 begin
   v_pp_year := public.td_postings_per_year(p_account.interest_posting_interval);
   v_interval := public.td_recurring_interval(p_account.interest_posting_interval);
@@ -222,13 +224,17 @@ begin
     from public.user_profile where id = p_account.user_id;
   v_anchor := (p_account.created_at at time zone coalesce(v_tz, 'Asia/Manila'))::date;
 
+  if p_account.interest_posting_interval = 'monthly' then
+    select remaining_occurrences into v_remaining from public.td_monthly_interest_state
+      where account_id = p_account.id and not is_completed;
+  end if;
   -- next_occurrence_at is materialized by recurring_set_next_at trigger.
   insert into public.recurring
     (user_id, service, amount_centavos, type, tag_id,
-     to_account_id, interval, first_occurrence_date, next_occurrence_at)
+     to_account_id, interval, first_occurrence_date, next_occurrence_at, remaining_occurrences)
   values
     (p_account.user_id, p_account.name || ' — Interest', v_amount, 'income', v_tag_id,
-     p_account.id, v_interval, v_anchor, now())
+     p_account.id, v_interval, v_anchor, now(), v_remaining)
   returning id into v_new_id;
 
   if p_account.interest_posting_interval = 'monthly' then
@@ -400,7 +406,7 @@ $$;
 -- Repair and retime all existing monthly TDs. This only creates schedules;
 -- ledger catch-up happens on the next hourly cron, not during migration.
 do $$
-declare a public.account; v_id uuid; v_start date; v_tz text; v_tag uuid;
+declare a public.account; v_rec public.recurring; v_id uuid; v_start date; v_end date; v_tz text; v_tag uuid;
 begin
   for a in select * from public.account
     where type = 'time-deposit' and interest_posting_interval = 'monthly'
@@ -429,16 +435,27 @@ begin
       (select max(date) from public.transaction where to_account_id = a.id
         and type = 'income' and recurring_id is null and tag_id = v_tag)
     )) into v_start;
-    insert into public.td_monthly_interest_state(account_id, accrued_through, tag_id, recurring_id, is_completed)
-      values (a.id, v_start, v_tag, v_id, coalesce(
-        (select is_completed from public.recurring where id = v_id), false))
+    select * into v_rec from public.recurring where id = v_id;
+    insert into public.td_monthly_interest_state(account_id, accrued_through, tag_id, recurring_id,
+      is_completed, remaining_occurrences)
+      values (a.id, v_start, v_tag, v_id, coalesce(v_rec.is_completed, false), v_rec.remaining_occurrences)
       on conflict (account_id) do nothing;
     select coalesce(timezone, 'Asia/Manila') into v_tz from public.user_profile where id = a.user_id;
+    v_end := least((date_trunc('month', v_start) + interval '1 month')::date, a.maturity_date);
+    -- Normalize generated mechanics previously editable in the UI, preserving
+    -- user metadata, countdown, completion and historical ledger entries.
     update public.recurring set
-      next_occurrence_at = least((date_trunc('month', v_start) + interval '1 month')::date,
-        a.maturity_date)::timestamp at time zone coalesce(v_tz, 'Asia/Manila'),
-      is_paused = is_paused or a.is_archived
-    where id = v_id and not is_completed;
+      type = 'income', to_account_id = a.id, from_account_id = null, fee_centavos = null,
+      tag_id = v_tag, interval = 'monthly', first_occurrence_date = v_end,
+      amount_centavos = greatest(1, public.td_monthly_net_interest_centavos(a, v_start, v_end))
+    where id = v_id;
+    -- Changing interval/anchor invokes the generic date trigger. Restore the
+    -- exact calendar date afterwards, including the prior date of completed rows.
+    update public.recurring set
+      next_occurrence_at = case when v_rec.is_completed then v_rec.next_occurrence_at
+        else v_end::timestamp at time zone coalesce(v_tz, 'Asia/Manila') end,
+      is_paused = v_rec.is_paused or (a.is_archived and not v_rec.is_completed)
+    where id = v_id;
   end loop;
 end;
 $$;
@@ -542,15 +559,23 @@ create or replace function public.td_monthly_remember_completion()
 returns trigger language plpgsql security definer set search_path = public as $$
 begin
   if tg_op = 'DELETE' then
-    update public.td_monthly_interest_state set is_completed = old.is_completed
-      where recurring_id = old.id;
+    update public.td_monthly_interest_state set is_completed = old.is_completed,
+      remaining_occurrences = old.remaining_occurrences where recurring_id = old.id;
     return old;
   end if;
-  update public.td_monthly_interest_state set is_completed = new.is_completed
-    where recurring_id = new.id;
+  if old.is_completed and old.remaining_occurrences is distinct from new.remaining_occurrences
+    and (new.remaining_occurrences is null or new.remaining_occurrences > 0)
+    and exists (select 1 from public.td_monthly_interest_state where recurring_id = new.id) then
+    -- The UI edits only the countdown; resetting it deliberately starts a new
+    -- countdown. The scheduler's decrement-to-zero completion is left intact.
+    new.is_completed := false;
+    new.completed_at := null;
+  end if;
+  update public.td_monthly_interest_state set is_completed = new.is_completed,
+    remaining_occurrences = new.remaining_occurrences where recurring_id = new.id;
   return new;
 end;
 $$;
 create trigger td_monthly_remember_completion_trg
-  before update of is_completed or delete on public.recurring
+  before update of is_completed, remaining_occurrences or delete on public.recurring
   for each row execute function public.td_monthly_remember_completion();

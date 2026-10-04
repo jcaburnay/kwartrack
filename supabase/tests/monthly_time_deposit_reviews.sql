@@ -1,7 +1,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 set search_path = public, extensions;
-select plan(41);
+select plan(47);
 
 insert into auth.users(id, email, raw_user_meta_data)
 values ('00000000-0000-4000-8000-000000000501', 'monthly-review@example.invalid',
@@ -284,6 +284,51 @@ update public.account set is_archived = false where id = '00000000-0000-4000-800
 select public.recurring_fire_due();
 select is((select count(*) from public.transaction where to_account_id = '00000000-0000-4000-8000-000000000518'),
   0::bigint, 'Unarchive skips archived months even when the generated schedule must be repaired');
+-- Match the UI payload: countdown edits do not explicitly send completion flags.
+insert into public.account(id, user_id, name, type, initial_balance_centavos,
+  principal_centavos, interest_rate_bps, maturity_date, interest_posting_interval, created_at)
+values ('00000000-0000-4000-8000-000000000519', '00000000-0000-4000-8000-000000000501',
+  'UI countdown reset', 'time-deposit', 15000000, 15000000, 600, '2099-11-01', 'monthly', '2020-09-01T00:00:00+08:00');
+update public.recurring set remaining_occurrences = 1 where id = (select interest_recurring_id from public.account
+  where id = '00000000-0000-4000-8000-000000000519');
+select public.recurring_fire_due();
+update public.recurring set remaining_occurrences = 2 where id = (select interest_recurring_id from public.account
+  where id = '00000000-0000-4000-8000-000000000519');
+select ok((select not r.is_completed and r.completed_at is null and not st.is_completed
+  from public.recurring r join public.td_monthly_interest_state st on st.recurring_id = r.id
+  where st.account_id = '00000000-0000-4000-8000-000000000519'),
+  'A positive UI countdown edit reactivates both recurring and protected completion');
+select public.recurring_fire_due();
+select is((select count(*) from public.transaction where to_account_id = '00000000-0000-4000-8000-000000000519'),
+  3::bigint, 'Reactivated UI countdown posts exactly the two new occurrences');
+update public.recurring set remaining_occurrences = null where id = (select interest_recurring_id from public.account
+  where id = '00000000-0000-4000-8000-000000000519');
+select ok((select not r.is_completed and r.completed_at is null and not st.is_completed
+  from public.recurring r join public.td_monthly_interest_state st on st.recurring_id = r.id
+  where st.account_id = '00000000-0000-4000-8000-000000000519'),
+  'Clearing the completed countdown through the UI payload reactivates an open-ended schedule');
+update public.recurring set is_paused = true where id = (select interest_recurring_id from public.account
+  where id = '00000000-0000-4000-8000-000000000519');
+-- One completed period leaves an active three-occurrence schedule with two remaining.
+insert into public.account(id, user_id, name, type, initial_balance_centavos,
+  principal_centavos, interest_rate_bps, maturity_date, interest_posting_interval, created_at)
+values ('00000000-0000-4000-8000-000000000520', '00000000-0000-4000-8000-000000000501',
+  'Repair finite countdown', 'time-deposit', 15000000, 15000000, 600, '2099-11-01', 'monthly',
+  (date_trunc('month', now() at time zone 'Asia/Manila') - interval '1 month') at time zone 'Asia/Manila');
+update public.recurring set remaining_occurrences = 3 where id = (select interest_recurring_id from public.account
+  where id = '00000000-0000-4000-8000-000000000520');
+select public.recurring_fire_due();
+select is((select remaining_occurrences from public.recurring where id = (select interest_recurring_id from public.account
+  where id = '00000000-0000-4000-8000-000000000520')), 2,
+  'An active finite monthly schedule decrements its first actual posting');
+delete from public.recurring where id = (select interest_recurring_id from public.account
+  where id = '00000000-0000-4000-8000-000000000520');
+select public.recurring_fire_due();
+select is((select remaining_occurrences from public.recurring where id = (select interest_recurring_id from public.account
+  where id = '00000000-0000-4000-8000-000000000520')), 2,
+  'Missing active schedule repair preserves its remaining finite countdown');
+select is((select count(*) from public.transaction where to_account_id = '00000000-0000-4000-8000-000000000520'),
+  1::bigint, 'Finite schedule repair preserves the processed cursor without reposting');
 -- Remove the remaining visible references, as a user can do before deleting a tag.
 delete from public.recurring where user_id = '00000000-0000-4000-8000-000000000501';
 delete from public.transaction where user_id = '00000000-0000-4000-8000-000000000501';

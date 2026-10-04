@@ -1,7 +1,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 set search_path = public, extensions;
-select plan(14);
+select plan(20);
 
 -- Replay the additive migration against existing synthetic TDs, rather than
 -- only testing newly created accounts after a clean db reset.
@@ -51,6 +51,23 @@ values ('00000000-0000-4000-8000-000000000407', '00000000-0000-4000-8000-0000000
 update public.recurring set remaining_occurrences = 0, is_completed = true, completed_at = now()
 where id = (select interest_recurring_id from public.account
   where id = '00000000-0000-4000-8000-000000000407');
+insert into public.account(id, user_id, name, type, initial_balance_centavos,
+  principal_centavos, interest_rate_bps, maturity_date, interest_posting_interval, created_at)
+values ('00000000-0000-4000-8000-000000000408', '00000000-0000-4000-8000-000000000401',
+  'Legacy mutated generated', 'time-deposit', 15000000, 15000000, 600, '2020-11-01', 'monthly',
+  '2020-09-01T00:00:00+08:00');
+insert into public.transaction(user_id, type, tag_id, to_account_id, amount_centavos, date, recurring_id, description)
+select user_id, 'income', tag_id, '00000000-0000-4000-8000-000000000408', 60000, '2020-10-01', id,
+  'Preserved legacy interest'
+from public.recurring where id = (select interest_recurring_id from public.account
+  where id = '00000000-0000-4000-8000-000000000408');
+update public.recurring set type = 'transfer', from_account_id = '00000000-0000-4000-8000-000000000403',
+  to_account_id = '00000000-0000-4000-8000-000000000405', tag_id = null, fee_centavos = 100,
+  interval = 'weekly', amount_centavos = 12345, first_occurrence_date = '2099-01-01',
+  service = 'Custom legacy label', description = 'Custom legacy description', is_paused = true,
+  remaining_occurrences = 4
+where id = (select interest_recurring_id from public.account
+  where id = '00000000-0000-4000-8000-000000000408');
 -- Simulate the schema before this migration; rollback restores all objects.
 drop trigger td_monthly_refresh_schedule_trg on public.account;
 drop trigger zz_td_monthly_resume_schedule_trg on public.recurring;
@@ -74,6 +91,27 @@ select ok((select is_paused from public.recurring
 select is((select (next_occurrence_at at time zone 'Asia/Manila')::date from public.recurring
   where to_account_id = '00000000-0000-4000-8000-000000000402'), '2020-10-01'::date,
   'Repair keeps missed first posting due rather than skipping to the future');
+select ok((select r.type = 'income' and r.from_account_id is null
+  and r.to_account_id = a.id and r.fee_centavos is null and r.interval = 'monthly' and t.type = 'income'
+  from public.account a join public.recurring r on r.id = a.interest_recurring_id
+  join public.tag t on t.id = r.tag_id where a.id = '00000000-0000-4000-8000-000000000408'),
+  'Migration normalizes legacy generated type, destination, source, fee, cadence and income tag');
+select is((select amount_centavos from public.recurring where id = (select interest_recurring_id from public.account
+  where id = '00000000-0000-4000-8000-000000000408')), 61395::bigint,
+  'Migration replaces legacy fixed amount with the historical next-period ACT/365 estimate');
+select is((select first_occurrence_date from public.recurring where id = (select interest_recurring_id from public.account
+  where id = '00000000-0000-4000-8000-000000000408')), '2020-11-01'::date,
+  'Migration restores a meaningful generated posting anchor');
+select is((select (next_occurrence_at at time zone 'Asia/Manila')::date from public.recurring
+  where id = (select interest_recurring_id from public.account where id = '00000000-0000-4000-8000-000000000408')),
+  '2020-11-01'::date, 'Migration keeps the missed next posting due after normalizing the cadence');
+select ok((select service = 'Custom legacy label' and description = 'Custom legacy description'
+  and is_paused and remaining_occurrences = 4 and not is_completed
+  from public.recurring where id = (select interest_recurring_id from public.account
+    where id = '00000000-0000-4000-8000-000000000408')),
+  'Migration preserves editable metadata, pause and finite countdown');
+select is((select description from public.transaction where to_account_id = '00000000-0000-4000-8000-000000000408'),
+  'Preserved legacy interest', 'Migration normalization leaves historical postings untouched');
 select public.recurring_fire_due();
 select is((select amount_centavos from public.transaction
   where to_account_id = '00000000-0000-4000-8000-000000000402' and date = '2020-10-01'),

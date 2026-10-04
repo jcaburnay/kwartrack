@@ -51,7 +51,13 @@ export function RecurringPanel({ pendingModal, onPendingModalConsumed }: Props) 
 		deleteRecurring,
 		togglePaused,
 	} = useRecurrings();
-	const { accounts } = useAccounts();
+	const {
+		accounts,
+		isLoading: accountsLoading,
+		error: accountsError,
+		refetch: refetchAccounts,
+	} = useAccounts();
+	const accountsReady = !accountsLoading && !accountsError;
 	const { groups } = useAccountGroups();
 	const { tags, createInline } = useTags();
 
@@ -71,14 +77,14 @@ export function RecurringPanel({ pendingModal, onPendingModalConsumed }: Props) 
 			onPendingModalConsumed();
 			return;
 		}
-		// edit case — wait for recurrings to populate
-		if (isLoading) return;
+		// Wait for account ownership before exposing editable recurring fields.
+		if (isLoading || !accountsReady) return;
 		const target = recurrings.find((r) => r.id === pendingModal.id);
 		if (target) {
 			setEditing(target);
 		}
 		onPendingModalConsumed();
-	}, [pendingModal, isLoading, recurrings, onPendingModalConsumed]);
+	}, [pendingModal, isLoading, accountsReady, recurrings, onPendingModalConsumed]);
 
 	const summary = summariseRecurrings(recurrings);
 
@@ -111,6 +117,21 @@ export function RecurringPanel({ pendingModal, onPendingModalConsumed }: Props) 
 
 			<ScrollFadeContainer className="flex-1 overflow-y-auto flex flex-col">
 				{error && <div className="alert alert-error text-sm mx-4 mt-3">{error}</div>}
+				{accountsError && (
+					<div className="alert alert-error text-sm mx-4 mt-3">
+						<span>
+							Accounts could not be loaded. Recurring editing is unavailable. {accountsError}
+						</span>
+						<button type="button" className="btn btn-sm" onClick={() => void refetchAccounts()}>
+							Retry accounts
+						</button>
+					</div>
+				)}
+				{editing && accountsLoading && (
+					<p role="status" className="mx-4 mt-3 text-sm text-base-content/60">
+						Loading accounts before editing…
+					</p>
+				)}
 				{isLoading ? (
 					<div className="flex-1 flex items-center justify-center">
 						<span className="loading loading-spinner text-primary" />
@@ -156,7 +177,7 @@ export function RecurringPanel({ pendingModal, onPendingModalConsumed }: Props) 
 				/>
 			)}
 
-			{editing && (
+			{editing && accountsReady && (
 				<EditRecurringModal
 					recurring={editing}
 					accounts={accounts}
