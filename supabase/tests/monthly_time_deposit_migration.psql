@@ -1,7 +1,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 set search_path = public, extensions;
-select plan(8);
+select plan(12);
 
 -- Replay the additive migration against existing synthetic TDs, rather than
 -- only testing newly created accounts after a clean db reset.
@@ -20,12 +20,29 @@ values
 delete from public.recurring where to_account_id = '00000000-0000-4000-8000-000000000402';
 update public.recurring set is_paused = true
   where to_account_id = '00000000-0000-4000-8000-000000000403';
-insert into public.transaction(user_id, type, tag_id, to_account_id, amount_centavos, date)
+insert into public.transaction(user_id, type, tag_id, to_account_id, amount_centavos, date, recurring_id)
 select '00000000-0000-4000-8000-000000000401', 'income', id,
-  '00000000-0000-4000-8000-000000000403', 60000, '2020-10-01'
+  '00000000-0000-4000-8000-000000000403', 60000, '2020-10-01',
+  (select interest_recurring_id from public.account where id = '00000000-0000-4000-8000-000000000403')
 from public.tag where user_id = '00000000-0000-4000-8000-000000000401' and name = 'interest-earned';
 update public.tag set name = 'renamed-interest' where user_id =
   '00000000-0000-4000-8000-000000000401' and name = 'interest-earned';
+insert into public.tag(user_id, name, type)
+values ('00000000-0000-4000-8000-000000000401', 'current-interest', 'income');
+update public.recurring set tag_id = (select id from public.tag
+  where user_id = '00000000-0000-4000-8000-000000000401' and name = 'current-interest')
+where to_account_id = '00000000-0000-4000-8000-000000000403';
+insert into public.account(id, user_id, name, type, initial_balance_centavos,
+  principal_centavos, interest_rate_bps, maturity_date, interest_posting_interval, created_at)
+values ('00000000-0000-4000-8000-000000000405', '00000000-0000-4000-8000-000000000401',
+  'Exact label collision', 'time-deposit', 15000000, 15000000, 600, '2020-11-01', 'monthly',
+  '2020-09-01T00:00:00+08:00');
+delete from public.recurring where to_account_id = '00000000-0000-4000-8000-000000000405';
+insert into public.recurring(id, user_id, service, type, tag_id, to_account_id,
+  amount_centavos, interval, first_occurrence_date, next_occurrence_at)
+select '00000000-0000-4000-8000-000000000406', user_id, 'Exact label collision — Interest',
+  'income', id, '00000000-0000-4000-8000-000000000405', 12345, 'monthly', '2099-01-01', '2099-01-01'
+from public.tag where user_id = '00000000-0000-4000-8000-000000000401' and name = 'current-interest';
 -- Simulate the schema before this migration; rollback restores all objects.
 drop trigger td_monthly_refresh_schedule_trg on public.account;
 drop trigger zz_td_monthly_resume_schedule_trg on public.recurring;
@@ -53,7 +70,16 @@ select is((select amount_centavos from public.transaction
   where to_account_id = '00000000-0000-4000-8000-000000000402' and date = '2020-10-01'),
   59178::bigint, 'Next hourly run posts missed interest using the new calculation');
 select is((select g.name from public.td_monthly_interest_state st join public.tag g on g.id = st.tag_id
-  where st.account_id = '00000000-0000-4000-8000-000000000403'), 'renamed-interest',
-  'Migration retains stable tag reference after rename');
+  where st.account_id = '00000000-0000-4000-8000-000000000403'), 'current-interest',
+  'Migration retains the currently linked tag while adopting postings with the old tag');
+select isnt((select interest_recurring_id from public.account
+  where id = '00000000-0000-4000-8000-000000000405'), '00000000-0000-4000-8000-000000000406'::uuid,
+  'Migration does not adopt an unrelated recurring with the exact generated label');
+select is((select count(*) from public.recurring where to_account_id = '00000000-0000-4000-8000-000000000405'),
+  2::bigint, 'Migration leaves the exact-label user schedule separate from the replacement');
+select is((select amount_centavos from public.recurring where id = '00000000-0000-4000-8000-000000000406'),
+  12345::bigint, 'Migration preserves unrelated exact-label income amount');
+select is((select count(*) from public.transaction where to_account_id = '00000000-0000-4000-8000-000000000403'),
+  1::bigint, 'Migration preserves the existing differently tagged linked interest posting');
 select * from finish();
 rollback;

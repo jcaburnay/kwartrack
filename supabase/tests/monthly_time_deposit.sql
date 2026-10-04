@@ -167,7 +167,8 @@ select is((select accrued_through from public.td_monthly_interest_state where ac
   'Processed cursor survives transaction deletion');
 insert into public.td_monthly_interest_state(account_id, accrued_through, tag_id)
 select '00000000-0000-4000-8000-000000000307', '2020-09-01', id from public.tag
-where user_id = '00000000-0000-4000-8000-000000000301' and name = 'interest-earned';
+where user_id = '00000000-0000-4000-8000-000000000301' and name = 'interest-earned'
+on conflict (account_id) do update set accrued_through = excluded.accrued_through;
 insert into public.transaction(user_id, type, tag_id, to_account_id, amount_centavos, date)
 select '00000000-0000-4000-8000-000000000301', 'income', id,
   '00000000-0000-4000-8000-000000000307', 50000, '2020-10-01'

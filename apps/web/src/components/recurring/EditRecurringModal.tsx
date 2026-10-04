@@ -46,6 +46,12 @@ export function EditRecurringModal({
 	const [isSubmitting, setIsSubmitting] = useState(false);
 
 	const defaults = formDefaultsFromRecurring(recurring);
+	const calculatedAmount = accounts.some(
+		(account) =>
+			account.type === "time-deposit" &&
+			account.interest_posting_interval === "monthly" &&
+			account.interest_recurring_id === recurring.id,
+	);
 
 	async function handleSubmit(input: RecurringInput) {
 		setSubmitError(null);
@@ -76,6 +82,7 @@ export function EditRecurringModal({
 			<Modal.Header title="Edit recurring" />
 			<RecurringForm
 				mode="edit"
+				calculatedAmount={calculatedAmount}
 				accounts={accounts}
 				groups={groups}
 				tags={tags}

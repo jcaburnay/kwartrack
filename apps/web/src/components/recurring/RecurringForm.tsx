@@ -29,6 +29,7 @@ export type RecurringFormValues = {
 
 type Props = {
 	mode: "create" | "edit";
+	calculatedAmount?: boolean;
 	accounts: readonly Account[];
 	groups: readonly AccountGroup[];
 	tags: readonly Tag[];
@@ -50,6 +51,7 @@ const INTERVALS: { value: RecurringInterval; label: string }[] = [
 
 export function RecurringForm({
 	mode,
+	calculatedAmount = false,
 	accounts,
 	groups,
 	tags,
@@ -190,9 +192,11 @@ export function RecurringForm({
 			<div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
 				<div>
 					<label className="floating-label">
-						<span>Amount (₱)</span>
+						<span>{calculatedAmount ? "Estimated amount (₱)" : "Amount (₱)"}</span>
 						<input
 							type="number"
+							readOnly={calculatedAmount}
+							aria-describedby={calculatedAmount ? "monthly-interest-amount-help" : undefined}
 							step="0.01"
 							min="0"
 							placeholder="0.00"
@@ -204,6 +208,12 @@ export function RecurringForm({
 							})}
 						/>
 					</label>
+					{calculatedAmount && (
+						<p id="monthly-interest-amount-help" className="mt-1 text-xs text-base-content/60">
+							Calculated from the time deposit’s balance, annual rate, and days in the period. Edit
+							the account’s interest rate to change this estimate.
+						</p>
+					)}
 					{errors.amountPesos && (
 						<p className="mt-1 text-xs text-error">{errors.amountPesos.message}</p>
 					)}

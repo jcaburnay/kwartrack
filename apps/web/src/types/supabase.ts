@@ -543,17 +543,20 @@ export type Database = {
 			td_monthly_interest_state: {
 				Row: {
 					account_id: string;
-					accrued_through: string;
+					accrued_through: string | null;
+					recurring_id: string | null;
 					tag_id: string | null;
 				};
 				Insert: {
 					account_id: string;
-					accrued_through: string;
+					accrued_through?: string | null;
+					recurring_id?: string | null;
 					tag_id?: string | null;
 				};
 				Update: {
 					account_id?: string;
-					accrued_through?: string;
+					accrued_through?: string | null;
+					recurring_id?: string | null;
 					tag_id?: string | null;
 				};
 				Relationships: [
@@ -562,6 +565,13 @@ export type Database = {
 						columns: ["account_id"];
 						isOneToOne: true;
 						referencedRelation: "account";
+						referencedColumns: ["id"];
+					},
+					{
+						foreignKeyName: "td_monthly_interest_state_recurring_id_fkey";
+						columns: ["recurring_id"];
+						isOneToOne: false;
+						referencedRelation: "recurring";
 						referencedColumns: ["id"];
 					},
 					{
