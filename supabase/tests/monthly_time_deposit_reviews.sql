@@ -1,7 +1,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 set search_path = public, extensions;
-select plan(47);
+select plan(63);
 
 insert into auth.users(id, email, raw_user_meta_data)
 values ('00000000-0000-4000-8000-000000000501', 'monthly-review@example.invalid',
@@ -329,6 +329,108 @@ select is((select remaining_occurrences from public.recurring where id = (select
   'Missing active schedule repair preserves its remaining finite countdown');
 select is((select count(*) from public.transaction where to_account_id = '00000000-0000-4000-8000-000000000520'),
   1::bigint, 'Finite schedule repair preserves the processed cursor without reposting');
+-- Deleted paused schedules must remain controllable without backfilling paused months.
+insert into public.account(id, user_id, name, type, initial_balance_centavos,
+  principal_centavos, interest_rate_bps, maturity_date, interest_posting_interval, created_at)
+values ('00000000-0000-4000-8000-000000000521', '00000000-0000-4000-8000-000000000501',
+  'Paused repair', 'time-deposit', 15000000, 15000000, 600, '2099-11-01', 'monthly',
+  '2020-09-01T00:00:00+08:00');
+update public.recurring set is_paused = true, remaining_occurrences = 4
+  where id = (select interest_recurring_id from public.account where id = '00000000-0000-4000-8000-000000000521');
+delete from public.recurring where id = (select interest_recurring_id from public.account
+  where id = '00000000-0000-4000-8000-000000000521');
+select public.recurring_fire_due();
+select ok((select r.is_paused and r.remaining_occurrences = 4 from public.recurring r join public.account a
+  on a.interest_recurring_id = r.id where a.id = '00000000-0000-4000-8000-000000000521'),
+  'Repair preserves both intentional pause and remaining countdown');
+select is((select count(*) from public.transaction where to_account_id = '00000000-0000-4000-8000-000000000521'),
+  0::bigint, 'Deleted paused schedule does not backfill during repair');
+update public.recurring set is_paused = false where id = (select interest_recurring_id from public.account
+  where id = '00000000-0000-4000-8000-000000000521');
+select public.recurring_fire_due();
+select is((select accrued_through from public.td_monthly_interest_state where account_id = '00000000-0000-4000-8000-000000000521'),
+  date_trunc('month', now() at time zone 'Asia/Manila')::date, 'Repaired pause resumes at the current month cursor');
+select is((select count(*) from public.transaction where to_account_id = '00000000-0000-4000-8000-000000000521'),
+  0::bigint, 'Explicit resume skips completed paused months after repair');
+-- Completed periodic cadence round trips explicitly start a fresh monthly countdown.
+insert into public.account(id, user_id, name, type, initial_balance_centavos,
+  principal_centavos, interest_rate_bps, maturity_date, interest_posting_interval, created_at)
+values ('00000000-0000-4000-8000-000000000522', '00000000-0000-4000-8000-000000000501',
+  'quarterly restart', 'time-deposit', 15000000, 15000000, 600, '2099-11-01', 'monthly',
+  '2020-09-01T00:00:00+08:00');
+update public.recurring set remaining_occurrences = 1 where id = (select interest_recurring_id
+  from public.account where id = '00000000-0000-4000-8000-000000000522');
+select public.recurring_fire_due();
+update public.account set interest_posting_interval = 'quarterly' where id = '00000000-0000-4000-8000-000000000522';
+update public.account set interest_posting_interval = 'monthly' where id = '00000000-0000-4000-8000-000000000522';
+select ok((select not r.is_completed and r.completed_at is null and r.remaining_occurrences is null
+  from public.recurring r join public.account a on a.interest_recurring_id = r.id where a.id = '00000000-0000-4000-8000-000000000522'),
+  'quarterly round trip restarts a completed schedule with an open-ended countdown');
+select public.recurring_fire_due();
+select ok((select count(*) > 1 from public.transaction where to_account_id = '00000000-0000-4000-8000-000000000522'),
+  'quarterly round trip resumes actual monthly postings');
+select is((select count(*) from public.transaction where to_account_id = '00000000-0000-4000-8000-000000000522' and date = '2020-10-01'),
+  1::bigint, 'quarterly round trip preserves previously credited periods');
+insert into public.account(id, user_id, name, type, initial_balance_centavos,
+  principal_centavos, interest_rate_bps, maturity_date, interest_posting_interval, created_at)
+values ('00000000-0000-4000-8000-000000000523', '00000000-0000-4000-8000-000000000501',
+  'semi-annual restart', 'time-deposit', 15000000, 15000000, 600, '2099-11-01', 'monthly',
+  '2020-09-01T00:00:00+08:00');
+update public.recurring set remaining_occurrences = 1 where id = (select interest_recurring_id
+  from public.account where id = '00000000-0000-4000-8000-000000000523');
+select public.recurring_fire_due();
+update public.account set interest_posting_interval = 'semi-annual' where id = '00000000-0000-4000-8000-000000000523';
+update public.account set interest_posting_interval = 'monthly' where id = '00000000-0000-4000-8000-000000000523';
+select ok((select not r.is_completed and r.completed_at is null and r.remaining_occurrences is null
+  from public.recurring r join public.account a on a.interest_recurring_id = r.id where a.id = '00000000-0000-4000-8000-000000000523'),
+  'semi-annual round trip restarts a completed schedule with an open-ended countdown');
+select public.recurring_fire_due();
+select ok((select count(*) > 1 from public.transaction where to_account_id = '00000000-0000-4000-8000-000000000523'),
+  'semi-annual round trip resumes actual monthly postings');
+select is((select count(*) from public.transaction where to_account_id = '00000000-0000-4000-8000-000000000523' and date = '2020-10-01'),
+  1::bigint, 'semi-annual round trip preserves previously credited periods');
+insert into public.account(id, user_id, name, type, initial_balance_centavos,
+  principal_centavos, interest_rate_bps, maturity_date, interest_posting_interval, created_at)
+values ('00000000-0000-4000-8000-000000000524', '00000000-0000-4000-8000-000000000501',
+  'annual restart', 'time-deposit', 15000000, 15000000, 600, '2099-11-01', 'monthly',
+  '2020-09-01T00:00:00+08:00');
+update public.recurring set remaining_occurrences = 1 where id = (select interest_recurring_id
+  from public.account where id = '00000000-0000-4000-8000-000000000524');
+select public.recurring_fire_due();
+update public.account set interest_posting_interval = 'annual' where id = '00000000-0000-4000-8000-000000000524';
+update public.account set interest_posting_interval = 'monthly' where id = '00000000-0000-4000-8000-000000000524';
+select ok((select not r.is_completed and r.completed_at is null and r.remaining_occurrences is null
+  from public.recurring r join public.account a on a.interest_recurring_id = r.id where a.id = '00000000-0000-4000-8000-000000000524'),
+  'annual round trip restarts a completed schedule with an open-ended countdown');
+select public.recurring_fire_due();
+select ok((select count(*) > 1 from public.transaction where to_account_id = '00000000-0000-4000-8000-000000000524'),
+  'annual round trip resumes actual monthly postings');
+select is((select count(*) from public.transaction where to_account_id = '00000000-0000-4000-8000-000000000524' and date = '2020-10-01'),
+  1::bigint, 'annual round trip preserves previously credited periods');
+insert into public.account(id, user_id, name, type, initial_balance_centavos,
+  principal_centavos, interest_rate_bps, maturity_date, interest_posting_interval, created_at)
+values ('00000000-0000-4000-8000-000000000525', '00000000-0000-4000-8000-000000000501',
+  'Paused completed restart', 'time-deposit', 15000000, 15000000, 600, '2099-11-01', 'monthly',
+  '2020-09-01T00:00:00+08:00');
+update public.recurring set remaining_occurrences = 1 where id = (select interest_recurring_id
+  from public.account where id = '00000000-0000-4000-8000-000000000525');
+select public.recurring_fire_due();
+update public.recurring set is_paused = true where id = (select interest_recurring_id
+  from public.account where id = '00000000-0000-4000-8000-000000000525');
+update public.account set interest_posting_interval = 'quarterly' where id = '00000000-0000-4000-8000-000000000525';
+update public.account set interest_posting_interval = 'monthly' where id = '00000000-0000-4000-8000-000000000525';
+select ok((select r.is_paused and not r.is_completed and r.remaining_occurrences is null
+  from public.recurring r join public.account a on a.interest_recurring_id = r.id
+  where a.id = '00000000-0000-4000-8000-000000000525'), 'Periodic restart preserves manual pause while resetting completion');
+select public.recurring_fire_due();
+select is((select count(*) from public.transaction where to_account_id = '00000000-0000-4000-8000-000000000525'),
+  1::bigint, 'A manually paused periodic restart does not fire');
+update public.recurring set is_paused = false where id = (select interest_recurring_id
+  from public.account where id = '00000000-0000-4000-8000-000000000525');
+select public.recurring_fire_due();
+select is((select accrued_through from public.td_monthly_interest_state
+  where account_id = '00000000-0000-4000-8000-000000000525'),
+  date_trunc('month', now() at time zone 'Asia/Manila')::date, 'Restarted manual pause resumes without old-period backfill');
 -- Remove the remaining visible references, as a user can do before deleting a tag.
 delete from public.recurring where user_id = '00000000-0000-4000-8000-000000000501';
 delete from public.transaction where user_id = '00000000-0000-4000-8000-000000000501';

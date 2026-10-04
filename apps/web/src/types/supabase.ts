@@ -545,6 +545,7 @@ export type Database = {
 					account_id: string;
 					accrued_through: string | null;
 					is_completed: boolean;
+					is_paused: boolean;
 					recurring_id: string | null;
 					remaining_occurrences: number | null;
 					tag_id: string | null;
@@ -553,6 +554,7 @@ export type Database = {
 					account_id: string;
 					accrued_through?: string | null;
 					is_completed?: boolean;
+					is_paused?: boolean;
 					recurring_id?: string | null;
 					remaining_occurrences?: number | null;
 					tag_id?: string | null;
@@ -561,6 +563,7 @@ export type Database = {
 					account_id?: string;
 					accrued_through?: string | null;
 					is_completed?: boolean;
+					is_paused?: boolean;
 					recurring_id?: string | null;
 					remaining_occurrences?: number | null;
 					tag_id?: string | null;

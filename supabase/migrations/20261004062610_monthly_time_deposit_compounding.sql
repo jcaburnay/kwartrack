@@ -7,6 +7,7 @@ create table public.td_monthly_interest_state (
   accrued_through date,
   recurring_id uuid references public.recurring(id) on delete set null,
   is_completed boolean not null default false,
+  is_paused boolean not null default false,
   remaining_occurrences int check (remaining_occurrences is null or remaining_occurrences >= 0),
   tag_id uuid references public.tag(id) on delete set null
 );
@@ -191,6 +192,7 @@ declare
   v_tz text;
   v_new_id uuid;
   v_remaining int;
+  v_paused boolean := false;
 begin
   v_pp_year := public.td_postings_per_year(p_account.interest_posting_interval);
   v_interval := public.td_recurring_interval(p_account.interest_posting_interval);
@@ -225,16 +227,17 @@ begin
   v_anchor := (p_account.created_at at time zone coalesce(v_tz, 'Asia/Manila'))::date;
 
   if p_account.interest_posting_interval = 'monthly' then
-    select remaining_occurrences into v_remaining from public.td_monthly_interest_state
-      where account_id = p_account.id and not is_completed;
+    select case when not is_completed then remaining_occurrences end, is_paused
+      into v_remaining, v_paused from public.td_monthly_interest_state
+      where account_id = p_account.id;
   end if;
   -- next_occurrence_at is materialized by recurring_set_next_at trigger.
   insert into public.recurring
     (user_id, service, amount_centavos, type, tag_id,
-     to_account_id, interval, first_occurrence_date, next_occurrence_at, remaining_occurrences)
+     to_account_id, interval, first_occurrence_date, next_occurrence_at, remaining_occurrences, is_paused)
   values
     (p_account.user_id, p_account.name || ' — Interest', v_amount, 'income', v_tag_id,
-     p_account.id, v_interval, v_anchor, now(), v_remaining)
+     p_account.id, v_interval, v_anchor, now(), v_remaining, coalesce(v_paused, false) or p_account.is_archived)
   returning id into v_new_id;
 
   if p_account.interest_posting_interval = 'monthly' then
@@ -437,8 +440,9 @@ begin
     )) into v_start;
     select * into v_rec from public.recurring where id = v_id;
     insert into public.td_monthly_interest_state(account_id, accrued_through, tag_id, recurring_id,
-      is_completed, remaining_occurrences)
-      values (a.id, v_start, v_tag, v_id, coalesce(v_rec.is_completed, false), v_rec.remaining_occurrences)
+      is_completed, remaining_occurrences, is_paused)
+      values (a.id, v_start, v_tag, v_id, coalesce(v_rec.is_completed, false), v_rec.remaining_occurrences,
+        v_rec.is_paused or (a.is_archived and not v_rec.is_completed))
       on conflict (account_id) do nothing;
     select coalesce(timezone, 'Asia/Manila') into v_tz from public.user_profile where id = a.user_id;
     v_end := least((date_trunc('month', v_start) + interval '1 month')::date, a.maturity_date);
@@ -489,7 +493,15 @@ begin
   end if;
   if a.interest_recurring_id is null then return new; end if;
   if exists (select 1 from public.recurring
-    where id = a.interest_recurring_id and is_completed) then return new; end if;
+    where id = a.interest_recurring_id and is_completed) then
+    if old.interest_posting_interval is not distinct from a.interest_posting_interval then
+      return new;
+    end if;
+    -- Periodic cadence changes reuse the row. An explicit return to monthly
+    -- starts a fresh countdown while leaving manual pause and metadata intact.
+    update public.recurring set is_completed = false, completed_at = null,
+      remaining_occurrences = null where id = a.interest_recurring_id;
+  end if;
   v_start := public.td_monthly_period_start(a);
   v_tag := public.td_interest_tag_id(a);
   if old.interest_posting_interval is distinct from a.interest_posting_interval then
@@ -499,11 +511,15 @@ begin
       (select max(date) from public.transaction where to_account_id = a.id
         and type = 'income' and recurring_id is null and tag_id = v_tag)
     )) into v_start;
-    insert into public.td_monthly_interest_state(account_id, accrued_through, tag_id, recurring_id)
-      values (a.id, v_start, v_tag, a.interest_recurring_id)
+    insert into public.td_monthly_interest_state(account_id, accrued_through, tag_id, recurring_id,
+      remaining_occurrences, is_paused)
+      values (a.id, v_start, v_tag, a.interest_recurring_id,
+        (select remaining_occurrences from public.recurring where id = a.interest_recurring_id),
+        (select is_paused from public.recurring where id = a.interest_recurring_id))
       on conflict (account_id) do update set accrued_through = excluded.accrued_through,
         tag_id = excluded.tag_id, recurring_id = excluded.recurring_id,
-        is_completed = false;
+        remaining_occurrences = excluded.remaining_occurrences,
+        is_paused = excluded.is_paused, is_completed = false;
   else
     insert into public.td_monthly_interest_state(account_id, accrued_through, tag_id, recurring_id)
       values (a.id, null, v_tag, a.interest_recurring_id)
@@ -560,7 +576,7 @@ returns trigger language plpgsql security definer set search_path = public as $$
 begin
   if tg_op = 'DELETE' then
     update public.td_monthly_interest_state set is_completed = old.is_completed,
-      remaining_occurrences = old.remaining_occurrences where recurring_id = old.id;
+      remaining_occurrences = old.remaining_occurrences, is_paused = old.is_paused where recurring_id = old.id;
     return old;
   end if;
   if old.is_completed and old.remaining_occurrences is distinct from new.remaining_occurrences
@@ -572,10 +588,10 @@ begin
     new.completed_at := null;
   end if;
   update public.td_monthly_interest_state set is_completed = new.is_completed,
-    remaining_occurrences = new.remaining_occurrences where recurring_id = new.id;
+    remaining_occurrences = new.remaining_occurrences, is_paused = new.is_paused where recurring_id = new.id;
   return new;
 end;
 $$;
 create trigger td_monthly_remember_completion_trg
-  before update of is_completed, remaining_occurrences or delete on public.recurring
+  before update of is_completed, remaining_occurrences, is_paused or delete on public.recurring
   for each row execute function public.td_monthly_remember_completion();
