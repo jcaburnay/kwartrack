@@ -19,5 +19,5 @@ PGPASSWORD=postgres psql -h 127.0.0.1 -p 54322 -U postgres -d postgres \
   -v ON_ERROR_STOP=1 -f supabase/tests/monthly_time_deposit_migration.psql
 ```
 
-Expect twenty `ok` assertions and no `not ok` assertions. All checks create only
+Expect twenty-three `ok` assertions and no `not ok` assertions. All checks create only
 synthetic data and roll back all fixtures and schema changes.

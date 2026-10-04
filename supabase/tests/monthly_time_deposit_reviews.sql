@@ -1,7 +1,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 set search_path = public, extensions;
-select plan(63);
+select plan(69);
 
 insert into auth.users(id, email, raw_user_meta_data)
 values ('00000000-0000-4000-8000-000000000501', 'monthly-review@example.invalid',
@@ -244,10 +244,16 @@ values ('00000000-0000-4000-8000-000000000516', '00000000-0000-4000-8000-0000000
   'Archive without pause', 'time-deposit', 15000000, 15000000, 600, '2099-11-01', 'monthly',
   (date_trunc('month', now() at time zone 'Asia/Manila') - interval '2 months') at time zone 'Asia/Manila');
 update public.account set is_archived = true where id = '00000000-0000-4000-8000-000000000516';
+select ok((select is_paused from public.recurring where id = (select interest_recurring_id
+  from public.account where id = '00000000-0000-4000-8000-000000000516')),
+  'Archiving a monthly deposit pauses its recurring in the same database update');
 select public.recurring_fire_due();
 select is((select count(*) from public.transaction where to_account_id = '00000000-0000-4000-8000-000000000516'),
   0::bigint, 'Archived deposits skip posting even when recurring pause never succeeded');
 update public.account set is_archived = false where id = '00000000-0000-4000-8000-000000000516';
+select ok((select not is_paused from public.recurring where id = (select interest_recurring_id
+  from public.account where id = '00000000-0000-4000-8000-000000000516')),
+  'Unarchiving releases the archive-owned pause without a second UI update');
 -- The UI resume request may write false to an already-false pause flag.
 update public.recurring set is_paused = false where id = (select interest_recurring_id from public.account
   where id = '00000000-0000-4000-8000-000000000516');
@@ -278,12 +284,33 @@ values ('00000000-0000-4000-8000-000000000518', '00000000-0000-4000-8000-0000000
   'Archive missing schedule', 'time-deposit', 15000000, 15000000, 600, '2099-11-01', 'monthly',
   (date_trunc('month', now() at time zone 'Asia/Manila') - interval '2 months') at time zone 'Asia/Manila');
 update public.account set is_archived = true where id = '00000000-0000-4000-8000-000000000518';
+-- Match the UI's separate pause request before the generated row is deleted.
+update public.recurring set is_paused = true where id = (select interest_recurring_id
+  from public.account where id = '00000000-0000-4000-8000-000000000518');
 delete from public.recurring where id = (select interest_recurring_id from public.account
   where id = '00000000-0000-4000-8000-000000000518');
 update public.account set is_archived = false where id = '00000000-0000-4000-8000-000000000518';
 select public.recurring_fire_due();
 select is((select count(*) from public.transaction where to_account_id = '00000000-0000-4000-8000-000000000518'),
   0::bigint, 'Unarchive skips archived months even when the generated schedule must be repaired');
+select ok((select not r.is_paused from public.recurring r join public.account a
+  on a.interest_recurring_id = r.id where a.id = '00000000-0000-4000-8000-000000000518'),
+  'Unarchive releases an archive-owned pause after schedule repair');
+insert into public.account(id, user_id, name, type, initial_balance_centavos,
+  principal_centavos, interest_rate_bps, maturity_date, interest_posting_interval, created_at)
+values ('00000000-0000-4000-8000-000000000528', '00000000-0000-4000-8000-000000000501',
+  'Deleted manual pause', 'time-deposit', 15000000, 15000000, 600, '2099-11-01', 'monthly',
+  (date_trunc('month', now() at time zone 'Asia/Manila') - interval '2 months') at time zone 'Asia/Manila');
+update public.recurring set is_paused = true where id = (select interest_recurring_id
+  from public.account where id = '00000000-0000-4000-8000-000000000528');
+update public.account set is_archived = true where id = '00000000-0000-4000-8000-000000000528';
+delete from public.recurring where id = (select interest_recurring_id from public.account
+  where id = '00000000-0000-4000-8000-000000000528');
+update public.account set is_archived = false where id = '00000000-0000-4000-8000-000000000528';
+select public.recurring_fire_due();
+select ok((select r.is_paused from public.recurring r join public.account a
+  on a.interest_recurring_id = r.id where a.id = '00000000-0000-4000-8000-000000000528'),
+  'Unarchive preserves a manual pause after schedule repair');
 -- Match the UI payload: countdown edits do not explicitly send completion flags.
 insert into public.account(id, user_id, name, type, initial_balance_centavos,
   principal_centavos, interest_rate_bps, maturity_date, interest_posting_interval, created_at)
@@ -431,6 +458,32 @@ select public.recurring_fire_due();
 select is((select accrued_through from public.td_monthly_interest_state
   where account_id = '00000000-0000-4000-8000-000000000525'),
   date_trunc('month', now() at time zone 'Asia/Manila')::date, 'Restarted manual pause resumes without old-period backfill');
+-- Periodic cadence exposes fields that monthly processing owns again on return.
+insert into public.account(id, user_id, name, type, initial_balance_centavos,
+  principal_centavos, interest_rate_bps, maturity_date, interest_posting_interval, created_at)
+values ('00000000-0000-4000-8000-000000000526', '00000000-0000-4000-8000-000000000501',
+  'Edited periodic schedule', 'time-deposit', 15000000, 15000000, 600, '2099-11-01', 'monthly',
+  '2020-09-01T00:00:00+08:00');
+update public.account set interest_posting_interval = 'quarterly'
+  where id = '00000000-0000-4000-8000-000000000526';
+update public.recurring set type = 'transfer', tag_id = null,
+  from_account_id = '00000000-0000-4000-8000-000000000517',
+  fee_centavos = 123, interval = 'weekly', first_occurrence_date = '2021-04-13'
+  where id = (select interest_recurring_id from public.account
+    where id = '00000000-0000-4000-8000-000000000526');
+update public.account set interest_posting_interval = 'monthly'
+  where id = '00000000-0000-4000-8000-000000000526';
+select ok((select r.type = 'income' and r.to_account_id = a.id and r.from_account_id is null
+    and r.fee_centavos is null and r.tag_id is not null and r.interval = 'monthly'
+    and r.first_occurrence_date = '2020-10-01'
+  from public.recurring r join public.account a on a.interest_recurring_id = r.id
+  where a.id = '00000000-0000-4000-8000-000000000526'),
+  'Returning to monthly restores the generated income schedule shape');
+select public.recurring_fire_due();
+select ok((select count(*) > 0 from public.transaction
+  where to_account_id = '00000000-0000-4000-8000-000000000526'
+    and type = 'income' and from_account_id is null and fee_centavos is null),
+  'Restored monthly schedule posts income into the deposit');
 -- Remove the remaining visible references, as a user can do before deleting a tag.
 delete from public.recurring where user_id = '00000000-0000-4000-8000-000000000501';
 delete from public.transaction where user_id = '00000000-0000-4000-8000-000000000501';

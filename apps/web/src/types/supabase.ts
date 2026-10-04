@@ -544,6 +544,7 @@ export type Database = {
 				Row: {
 					account_id: string;
 					accrued_through: string | null;
+					archive_owned_pause: boolean;
 					is_completed: boolean;
 					is_paused: boolean;
 					recurring_id: string | null;
@@ -553,6 +554,7 @@ export type Database = {
 				Insert: {
 					account_id: string;
 					accrued_through?: string | null;
+					archive_owned_pause?: boolean;
 					is_completed?: boolean;
 					is_paused?: boolean;
 					recurring_id?: string | null;
@@ -562,6 +564,7 @@ export type Database = {
 				Update: {
 					account_id?: string;
 					accrued_through?: string | null;
+					archive_owned_pause?: boolean;
 					is_completed?: boolean;
 					is_paused?: boolean;
 					recurring_id?: string | null;

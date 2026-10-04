@@ -8,6 +8,7 @@ create table public.td_monthly_interest_state (
   recurring_id uuid references public.recurring(id) on delete set null,
   is_completed boolean not null default false,
   is_paused boolean not null default false,
+  archive_owned_pause boolean not null default false,
   remaining_occurrences int check (remaining_occurrences is null or remaining_occurrences >= 0),
   tag_id uuid references public.tag(id) on delete set null
 );
@@ -409,7 +410,8 @@ $$;
 -- Repair and retime all existing monthly TDs. This only creates schedules;
 -- ledger catch-up happens on the next hourly cron, not during migration.
 do $$
-declare a public.account; v_rec public.recurring; v_id uuid; v_start date; v_end date; v_tz text; v_tag uuid;
+declare a public.account; v_rec public.recurring; v_id uuid; v_start date; v_end date;
+  v_tz text; v_tag uuid; v_anchor date;
 begin
   for a in select * from public.account
     where type = 'time-deposit' and interest_posting_interval = 'monthly'
@@ -428,15 +430,23 @@ begin
         on conflict (user_id, name, type) do update set name = excluded.name
         returning id into v_tag;
     end if;
+    select coalesce(timezone, 'Asia/Manila') into v_tz from public.user_profile where id = a.user_id;
+    v_anchor := (a.created_at at time zone coalesce(v_tz, 'Asia/Manila'))::date;
     -- Deliberate one-time adoption of historical entries. Runtime processing
     -- never infers cursor changes from editable transaction dates.
     select greatest(v_start, coalesce(
       (select max(date) from public.transaction
         where to_account_id = a.id and type = 'income' and recurring_id = v_id),
-      -- Older manual imports have no recurring provenance. Deliberately adopt
-      -- those legacy interest-tag entries only when no linked posting exists.
+      -- Older entries may have no recurring provenance. A deleted schedule
+      -- clears transaction.recurring_id, and its tag may since have been
+      -- renamed. Match the old fixed monthly amount on its anchored calendar
+      -- date as a narrow fallback when the replacement tag cannot identify it.
       (select max(date) from public.transaction where to_account_id = a.id
-        and type = 'income' and recurring_id is null and tag_id = v_tag)
+        and type = 'income' and recurring_id is null
+        and (tag_id = v_tag or (amount_centavos = public.td_periodic_net_interest_centavos(
+          a.principal_centavos, a.interest_rate_bps, 12)
+          and date = (v_anchor + (((extract(year from date)::int - extract(year from v_anchor)::int) * 12
+            + extract(month from date)::int - extract(month from v_anchor)::int) || ' months')::interval)::date)))
     )) into v_start;
     select * into v_rec from public.recurring where id = v_id;
     insert into public.td_monthly_interest_state(account_id, accrued_through, tag_id, recurring_id,
@@ -444,7 +454,6 @@ begin
       values (a.id, v_start, v_tag, v_id, coalesce(v_rec.is_completed, false), v_rec.remaining_occurrences,
         v_rec.is_paused or (a.is_archived and not v_rec.is_completed))
       on conflict (account_id) do nothing;
-    select coalesce(timezone, 'Asia/Manila') into v_tz from public.user_profile where id = a.user_id;
     v_end := least((date_trunc('month', v_start) + interval '1 month')::date, a.maturity_date);
     -- Normalize generated mechanics previously editable in the UI, preserving
     -- user metadata, countdown, completion and historical ledger entries.
@@ -467,6 +476,7 @@ $$;
 create or replace function public.td_monthly_refresh_schedule()
 returns trigger language plpgsql security definer set search_path = public as $$
 declare a public.account; v_start date; v_end date; v_tz text; v_tag uuid;
+  v_paused boolean; v_archive_owned_pause boolean;
 begin
   -- An earlier AFTER trigger may have populated the backlink through a nested
   -- update. Its persisted row, rather than this outer NEW, is authoritative.
@@ -479,10 +489,21 @@ begin
       where account_id = a.id;
     return new;
   end if;
+  if not old.is_archived and a.is_archived then
+    -- Remember whether the pause existed before archive. Account archive owns
+    -- only a newly introduced pause, even if its recurring is later deleted.
+    select coalesce(
+      (select r.is_paused from public.recurring r where r.id = a.interest_recurring_id),
+      (select st.is_paused from public.td_monthly_interest_state st where st.account_id = a.id),
+      false) into v_paused;
+    insert into public.td_monthly_interest_state(account_id, is_paused, archive_owned_pause)
+      values (a.id, true, not v_paused)
+      on conflict (account_id) do update set archive_owned_pause = excluded.archive_owned_pause;
+    update public.recurring set is_paused = true where id = a.interest_recurring_id;
+  end if;
   if old.is_archived and not a.is_archived then
-    -- The account archive may have succeeded while a separate recurring pause
-    -- request failed. Skip completed archived periods even without a pause flip
-    -- or a surviving schedule, and preserve independent manual pause flags.
+    -- Skip completed archived periods before releasing an archive-owned pause,
+    -- including when the generated recurring was deleted during archive.
     select coalesce(timezone, 'Asia/Manila') into v_tz
       from public.user_profile where id = a.user_id;
     v_start := greatest(public.td_monthly_period_start(a),
@@ -490,6 +511,14 @@ begin
     insert into public.td_monthly_interest_state(account_id, accrued_through, tag_id)
       values (a.id, v_start, public.td_interest_tag_id(a))
       on conflict (account_id) do update set accrued_through = excluded.accrued_through;
+    select archive_owned_pause into v_archive_owned_pause
+      from public.td_monthly_interest_state where account_id = a.id;
+    update public.td_monthly_interest_state set
+      is_paused = case when v_archive_owned_pause then false else is_paused end,
+      archive_owned_pause = false where account_id = a.id;
+    if v_archive_owned_pause then
+      update public.recurring set is_paused = false where id = a.interest_recurring_id;
+    end if;
   end if;
   if a.interest_recurring_id is null then return new; end if;
   if exists (select 1 from public.recurring
@@ -504,6 +533,11 @@ begin
   end if;
   v_start := public.td_monthly_period_start(a);
   v_tag := public.td_interest_tag_id(a);
+  if v_tag is null then
+    insert into public.tag(user_id, name, type) values (a.user_id, 'interest-earned', 'income')
+      on conflict (user_id, name, type) do update set name = excluded.name
+      returning id into v_tag;
+  end if;
   if old.interest_posting_interval is distinct from a.interest_posting_interval then
     select greatest(v_start, coalesce(
       (select max(date) from public.transaction where to_account_id = a.id
@@ -529,9 +563,15 @@ begin
   select coalesce(timezone, 'Asia/Manila') into v_tz
     from public.user_profile where id = a.user_id;
   update public.recurring set
+    type = 'income', to_account_id = a.id, from_account_id = null,
+    fee_centavos = null, tag_id = v_tag, interval = 'monthly',
+    first_occurrence_date = v_end,
     next_occurrence_at = v_end::timestamp at time zone coalesce(v_tz, 'Asia/Manila'),
     amount_centavos = greatest(1, public.td_monthly_net_interest_centavos(a, v_start, v_end))
   where id = a.interest_recurring_id;
+  -- The generic recurring date trigger runs when the interval/anchor changes.
+  update public.recurring set next_occurrence_at = v_end::timestamp at time zone
+    coalesce(v_tz, 'Asia/Manila') where id = a.interest_recurring_id;
   return new;
 end;
 $$;
@@ -569,8 +609,8 @@ create trigger zz_td_monthly_resume_schedule_trg
   before update of is_paused on public.recurring
   for each row execute function public.td_monthly_resume_schedule();
 
--- Keep completion authoritative after a recurring is removed. Explicitly
--- resetting a surviving countdown clears completion through the same trigger.
+-- Keep completion and pause authoritative after a recurring is removed.
+-- Explicitly resetting a surviving countdown clears completion here.
 create or replace function public.td_monthly_remember_completion()
 returns trigger language plpgsql security definer set search_path = public as $$
 begin

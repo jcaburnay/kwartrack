@@ -1,7 +1,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 set search_path = public, extensions;
-select plan(20);
+select plan(23);
 
 -- Replay the additive migration against existing synthetic TDs, rather than
 -- only testing newly created accounts after a clean db reset.
@@ -16,6 +16,9 @@ values
    '2020-09-01T00:00:00+08:00'),
   ('00000000-0000-4000-8000-000000000403', '00000000-0000-4000-8000-000000000401',
    'Existing paused monthly', 'time-deposit', 15000000, 15000000, 600, '2020-11-01', 'monthly',
+   '2020-09-01T00:00:00+08:00'),
+  ('00000000-0000-4000-8000-000000000409', '00000000-0000-4000-8000-000000000401',
+   'Deleted monthly schedule', 'time-deposit', 15000000, 15000000, 600, '2020-11-01', 'monthly',
    '2020-09-01T00:00:00+08:00');
 delete from public.recurring where to_account_id = '00000000-0000-4000-8000-000000000402';
 update public.recurring set is_paused = true
@@ -25,8 +28,19 @@ select '00000000-0000-4000-8000-000000000401', 'income', id,
   '00000000-0000-4000-8000-000000000403', 60000, '2020-10-01',
   (select interest_recurring_id from public.account where id = '00000000-0000-4000-8000-000000000403')
 from public.tag where user_id = '00000000-0000-4000-8000-000000000401' and name = 'interest-earned';
+insert into public.transaction(user_id, type, tag_id, to_account_id, amount_centavos, date, recurring_id)
+select '00000000-0000-4000-8000-000000000401', 'income', id,
+  '00000000-0000-4000-8000-000000000409', 60000, '2020-10-01',
+  (select interest_recurring_id from public.account where id = '00000000-0000-4000-8000-000000000409')
+from public.tag where user_id = '00000000-0000-4000-8000-000000000401' and name = 'interest-earned';
 update public.tag set name = 'renamed-interest' where user_id =
   '00000000-0000-4000-8000-000000000401' and name = 'interest-earned';
+delete from public.recurring where id = (select interest_recurring_id from public.account
+  where id = '00000000-0000-4000-8000-000000000409');
+insert into public.transaction(user_id, type, tag_id, to_account_id, amount_centavos, date)
+select '00000000-0000-4000-8000-000000000401', 'income', id,
+  '00000000-0000-4000-8000-000000000409', 60000, '2020-10-15'
+from public.tag where user_id = '00000000-0000-4000-8000-000000000401' and name = 'renamed-interest';
 insert into public.tag(user_id, name, type)
 values ('00000000-0000-4000-8000-000000000401', 'current-interest', 'income');
 update public.recurring set tag_id = (select id from public.tag
@@ -86,6 +100,12 @@ select is((select count(*) from public.transaction
 select is((select accrued_through from public.td_monthly_interest_state
   where account_id = '00000000-0000-4000-8000-000000000403'), '2020-10-01'::date,
   'Migration adopts the latest existing interest posting without rewriting it');
+select is((select accrued_through from public.td_monthly_interest_state
+  where account_id = '00000000-0000-4000-8000-000000000409'), '2020-10-01'::date,
+  'Migration adopts old interest after its tag is renamed and schedule deleted');
+select is((select count(*) from public.transaction
+  where to_account_id = '00000000-0000-4000-8000-000000000409'), 2::bigint,
+  'Migration does not duplicate deleted-schedule interest or consume later unrelated income');
 select ok((select is_paused from public.recurring
   where to_account_id = '00000000-0000-4000-8000-000000000403'), 'Migration preserves an intentional pause');
 select is((select (next_occurrence_at at time zone 'Asia/Manila')::date from public.recurring
@@ -116,6 +136,9 @@ select public.recurring_fire_due();
 select is((select amount_centavos from public.transaction
   where to_account_id = '00000000-0000-4000-8000-000000000402' and date = '2020-10-01'),
   59178::bigint, 'Next hourly run posts missed interest using the new calculation');
+select is((select count(*) from public.transaction
+  where to_account_id = '00000000-0000-4000-8000-000000000409' and date = '2020-10-01'),
+  1::bigint, 'First cron does not duplicate adopted interest after tag rename and schedule deletion');
 select is((select g.name from public.td_monthly_interest_state st join public.tag g on g.id = st.tag_id
   where st.account_id = '00000000-0000-4000-8000-000000000403'), 'current-interest',
   'Migration retains the currently linked tag while adopting postings with the old tag');
