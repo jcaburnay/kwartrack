@@ -544,32 +544,20 @@ export type Database = {
 				Row: {
 					account_id: string;
 					accrued_through: string | null;
-					archive_owned_pause: boolean;
-					is_completed: boolean;
-					is_paused: boolean;
-					recurring_id: string | null;
-					remaining_occurrences: number | null;
-					tag_id: string | null;
+					needs_reconciliation: boolean;
+					reconciliation_cutover: string | null;
 				};
 				Insert: {
 					account_id: string;
 					accrued_through?: string | null;
-					archive_owned_pause?: boolean;
-					is_completed?: boolean;
-					is_paused?: boolean;
-					recurring_id?: string | null;
-					remaining_occurrences?: number | null;
-					tag_id?: string | null;
+					needs_reconciliation?: boolean;
+					reconciliation_cutover?: string | null;
 				};
 				Update: {
 					account_id?: string;
 					accrued_through?: string | null;
-					archive_owned_pause?: boolean;
-					is_completed?: boolean;
-					is_paused?: boolean;
-					recurring_id?: string | null;
-					remaining_occurrences?: number | null;
-					tag_id?: string | null;
+					needs_reconciliation?: boolean;
+					reconciliation_cutover?: string | null;
 				};
 				Relationships: [
 					{
@@ -577,20 +565,6 @@ export type Database = {
 						columns: ["account_id"];
 						isOneToOne: true;
 						referencedRelation: "account";
-						referencedColumns: ["id"];
-					},
-					{
-						foreignKeyName: "td_monthly_interest_state_recurring_id_fkey";
-						columns: ["recurring_id"];
-						isOneToOne: false;
-						referencedRelation: "recurring";
-						referencedColumns: ["id"];
-					},
-					{
-						foreignKeyName: "td_monthly_interest_state_tag_id_fkey";
-						columns: ["tag_id"];
-						isOneToOne: false;
-						referencedRelation: "tag";
 						referencedColumns: ["id"];
 					},
 				];
@@ -875,11 +849,11 @@ export type Database = {
 				Returns: number;
 			};
 			td_check_maturity_due: { Args: never; Returns: number };
-			td_create_interest_recurring: {
-				Args: { p_account: Database["public"]["Tables"]["account"]["Row"] };
-				Returns: string;
+			td_confirm_interest_reconciliation: {
+				Args: { p_account_id: string };
+				Returns: undefined;
 			};
-			td_interest_tag_id: {
+			td_create_interest_recurring: {
 				Args: { p_account: Database["public"]["Tables"]["account"]["Row"] };
 				Returns: string;
 			};

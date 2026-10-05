@@ -1,7 +1,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 set search_path = public, extensions;
-select plan(43);
+select plan(41);
 
 -- All fixtures are synthetic and rolled back. Dates deliberately remain in
 -- the past so the real cron entrypoints can exercise catch-up deterministically.
@@ -43,14 +43,12 @@ insert into public.account(id, user_id, name, type, initial_balance_centavos,
 values ('00000000-0000-4000-8000-000000000303', '00000000-0000-4000-8000-000000000301',
   'Partial monthly', 'time-deposit', 15000000, 15000000, 600, '2020-10-15', 'monthly',
   '2020-09-16T00:00:00+08:00');
--- Delete the generated recurring to reproduce the missing schedule.
-delete from public.recurring where to_account_id = '00000000-0000-4000-8000-000000000303';
 select public.td_check_maturity_due();
 select is((select amount_centavos from public.transaction where to_account_id =
   '00000000-0000-4000-8000-000000000303' and date = '2020-10-01'), 29589::bigint,
   'Mid-month opening only earns 15 eligible September days');
 select is((select count(*) from public.transaction where to_account_id = '00000000-0000-4000-8000-000000000303'),
-  2::bigint, 'Missing schedule repairs and catches up including partial maturity');
+  2::bigint, 'Maturity catches up including the final partial period');
 select is((select max(date) from public.transaction where to_account_id = '00000000-0000-4000-8000-000000000303'),
   '2020-10-15'::date, 'Final partial period posts at maturity');
 select is((select accrued_through from public.td_monthly_interest_state
@@ -165,9 +163,8 @@ select is((select accrued_through from public.td_monthly_interest_state where ac
   '00000000-0000-4000-8000-000000000306'),
   date_trunc('month', now() at time zone 'Asia/Manila')::date,
   'Processed cursor survives transaction deletion');
-insert into public.td_monthly_interest_state(account_id, accrued_through, tag_id)
-select '00000000-0000-4000-8000-000000000307', '2020-09-01', id from public.tag
-where user_id = '00000000-0000-4000-8000-000000000301' and name = 'interest-earned'
+insert into public.td_monthly_interest_state(account_id, accrued_through)
+values ('00000000-0000-4000-8000-000000000307', '2020-09-01')
 on conflict (account_id) do update set accrued_through = excluded.accrued_through;
 insert into public.transaction(user_id, type, tag_id, to_account_id, amount_centavos, date)
 select '00000000-0000-4000-8000-000000000301', 'income', id,
@@ -181,8 +178,9 @@ update public.account set interest_posting_interval = 'quarterly'
   where id = '00000000-0000-4000-8000-000000000307';
 update public.account set interest_posting_interval = 'monthly'
   where id = '00000000-0000-4000-8000-000000000307';
-select is(public.td_monthly_period_start(a), '2020-10-01'::date,
-  'Explicit cadence transition deliberately adopts historical interest')
+select is(public.td_monthly_period_start(a),
+  date_trunc('month', now() at time zone 'Asia/Manila')::date,
+  'Returning to monthly starts prospectively without interpreting editable history')
   from public.account a where id = '00000000-0000-4000-8000-000000000307';
 
 insert into public.account(id, user_id, name, type, initial_balance_centavos,
@@ -204,11 +202,6 @@ select is((select count(*) from public.transaction t join public.tag g on g.id =
 select is((select count(*) from public.transaction where to_account_id =
   '00000000-0000-4000-8000-000000000309' and amount_centavos = 12345), 1::bigint,
   'Unrelated due recurring still fires after interest tag rename');
-delete from public.recurring where to_account_id = '00000000-0000-4000-8000-000000000309';
-select lives_ok('select public.recurring_fire_due()', 'Missing schedule repairs using saved renamed tag ID');
-select is((select count(*) from public.recurring r join public.tag g on g.id = r.tag_id
-  where r.to_account_id = '00000000-0000-4000-8000-000000000309' and g.name = 'deposit-yield'),
-  1::bigint, 'Repair reuses saved tag without depending on the editable name');
 -- A manually edited posting date cannot move the persisted monthly cursor.
 update public.transaction set date = date + 5 where to_account_id =
   '00000000-0000-4000-8000-000000000309' and tag_id in (select id from public.tag

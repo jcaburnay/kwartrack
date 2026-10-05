@@ -154,6 +154,7 @@ export function RecurringForm({
 					<span>Service</span>
 					<input
 						type="text"
+						readOnly={calculatedAmount}
 						placeholder="e.g. Netflix"
 						className="input input-bordered w-full"
 						autoFocus={mode === "create"}

@@ -7,6 +7,7 @@ type Props = {
 	onEdit: (r: Recurring) => void;
 	onTogglePaused: (id: string, currentlyPaused: boolean) => Promise<{ error: string | null }>;
 	onDelete: (id: string) => Promise<{ error: string | null }>;
+	canDelete: boolean;
 };
 
 const MENU_MIN_HEIGHT = 120;
@@ -20,7 +21,13 @@ function computePosition(rect: DOMRect) {
 	};
 }
 
-export function RecurringRowActions({ recurring, onEdit, onTogglePaused, onDelete }: Props) {
+export function RecurringRowActions({
+	recurring,
+	onEdit,
+	onTogglePaused,
+	onDelete,
+	canDelete,
+}: Props) {
 	const [open, setOpen] = useState(false);
 	const [pos, setPos] = useState({ top: 0, right: 0 });
 	const buttonRef = useRef<HTMLButtonElement>(null);
@@ -112,11 +119,13 @@ export function RecurringRowActions({ recurring, onEdit, onTogglePaused, onDelet
 									</button>
 								</li>
 							)}
-							<li>
-								<button type="button" className="text-error" onClick={hardDelete}>
-									Delete
-								</button>
-							</li>
+							{canDelete && (
+								<li>
+									<button type="button" className="text-error" onClick={hardDelete}>
+										Delete
+									</button>
+								</li>
+							)}
 						</ul>
 					</>,
 					document.body,

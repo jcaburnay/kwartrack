@@ -152,6 +152,7 @@ export function RecurringPanel({ pendingModal, onPendingModalConsumed }: Props) 
 							<RecurringTable
 								recurrings={visible}
 								accounts={accounts}
+								accountsReady={accountsReady}
 								tags={tags}
 								onEdit={setEditing}
 								onTogglePaused={togglePaused}

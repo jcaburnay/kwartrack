@@ -1,10 +1,10 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 set search_path = public, extensions;
-select plan(29);
+select plan(14);
 
--- Replay the additive migration against existing synthetic TDs, rather than
--- only testing newly created accounts after a clean db reset.
+-- Simulate legacy accounts before replaying the candidate migration. The
+-- migration must never infer paid periods from mutable or deleted ledger rows.
 insert into auth.users(id, email, raw_user_meta_data)
 values ('00000000-0000-4000-8000-000000000401', 'monthly-migration@example.invalid',
   '{"display_name":"Migration test","timezone":"Asia/Manila"}');
@@ -12,201 +12,87 @@ insert into public.account(id, user_id, name, type, initial_balance_centavos,
   principal_centavos, interest_rate_bps, maturity_date, interest_posting_interval, created_at)
 values
   ('00000000-0000-4000-8000-000000000402', '00000000-0000-4000-8000-000000000401',
-   'Missing monthly', 'time-deposit', 15000000, 15000000, 600, '2020-11-01', 'monthly',
-   '2020-09-01T00:00:00+08:00'),
+   'Deleted prior posting', 'time-deposit', 15000000, 15000000, 600, '2099-11-01', 'monthly',
+   (date_trunc('month', now() at time zone 'Asia/Manila') - interval '1 month') at time zone 'Asia/Manila'),
   ('00000000-0000-4000-8000-000000000403', '00000000-0000-4000-8000-000000000401',
-   'Existing paused monthly', 'time-deposit', 15000000, 15000000, 600, '2020-11-01', 'monthly',
-   '2020-09-01T00:00:00+08:00'),
-  ('00000000-0000-4000-8000-000000000409', '00000000-0000-4000-8000-000000000401',
-   'Deleted monthly schedule', 'time-deposit', 15000000, 15000000, 600, '2020-11-01', 'monthly',
-   '2020-09-01T00:00:00+08:00');
-delete from public.recurring where to_account_id = '00000000-0000-4000-8000-000000000402';
-update public.recurring set is_paused = true
-  where to_account_id = '00000000-0000-4000-8000-000000000403';
+   'Surviving prior posting', 'time-deposit', 15000000, 15000000, 600, '2099-11-01', 'monthly',
+   (date_trunc('month', now() at time zone 'Asia/Manila') - interval '1 month') at time zone 'Asia/Manila'),
+  ('00000000-0000-4000-8000-000000000404', '00000000-0000-4000-8000-000000000401',
+   'Missing old schedule', 'time-deposit', 15000000, 15000000, 600, '2099-11-01', 'monthly',
+   (date_trunc('month', now() at time zone 'Asia/Manila') - interval '1 month') at time zone 'Asia/Manila'),
+  ('00000000-0000-4000-8000-000000000405', '00000000-0000-4000-8000-000000000401',
+   'Opened this month', 'time-deposit', 15000000, 15000000, 600, '2099-11-01', 'monthly',
+   now());
 insert into public.transaction(user_id, type, tag_id, to_account_id, amount_centavos, date, recurring_id)
-select '00000000-0000-4000-8000-000000000401', 'income', id,
-  '00000000-0000-4000-8000-000000000403', 60000, '2020-10-01',
-  (select interest_recurring_id from public.account where id = '00000000-0000-4000-8000-000000000403')
-from public.tag where user_id = '00000000-0000-4000-8000-000000000401' and name = 'interest-earned';
-insert into public.transaction(user_id, type, tag_id, to_account_id, amount_centavos, date, recurring_id)
-select '00000000-0000-4000-8000-000000000401', 'income', id,
-  '00000000-0000-4000-8000-000000000409', 60000, '2020-10-01',
-  (select interest_recurring_id from public.account where id = '00000000-0000-4000-8000-000000000409')
-from public.tag where user_id = '00000000-0000-4000-8000-000000000401' and name = 'interest-earned';
-update public.tag set name = 'renamed-interest' where user_id =
-  '00000000-0000-4000-8000-000000000401' and name = 'interest-earned';
-delete from public.recurring where id = (select interest_recurring_id from public.account
-  where id = '00000000-0000-4000-8000-000000000409');
-insert into public.transaction(user_id, type, tag_id, to_account_id, amount_centavos, date)
-select '00000000-0000-4000-8000-000000000401', 'income', id,
-  '00000000-0000-4000-8000-000000000409', 60000, '2020-10-15'
-from public.tag where user_id = '00000000-0000-4000-8000-000000000401' and name = 'renamed-interest';
-insert into public.tag(user_id, name, type)
-values ('00000000-0000-4000-8000-000000000401', 'current-interest', 'income');
-update public.recurring set tag_id = (select id from public.tag
-  where user_id = '00000000-0000-4000-8000-000000000401' and name = 'current-interest')
-where to_account_id = '00000000-0000-4000-8000-000000000403';
-insert into public.account(id, user_id, name, type, initial_balance_centavos,
-  principal_centavos, interest_rate_bps, maturity_date, interest_posting_interval, created_at)
-values ('00000000-0000-4000-8000-000000000405', '00000000-0000-4000-8000-000000000401',
-  'Exact label collision', 'time-deposit', 15000000, 15000000, 600, '2020-11-01', 'monthly',
-  '2020-09-01T00:00:00+08:00');
-delete from public.recurring where to_account_id = '00000000-0000-4000-8000-000000000405';
-insert into public.recurring(id, user_id, service, type, tag_id, to_account_id,
-  amount_centavos, interval, first_occurrence_date, next_occurrence_at)
-select '00000000-0000-4000-8000-000000000406', user_id, 'Exact label collision — Interest',
-  'income', id, '00000000-0000-4000-8000-000000000405', 12345, 'monthly', '2099-01-01', '2099-01-01'
-from public.tag where user_id = '00000000-0000-4000-8000-000000000401' and name = 'current-interest';
-insert into public.account(id, user_id, name, type, initial_balance_centavos,
-  principal_centavos, interest_rate_bps, maturity_date, interest_posting_interval, created_at)
-values ('00000000-0000-4000-8000-000000000407', '00000000-0000-4000-8000-000000000401',
-  'Previously completed monthly', 'time-deposit', 15000000, 15000000, 600, '2099-11-01', 'monthly',
-  '2020-09-01T00:00:00+08:00');
-update public.recurring set remaining_occurrences = 0, is_completed = true, completed_at = now()
-where id = (select interest_recurring_id from public.account
-  where id = '00000000-0000-4000-8000-000000000407');
-insert into public.account(id, user_id, name, type, initial_balance_centavos,
-  principal_centavos, interest_rate_bps, maturity_date, interest_posting_interval, created_at)
-values ('00000000-0000-4000-8000-000000000408', '00000000-0000-4000-8000-000000000401',
-  'Legacy mutated generated', 'time-deposit', 15000000, 15000000, 600, '2020-11-01', 'monthly',
-  '2020-09-01T00:00:00+08:00');
-insert into public.transaction(user_id, type, tag_id, to_account_id, amount_centavos, date, recurring_id, description)
-select user_id, 'income', tag_id, '00000000-0000-4000-8000-000000000408', 60000, '2020-10-01', id,
-  'Preserved legacy interest'
-from public.recurring where id = (select interest_recurring_id from public.account
-  where id = '00000000-0000-4000-8000-000000000408');
-update public.recurring set type = 'transfer', from_account_id = '00000000-0000-4000-8000-000000000403',
-  to_account_id = '00000000-0000-4000-8000-000000000405', tag_id = null, fee_centavos = 100,
-  interval = 'weekly', amount_centavos = 12345, first_occurrence_date = '2099-01-01',
-  service = 'Custom legacy label', description = 'Custom legacy description', is_paused = true,
-  remaining_occurrences = 4
-where id = (select interest_recurring_id from public.account
-  where id = '00000000-0000-4000-8000-000000000408');
--- Legacy archive actions had no recorded pause provenance. An already-paused
--- archived row must still resume on unarchive, as the old UI did.
-insert into public.account(id, user_id, name, type, initial_balance_centavos,
-  principal_centavos, interest_rate_bps, maturity_date, interest_posting_interval, created_at)
-values
-  ('00000000-0000-4000-8000-000000000410', '00000000-0000-4000-8000-000000000401',
-   'Archived without prior pause', 'time-deposit', 15000000, 15000000, 600, '2099-11-01', 'monthly',
-   '2020-09-01T00:00:00+08:00'),
-  ('00000000-0000-4000-8000-000000000411', '00000000-0000-4000-8000-000000000401',
-   'Already paused at archive', 'time-deposit', 15000000, 15000000, 600, '2099-11-01', 'monthly',
-   '2020-09-01T00:00:00+08:00'),
-  ('00000000-0000-4000-8000-000000000412', '00000000-0000-4000-8000-000000000401',
-   'Archived without schedule', 'time-deposit', 15000000, 15000000, 600, '2099-11-01', 'monthly',
-   '2020-09-01T00:00:00+08:00');
-update public.recurring set is_paused = true where id = (select interest_recurring_id
-  from public.account where id = '00000000-0000-4000-8000-000000000411');
-update public.account set is_archived = true where id in
-  ('00000000-0000-4000-8000-000000000410', '00000000-0000-4000-8000-000000000411',
-   '00000000-0000-4000-8000-000000000412');
--- Simulate an older two-step archive whose recurring pause request failed.
-update public.recurring set is_paused = false where id = (select interest_recurring_id
-  from public.account where id = '00000000-0000-4000-8000-000000000410');
-delete from public.recurring where id = (select interest_recurring_id
-  from public.account where id = '00000000-0000-4000-8000-000000000412');
--- Simulate the schema before this migration; rollback restores all objects.
+select a.user_id, 'income', r.tag_id, a.id, 59178,
+  date_trunc('month', now() at time zone 'Asia/Manila')::date, r.id
+from public.account a join public.recurring r on r.id = a.interest_recurring_id
+where a.id in ('00000000-0000-4000-8000-000000000402',
+  '00000000-0000-4000-8000-000000000403');
+delete from public.transaction where to_account_id = '00000000-0000-4000-8000-000000000402';
+update public.recurring set next_occurrence_at =
+  (date_trunc('month', now() at time zone 'Asia/Manila') + interval '1 month') at time zone 'Asia/Manila'
+where to_account_id in ('00000000-0000-4000-8000-000000000402',
+  '00000000-0000-4000-8000-000000000403');
+delete from public.recurring where to_account_id = '00000000-0000-4000-8000-000000000404';
+
 drop trigger td_monthly_refresh_schedule_trg on public.account;
 drop trigger zz_td_monthly_resume_schedule_trg on public.recurring;
-drop trigger if exists td_monthly_remember_completion_trg on public.recurring;
+drop trigger a_td_monthly_protect_recurring_trg on public.recurring;
+drop trigger td_monthly_reset_completion_trg on public.recurring;
+drop trigger a_td_monthly_protect_backlink_trg on public.account;
 drop table public.td_monthly_interest_state;
 \ir ../migrations/20261004062610_monthly_time_deposit_compounding.sql
 
+select is((select accrued_through from public.td_monthly_interest_state
+  where account_id = '00000000-0000-4000-8000-000000000402'),
+  date_trunc('month', now() at time zone 'Asia/Manila')::date,
+  'Deleted old posting does not put the cursor behind cutover');
+select ok((select needs_reconciliation from public.td_monthly_interest_state
+  where account_id = '00000000-0000-4000-8000-000000000402'),
+  'Deleted old posting is marked for reconciliation');
+select ok((select needs_reconciliation from public.td_monthly_interest_state
+  where account_id = '00000000-0000-4000-8000-000000000403'),
+  'Editable old history remains explicitly reviewable even with a surviving posting');
+select is((select amount_centavos from public.transaction
+  where to_account_id = '00000000-0000-4000-8000-000000000403'),
+  59178::bigint, 'Migration preserves historical credited amount');
 select ok((select interest_recurring_id is not null from public.account
-  where id = '00000000-0000-4000-8000-000000000402'), 'Migration restores missing recurring link');
-select is((select count(*) from public.recurring
-  where to_account_id = '00000000-0000-4000-8000-000000000402'), 1::bigint,
-  'Migration creates exactly one replacement schedule');
+  where id = '00000000-0000-4000-8000-000000000404'),
+  'Migration creates a schedule for an old account with none');
+select ok((select needs_reconciliation from public.td_monthly_interest_state
+  where account_id = '00000000-0000-4000-8000-000000000404'),
+  'Missing old schedule is marked for reconciliation');
+select ok((select not needs_reconciliation from public.td_monthly_interest_state
+  where account_id = '00000000-0000-4000-8000-000000000405'),
+  'Current-month account needs no historical reconciliation');
+select public.recurring_fire_due();
 select is((select count(*) from public.transaction
   where to_account_id = '00000000-0000-4000-8000-000000000402'), 0::bigint,
-  'Migration does not post ledger entries during deployment');
-select is((select accrued_through from public.td_monthly_interest_state
-  where account_id = '00000000-0000-4000-8000-000000000403'), '2020-10-01'::date,
-  'Migration adopts the latest existing interest posting without rewriting it');
-select is((select accrued_through from public.td_monthly_interest_state
-  where account_id = '00000000-0000-4000-8000-000000000409'), '2020-10-01'::date,
-  'Migration adopts old interest after its tag is renamed and schedule deleted');
+  'First hourly run does not recreate a deliberately deleted old posting');
 select is((select count(*) from public.transaction
-  where to_account_id = '00000000-0000-4000-8000-000000000409'), 2::bigint,
-  'Migration does not duplicate deleted-schedule interest or consume later unrelated income');
-select ok((select is_paused from public.recurring
-  where to_account_id = '00000000-0000-4000-8000-000000000403'), 'Migration preserves an intentional pause');
-select ok((select st.archive_owned_pause and r.is_paused from public.td_monthly_interest_state st
-  join public.recurring r on r.id = st.recurring_id
-  where st.account_id = '00000000-0000-4000-8000-000000000410'),
-  'Migration records a pause it adds to an already archived deposit');
-select ok((select st.archive_owned_pause and r.is_paused from public.td_monthly_interest_state st
-  join public.recurring r on r.id = st.recurring_id
-  where st.account_id = '00000000-0000-4000-8000-000000000411'),
-  'Migration classifies an already paused archived schedule for legacy unarchive behavior');
-select ok((select st.archive_owned_pause and r.is_paused from public.td_monthly_interest_state st
-  join public.recurring r on r.id = st.recurring_id
-  where st.account_id = '00000000-0000-4000-8000-000000000412'),
-  'Migration owns the pause on a replacement created for an archived deposit');
-update public.account set is_archived = false where id in
-  ('00000000-0000-4000-8000-000000000410', '00000000-0000-4000-8000-000000000411',
-   '00000000-0000-4000-8000-000000000412');
-select ok((select not r.is_paused and not st.archive_owned_pause from public.recurring r
-  join public.account a on a.interest_recurring_id = r.id
-  join public.td_monthly_interest_state st on st.account_id = a.id
-  where a.id = '00000000-0000-4000-8000-000000000410'),
-  'Unarchive resumes the schedule paused by migration');
-select ok((select not r.is_paused from public.recurring r join public.account a
-  on a.interest_recurring_id = r.id where a.id = '00000000-0000-4000-8000-000000000411'),
-  'Unarchive resumes an already paused legacy archived schedule');
-select ok((select not r.is_paused from public.recurring r join public.account a
-  on a.interest_recurring_id = r.id where a.id = '00000000-0000-4000-8000-000000000412'),
-  'Unarchive resumes the migration-created replacement schedule');
+  where to_account_id = '00000000-0000-4000-8000-000000000404'), 0::bigint,
+  'First hourly run does not invent ambiguous old credits');
 select is((select (next_occurrence_at at time zone 'Asia/Manila')::date from public.recurring
-  where to_account_id = '00000000-0000-4000-8000-000000000402'), '2020-10-01'::date,
-  'Repair keeps missed first posting due rather than skipping to the future');
-select ok((select r.type = 'income' and r.from_account_id is null
-  and r.to_account_id = a.id and r.fee_centavos is null and r.interval = 'monthly' and t.type = 'income'
-  from public.account a join public.recurring r on r.id = a.interest_recurring_id
-  join public.tag t on t.id = r.tag_id where a.id = '00000000-0000-4000-8000-000000000408'),
-  'Migration normalizes legacy generated type, destination, source, fee, cadence and income tag');
-select is((select amount_centavos from public.recurring where id = (select interest_recurring_id from public.account
-  where id = '00000000-0000-4000-8000-000000000408')), 61395::bigint,
-  'Migration replaces legacy fixed amount with the historical next-period ACT/365 estimate');
-select is((select first_occurrence_date from public.recurring where id = (select interest_recurring_id from public.account
-  where id = '00000000-0000-4000-8000-000000000408')), '2020-11-01'::date,
-  'Migration restores a meaningful generated posting anchor');
-select is((select (next_occurrence_at at time zone 'Asia/Manila')::date from public.recurring
-  where id = (select interest_recurring_id from public.account where id = '00000000-0000-4000-8000-000000000408')),
-  '2020-11-01'::date, 'Migration keeps the missed next posting due after normalizing the cadence');
-select ok((select service = 'Custom legacy label' and description = 'Custom legacy description'
-  and is_paused and remaining_occurrences = 4 and not is_completed
-  from public.recurring where id = (select interest_recurring_id from public.account
-    where id = '00000000-0000-4000-8000-000000000408')),
-  'Migration preserves editable metadata, pause and finite countdown');
-select is((select description from public.transaction where to_account_id = '00000000-0000-4000-8000-000000000408'),
-  'Preserved legacy interest', 'Migration normalization leaves historical postings untouched');
-select public.recurring_fire_due();
-select is((select amount_centavos from public.transaction
-  where to_account_id = '00000000-0000-4000-8000-000000000402' and date = '2020-10-01'),
-  59178::bigint, 'Next hourly run posts missed interest using the new calculation');
-select is((select count(*) from public.transaction
-  where to_account_id = '00000000-0000-4000-8000-000000000409' and date = '2020-10-01'),
-  1::bigint, 'First cron does not duplicate adopted interest after tag rename and schedule deletion');
-select is((select g.name from public.td_monthly_interest_state st join public.tag g on g.id = st.tag_id
-  where st.account_id = '00000000-0000-4000-8000-000000000403'), 'current-interest',
-  'Migration retains the currently linked tag while adopting postings with the old tag');
-select isnt((select interest_recurring_id from public.account
-  where id = '00000000-0000-4000-8000-000000000405'), '00000000-0000-4000-8000-000000000406'::uuid,
-  'Migration does not adopt an unrelated recurring with the exact generated label');
-select is((select count(*) from public.recurring where to_account_id = '00000000-0000-4000-8000-000000000405'),
-  2::bigint, 'Migration leaves the exact-label user schedule separate from the replacement');
-select is((select amount_centavos from public.recurring where id = '00000000-0000-4000-8000-000000000406'),
-  12345::bigint, 'Migration preserves unrelated exact-label income amount');
-select is((select count(*) from public.transaction where to_account_id = '00000000-0000-4000-8000-000000000403'),
-  1::bigint, 'Migration preserves the existing differently tagged linked interest posting');
-delete from public.recurring where id = (select interest_recurring_id from public.account
-  where id = '00000000-0000-4000-8000-000000000407');
-select public.recurring_fire_due();
-select is((select count(*) from public.recurring where to_account_id = '00000000-0000-4000-8000-000000000407'),
-  0::bigint, 'Migration preserves existing completion after the completed row is deleted');
-select is((select count(*) from public.transaction where to_account_id = '00000000-0000-4000-8000-000000000407'),
-  0::bigint, 'Migrated completed schedule deletion does not credit missed periods');
+  where id = (select interest_recurring_id from public.account
+    where id = '00000000-0000-4000-8000-000000000404')),
+  (date_trunc('month', now() at time zone 'Asia/Manila') + interval '1 month')::date,
+  'Migrated monthly schedule next posts on the first of the following month');
+set local role authenticated;
+set local request.jwt.claim.sub = '00000000-0000-4000-8000-000000000401';
+select throws_ok($$select public.td_confirm_interest_reconciliation(
+  '00000000-0000-4000-8000-000000000999')$$, 'P0001', 'Monthly time deposit not found',
+  'A user cannot acknowledge another account');
+select lives_ok($$select public.td_confirm_interest_reconciliation(
+  '00000000-0000-4000-8000-000000000402')$$,
+  'User can acknowledge reviewed historical interest');
+reset role;
+select ok((select not needs_reconciliation from public.td_monthly_interest_state
+  where account_id = '00000000-0000-4000-8000-000000000402'),
+  'Acknowledgment clears only the review flag');
+select is((select accrued_through from public.td_monthly_interest_state
+  where account_id = '00000000-0000-4000-8000-000000000402'),
+  date_trunc('month', now() at time zone 'Asia/Manila')::date,
+  'Acknowledgment cannot change paid-period progress');
 select * from finish();
 rollback;

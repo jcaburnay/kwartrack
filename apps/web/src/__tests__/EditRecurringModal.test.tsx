@@ -1,4 +1,5 @@
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { expect, it, vi } from "vitest";
 import { EditRecurringModal } from "../components/recurring/EditRecurringModal";
 import type { Account } from "../utils/accountBalances";
@@ -45,6 +46,7 @@ const account: Account = {
 	updated_at: "",
 };
 function show(row = recurring) {
+	const updateRecurring = vi.fn(async () => ({ error: null }));
 	render(
 		<EditRecurringModal
 			recurring={row}
@@ -52,12 +54,23 @@ function show(row = recurring) {
 			groups={[]}
 			tags={[]}
 			createTag={vi.fn(async () => null)}
-			updateRecurring={vi.fn(async () => ({ error: null }))}
+			updateRecurring={updateRecurring}
 			onSaved={vi.fn()}
 			onCancel={vi.fn()}
 		/>,
 	);
+	return updateRecurring;
 }
+it("only submits editable metadata for linked monthly interest", async () => {
+	const updateRecurring = show();
+	expect(screen.getByRole("textbox", { name: "Service" })).toHaveAttribute("readonly");
+	await userEvent.setup().click(screen.getByRole("button", { name: "Save" }));
+	expect(updateRecurring).toHaveBeenCalledWith("interest", {
+		tag_id: "tag",
+		description: null,
+		remaining_occurrences: null,
+	});
+});
 it("shows linked monthly interest as a read-only estimate with an explanation", () => {
 	show();
 	expect(screen.getByRole("spinbutton", { name: /amount/i })).toHaveAttribute("readonly");
