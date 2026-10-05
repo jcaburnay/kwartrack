@@ -1,4 +1,5 @@
 import { render, screen, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { RecurringTable } from "../components/recurring/RecurringTable";
 import type { Tag } from "../hooks/useTags";
@@ -61,11 +62,12 @@ const tags: Tag[] = [
 
 const noop = vi.fn(async () => ({ error: null }));
 
-function renderTable(recurrings: Recurring[]) {
+function renderTable(recurrings: Recurring[], rowAccounts = accounts, accountsReady = true) {
 	return render(
 		<RecurringTable
 			recurrings={recurrings}
-			accounts={accounts}
+			accounts={rowAccounts}
+			accountsReady={accountsReady}
 			tags={tags}
 			onEdit={vi.fn()}
 			onTogglePaused={noop}
@@ -75,6 +77,43 @@ function renderTable(recurrings: Recurring[]) {
 }
 
 describe("RecurringTable (6-column layout)", () => {
+	it("offers Pause but not Delete for a linked generated interest schedule", async () => {
+		const deposit = {
+			...mkAccount("td", "Deposit"),
+			type: "time-deposit" as const,
+			interest_posting_interval: "monthly" as const,
+			interest_recurring_id: "interest",
+		};
+		renderTable([rec({ id: "interest", type: "income", to_account_id: "td" })], [deposit]);
+		await userEvent.setup().click(screen.getByRole("button", { name: "Row actions" }));
+		expect(screen.getByRole("button", { name: "Pause" })).toBeInTheDocument();
+		expect(screen.queryByRole("button", { name: "Delete" })).not.toBeInTheDocument();
+	});
+
+	it("protects linked generated schedules for other deposit cadences", async () => {
+		const deposit = {
+			...mkAccount("td", "Deposit"),
+			type: "time-deposit" as const,
+			interest_posting_interval: "quarterly" as const,
+			interest_recurring_id: "interest",
+		};
+		renderTable([rec({ id: "interest", type: "income", to_account_id: "td" })], [deposit]);
+		await userEvent.setup().click(screen.getByRole("button", { name: "Row actions" }));
+		expect(screen.getByRole("button", { name: "Pause" })).toBeInTheDocument();
+		expect(screen.queryByRole("button", { name: "Delete" })).not.toBeInTheDocument();
+	});
+
+	it("retains Delete for an independent recurring after accounts load", async () => {
+		renderTable([rec({ id: "ordinary" })]);
+		await userEvent.setup().click(screen.getByRole("button", { name: "Row actions" }));
+		expect(screen.getByRole("button", { name: "Delete" })).toBeInTheDocument();
+	});
+
+	it("does not offer Delete before account ownership is known", async () => {
+		renderTable([rec({ id: "ordinary" })], [], false);
+		await userEvent.setup().click(screen.getByRole("button", { name: "Row actions" }));
+		expect(screen.queryByRole("button", { name: "Delete" })).not.toBeInTheDocument();
+	});
 	it("shows the empty state when no recurrings", () => {
 		renderTable([]);
 		expect(screen.getByText(/No recurrings yet/i)).toBeInTheDocument();

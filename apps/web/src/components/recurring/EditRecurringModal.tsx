@@ -14,7 +14,7 @@ type Props = {
 	createTag: (name: string, type: Exclude<TagScope, "any">) => Promise<Tag | null>;
 	updateRecurring: (
 		id: string,
-		partial: {
+		partial: Partial<{
 			service: string;
 			amount_centavos: number;
 			type: "expense" | "income" | "transfer";
@@ -26,7 +26,7 @@ type Props = {
 			interval: Recurring["interval"];
 			first_occurrence_date: string;
 			remaining_occurrences: number | null;
-		},
+		}>,
 	) => Promise<{ error: string | null }>;
 	onSaved: () => Promise<void> | void;
 	onCancel: () => void;
@@ -46,23 +46,33 @@ export function EditRecurringModal({
 	const [isSubmitting, setIsSubmitting] = useState(false);
 
 	const defaults = formDefaultsFromRecurring(recurring);
+	const calculatedAmount = accounts.some(
+		(account) => account.type === "time-deposit" && account.interest_recurring_id === recurring.id,
+	);
 
 	async function handleSubmit(input: RecurringInput) {
 		setSubmitError(null);
 		setIsSubmitting(true);
-		const { error } = await updateRecurring(recurring.id, {
-			service: input.service.trim(),
-			amount_centavos: input.amountCentavos,
-			type: input.type,
-			tag_id: input.tagId,
-			from_account_id: input.fromAccountId,
-			to_account_id: input.toAccountId,
-			fee_centavos: input.feeCentavos,
-			description: input.description || null,
-			interval: input.interval,
-			first_occurrence_date: input.firstOccurrenceDate,
-			remaining_occurrences: input.remainingOccurrences,
-		});
+		const partial = calculatedAmount
+			? {
+					tag_id: input.tagId,
+					description: input.description || null,
+					remaining_occurrences: input.remainingOccurrences,
+				}
+			: {
+					service: input.service.trim(),
+					amount_centavos: input.amountCentavos,
+					type: input.type,
+					tag_id: input.tagId,
+					from_account_id: input.fromAccountId,
+					to_account_id: input.toAccountId,
+					fee_centavos: input.feeCentavos,
+					description: input.description || null,
+					interval: input.interval,
+					first_occurrence_date: input.firstOccurrenceDate,
+					remaining_occurrences: input.remainingOccurrences,
+				};
+		const { error } = await updateRecurring(recurring.id, partial);
 		setIsSubmitting(false);
 		if (error) {
 			setSubmitError(error);
@@ -76,6 +86,7 @@ export function EditRecurringModal({
 			<Modal.Header title="Edit recurring" />
 			<RecurringForm
 				mode="edit"
+				calculatedAmount={calculatedAmount}
 				accounts={accounts}
 				groups={groups}
 				tags={tags}

@@ -3,7 +3,7 @@ import { bumpVersion } from "./useTransactionVersion";
 
 /**
  * Opens a single Supabase realtime channel for the signed-in user that listens
- * for `postgres_changes` on the `transaction` and `account` tables and bumps
+ * for `postgres_changes` on the `transaction`, `account`, and `recurring` tables and bumps
  * the matching table version. This catches mutations that don't originate from
  * the current tab — server-side cron-fired recurrings, edits in another tab,
  * edits on another device.
@@ -25,6 +25,9 @@ export function subscribeTransactionRealtime(userId: string): () => void {
 		})
 		.on("postgres_changes", { event: "*", schema: "public", table: "account", filter }, () => {
 			bumpVersion("account");
+		})
+		.on("postgres_changes", { event: "*", schema: "public", table: "recurring", filter }, () => {
+			bumpVersion("recurring");
 		})
 		.subscribe();
 

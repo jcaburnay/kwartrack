@@ -61,13 +61,13 @@ export function AccountRowActions({ account, onEdit, onChanged }: Props) {
 			window.alert(`Archive failed: ${accRes.error.message}`);
 			return;
 		}
-		// For TDs with a linked interest-posting recurring, mirror the archive
-		// state on the recurring's pause state — archived TDs shouldn't keep
-		// firing interest into themselves (spec §188). Two updates rather than
-		// an atomic RPC: if the recurring pause fails, the account is already
-		// archived but the recurring keeps firing. Surface the partial-failure
-		// to the user so they can manually pause/unarchive to recover.
-		if (account.interest_recurring_id) {
+		// Monthly deposits synchronize archive-owned pauses in the database,
+		// including when the generated recurring has been deleted. Other time
+		// deposits continue to mirror archive state on their linked recurring.
+		if (
+			account.interest_recurring_id &&
+			!(account.type === "time-deposit" && account.interest_posting_interval === "monthly")
+		) {
 			const recRes = await supabase
 				.from("recurring")
 				.update({ is_paused: nextArchived })

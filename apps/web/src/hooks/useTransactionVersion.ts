@@ -18,17 +18,19 @@ import { useEffect, useState } from "react";
  *     legacy "any tx-shaped change" tick.
  */
 
-type TableName = "transaction" | "account" | "debt" | "split_event";
+type TableName = "transaction" | "account" | "recurring" | "debt" | "split_event";
 
 const versions: Record<TableName, number> = {
 	transaction: 0,
 	account: 0,
+	recurring: 0,
 	debt: 0,
 	split_event: 0,
 };
 const listeners: Record<TableName, Set<() => void>> = {
 	transaction: new Set(),
 	account: new Set(),
+	recurring: new Set(),
 	debt: new Set(),
 	split_event: new Set(),
 };

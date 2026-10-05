@@ -268,7 +268,13 @@ Ported from the legacy implementation's `time_deposit_metadata` model largely un
 
 **Balance behavior.** `balance` starts at `principalCentavos` and grows via periodic interest postings. Counted as an asset (same as e-wallet/savings). The delta `balance − principalCentavos` equals accrued interest to date.
 
-**Interest accrual.** Ports the legacy mechanism: a linked scheduled recurring generates `income` transactions tagged `interest-earned` with `to = this time deposit` at the `interestPostingInterval`. No on-the-fly balance extrapolation — every centavo of interest is an actual ledger entry, which keeps transaction history honest. For `at-maturity`, the scheduled job posts a single interest transaction on the day `maturityDate` passes.
+**Interest accrual.** A linked scheduled recurring generates `income` transactions tagged `interest-earned` with `to = this time deposit` at the `interestPostingInterval`.
+
+Monthly deposits post on the first calendar day of the following month in the user's timezone, using eligible days / 365 and historical end-of-day ledger balances. Credited net interest compounds in subsequent periods; gross interest and 20% withholding tax are rounded separately using the single annual rate. The first period begins at funding (or account creation for an externally funded opening balance), excludes the maturity date, and may end in a final partial posting at maturity. The hourly job catches up due periods chronologically after other overdue recurring ledger entries; the daily maturity job shares its transaction lock. The generated recurring row displays the next estimated amount and holds the user's tag, description, pause, and occurrence limit. Its calculated amount, date, type, destination, and service cannot be edited; users pause rather than delete it. A protected per-account paid-through cursor is the sole authority for posting progress. Deleting or redating a credited transaction changes the ledger balance but never causes the scheduler to recreate that historical credit. The scheduler advances the cursor and writes each interest transaction atomically. Archived accounts do not post; unarchiving or resuming a paused schedule skips completed inactive months without changing the user's pause choice. An explicit return to monthly from another cadence starts prospectively with a fresh occurrence limit. A renamed or edited income tag remains attached through its stable ID. The next scheduled amount is only an estimate, with a minimum one-cent display amount for very small deposits.
+
+Existing monthly deposits have editable historical schedules and transactions, so migration cannot prove every older period was paid. Migration preserves all ledger entries and begins automatic monthly posting prospectively rather than risking a duplicate credit. Every pre-cutover monthly account is marked for reconciliation; the account detail asks the user to compare bank statements, record any missing interest as ordinary income, and mark the review complete. Acknowledgment only clears the review flag; it cannot change the protected paid-through cursor. New monthly deposits do not need historical reconciliation.
+
+Other periodic intervals retain fixed principal-based postings. Their generated schedules use the same protected control boundary: users can edit metadata and pause them, while calculated fields and deletion remain account-owned. No on-the-fly balance extrapolation — every centavo of interest is an actual ledger entry, which keeps transaction history honest. For `at-maturity`, the scheduled job posts a single interest transaction on the day `maturityDate` passes.
 
 **Maturity handling.** A scheduled `pg_cron` job runs daily, finds time deposits whose `maturityDate` has passed, flips `isMatured`, and stops future interest postings. The matured balance stays in the account until the user transfers it out via a normal transfer.
 
@@ -285,7 +291,7 @@ Ported from the legacy implementation's `time_deposit_metadata` model largely un
 
 **Deliberately skipped for 1.0.0:**
 
-- Compounding frequency control (monthly vs daily compounding). The legacy model uses simple periodic posting; the current app ports the same behavior. This can be refined later if real-world use reveals the need.
+- Compounding frequency control (monthly vs daily compounding). Monthly deposits compound on credited net interest; there is no separate frequency control.
 - Early-withdrawal penalty math. If it matters, the user records the penalty as a normal `expense` when it posts.
 
 #### New Account (two-step flow, launched from FAB)
@@ -494,7 +500,7 @@ How `nextOccurrenceAt` advances after each firing:
 
 #### Edit
 
-All fields editable after creation. Scope of changes:
+All fields editable after creation, except the amount, interval, schedule, type, and accounts on a linked monthly time-deposit interest schedule. The amount is a read-only estimate calculated from the account balance, rate, and eligible days; the interval and schedule are read-only because posting follows calendar months and account maturity. Type and account controls are disabled because interest always credits the linked deposit as income. Change the account’s annual rate, posting cadence, or maturity date to adjust these calculations. Editing waits for account data so protected fields cannot be exposed during loading or a failed request; failed account loads offer a retry. Scope of changes:
 
 - Editing `amount`, `from`, `to`, `type`, or `fee` affects **only future firings**. Past auto-generated transactions are historical records and are not modified.
 - Editing `interval` or `firstOccurrenceDate` recomputes `nextOccurrenceAt` based on the new anchor/interval, stepping forward from today. Past transactions remain.

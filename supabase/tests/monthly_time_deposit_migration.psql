@@ -1,0 +1,98 @@
+begin;
+create extension if not exists pgtap with schema extensions;
+set search_path = public, extensions;
+select plan(14);
+
+-- Simulate legacy accounts before replaying the candidate migration. The
+-- migration must never infer paid periods from mutable or deleted ledger rows.
+insert into auth.users(id, email, raw_user_meta_data)
+values ('00000000-0000-4000-8000-000000000401', 'monthly-migration@example.invalid',
+  '{"display_name":"Migration test","timezone":"Asia/Manila"}');
+insert into public.account(id, user_id, name, type, initial_balance_centavos,
+  principal_centavos, interest_rate_bps, maturity_date, interest_posting_interval, created_at)
+values
+  ('00000000-0000-4000-8000-000000000402', '00000000-0000-4000-8000-000000000401',
+   'Deleted prior posting', 'time-deposit', 15000000, 15000000, 600, '2099-11-01', 'monthly',
+   (date_trunc('month', now() at time zone 'Asia/Manila') - interval '1 month') at time zone 'Asia/Manila'),
+  ('00000000-0000-4000-8000-000000000403', '00000000-0000-4000-8000-000000000401',
+   'Surviving prior posting', 'time-deposit', 15000000, 15000000, 600, '2099-11-01', 'monthly',
+   (date_trunc('month', now() at time zone 'Asia/Manila') - interval '1 month') at time zone 'Asia/Manila'),
+  ('00000000-0000-4000-8000-000000000404', '00000000-0000-4000-8000-000000000401',
+   'Missing old schedule', 'time-deposit', 15000000, 15000000, 600, '2099-11-01', 'monthly',
+   (date_trunc('month', now() at time zone 'Asia/Manila') - interval '1 month') at time zone 'Asia/Manila'),
+  ('00000000-0000-4000-8000-000000000405', '00000000-0000-4000-8000-000000000401',
+   'Opened this month', 'time-deposit', 15000000, 15000000, 600, '2099-11-01', 'monthly',
+   now());
+insert into public.transaction(user_id, type, tag_id, to_account_id, amount_centavos, date, recurring_id)
+select a.user_id, 'income', r.tag_id, a.id, 59178,
+  date_trunc('month', now() at time zone 'Asia/Manila')::date, r.id
+from public.account a join public.recurring r on r.id = a.interest_recurring_id
+where a.id in ('00000000-0000-4000-8000-000000000402',
+  '00000000-0000-4000-8000-000000000403');
+delete from public.transaction where to_account_id = '00000000-0000-4000-8000-000000000402';
+update public.recurring set next_occurrence_at =
+  (date_trunc('month', now() at time zone 'Asia/Manila') + interval '1 month') at time zone 'Asia/Manila'
+where to_account_id in ('00000000-0000-4000-8000-000000000402',
+  '00000000-0000-4000-8000-000000000403');
+delete from public.recurring where to_account_id = '00000000-0000-4000-8000-000000000404';
+
+drop trigger td_monthly_refresh_schedule_trg on public.account;
+drop trigger zz_td_monthly_resume_schedule_trg on public.recurring;
+drop trigger a_td_monthly_protect_recurring_trg on public.recurring;
+drop trigger td_monthly_reset_completion_trg on public.recurring;
+drop trigger a_td_monthly_protect_backlink_trg on public.account;
+drop table public.td_monthly_interest_state;
+\ir ../migrations/20261004062610_monthly_time_deposit_compounding.sql
+
+select is((select accrued_through from public.td_monthly_interest_state
+  where account_id = '00000000-0000-4000-8000-000000000402'),
+  date_trunc('month', now() at time zone 'Asia/Manila')::date,
+  'Deleted old posting does not put the cursor behind cutover');
+select ok((select needs_reconciliation from public.td_monthly_interest_state
+  where account_id = '00000000-0000-4000-8000-000000000402'),
+  'Deleted old posting is marked for reconciliation');
+select ok((select needs_reconciliation from public.td_monthly_interest_state
+  where account_id = '00000000-0000-4000-8000-000000000403'),
+  'Editable old history remains explicitly reviewable even with a surviving posting');
+select is((select amount_centavos from public.transaction
+  where to_account_id = '00000000-0000-4000-8000-000000000403'),
+  59178::bigint, 'Migration preserves historical credited amount');
+select ok((select interest_recurring_id is not null from public.account
+  where id = '00000000-0000-4000-8000-000000000404'),
+  'Migration creates a schedule for an old account with none');
+select ok((select needs_reconciliation from public.td_monthly_interest_state
+  where account_id = '00000000-0000-4000-8000-000000000404'),
+  'Missing old schedule is marked for reconciliation');
+select ok((select not needs_reconciliation from public.td_monthly_interest_state
+  where account_id = '00000000-0000-4000-8000-000000000405'),
+  'Current-month account needs no historical reconciliation');
+select public.recurring_fire_due();
+select is((select count(*) from public.transaction
+  where to_account_id = '00000000-0000-4000-8000-000000000402'), 0::bigint,
+  'First hourly run does not recreate a deliberately deleted old posting');
+select is((select count(*) from public.transaction
+  where to_account_id = '00000000-0000-4000-8000-000000000404'), 0::bigint,
+  'First hourly run does not invent ambiguous old credits');
+select is((select (next_occurrence_at at time zone 'Asia/Manila')::date from public.recurring
+  where id = (select interest_recurring_id from public.account
+    where id = '00000000-0000-4000-8000-000000000404')),
+  (date_trunc('month', now() at time zone 'Asia/Manila') + interval '1 month')::date,
+  'Migrated monthly schedule next posts on the first of the following month');
+set local role authenticated;
+set local request.jwt.claim.sub = '00000000-0000-4000-8000-000000000401';
+select throws_ok($$select public.td_confirm_interest_reconciliation(
+  '00000000-0000-4000-8000-000000000999')$$, 'P0001', 'Monthly time deposit not found',
+  'A user cannot acknowledge another account');
+select lives_ok($$select public.td_confirm_interest_reconciliation(
+  '00000000-0000-4000-8000-000000000402')$$,
+  'User can acknowledge reviewed historical interest');
+reset role;
+select ok((select not needs_reconciliation from public.td_monthly_interest_state
+  where account_id = '00000000-0000-4000-8000-000000000402'),
+  'Acknowledgment clears only the review flag');
+select is((select accrued_through from public.td_monthly_interest_state
+  where account_id = '00000000-0000-4000-8000-000000000402'),
+  date_trunc('month', now() at time zone 'Asia/Manila')::date,
+  'Acknowledgment cannot change paid-period progress');
+select * from finish();
+rollback;

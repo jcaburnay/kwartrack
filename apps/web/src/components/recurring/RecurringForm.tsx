@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { type SubmitHandler, useForm, useWatch } from "react-hook-form";
 import type { Tag, TagScope } from "../../hooks/useTags";
 import type { Account, AccountGroup } from "../../utils/accountBalances";
@@ -29,6 +29,7 @@ export type RecurringFormValues = {
 
 type Props = {
 	mode: "create" | "edit";
+	calculatedAmount?: boolean;
 	accounts: readonly Account[];
 	groups: readonly AccountGroup[];
 	tags: readonly Tag[];
@@ -50,6 +51,7 @@ const INTERVALS: { value: RecurringInterval; label: string }[] = [
 
 export function RecurringForm({
 	mode,
+	calculatedAmount = false,
 	accounts,
 	groups,
 	tags,
@@ -60,6 +62,7 @@ export function RecurringForm({
 	onSubmit,
 	onCancel,
 }: Props) {
+	const intervalId = useId();
 	const {
 		register,
 		control,
@@ -151,6 +154,7 @@ export function RecurringForm({
 					<span>Service</span>
 					<input
 						type="text"
+						readOnly={calculatedAmount}
 						placeholder="e.g. Netflix"
 						className="input input-bordered w-full"
 						autoFocus={mode === "create"}
@@ -178,6 +182,7 @@ export function RecurringForm({
 							key={opt.value}
 							type="button"
 							aria-pressed={active}
+							disabled={calculatedAmount}
 							className={`btn join-item flex-1 border border-base-content/40 ${active ? opt.activeClass : "btn-ghost"}`}
 							onClick={() => setValue("type", opt.value, { shouldDirty: true })}
 						>
@@ -190,9 +195,11 @@ export function RecurringForm({
 			<div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
 				<div>
 					<label className="floating-label">
-						<span>Amount (₱)</span>
+						<span>{calculatedAmount ? "Estimated amount (₱)" : "Amount (₱)"}</span>
 						<input
 							type="number"
+							readOnly={calculatedAmount}
+							aria-describedby={calculatedAmount ? "monthly-interest-amount-help" : undefined}
 							step="0.01"
 							min="0"
 							placeholder="0.00"
@@ -204,6 +211,12 @@ export function RecurringForm({
 							})}
 						/>
 					</label>
+					{calculatedAmount && (
+						<p id="monthly-interest-amount-help" className="mt-1 text-xs text-base-content/60">
+							Calculated from the time deposit’s balance, annual rate, and days in the period. Edit
+							the account’s interest rate to change this estimate.
+						</p>
+					)}
 					{errors.amountPesos && (
 						<p className="mt-1 text-xs text-error">{errors.amountPesos.message}</p>
 					)}
@@ -225,6 +238,7 @@ export function RecurringForm({
 			{showFrom && showTo ? (
 				<div className="flex items-center gap-2">
 					<AccountSelect
+						disabled={calculatedAmount}
 						label="From account"
 						placeholder="Select source…"
 						value={fromAccountId}
@@ -237,6 +251,7 @@ export function RecurringForm({
 						→
 					</span>
 					<AccountSelect
+						disabled={calculatedAmount}
 						label="To account"
 						placeholder="Select destination…"
 						value={toAccountId}
@@ -250,6 +265,7 @@ export function RecurringForm({
 				<>
 					{showFrom && (
 						<AccountSelect
+							disabled={calculatedAmount}
 							label="From account"
 							placeholder="Select source…"
 							value={fromAccountId}
@@ -261,6 +277,7 @@ export function RecurringForm({
 
 					{showTo && (
 						<AccountSelect
+							disabled={calculatedAmount}
 							label="To account"
 							placeholder="Select destination…"
 							value={toAccountId}
@@ -270,6 +287,12 @@ export function RecurringForm({
 						/>
 					)}
 				</>
+			)}
+
+			{calculatedAmount && (
+				<p className="text-xs text-base-content/60">
+					Interest always credits this time deposit as income.
+				</p>
 			)}
 
 			{showFee && (
@@ -299,18 +322,32 @@ export function RecurringForm({
 			</label>
 
 			<div className="grid grid-cols-2 gap-3">
-				<label className="floating-label">
+				<label className="floating-label" htmlFor={intervalId}>
 					<span>Interval</span>
-					<select
-						className="select select-bordered w-full"
-						{...register("interval", { required: true })}
-					>
-						{INTERVALS.map((iv) => (
-							<option key={iv.value} value={iv.value}>
-								{iv.label}
-							</option>
-						))}
-					</select>
+					{calculatedAmount ? (
+						<>
+							<input
+								id={intervalId}
+								type="text"
+								value="Monthly"
+								readOnly
+								className="input input-bordered w-full"
+							/>
+							<input type="hidden" {...register("interval")} />
+						</>
+					) : (
+						<select
+							id={intervalId}
+							className="select select-bordered w-full"
+							{...register("interval", { required: true })}
+						>
+							{INTERVALS.map((iv) => (
+								<option key={iv.value} value={iv.value}>
+									{iv.label}
+								</option>
+							))}
+						</select>
+					)}
 				</label>
 
 				<div>
@@ -318,6 +355,7 @@ export function RecurringForm({
 						<span>Schedule</span>
 						<input
 							type="date"
+							readOnly={calculatedAmount}
 							className="input input-bordered w-full"
 							{...register("firstOccurrenceDate", { required: "Schedule is required" })}
 						/>
@@ -327,6 +365,13 @@ export function RecurringForm({
 					)}
 				</div>
 			</div>
+
+			{calculatedAmount && (
+				<p className="text-xs text-base-content/60">
+					Interest posts on the first day of the following month, with a final posting at maturity.
+					Change the account’s posting cadence or maturity date to adjust the schedule.
+				</p>
+			)}
 
 			<div>
 				<label className="floating-label">

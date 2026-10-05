@@ -11,6 +11,7 @@ import { RecurringRowActions } from "./RecurringRowActions";
 type Props = {
 	recurrings: readonly Recurring[];
 	accounts: readonly Account[];
+	accountsReady: boolean;
 	tags: readonly Tag[];
 	onEdit: (r: Recurring) => void;
 	onTogglePaused: (id: string, currentlyPaused: boolean) => Promise<{ error: string | null }>;
@@ -82,12 +83,16 @@ function scheduleSubLine(r: Recurring): string {
 export function RecurringTable({
 	recurrings,
 	accounts,
+	accountsReady,
 	tags,
 	onEdit,
 	onTogglePaused,
 	onDelete,
 }: Props) {
 	const accountById = new Map(accounts.map((a) => [a.id, a]));
+	const protectedIds = new Set(
+		accounts.filter((a) => a.type === "time-deposit").map((a) => a.interest_recurring_id),
+	);
 	const tagById = new Map(tags.map((t) => [t.id, t]));
 	const { ref, isNarrow } = useContainerNarrow<HTMLDivElement>(CARD_MAX_WIDTH);
 
@@ -111,6 +116,7 @@ export function RecurringTable({
 							recurring={r}
 							tagName={r.tag_id ? (tagById.get(r.tag_id)?.name ?? null) : null}
 							accountLabel={renderAccount(r, accountById)}
+							canDelete={accountsReady && !protectedIds.has(r.id)}
 							onEdit={onEdit}
 							onTogglePaused={onTogglePaused}
 							onDelete={onDelete}
@@ -165,6 +171,7 @@ export function RecurringTable({
 										<td className="text-right">
 											<RecurringRowActions
 												recurring={r}
+												canDelete={accountsReady && !protectedIds.has(r.id)}
 												onEdit={onEdit}
 												onTogglePaused={onTogglePaused}
 												onDelete={onDelete}
@@ -185,6 +192,7 @@ type CardProps = {
 	recurring: Recurring;
 	tagName: string | null;
 	accountLabel: ReactNode;
+	canDelete: boolean;
 	onEdit: (r: Recurring) => void;
 	onTogglePaused: (id: string, currentlyPaused: boolean) => Promise<{ error: string | null }>;
 	onDelete: (id: string) => Promise<{ error: string | null }>;
@@ -194,6 +202,7 @@ function RecurringCard({
 	recurring: r,
 	tagName,
 	accountLabel,
+	canDelete,
 	onEdit,
 	onTogglePaused,
 	onDelete,
@@ -239,6 +248,7 @@ function RecurringCard({
 				<div className="shrink-0 -mr-1">
 					<RecurringRowActions
 						recurring={r}
+						canDelete={canDelete}
 						onEdit={onEdit}
 						onTogglePaused={onTogglePaused}
 						onDelete={onDelete}

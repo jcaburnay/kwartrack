@@ -1,0 +1,106 @@
+import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { expect, it, vi } from "vitest";
+import { EditRecurringModal } from "../components/recurring/EditRecurringModal";
+import type { Account } from "../utils/accountBalances";
+import type { Recurring } from "../utils/recurringFilters";
+
+const recurring: Recurring = {
+	id: "interest",
+	user_id: "user",
+	service: "Renamed interest",
+	type: "income",
+	amount_centavos: 59178,
+	tag_id: "tag",
+	to_account_id: "td",
+	from_account_id: null,
+	fee_centavos: null,
+	description: null,
+	interval: "monthly",
+	first_occurrence_date: "2026-10-01",
+	next_occurrence_at: "2026-10-01T00:00:00Z",
+	remaining_occurrences: null,
+	is_completed: false,
+	is_paused: false,
+	completed_at: null,
+	created_at: "",
+	updated_at: "",
+};
+const account: Account = {
+	id: "td",
+	user_id: "user",
+	name: "Deposit",
+	type: "time-deposit",
+	group_id: null,
+	credit_limit_centavos: null,
+	principal_centavos: 15000000,
+	interest_rate_bps: 600,
+	maturity_date: "2027-03-01",
+	interest_posting_interval: "monthly",
+	interest_recurring_id: "interest",
+	is_matured: false,
+	initial_balance_centavos: 15000000,
+	balance_centavos: 15000000,
+	is_archived: false,
+	created_at: "",
+	updated_at: "",
+};
+function show(row = recurring) {
+	const updateRecurring = vi.fn(async () => ({ error: null }));
+	render(
+		<EditRecurringModal
+			recurring={row}
+			accounts={[account]}
+			groups={[]}
+			tags={[]}
+			createTag={vi.fn(async () => null)}
+			updateRecurring={updateRecurring}
+			onSaved={vi.fn()}
+			onCancel={vi.fn()}
+		/>,
+	);
+	return updateRecurring;
+}
+it("only submits editable metadata for linked monthly interest", async () => {
+	const updateRecurring = show();
+	expect(screen.getByRole("textbox", { name: "Service" })).toHaveAttribute("readonly");
+	await userEvent.setup().click(screen.getByRole("button", { name: "Save" }));
+	expect(updateRecurring).toHaveBeenCalledWith("interest", {
+		tag_id: "tag",
+		description: null,
+		remaining_occurrences: null,
+	});
+});
+it("shows linked monthly interest as a read-only estimate with an explanation", () => {
+	show();
+	expect(screen.getByRole("spinbutton", { name: /amount/i })).toHaveAttribute("readonly");
+	expect(screen.getByText(/calculated from the time deposit/i)).toBeInTheDocument();
+});
+it("keeps independent income to the same deposit editable", () => {
+	show({ ...recurring, id: "other" });
+	expect(screen.getByRole("spinbutton", { name: /amount/i })).not.toHaveAttribute("readonly");
+});
+it("makes the calculated monthly interval and schedule read-only", () => {
+	show();
+	expect(screen.getByRole("textbox", { name: "Interval" })).toHaveAttribute("readonly");
+	expect(screen.getByLabelText("Schedule")).toHaveAttribute("readonly");
+	expect(screen.getByText(/first day of the following month/i)).toBeInTheDocument();
+});
+it("keeps independent recurring interval and schedule editable", () => {
+	show({ ...recurring, id: "other" });
+	expect(screen.getByRole("combobox", { name: "Interval" })).not.toBeDisabled();
+	expect(screen.getByLabelText("Schedule")).not.toHaveAttribute("readonly");
+});
+it("locks transaction type and destination for monthly interest", () => {
+	show();
+	for (const name of ["Expense", "Income", "Transfer"]) {
+		expect(screen.getByRole("button", { name })).toBeDisabled();
+	}
+	expect(screen.getByRole("combobox", { name: "To account" })).toBeDisabled();
+	expect(screen.getByText(/always credits this time deposit/i)).toBeInTheDocument();
+});
+it("keeps transaction type and destination editable for independent income", () => {
+	show({ ...recurring, id: "other" });
+	expect(screen.getByRole("button", { name: "Expense" })).not.toBeDisabled();
+	expect(screen.getByRole("combobox", { name: "To account" })).not.toBeDisabled();
+});

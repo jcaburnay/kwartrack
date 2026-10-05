@@ -540,6 +540,35 @@ export type Database = {
 				};
 				Relationships: [];
 			};
+			td_monthly_interest_state: {
+				Row: {
+					account_id: string;
+					accrued_through: string | null;
+					needs_reconciliation: boolean;
+					reconciliation_cutover: string | null;
+				};
+				Insert: {
+					account_id: string;
+					accrued_through?: string | null;
+					needs_reconciliation?: boolean;
+					reconciliation_cutover?: string | null;
+				};
+				Update: {
+					account_id?: string;
+					accrued_through?: string | null;
+					needs_reconciliation?: boolean;
+					reconciliation_cutover?: string | null;
+				};
+				Relationships: [
+					{
+						foreignKeyName: "td_monthly_interest_state_account_id_fkey";
+						columns: ["account_id"];
+						isOneToOne: true;
+						referencedRelation: "account";
+						referencedColumns: ["id"];
+					},
+				];
+			};
 			transaction: {
 				Row: {
 					amount_centavos: number;
@@ -820,7 +849,23 @@ export type Database = {
 				Returns: number;
 			};
 			td_check_maturity_due: { Args: never; Returns: number };
+			td_confirm_interest_reconciliation: {
+				Args: { p_account_id: string };
+				Returns: undefined;
+			};
 			td_create_interest_recurring: {
+				Args: { p_account: Database["public"]["Tables"]["account"]["Row"] };
+				Returns: string;
+			};
+			td_monthly_net_interest_centavos: {
+				Args: {
+					p_account: Database["public"]["Tables"]["account"]["Row"];
+					p_end: string;
+					p_start: string;
+				};
+				Returns: number;
+			};
+			td_monthly_period_start: {
 				Args: { p_account: Database["public"]["Tables"]["account"]["Row"] };
 				Returns: string;
 			};
@@ -832,6 +877,7 @@ export type Database = {
 				};
 				Returns: number;
 			};
+			td_post_monthly_interest_due: { Args: never; Returns: number };
 			td_postings_per_year: {
 				Args: { p_interval: Database["public"]["Enums"]["posting_interval"] };
 				Returns: number;
