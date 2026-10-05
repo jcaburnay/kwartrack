@@ -1,7 +1,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 set search_path = public, extensions;
-select plan(23);
+select plan(29);
 
 -- Replay the additive migration against existing synthetic TDs, rather than
 -- only testing newly created accounts after a clean db reset.
@@ -82,6 +82,30 @@ update public.recurring set type = 'transfer', from_account_id = '00000000-0000-
   remaining_occurrences = 4
 where id = (select interest_recurring_id from public.account
   where id = '00000000-0000-4000-8000-000000000408');
+-- Legacy archive actions had no recorded pause provenance. An already-paused
+-- archived row must still resume on unarchive, as the old UI did.
+insert into public.account(id, user_id, name, type, initial_balance_centavos,
+  principal_centavos, interest_rate_bps, maturity_date, interest_posting_interval, created_at)
+values
+  ('00000000-0000-4000-8000-000000000410', '00000000-0000-4000-8000-000000000401',
+   'Archived without prior pause', 'time-deposit', 15000000, 15000000, 600, '2099-11-01', 'monthly',
+   '2020-09-01T00:00:00+08:00'),
+  ('00000000-0000-4000-8000-000000000411', '00000000-0000-4000-8000-000000000401',
+   'Already paused at archive', 'time-deposit', 15000000, 15000000, 600, '2099-11-01', 'monthly',
+   '2020-09-01T00:00:00+08:00'),
+  ('00000000-0000-4000-8000-000000000412', '00000000-0000-4000-8000-000000000401',
+   'Archived without schedule', 'time-deposit', 15000000, 15000000, 600, '2099-11-01', 'monthly',
+   '2020-09-01T00:00:00+08:00');
+update public.recurring set is_paused = true where id = (select interest_recurring_id
+  from public.account where id = '00000000-0000-4000-8000-000000000411');
+update public.account set is_archived = true where id in
+  ('00000000-0000-4000-8000-000000000410', '00000000-0000-4000-8000-000000000411',
+   '00000000-0000-4000-8000-000000000412');
+-- Simulate an older two-step archive whose recurring pause request failed.
+update public.recurring set is_paused = false where id = (select interest_recurring_id
+  from public.account where id = '00000000-0000-4000-8000-000000000410');
+delete from public.recurring where id = (select interest_recurring_id
+  from public.account where id = '00000000-0000-4000-8000-000000000412');
 -- Simulate the schema before this migration; rollback restores all objects.
 drop trigger td_monthly_refresh_schedule_trg on public.account;
 drop trigger zz_td_monthly_resume_schedule_trg on public.recurring;
@@ -108,6 +132,32 @@ select is((select count(*) from public.transaction
   'Migration does not duplicate deleted-schedule interest or consume later unrelated income');
 select ok((select is_paused from public.recurring
   where to_account_id = '00000000-0000-4000-8000-000000000403'), 'Migration preserves an intentional pause');
+select ok((select st.archive_owned_pause and r.is_paused from public.td_monthly_interest_state st
+  join public.recurring r on r.id = st.recurring_id
+  where st.account_id = '00000000-0000-4000-8000-000000000410'),
+  'Migration records a pause it adds to an already archived deposit');
+select ok((select st.archive_owned_pause and r.is_paused from public.td_monthly_interest_state st
+  join public.recurring r on r.id = st.recurring_id
+  where st.account_id = '00000000-0000-4000-8000-000000000411'),
+  'Migration classifies an already paused archived schedule for legacy unarchive behavior');
+select ok((select st.archive_owned_pause and r.is_paused from public.td_monthly_interest_state st
+  join public.recurring r on r.id = st.recurring_id
+  where st.account_id = '00000000-0000-4000-8000-000000000412'),
+  'Migration owns the pause on a replacement created for an archived deposit');
+update public.account set is_archived = false where id in
+  ('00000000-0000-4000-8000-000000000410', '00000000-0000-4000-8000-000000000411',
+   '00000000-0000-4000-8000-000000000412');
+select ok((select not r.is_paused and not st.archive_owned_pause from public.recurring r
+  join public.account a on a.interest_recurring_id = r.id
+  join public.td_monthly_interest_state st on st.account_id = a.id
+  where a.id = '00000000-0000-4000-8000-000000000410'),
+  'Unarchive resumes the schedule paused by migration');
+select ok((select not r.is_paused from public.recurring r join public.account a
+  on a.interest_recurring_id = r.id where a.id = '00000000-0000-4000-8000-000000000411'),
+  'Unarchive resumes an already paused legacy archived schedule');
+select ok((select not r.is_paused from public.recurring r join public.account a
+  on a.interest_recurring_id = r.id where a.id = '00000000-0000-4000-8000-000000000412'),
+  'Unarchive resumes the migration-created replacement schedule');
 select is((select (next_occurrence_at at time zone 'Asia/Manila')::date from public.recurring
   where to_account_id = '00000000-0000-4000-8000-000000000402'), '2020-10-01'::date,
   'Repair keeps missed first posting due rather than skipping to the future');

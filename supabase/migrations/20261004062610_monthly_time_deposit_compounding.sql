@@ -411,13 +411,18 @@ $$;
 -- ledger catch-up happens on the next hourly cron, not during migration.
 do $$
 declare a public.account; v_rec public.recurring; v_id uuid; v_start date; v_end date;
-  v_tz text; v_tag uuid; v_anchor date;
+  v_tz text; v_tag uuid; v_anchor date; v_archive_owned_pause boolean;
 begin
   for a in select * from public.account
     where type = 'time-deposit' and interest_posting_interval = 'monthly'
       and not is_matured for update
   loop
     v_start := public.td_monthly_period_start(a);
+    -- Legacy archive actions had no pause provenance and always resumed on
+    -- unarchive. Preserve that behavior for archived, incomplete schedules,
+    -- including a missing row that this migration will replace.
+    v_archive_owned_pause := a.is_archived and not coalesce(
+      (select is_completed from public.recurring where id = a.interest_recurring_id), false);
     v_id := a.interest_recurring_id;
     if v_id is null then
       v_id := public.td_create_interest_recurring(a);
@@ -450,9 +455,9 @@ begin
     )) into v_start;
     select * into v_rec from public.recurring where id = v_id;
     insert into public.td_monthly_interest_state(account_id, accrued_through, tag_id, recurring_id,
-      is_completed, remaining_occurrences, is_paused)
+      is_completed, remaining_occurrences, is_paused, archive_owned_pause)
       values (a.id, v_start, v_tag, v_id, coalesce(v_rec.is_completed, false), v_rec.remaining_occurrences,
-        v_rec.is_paused or (a.is_archived and not v_rec.is_completed))
+        v_rec.is_paused or (a.is_archived and not v_rec.is_completed), v_archive_owned_pause)
       on conflict (account_id) do nothing;
     v_end := least((date_trunc('month', v_start) + interval '1 month')::date, a.maturity_date);
     -- Normalize generated mechanics previously editable in the UI, preserving
