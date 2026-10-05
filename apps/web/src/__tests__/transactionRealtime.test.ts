@@ -60,9 +60,11 @@ vi.mock("../lib/supabase", () => ({
 const { subscribeTransactionRealtime } = await import("../hooks/useTransactionRealtime");
 const { useTransactionVersion } = await import("../hooks/useTransactionVersion");
 const { useRecurrings } = await import("../hooks/useRecurrings");
+const { resetAllSharedStores } = await import("../hooks/sharedStore");
 
 describe("subscribeTransactionRealtime", () => {
 	beforeEach(() => {
+		resetAllSharedStores();
 		listeners.length = 0;
 		channelFactory.mockClear();
 		subscribe.mockClear();
@@ -100,6 +102,19 @@ describe("subscribeTransactionRealtime", () => {
 		await waitFor(() =>
 			expect(view.result.current.recurrings[0]?.next_occurrence_at).toBe("2026-11-01T00:00:00Z"),
 		);
+		expect(recurringFetch).toHaveBeenCalledTimes(2);
+		view.unmount();
+	});
+
+	it("removes a matured deposit's generated recurring after its account changes", async () => {
+		const view = renderHook(() => useRecurrings());
+		await waitFor(() => expect(view.result.current.recurrings).toHaveLength(1));
+		subscribeTransactionRealtime("u1");
+		recurringRows = [];
+		act(() => {
+			listeners.find((l) => l.config.table === "account")?.handler({ eventType: "UPDATE" });
+		});
+		await waitFor(() => expect(view.result.current.recurrings).toHaveLength(0));
 		expect(recurringFetch).toHaveBeenCalledTimes(2);
 		view.unmount();
 	});

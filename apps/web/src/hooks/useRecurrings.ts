@@ -41,7 +41,7 @@ const store = createSharedStore<Recurring[]>(
 		return data ?? [];
 	},
 	[],
-	["recurring"],
+	["recurring", "account"],
 );
 
 registerSharedStore(store.reset);

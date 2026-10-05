@@ -1,7 +1,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 set search_path = public, extensions;
-select plan(71);
+select plan(73);
 
 insert into auth.users(id, email, raw_user_meta_data)
 values ('00000000-0000-4000-8000-000000000501', 'monthly-review@example.invalid',
@@ -501,6 +501,28 @@ select ok((select count(*) > 0 from public.transaction
   where to_account_id = '00000000-0000-4000-8000-000000000526'
     and type = 'income' and from_account_id is null and fee_centavos is null),
   'Restored monthly schedule posts income into the deposit');
+-- A ledger balance update must not lock the linked recurring. The hourly
+-- processor refreshes its display estimate from the committed ledger instead.
+insert into public.account(id, user_id, name, type, initial_balance_centavos,
+  principal_centavos, interest_rate_bps, maturity_date, interest_posting_interval)
+values ('00000000-0000-4000-8000-000000000527', '00000000-0000-4000-8000-000000000501',
+  'Balance estimate refresh', 'time-deposit', 15000000, 15000000, 600, '2099-11-01', 'monthly');
+create temporary table before_balance_change as
+  select amount_centavos from public.recurring where id = (select interest_recurring_id
+    from public.account where id = '00000000-0000-4000-8000-000000000527');
+insert into public.transaction(user_id, type, tag_id, to_account_id, amount_centavos, date)
+select user_id, 'income', id, '00000000-0000-4000-8000-000000000527', 10000000,
+  (now() at time zone 'Asia/Manila')::date
+from public.tag where user_id = '00000000-0000-4000-8000-000000000501' and name = 'interest-earned';
+select is((select amount_centavos from public.recurring where id = (select interest_recurring_id
+    from public.account where id = '00000000-0000-4000-8000-000000000527')),
+  (select amount_centavos from before_balance_change),
+  'Ledger balance update does not synchronously lock and retime the recurring');
+select public.td_post_monthly_interest_due();
+select ok((select amount_centavos from public.recurring where id = (select interest_recurring_id
+    from public.account where id = '00000000-0000-4000-8000-000000000527')) >
+  (select amount_centavos from before_balance_change),
+  'Hourly monthly processor refreshes the next estimate from the ledger');
 -- Remove the remaining visible references, as a user can do before deleting a tag.
 delete from public.recurring where user_id = '00000000-0000-4000-8000-000000000501';
 delete from public.transaction where user_id = '00000000-0000-4000-8000-000000000501';

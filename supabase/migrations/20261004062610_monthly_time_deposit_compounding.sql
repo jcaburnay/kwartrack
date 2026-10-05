@@ -594,7 +594,10 @@ begin
 end;
 $$;
 create trigger td_monthly_refresh_schedule_trg
-  after update of interest_rate_bps, interest_posting_interval, maturity_date, interest_recurring_id, balance_centavos, is_matured, is_archived
+  -- Ledger balance changes must not wait on a recurring row while holding the
+  -- account lock: deleting that row takes the locks in the opposite order.
+  -- The hourly processor recalculates the next estimate from the ledger.
+  after update of interest_rate_bps, interest_posting_interval, maturity_date, interest_recurring_id, is_matured, is_archived
   on public.account for each row execute function public.td_monthly_refresh_schedule();
 
 -- Resume skips completed calendar periods during an intentional pause. The
