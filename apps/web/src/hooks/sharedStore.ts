@@ -1,7 +1,7 @@
 import { useEffect, useSyncExternalStore } from "react";
 import { useVersion } from "./useTransactionVersion";
 
-type TableName = "transaction" | "account" | "debt" | "split_event";
+type TableName = "transaction" | "account" | "recurring" | "debt" | "split_event";
 
 type State<T> = {
 	data: T;

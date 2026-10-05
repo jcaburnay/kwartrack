@@ -29,16 +29,20 @@ function inputToInsert(input: RecurringInput, userId: string): RecurringInsert {
 	};
 }
 
-const store = createSharedStore<Recurring[]>(async () => {
-	const { data, error } = await supabase
-		.from("recurring")
-		.select("*")
-		.order("is_completed", { ascending: true })
-		.order("is_paused", { ascending: true })
-		.order("next_occurrence_at", { ascending: true });
-	if (error) throw new Error(error.message);
-	return data ?? [];
-}, []);
+const store = createSharedStore<Recurring[]>(
+	async () => {
+		const { data, error } = await supabase
+			.from("recurring")
+			.select("*")
+			.order("is_completed", { ascending: true })
+			.order("is_paused", { ascending: true })
+			.order("next_occurrence_at", { ascending: true });
+		if (error) throw new Error(error.message);
+		return data ?? [];
+	},
+	[],
+	["recurring"],
+);
 
 registerSharedStore(store.reset);
 

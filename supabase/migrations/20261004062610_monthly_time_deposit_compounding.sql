@@ -91,6 +91,7 @@ declare
   v_tz text;
   v_tag uuid;
   v_amount bigint;
+  v_protected_recurring_id uuid;
   v_count int := 0;
 begin
   for a in select * from public.account
@@ -109,16 +110,27 @@ begin
     -- Editable service labels cannot establish ownership of a schedule.
     -- Only the protected identity may restore a surviving missing backlink.
     if a.interest_recurring_id is null then
-      select r.id into a.interest_recurring_id from public.td_monthly_interest_state st
-        join public.recurring r on r.id = st.recurring_id
-        where st.account_id = a.id and r.user_id = a.user_id;
+      select recurring_id into v_protected_recurring_id
+        from public.td_monthly_interest_state where account_id = a.id;
+      if v_protected_recurring_id is not null then
+        select r.id into a.interest_recurring_id from public.recurring r
+          where r.id = v_protected_recurring_id and r.user_id = a.user_id
+          for update skip locked;
+        -- A concurrent delete owns the old recurring and will clear its FKs.
+        -- Retry next run instead of creating a duplicate while it is in flight.
+        if a.interest_recurring_id is null and exists (
+          select 1 from public.recurring where id = v_protected_recurring_id) then
+          continue;
+        end if;
+      end if;
       if a.interest_recurring_id is null then
         a.interest_recurring_id := public.td_create_interest_recurring(a);
       end if;
       update public.account set interest_recurring_id = a.interest_recurring_id where id = a.id;
     end if;
     select * into v_rec from public.recurring
-      where id = a.interest_recurring_id for update;
+      where id = a.interest_recurring_id for update skip locked;
+    if not found then continue; end if;
     if v_rec.is_paused or v_rec.is_completed then continue; end if;
     v_remaining := v_rec.remaining_occurrences;
 
@@ -271,13 +283,10 @@ declare
   v_completed boolean;
   v_is_installment boolean;
 begin
-  -- Restore protected identities before generic processing. Ownership follows
-  -- the generated ID, even if older edits changed its type or destination.
-  update public.account a set interest_recurring_id = st.recurring_id
-    from public.td_monthly_interest_state st join public.recurring rec on rec.id = st.recurring_id
-    where st.account_id = a.id and rec.user_id = a.user_id
-      and a.type = 'time-deposit' and a.interest_posting_interval = 'monthly'
-      and not a.is_matured and a.interest_recurring_id is null;
+  -- The hourly job and the daily maturity job share this entrypoint. Hold one
+  -- transaction-scoped lock through maturity processing so overdue ledger
+  -- entries cannot be divided between overlapping runs.
+  perform pg_advisory_xact_lock(20261004, 1);
   for r in
     select * from public.recurring rec
      where is_paused = false
@@ -286,6 +295,10 @@ begin
        and not exists (select 1 from public.account a
          where a.type = 'time-deposit' and a.interest_posting_interval = 'monthly'
            and a.interest_recurring_id = rec.id)
+       and not exists (select 1 from public.td_monthly_interest_state st
+         join public.account a on a.id = st.account_id
+         where a.type = 'time-deposit' and a.interest_posting_interval = 'monthly'
+           and st.recurring_id = rec.id)
      for update skip locked
   loop
     select timezone into v_tz from public.user_profile where id = r.user_id;
@@ -633,7 +646,9 @@ begin
     new.completed_at := null;
   end if;
   update public.td_monthly_interest_state set is_completed = new.is_completed,
-    remaining_occurrences = new.remaining_occurrences, is_paused = new.is_paused where recurring_id = new.id;
+    remaining_occurrences = new.remaining_occurrences, is_paused = new.is_paused,
+    archive_owned_pause = case when old.is_paused and not new.is_paused then false
+      else archive_owned_pause end where recurring_id = new.id;
   return new;
 end;
 $$;

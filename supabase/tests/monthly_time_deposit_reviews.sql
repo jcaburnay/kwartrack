@@ -1,7 +1,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 set search_path = public, extensions;
-select plan(69);
+select plan(71);
 
 insert into auth.users(id, email, raw_user_meta_data)
 values ('00000000-0000-4000-8000-000000000501', 'monthly-review@example.invalid',
@@ -311,6 +311,23 @@ select public.recurring_fire_due();
 select ok((select r.is_paused from public.recurring r join public.account a
   on a.interest_recurring_id = r.id where a.id = '00000000-0000-4000-8000-000000000528'),
   'Unarchive preserves a manual pause after schedule repair');
+insert into public.account(id, user_id, name, type, initial_balance_centavos,
+  principal_centavos, interest_rate_bps, maturity_date, interest_posting_interval, created_at)
+values ('00000000-0000-4000-8000-000000000529', '00000000-0000-4000-8000-000000000501',
+  'Pause override while archived', 'time-deposit', 15000000, 15000000, 600, '2099-11-01', 'monthly',
+  (date_trunc('month', now() at time zone 'Asia/Manila') - interval '2 months') at time zone 'Asia/Manila');
+update public.account set is_archived = true where id = '00000000-0000-4000-8000-000000000529';
+update public.recurring set is_paused = false where id = (select interest_recurring_id
+  from public.account where id = '00000000-0000-4000-8000-000000000529');
+update public.recurring set is_paused = true where id = (select interest_recurring_id
+  from public.account where id = '00000000-0000-4000-8000-000000000529');
+select ok((select not archive_owned_pause and is_paused from public.td_monthly_interest_state
+  where account_id = '00000000-0000-4000-8000-000000000529'),
+  'Resuming an archive-owned pause releases ownership before a later manual pause');
+update public.account set is_archived = false where id = '00000000-0000-4000-8000-000000000529';
+select ok((select r.is_paused from public.recurring r join public.account a
+  on a.interest_recurring_id = r.id where a.id = '00000000-0000-4000-8000-000000000529'),
+  'Unarchive retains the manually reapplied pause');
 -- Match the UI payload: countdown edits do not explicitly send completion flags.
 insert into public.account(id, user_id, name, type, initial_balance_centavos,
   principal_centavos, interest_rate_bps, maturity_date, interest_posting_interval, created_at)
