@@ -1,0 +1,65 @@
+name: Local API validation
+
+on:
+  pull_request:
+    paths:
+      - "apps/api/**"
+      - "infra/**"
+      - "scripts/local/**"
+      - "scripts/check-release-version.mjs"
+      - "package.json"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
+      - ".dockerignore"
+      - ".github/workflows/api-validation.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: local-api-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      APP_ENV: local
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.34.5
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24.22.1"
+          cache: pnpm
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.13.4
+          terraform_wrapper: false
+      - run: pnpm install --frozen-lockfile
+      - name: Check formatting and release alignment
+        run: |
+          pnpm release:check
+          pnpm run ci
+      - name: Test compiled API
+        run: |
+          pnpm api:test
+          pnpm local:test
+      - name: Provision and verify local infrastructure
+        run: pnpm local:setup
+      - name: Check Terraform
+        run: |
+          pnpm local:infra:terraform fmt -check
+          pnpm local:infra:terraform validate
+          pnpm local:infra:terraform plan -detailed-exitcode -input=false
+      - name: Test real PostgreSQL integration
+        run: pnpm api:test:integration
+      - name: Verify two-target balancing and recovery
+        run: pnpm local:smoke:balancing
+      - name: Stop local resources
+        if: always()
+        run: pnpm local:stop

@@ -1,0 +1,13 @@
+.git
+**/node_modules
+**/dist
+**/.env
+**/.env.*
+**/*.local
+**/terraform.tfstate*
+**/.terraform
+.superpowers
+.worktrees
+coverage
+test-results
+playwright-report

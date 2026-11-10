@@ -78,6 +78,10 @@ React 19 + TypeScript + Vite · Supabase (Auth + Postgres + Realtime + Storage) 
 
 ## Local development
 
+The independent NestJS backend experiment has a separate
+[local backend setup guide](docs/local-backend.md). The Supabase workflow below
+remains the current application setup.
+
 Requires Node 24.x, Corepack, and Docker Desktop (or another Docker-compatible
 daemon). Node 25 and newer are not currently supported.
 

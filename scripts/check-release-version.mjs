@@ -5,6 +5,7 @@ const packageFiles = [
 	["workspace", "package.json"],
 	["web", "apps/web/package.json"],
 	["MCP", "apps/mcp/package.json"],
+	["API", "apps/api/package.json"],
 ];
 
 const versions = await Promise.all(

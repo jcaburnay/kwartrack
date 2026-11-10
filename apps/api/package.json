@@ -1,0 +1,37 @@
+{
+	"name": "@kwartrack/api",
+	"private": true,
+	"version": "1.0.3",
+	"type": "module",
+	"scripts": {
+		"dev": "tsc-watch --project tsconfig.json --onSuccess \"node --env-file-if-exists=.env.local dist/main.js\"",
+		"build": "tsc -p tsconfig.json",
+		"start": "node --env-file-if-exists=.env.local dist/main.js",
+		"test": "pnpm build && vitest run",
+		"test:integration": "pnpm build && node --env-file-if-exists=.env.local node_modules/vitest/vitest.mjs run --config vitest.integration.config.mts",
+		"db:generate": "drizzle-kit generate",
+		"db:migrate": "pnpm build && node --env-file-if-exists=.env.local dist/database/migrate.js",
+		"db:seed": "pnpm build && node --env-file-if-exists=.env.local dist/database/seed.js"
+	},
+	"dependencies": {
+		"@nestjs/common": "12.4.2",
+		"@nestjs/core": "12.4.2",
+		"@nestjs/platform-express": "12.4.2",
+		"@nestjs/swagger": "12.1.1",
+		"drizzle-orm": "0.45.4",
+		"pg": "8.23.1",
+		"reflect-metadata": "0.2.2",
+		"rxjs": "7.8.2"
+	},
+	"devDependencies": {
+		"@types/express": "5.0.6",
+		"@types/node": "25.5.0",
+		"@types/pg": "8.23.1",
+		"@types/supertest": "7.2.1",
+		"drizzle-kit": "0.31.11",
+		"supertest": "7.3.2",
+		"tsc-watch": "7.2.1",
+		"typescript": "6.0.2",
+		"vitest": "4.1.2"
+	}
+}
