@@ -38,7 +38,7 @@ try {
 				"Reset selects Compose project kwartrack-backend-local and its floci-data volume.",
 			);
 			console.log(
-				"Reset selects infra/terraform/local/{terraform.tfstate,terraform.tfstate.backup,local.auto.tfvars.json} and infra/local/backend.env.local.",
+				"Reset selects infra/terraform/local/{terraform.tfstate,terraform.tfstate.backup,local.auto.tfvars.json} and infra/local/{backend,auth}.env.local.",
 			);
 			const volumes = run("docker", ["volume", "ls", "-q", "--filter", projectFilter], {
 				capture: true,
@@ -74,6 +74,7 @@ try {
 				}
 			}
 			rmSync(`${root}infra/local/backend.env.local`, { force: true });
+			rmSync(`${root}infra/local/auth.env.local`, { force: true });
 			console.log(
 				"Removed the local experiment's resources and state; Supabase and unrelated Docker resources were not selected.",
 			);

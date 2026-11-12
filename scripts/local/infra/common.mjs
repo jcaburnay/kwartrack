@@ -81,7 +81,7 @@ export function validateTerraformEndpoints(source) {
 	const endpoints = new Map(
 		[...block.matchAll(/^\s*(\w+)\s*=\s*"([^"]+)"\s*$/gm)].map((entry) => [entry[1], entry[2]]),
 	);
-	const required = ["apigateway", "apigatewayv2", "ec2", "elbv2", "rds", "sts"];
+	const required = ["apigateway", "apigatewayv2", "cognitoidp", "ec2", "elbv2", "rds", "sts"];
 	if (
 		endpoints.size !== required.length ||
 		required.some((service) => endpoints.get(service) !== endpoint)

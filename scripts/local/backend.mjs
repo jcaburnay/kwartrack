@@ -46,6 +46,7 @@ try {
 	const databaseEnv = { DATABASE_URL: env.API_HOST_DATABASE_URL };
 	run("pnpm", ["api:db:migrate"], { env: databaseEnv });
 	run("pnpm", ["api:db:seed"], { env: databaseEnv });
+	run(process.execPath, ["scripts/local/auth/setup.mjs"]);
 	run(process.execPath, ["scripts/local/infra/api.mjs", "up"]);
 	await waitForApi();
 	run(process.execPath, ["scripts/local/infra/smoke.mjs"]);

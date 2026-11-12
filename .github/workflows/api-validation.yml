@@ -49,8 +49,15 @@ jobs:
         run: |
           pnpm api:test
           pnpm local:test
+          pnpm local:auth:test
       - name: Provision and verify local infrastructure
         run: pnpm local:setup
+      - name: Verify local Cognito compatibility
+        run: pnpm local:auth:probe
+      - name: Verify stable synthetic Cognito users
+        run: pnpm local:auth:smoke
+      - name: Verify Cognito and database persistence
+        run: pnpm local:auth:restart-smoke
       - name: Check Terraform
         run: |
           pnpm local:infra:terraform fmt -check

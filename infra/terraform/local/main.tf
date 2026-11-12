@@ -20,6 +20,7 @@ provider "aws" {
   endpoints {
     apigateway   = "http://127.0.0.1:4566"
     apigatewayv2 = "http://127.0.0.1:4566"
+    cognitoidp   = "http://127.0.0.1:4566"
     ec2          = "http://127.0.0.1:4566"
     elbv2        = "http://127.0.0.1:4566"
     rds          = "http://127.0.0.1:4566"
@@ -182,4 +183,39 @@ output "alb_dns_name" {
 
 output "target_group_arn" {
   value = aws_lb_target_group.api.arn
+}
+
+resource "aws_cognito_user_pool" "local" {
+  name                     = "kwartrack-api-local"
+  username_attributes      = ["email"]
+  auto_verified_attributes = ["email"]
+  tags                     = { project = "kwartrack-backend-local" }
+}
+
+resource "aws_cognito_user_pool_client" "local" {
+  name                    = "kwartrack-api-local-public"
+  user_pool_id            = aws_cognito_user_pool.local.id
+  generate_secret         = false
+  explicit_auth_flows     = ["ALLOW_USER_PASSWORD_AUTH", "ALLOW_REFRESH_TOKEN_AUTH"]
+  enable_token_revocation = true
+  access_token_validity   = 15
+  id_token_validity       = 15
+  refresh_token_validity  = 1
+  token_validity_units {
+    access_token  = "minutes"
+    id_token      = "minutes"
+    refresh_token = "days"
+  }
+}
+
+output "cognito_user_pool_id" {
+  value = aws_cognito_user_pool.local.id
+}
+
+output "cognito_client_id" {
+  value = aws_cognito_user_pool_client.local.id
+}
+
+output "cognito_issuer" {
+  value = "http://floci:4566/${aws_cognito_user_pool.local.id}"
 }

@@ -115,6 +115,7 @@ pnpm api:test:integration
 pnpm local:test
 pnpm local:smoke
 pnpm local:smoke:balancing
+pnpm local:auth:probe
 pnpm local:infra:terraform fmt -check
 pnpm local:infra:terraform validate
 pnpm local:infra:terraform plan -detailed-exitcode -input=false
@@ -141,6 +142,13 @@ dependencies are missing. It never silently skips.
 The balancing smoke temporarily starts a second API container, registers it with
 the target group, checks traffic reaches both instances, stops/restarts the second
 target, and restores the single-target topology afterward.
+
+The [local Cognito guide](local-auth.md) describes the permanent Alice/Bob fixtures
+prepared by setup, their credentials, and repeatability/persistence checks.
+The auth probe creates and removes a disposable local Cognito pool to verify
+the [Phase 2 auth contract](adr/phase-2-auth-contract.md). It checks signatures,
+refresh/revocation, negative sign-in cases, local CORS, and signup/recovery
+compatibility. It does not install authentication on the API yet.
 
 ```sh
 pnpm local:stop
@@ -185,7 +193,7 @@ HTTP responses include bounded `X-Request-Id` and `X-Api-Instance` headers.
 Request logs contain correlation, method, status, and duration, omitting bodies,
 query strings, credentials, and authorization headers. Forwarded headers are not
 trusted by default. Swagger is available only in the explicit local application
-mode. Authentication and financial features begin in later phases.
+mode. The API authentication guard and financial features remain in later tickets.
 
 The new API validation workflow runs on matching PRs or manual dispatch with
 read-only repository permissions and no deployment credentials. It exercises

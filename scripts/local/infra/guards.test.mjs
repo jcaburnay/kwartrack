@@ -58,10 +58,9 @@ function providerConfiguration(services) {
 	return `provider "aws" {\nendpoints {\n${services.map(([service, endpoint]) => `${service} = "${endpoint}"`).join("\n")}\n}\n}`;
 }
 
-const services = ["apigateway", "apigatewayv2", "ec2", "elbv2", "rds", "sts"].map((service) => [
-	service,
-	"http://127.0.0.1:4566",
-]);
+const services = ["apigateway", "apigatewayv2", "cognitoidp", "ec2", "elbv2", "rds", "sts"].map(
+	(service) => [service, "http://127.0.0.1:4566"],
+);
 
 test("all used AWS services must have explicit local provider endpoints", () => {
 	assert.doesNotThrow(() => validateTerraformEndpoints(providerConfiguration(services)));
