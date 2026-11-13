@@ -1,5 +1,7 @@
 # Kwartrack — Agent Guide
 
+Profile: production
+
 This is the canonical repository guide for every coding agent. Tool-specific
 instruction files should reference this file instead of duplicating its
 contents.
@@ -54,6 +56,17 @@ pnpm types:gen          # regenerate local Supabase TypeScript types
 
 Run `pnpm run ci`, the relevant tests, and the relevant builds before handing
 off a change. Use the local Supabase stack when integration coverage applies.
+
+Review gate (production profile: `main` is protected and changes only through a
+PR the maintainer merges). Before every push of a branch, `review-gate run`; to
+open or update the PR, `review-gate pr`. Both take these checks:
+`source ~/.nvm/nvm.sh && nvm use --silent && pnpm run ci && pnpm test && pnpm build`
+
+On dev-pc the default Node is newer than this repo allows (`.nvmrc`: 24), so the
+checks switch to Node 24 first. Each new checkout or worktree needs its own local
+setup once: Node 24, then `node scripts/setup.mjs` (not `pnpm bootstrap`: with
+the standalone pnpm binary it fails at dependency install). It starts the shared
+local Supabase stack and writes `.env.local`, which the integration tests need.
 
 ## Project structure
 
