@@ -1,3 +1,4 @@
+import { createHmac } from "node:crypto";
 import { createClient } from "@supabase/supabase-js";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { SupabaseFinanceDataSource } from "./supabase.js";
@@ -89,5 +90,64 @@ runOrSkip("SupabaseFinanceDataSource RLS", () => {
 		expect(accounts.find((account) => account.name === "First Wallet")?.balanceCentavos).toBe(
 			9_877,
 		);
+	});
+	it("allows approved OAuth period reads but rejects OAuth writes and other readers", async () => {
+		const jwtSecret = process.env.SUPABASE_JWT_SECRET;
+		if (!jwtSecret)
+			throw new Error("Local SUPABASE_JWT_SECRET required for OAuth policy verification");
+		const p = await admin
+			.from("budget_period")
+			.insert({
+				user_id: userIds[0],
+				start_date: "2035-11-15",
+				end_date: "2035-12-15",
+				overall_centavos: 10000,
+			})
+			.select()
+			.single();
+		if (p.error) throw p.error;
+		const claims = JSON.parse(Buffer.from(accessTokens[0]!.split(".")[1]!, "base64url").toString());
+		function oauthClient(clientId: string) {
+			const header = Buffer.from(JSON.stringify({ alg: "HS256", typ: "JWT" })).toString(
+				"base64url",
+			);
+			const payload = Buffer.from(JSON.stringify({ ...claims, client_id: clientId })).toString(
+				"base64url",
+			);
+			const message = `${header}.${payload}`;
+			const signature = createHmac("sha256", jwtSecret!).update(message).digest("base64url");
+			return createClient(supabaseUrl!, publishableKey!, {
+				auth: { persistSession: false, storageKey: crypto.randomUUID() },
+				global: { headers: { Authorization: `Bearer ${message}.${signature}` } },
+			});
+		}
+		const approved = oauthClient("f5d50b9f-94ce-4aa9-b598-ade3829361f9");
+		const read = await approved.from("budget_period").select("id").eq("id", p.data.id);
+		if (read.error) throw new Error(read.error.message);
+		expect(read.data).toHaveLength(1);
+		expect(
+			(
+				await approved.from("budget_period").insert({
+					user_id: userIds[0],
+					start_date: "2036-01-01",
+					end_date: "2036-01-31",
+					overall_centavos: 0,
+				})
+			).error,
+		).not.toBeNull();
+		expect(
+			(
+				await approved
+					.from("budget_period")
+					.update({ overall_centavos: 1 })
+					.eq("id", p.data.id)
+					.select()
+			).data,
+		).toEqual([]);
+		expect(
+			(await approved.from("budget_period").delete().eq("id", p.data.id).select()).data,
+		).toEqual([]);
+		const unknown = oauthClient("11111111-1111-4111-8111-111111111111");
+		expect((await unknown.from("budget_period").select("id").eq("id", p.data.id)).data).toEqual([]);
 	});
 });

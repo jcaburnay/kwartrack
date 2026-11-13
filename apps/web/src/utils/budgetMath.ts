@@ -1,3 +1,4 @@
+import type { BudgetDateRange } from "./budgetPeriod";
 import { isEarlyMonth, projectedEndOfMonth } from "./pacingMath";
 
 export type ActualsByTag = Map<string, number>;
@@ -61,7 +62,7 @@ export function projectedBucket(
 	allocatedCentavos: number,
 	today: Date,
 	timezone: string,
-	monthYYYYMM: string,
+	monthYYYYMM: string | BudgetDateRange,
 ): ProgressBucket {
 	if (allocatedCentavos <= 0) return "empty";
 	if (actualCentavos > allocatedCentavos) return "red";

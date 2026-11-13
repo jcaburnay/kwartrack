@@ -52,12 +52,12 @@ export function EditOverallModal({
 
 	return (
 		<Modal onClose={onCancel} size="md">
-			<Modal.Header title={isUnset ? "Set monthly cap" : "Edit monthly cap"} />
+			<Modal.Header title={isUnset ? "Set budget cap" : "Edit budget cap"} />
 			<Modal.Body>
 				<label className="floating-label">
 					<span>Amount (₱)</span>
 					<input
-						aria-label="Monthly cap amount"
+						aria-label="Budget cap amount"
 						type="number"
 						min="0"
 						step="0.01"

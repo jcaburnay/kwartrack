@@ -15,6 +15,8 @@ export const ENTITY_KEYS = [
 	"split_participant",
 	"budget_config",
 	"budget_allocation",
+	"budget_period",
+	"budget_period_allocation",
 ] as const;
 
 export type EntityKey = (typeof ENTITY_KEYS)[number];
@@ -31,6 +33,8 @@ export const ENTITY_LABELS: Record<EntityKey, string> = {
 	split_participant: "Split participants",
 	budget_config: "Budget configs",
 	budget_allocation: "Budget allocations",
+	budget_period: "Budget periods",
+	budget_period_allocation: "Budget period allocations",
 };
 
 type AnyRow = Record<string, unknown>;
@@ -98,6 +102,8 @@ export async function exportFullJson(sb: SB, userId: string): Promise<void> {
 		budgets: {
 			configs: tables.budget_config ?? [],
 			allocations: tables.budget_allocation ?? [],
+			periods: tables.budget_period ?? [],
+			periodAllocations: tables.budget_period_allocation ?? [],
 		},
 		debts: tables.debt ?? [],
 		splitEvents: tables.split_event ?? [],

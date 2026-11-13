@@ -1,3 +1,6 @@
+import { type BudgetDateRange, periodPacing } from "./budgetPeriod";
+import { ymdISO } from "./dateRange";
+
 const EARLY_MONTH_DAYS = 2;
 
 export function daysInMonth(monthYYYYMM: string): number {
@@ -25,45 +28,46 @@ export function currentMonthYYYYMM(today: Date, timezone: string): string {
 	return `${y}-${m}`;
 }
 
-export function daysRemaining(today: Date, timezone: string, monthYYYYMM: string): number {
-	const current = currentMonthYYYYMM(today, timezone);
-	if (monthYYYYMM < current) return 0;
-	if (monthYYYYMM > current) return daysInMonth(monthYYYYMM);
-	return Math.max(0, daysInMonth(monthYYYYMM) - dayOfMonth(today, timezone));
+function pacingRange(value: string | BudgetDateRange): BudgetDateRange {
+	if (typeof value !== "string") return value;
+	return {
+		start_date: `${value}-01`,
+		end_date: `${value}-${String(daysInMonth(value)).padStart(2, "0")}`,
+	};
 }
 
+export function daysRemaining(
+	today: Date,
+	timezone: string,
+	period: string | BudgetDateRange,
+): number {
+	return periodPacing(pacingRange(period), ymdISO(today, timezone)).daysLeft;
+}
 export function expectedSpendByToday(
 	allocatedCentavos: number,
 	today: Date,
 	timezone: string,
-	monthYYYYMM: string,
+	period: string | BudgetDateRange,
 ): number {
 	if (allocatedCentavos <= 0) return 0;
-	const current = currentMonthYYYYMM(today, timezone);
-	if (monthYYYYMM < current) return allocatedCentavos;
-	if (monthYYYYMM > current) return 0;
-	const total = daysInMonth(monthYYYYMM);
-	const day = dayOfMonth(today, timezone);
-	return Math.min(allocatedCentavos, Math.round((allocatedCentavos * day) / total));
+	const { totalDays, elapsedDays } = periodPacing(pacingRange(period), ymdISO(today, timezone));
+	return Math.round((allocatedCentavos * elapsedDays) / totalDays);
 }
-
 export function projectedEndOfMonth(
 	actualCentavos: number,
 	today: Date,
 	timezone: string,
-	monthYYYYMM: string,
+	period: string | BudgetDateRange,
 ): number {
-	const current = currentMonthYYYYMM(today, timezone);
-	if (monthYYYYMM < current) return actualCentavos;
-	if (monthYYYYMM > current) return 0;
-	const day = dayOfMonth(today, timezone);
-	if (day <= 0) return 0;
-	return Math.round((actualCentavos * daysInMonth(monthYYYYMM)) / day);
+	const { totalDays, elapsedDays } = periodPacing(pacingRange(period), ymdISO(today, timezone));
+	return elapsedDays === 0 ? 0 : Math.round((actualCentavos * totalDays) / elapsedDays);
 }
-
-export function isEarlyMonth(today: Date, timezone: string, monthYYYYMM: string): boolean {
-	const current = currentMonthYYYYMM(today, timezone);
-	if (monthYYYYMM > current) return true;
-	if (monthYYYYMM < current) return false;
-	return dayOfMonth(today, timezone) <= EARLY_MONTH_DAYS;
+export function isEarlyMonth(
+	today: Date,
+	timezone: string,
+	period: string | BudgetDateRange,
+): boolean {
+	const range = pacingRange(period);
+	if (ymdISO(today, timezone) > range.end_date) return false;
+	return periodPacing(range, ymdISO(today, timezone)).elapsedDays <= EARLY_MONTH_DAYS;
 }

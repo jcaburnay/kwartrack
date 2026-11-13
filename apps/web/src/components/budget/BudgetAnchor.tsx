@@ -1,13 +1,14 @@
 import { Pencil } from "lucide-react";
 import { useState } from "react";
 import { projectedBucket } from "../../utils/budgetMath";
+import type { BudgetDateRange } from "../../utils/budgetPeriod";
 import { formatCentavos } from "../../utils/currency";
 import { daysRemaining, projectedEndOfMonth } from "../../utils/pacingMath";
 import { SubmitButton } from "../ui/SubmitButton";
 import { EditOverallModal } from "./EditOverallModal";
 
 type Props = {
-	month: string;
+	month: string | BudgetDateRange;
 	overallCentavos: number | null;
 	actualCentavos: number;
 	allocatedSumCentavos: number;
@@ -67,7 +68,7 @@ export function BudgetAnchor({
 			<>
 				<div className="flex flex-col gap-2">
 					<p className="text-sm text-base-content/60">
-						Set a monthly budget to track spending against limits across tags.
+						Set a budget to track spending against limits across tags.
 					</p>
 					<div className="flex flex-wrap items-center gap-2">
 						<button
@@ -85,7 +86,7 @@ export function BudgetAnchor({
 								loading={copying}
 								spinnerSize="xs"
 							>
-								Copy from previous month
+								Copy from previous budget
 							</SubmitButton>
 						)}
 					</div>

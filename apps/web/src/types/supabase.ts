@@ -192,6 +192,84 @@ export type Database = {
 				};
 				Relationships: [];
 			};
+			budget_period: {
+				Row: {
+					created_at: string;
+					end_date: string;
+					id: string;
+					legacy_month: string | null;
+					overall_centavos: number;
+					start_date: string;
+					updated_at: string;
+					user_id: string;
+				};
+				Insert: {
+					created_at?: string;
+					end_date: string;
+					id?: string;
+					legacy_month?: string | null;
+					overall_centavos?: number;
+					start_date: string;
+					updated_at?: string;
+					user_id: string;
+				};
+				Update: {
+					created_at?: string;
+					end_date?: string;
+					id?: string;
+					legacy_month?: string | null;
+					overall_centavos?: number;
+					start_date?: string;
+					updated_at?: string;
+					user_id?: string;
+				};
+				Relationships: [];
+			};
+			budget_period_allocation: {
+				Row: {
+					amount_centavos: number;
+					created_at: string;
+					id: string;
+					period_id: string;
+					tag_id: string;
+					updated_at: string;
+					user_id: string;
+				};
+				Insert: {
+					amount_centavos: number;
+					created_at?: string;
+					id?: string;
+					period_id: string;
+					tag_id: string;
+					updated_at?: string;
+					user_id: string;
+				};
+				Update: {
+					amount_centavos?: number;
+					created_at?: string;
+					id?: string;
+					period_id?: string;
+					tag_id?: string;
+					updated_at?: string;
+					user_id?: string;
+				};
+				Relationships: [
+					{
+						foreignKeyName: "budget_period_allocation_user_id_period_id_fkey";
+						columns: ["user_id", "period_id"];
+						isOneToOne: false;
+						referencedRelation: "budget_period";
+						referencedColumns: ["user_id", "id"];
+					},
+					{
+						foreignKeyName: "budget_period_allocation_user_id_tag_id_fkey";
+						columns: ["user_id", "tag_id"];
+						isOneToOne: false;
+						referencedRelation: "tag";
+						referencedColumns: ["user_id", "id"];
+					},
+				];
+			};
 			debt: {
 				Row: {
 					amount_centavos: number;
@@ -737,6 +815,17 @@ export type Database = {
 			};
 			assert_tag_owned: {
 				Args: { p_label: string; p_tag_id: string; p_user_id: string };
+				Returns: undefined;
+			};
+			budget_range_actuals: {
+				Args: { p_end: string; p_start: string };
+				Returns: {
+					actual_centavos: number;
+					tag_id: string;
+				}[];
+			};
+			copy_budget_period: {
+				Args: { p_source: string; p_target: string };
 				Returns: undefined;
 			};
 			create_split: {

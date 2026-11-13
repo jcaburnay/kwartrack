@@ -1,3 +1,4 @@
+import type { BudgetDateRange } from "./budgetPeriod";
 import { isEarlyMonth, projectedEndOfMonth } from "./pacingMath";
 
 export type SortableRow = {
@@ -7,7 +8,12 @@ export type SortableRow = {
 	actual: number;
 };
 
-function riskScore(row: SortableRow, today: Date, timezone: string, monthYYYYMM: string): number {
+function riskScore(
+	row: SortableRow,
+	today: Date,
+	timezone: string,
+	monthYYYYMM: string | BudgetDateRange,
+): number {
 	if (row.allocated <= 0) return Number.NEGATIVE_INFINITY;
 	if (isEarlyMonth(today, timezone, monthYYYYMM)) {
 		return row.actual / row.allocated;
@@ -19,7 +25,7 @@ export function sortByOvershootRisk(
 	rows: readonly SortableRow[],
 	today: Date,
 	timezone: string,
-	monthYYYYMM: string,
+	monthYYYYMM: string | BudgetDateRange,
 ): SortableRow[] {
 	return [...rows].sort((a, b) => {
 		const ra = riskScore(a, today, timezone, monthYYYYMM);

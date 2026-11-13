@@ -120,8 +120,8 @@ export function JigsawPage() {
 					<div id="panel-budget" className={panelClass("budget", "jigsaw-budget")}>
 						{shouldMountPanel("budget") && (
 							<BudgetPanel
-								onDrillToTag={(tagId, month) => {
-									setCrossBudgetFilter({ tagId, month });
+								onDrillToTag={(tagId, range) => {
+									setCrossBudgetFilter({ tagId, ...range });
 									// Drill jumps to the accounts panel so the user sees the
 									// filtered transactions immediately.
 									const next = new URLSearchParams(params);

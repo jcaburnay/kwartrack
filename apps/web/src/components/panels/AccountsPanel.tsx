@@ -9,7 +9,7 @@ import { useTransactionListQuery } from "../../hooks/useTransactionListQuery";
 import { useTransactionMonthSummary } from "../../hooks/useTransactionMonthSummary";
 import { useAuth } from "../../providers/AuthProvider";
 import type { Account } from "../../utils/accountBalances";
-import { monthBounds, shiftDaysISO } from "../../utils/dateRange";
+import { monthBounds } from "../../utils/dateRange";
 import {
 	EMPTY_FILTERS,
 	type Transaction,
@@ -46,7 +46,7 @@ export type CrossSplitFilter = { id: string; label: string } | null;
 // One-shot drill signal from the Budget panel: applies tagId + month-bounded
 // custom date range, then clears itself so subsequent filter-bar edits are
 // preserved.
-export type CrossBudgetFilter = { tagId: string; month: string } | null;
+export type CrossBudgetFilter = { tagId: string; start_date: string; end_date: string } | null;
 
 type Props = {
 	pendingModal?: PendingModal;
@@ -164,18 +164,17 @@ export function AccountsPanel({
 		onPendingModalConsumed?.();
 	}, [pendingModal, onPendingModalConsumed]);
 
-	// Drill-in from Budget: apply tag + month-bounded custom date range, then
+	// Drill-in from Budget: apply tag + period-bounded custom date range, then
 	// signal upward to clear so this acts as a one-shot rather than persistent
 	// state. After the apply, the user can freely edit the filter bar.
 	useEffect(() => {
 		if (!crossBudgetFilter) return;
-		const bounds = monthBounds(timezone, new Date(`${crossBudgetFilter.month}-15T12:00:00Z`));
-		const dateFrom = bounds.startISO;
-		const dateTo = shiftDaysISO(bounds.endExclusiveISO, -1);
+		const dateFrom = crossBudgetFilter.start_date;
+		const dateTo = crossBudgetFilter.end_date;
 		setFilters((prev) => ({ ...prev, tagId: crossBudgetFilter.tagId }));
 		setDateRange({ preset: "custom", customFrom: dateFrom, customTo: dateTo });
 		onClearCrossBudgetFilter?.();
-	}, [crossBudgetFilter, timezone, onClearCrossBudgetFilter]);
+	}, [crossBudgetFilter, onClearCrossBudgetFilter]);
 
 	const visibleAccountsCount = accounts.filter((a) => !a.is_archived).length;
 

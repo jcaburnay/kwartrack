@@ -73,9 +73,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 	// effect avoids the duplicate fetch when getSession() and onAuthStateChange()
 	// both fire for the same session on initial load.
 	useEffect(() => {
+		resetAllSharedStores();
 		if (!userId) {
 			setProfile(null);
-			resetAllSharedStores();
 			return;
 		}
 		loadProfile(userId);

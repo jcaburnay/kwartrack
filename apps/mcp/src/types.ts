@@ -73,6 +73,11 @@ export type BudgetStatus = {
 	unbudgetedCentavos: number;
 };
 
+export type BudgetPeriodSelector = { periodId?: string; asOf?: string };
+export type PeriodBudgetStatus = Omit<BudgetStatus, "month"> & {
+	period: { id: string; startDate: string; endDate: string } | null;
+};
+
 export type UpcomingItem = {
 	id: string;
 	kind: "recurring" | "debt";
@@ -93,6 +98,7 @@ export interface FinanceDataSource {
 	searchTransactions(filters: TransactionSearch): Promise<TransactionResult[]>;
 	createExpense(input: CreateExpenseInput): Promise<CreateExpenseResult>;
 	getBudgetStatus(month: string): Promise<BudgetStatus>;
+	getBudgetPeriodStatus(selector: BudgetPeriodSelector): Promise<PeriodBudgetStatus>;
 	listUpcoming(options: {
 		from: string;
 		to: string;

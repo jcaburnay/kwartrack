@@ -1,7 +1,5 @@
 import { useEffect, useSyncExternalStore } from "react";
-import { useVersion } from "./useTransactionVersion";
-
-type TableName = "transaction" | "account" | "debt" | "split_event";
+import { type TableName, useVersion } from "./useTransactionVersion";
 
 type State<T> = {
 	data: T;
@@ -43,6 +41,8 @@ export function createSharedStore<T>(
 	let state: State<T> = { data: initial, isLoading: true, error: null };
 	let inflight: Promise<void> | null = null;
 	let lastVersion = -1;
+	let generation = 0;
+	let queued = false;
 	const listeners = new Set<() => void>();
 
 	const subscribe = (cb: () => void): (() => void) => {
@@ -62,43 +62,56 @@ export function createSharedStore<T>(
 	const getSnapshot = (): State<T> => state;
 
 	const refetch = (): Promise<void> => {
-		if (inflight) return inflight;
-		inflight = fetcher()
-			.then((data) => {
-				state = { data, isLoading: false, error: null };
-			})
-			.catch((e: unknown) => {
-				state = {
-					...state,
-					isLoading: false,
-					error: e instanceof Error ? e.message : String(e),
-				};
-			})
-			.finally(() => {
-				inflight = null;
-				for (const fn of listeners) fn();
-			});
+		if (inflight) {
+			queued = true;
+			return inflight;
+		}
+		const requestGeneration = generation;
+		const request = (async () => {
+			do {
+				queued = false;
+				let next: State<T>;
+				try {
+					next = { data: await fetcher(), isLoading: false, error: null };
+				} catch (e: unknown) {
+					next = { ...state, isLoading: false, error: e instanceof Error ? e.message : String(e) };
+				}
+				if (requestGeneration !== generation) return;
+				// A mutation happened while fetching: don't publish the stale snapshot.
+				if (!queued) state = next;
+			} while (queued);
+		})();
+		inflight = request.finally(() => {
+			if (requestGeneration !== generation) return;
+			inflight = null;
+			for (const fn of listeners) fn();
+		});
 		return inflight;
 	};
-
 	const ensureFresh = (version: number): void => {
-		if (lastVersion === version && state.error == null && !inflight) return;
+		if (lastVersion === version && state.error == null) return;
+		const first = lastVersion === -1;
 		lastVersion = version;
+		if (first && inflight) return;
 		void refetch();
 	};
-
 	const reset = (): void => {
+		generation += 1;
+		inflight = null;
+		queued = false;
 		state = { data: initial, isLoading: true, error: null };
 		lastVersion = -1;
 		for (const fn of listeners) fn();
+		if (listeners.size > 0) void refetch();
 	};
 
 	const useStore = () => {
 		const snap = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 		const version = useVersion(invalidatesOn);
+		// biome-ignore lint/correctness/useExhaustiveDependencies: factory callback identity changes when a keyed hook switches stores, including previously cached periods.
 		useEffect(() => {
 			ensureFresh(version);
-		}, [version]);
+		}, [version, ensureFresh]);
 		return { ...snap, refetch };
 	};
 

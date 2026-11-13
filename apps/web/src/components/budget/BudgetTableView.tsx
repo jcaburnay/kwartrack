@@ -5,6 +5,7 @@ import { useContainerNarrow } from "../../hooks/useContainerNarrow";
 import { useScrollAndFlash } from "../../hooks/useScrollAndFlash";
 import type { Tag } from "../../hooks/useTags";
 import { type ActualsByTag, projectedBucket } from "../../utils/budgetMath";
+import type { BudgetDateRange } from "../../utils/budgetPeriod";
 import { type SortableRow, sortByOvershootRisk } from "../../utils/budgetSorting";
 import { formatCentavos } from "../../utils/currency";
 import { ScrollFadeContainer } from "../ui/ScrollFadeContainer";
@@ -26,7 +27,7 @@ type Props = {
 	actualsByTag: ActualsByTag;
 	othersCentavos: number;
 	overallCentavos: number;
-	month: string;
+	month: string | BudgetDateRange;
 	today: Date;
 	timezone: string;
 	onUpsert: (tagId: string, centavos: number) => Promise<string | null>;

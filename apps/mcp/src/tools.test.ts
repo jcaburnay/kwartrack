@@ -1,6 +1,6 @@
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createKwartrackServer } from "./tools.js";
 import type {
 	Account,
@@ -9,6 +9,7 @@ import type {
 	CreateExpenseInput,
 	CreateExpenseResult,
 	FinanceDataSource,
+	PeriodBudgetStatus,
 	TransactionResult,
 	TransactionSearch,
 	UpcomingItem,
@@ -98,6 +99,32 @@ class FakeFinanceDataSource implements FinanceDataSource {
 		};
 	}
 
+	periodRequests: Array<{ periodId?: string; asOf?: string }> = [];
+	gap = false;
+	async getBudgetPeriodStatus(selector: {
+		periodId?: string;
+		asOf?: string;
+	}): Promise<PeriodBudgetStatus> {
+		this.periodRequests.push(selector);
+		const { month: _month, ...status } = await this.getBudgetStatus("2026-11");
+		return this.gap
+			? {
+					period: null,
+					overallBudgetCentavos: 0,
+					overallActualCentavos: 0,
+					allocations: [],
+					unbudgetedCentavos: 0,
+				}
+			: {
+					...status,
+					period: {
+						id: "11111111-1111-4111-8111-111111111111",
+						startDate: "2026-11-15",
+						endDate: "2026-12-15",
+					},
+				};
+	}
+
 	async listUpcoming(): Promise<UpcomingItem[]> {
 		return [
 			{
@@ -125,6 +152,52 @@ describe("Kwartrack MCP tools", () => {
 		client = new Client({ name: "kwartrack-test", version: "1.0.0" });
 		await server.connect(serverTransport);
 		await client.connect(clientTransport);
+	});
+
+	it("defaults to today's date in the profile timezone across UTC midnight", async () => {
+		vi.useFakeTimers({ toFake: ["Date"] });
+		vi.setSystemTime(new Date("2026-11-15T00:30:00Z"));
+		vi.spyOn(dataSource, "getProfile").mockResolvedValue({
+			displayName: "Test User",
+			timezone: "America/Los_Angeles",
+		});
+		try {
+			const response = await client.callTool({ name: "get_budget_status", arguments: {} });
+			expect(response.isError).not.toBe(true);
+			expect(dataSource.periodRequests).toEqual([{ asOf: "2026-11-14" }]);
+		} finally {
+			vi.useRealTimers();
+		}
+	});
+
+	it("selects the inclusive budget period for an explicit as-of date", async () => {
+		const response = await client.callTool({
+			name: "get_budget_status",
+			arguments: { asOf: "2026-12-15" },
+		});
+		expect(response.isError).not.toBe(true);
+		expect(response.structuredContent).toMatchObject({
+			basis: "period",
+			month: null,
+			period: { startDate: "2026-11-15", endDate: "2026-12-15" },
+		});
+		expect(dataSource.periodRequests).toEqual([{ asOf: "2026-12-15" }]);
+	});
+	it("reports no active budget in gaps without an over-budget warning", async () => {
+		dataSource.gap = true;
+		const response = await client.callTool({
+			name: "get_budget_status",
+			arguments: { asOf: "2026-12-20" },
+		});
+		expect(response.structuredContent).toMatchObject({ period: null, isOverBudget: false });
+		expect(JSON.stringify(response.content)).toContain("No active budget");
+	});
+	it("rejects conflicting monthly and period selectors", async () => {
+		const response = await client.callTool({
+			name: "get_budget_status",
+			arguments: { month: "2026-11", asOf: "2026-11-15" },
+		});
+		expect(response.isError).toBe(true);
 	});
 
 	afterEach(async () => {

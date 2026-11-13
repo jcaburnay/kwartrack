@@ -84,7 +84,7 @@ export function createKwartrackServer(dataSource: FinanceDataSource) {
 		{
 			title: "Get financial summary",
 			description:
-				"Get current account balances, assets, liabilities, net worth, and income, expenses, and budget progress for one calendar month. Account balances are always current, while cash flow and budget values use the selected month.",
+				"Get current account balances, assets, liabilities, net worth, and income, expenses, and budget progress for one calendar month. Account balances are always current. Cash flow uses the selected calendar month. Budget defaults to the active inclusive period; an explicit month requests legacy calendar-month budgeting.",
 			inputSchema: { month: monthSchema.optional() },
 			outputSchema: {
 				month: monthSchema,
@@ -101,6 +101,11 @@ export function createKwartrackServer(dataSource: FinanceDataSource) {
 				expenses: z.string(),
 				cashFlowNetCentavos: z.number().int(),
 				cashFlowNet: z.string(),
+				budgetBasis: z.enum(["period", "calendar-month"]),
+				budgetPeriod: z
+					.object({ id: z.string(), startDate: dateSchema, endDate: dateSchema })
+					.nullable(),
+				budgetActualCentavos: z.number().int(),
 				budgetCentavos: z.number().int(),
 				budget: z.string(),
 				budgetRemainingCentavos: z.number().int(),
@@ -114,7 +119,11 @@ export function createKwartrackServer(dataSource: FinanceDataSource) {
 			const [accounts, cashFlow, budget] = await Promise.all([
 				dataSource.listAccounts({ includeArchived: false }),
 				dataSource.getMonthCashFlow(`${selectedMonth}-01`, `${nextMonth(selectedMonth)}-01`),
-				dataSource.getBudgetStatus(selectedMonth),
+				month
+					? dataSource.getBudgetStatus(selectedMonth)
+					: dataSource.getBudgetPeriodStatus({
+							asOf: dateInTimezone(new Date(), profile.timezone),
+						}),
 			]);
 			const balances = summarizeAccounts(accounts);
 			const remaining = budgetRemaining(budget);
@@ -133,6 +142,9 @@ export function createKwartrackServer(dataSource: FinanceDataSource) {
 				expenses: formatPhp(cashFlow.expenseCentavos),
 				cashFlowNetCentavos: cashFlow.netCentavos,
 				cashFlowNet: formatPhp(cashFlow.netCentavos),
+				budgetBasis: month ? ("calendar-month" as const) : ("period" as const),
+				budgetPeriod: "period" in budget ? budget.period : null,
+				budgetActualCentavos: budget.overallActualCentavos,
 				budgetCentavos: budget.overallBudgetCentavos,
 				budget: formatPhp(budget.overallBudgetCentavos),
 				budgetRemainingCentavos: remaining,
@@ -330,10 +342,16 @@ export function createKwartrackServer(dataSource: FinanceDataSource) {
 		{
 			title: "Get budget status",
 			description:
-				"Get Kwartrack's overall and per-tag budget versus actual expense spending for one calendar month.",
-			inputSchema: { month: monthSchema.optional() },
+				"Get overall and per-tag budget spending for an inclusive budget period. Use periodId or asOf; defaults to today in the profile timezone. Gaps have no active budget. The legacy month argument reports calendar-month budgets separately.",
+			inputSchema: {
+				month: monthSchema.optional(),
+				periodId: z.string().uuid().optional(),
+				asOf: dateSchema.optional(),
+			},
 			outputSchema: {
-				month: monthSchema,
+				month: monthSchema.nullable(),
+				basis: z.enum(["period", "calendar-month"]),
+				period: z.object({ id: z.string(), startDate: dateSchema, endDate: dateSchema }).nullable(),
 				overallBudgetCentavos: z.number().int(),
 				overallBudget: z.string(),
 				overallActualCentavos: z.number().int(),
@@ -358,10 +376,23 @@ export function createKwartrackServer(dataSource: FinanceDataSource) {
 			},
 			annotations,
 		},
-		async ({ month }) => {
+		async ({ month, periodId, asOf }) => {
+			if ([month, periodId, asOf].filter((v) => v !== undefined).length > 1)
+				return toolError(new Error("Choose only one of month, periodId, or asOf."));
 			const profile = await dataSource.getProfile();
-			const selectedMonth = month ?? monthInTimezone(new Date(), profile.timezone);
-			const status = await dataSource.getBudgetStatus(selectedMonth);
+			const selectedMonth = month ?? null;
+			const periodStatus = month
+				? null
+				: await dataSource.getBudgetPeriodStatus(
+						periodId
+							? { periodId }
+							: { asOf: asOf ?? dateInTimezone(new Date(), profile.timezone) },
+					);
+			const status = periodStatus ?? (await dataSource.getBudgetStatus(month!));
+			const period = periodStatus?.period ?? null;
+			const label =
+				month ??
+				(period ? `${period.startDate} through ${period.endDate} (inclusive)` : "No active budget");
 			const remaining = budgetRemaining(status);
 			const allocations = status.allocations.map((allocation) => {
 				const allocationRemaining = allocation.budgetCentavos - allocation.actualCentavos;
@@ -376,6 +407,8 @@ export function createKwartrackServer(dataSource: FinanceDataSource) {
 			});
 			const structuredContent = {
 				month: selectedMonth,
+				basis: month ? ("calendar-month" as const) : ("period" as const),
+				period,
 				overallBudgetCentavos: status.overallBudgetCentavos,
 				overallBudget: formatPhp(status.overallBudgetCentavos),
 				overallActualCentavos: status.overallActualCentavos,
@@ -389,9 +422,11 @@ export function createKwartrackServer(dataSource: FinanceDataSource) {
 			};
 			return toolResult(
 				structuredContent,
-				remaining < 0
-					? `The ${selectedMonth} budget is over by ${formatPhp(-remaining)}.`
-					: `The ${selectedMonth} budget has ${formatPhp(remaining)} remaining.`,
+				!month && !period
+					? "No active budget for this date. Expenses in a gap are not assigned to a budget."
+					: remaining < 0
+						? `The ${label} budget is over by ${formatPhp(-remaining)}.`
+						: `The ${label} budget has ${formatPhp(remaining)} remaining.`,
 			);
 		},
 	);
