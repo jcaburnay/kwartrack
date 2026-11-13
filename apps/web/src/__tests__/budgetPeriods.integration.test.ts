@@ -27,7 +27,7 @@ run("budget periods database", () => {
 		});
 		if (second.error || !second.data.user) throw second.error;
 		foreignOwner = second.data.user.id;
-		signedIn = createClient<Database>(url, import.meta.env.VITE_SUPABASE_ANON_KEY, {
+		signedIn = createClient<Database>(url, import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY, {
 			auth: { persistSession: false },
 		});
 		const login = await signedIn.auth.signInWithPassword({ email, password });
