@@ -35,3 +35,13 @@ OAuth reads/blocked writes, migration of an already-populated local monthly
 budget, and headless browser creation in corporate/business at desktop/mobile
 sizes. The final test/build counts and local lint limitation are recorded in
 this task's handoff. No remote deployment or push is part of this change.
+
+## PR review follow-up: tag deletion cascades
+
+The automated review on PR #23 found that the custom-date legacy-write guard
+also rejected FK cascade cleanup when deleting an otherwise-unused tag. A local
+integration regression reproduced the refresh error. The guard now distinguishes
+cleanup by checking that the referenced tag is already gone; direct legacy
+allocation deletes with a live tag remain blocked. Tests cover both retained
+and already-removed canonical allocations, preserve unrelated allocations, and
+verify the custom period's dates and cap remain unchanged.

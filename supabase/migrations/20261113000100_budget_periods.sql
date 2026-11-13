@@ -117,15 +117,22 @@ create trigger budget_10_cap after insert or update on public.budget_period_allo
 -- Once dates become custom, reject old-client edits rather than overwrite them.
 create function public.sync_budget_monthly() returns trigger
 language plpgsql security definer set search_path=public,pg_temp as $$
-declare p public.budget_period; v_month text; v_owner uuid; v_tag uuid;
+declare p public.budget_period; v_month text; v_owner uuid; v_tag_cleanup boolean := false;
 begin
   if current_setting('kwartrack.budget_mirroring',true)='on' then return coalesce(new,old); end if;
   v_owner:=coalesce(new.user_id,old.user_id);
   perform set_config('kwartrack.budget_mirroring','on',true);
   if tg_table_name in ('budget_config','budget_allocation') then
     v_month:=coalesce(new.month,old.month);
+    if tg_table_name='budget_allocation' and tg_op='DELETE' then
+      -- FK cascade cleanup runs after the tag is gone. A direct old-client
+      -- allocation delete still has a live tag and must remain blocked.
+      v_tag_cleanup := not exists (
+        select 1 from public.tag where id=old.tag_id and user_id=old.user_id
+      );
+    end if;
     select * into p from public.budget_period where user_id=v_owner and legacy_month=v_month;
-    if found and (p.start_date<>(v_month||'-01')::date or p.end_date<>((v_month||'-01')::date+interval '1 month - 1 day')::date) then
+    if found and not v_tag_cleanup and (p.start_date<>(v_month||'-01')::date or p.end_date<>((v_month||'-01')::date+interval '1 month - 1 day')::date) then
       raise exception 'This budget now uses custom dates. Refresh Kwartrack before editing it.' using errcode='23514';
     end if;
     if tg_table_name='budget_config' then

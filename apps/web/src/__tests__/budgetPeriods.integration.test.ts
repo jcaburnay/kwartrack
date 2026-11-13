@@ -41,11 +41,14 @@ run("budget periods database", () => {
 		foreignTag = tags.data!.find((t) => t.user_id === foreignOwner)!.id;
 	}, 30000);
 	beforeEach(async () => {
-		await admin.from("budget_allocation").delete().eq("user_id", owner);
-		await admin.from("budget_config").delete().eq("user_id", owner);
-		const wiped = await admin.from("budget_period").delete().eq("user_id", owner);
-		if (wiped.error) throw wiped.error;
+		// Remove custom periods before their protected legacy snapshots, checking
+		// cleanup failures so one case cannot leak monthly records into the next.
+		for (const table of ["budget_period", "budget_allocation", "budget_config"] as const) {
+			const { error } = await admin.from(table).delete().eq("user_id", owner);
+			if (error) throw error;
+		}
 	});
+
 	afterAll(async () => {
 		if (owner) await admin.auth.admin.deleteUser(owner);
 		if (foreignOwner) await admin.auth.admin.deleteUser(foreignOwner);
@@ -251,6 +254,77 @@ run("budget periods database", () => {
 			.eq("month", "2031-08")
 			.single();
 		expect(legacy.data?.amount_centavos).toBe(3000);
+	});
+
+	it.each([
+		false,
+		true,
+	])("allows tag-deletion cascades for customized migrated budgets (canonical allocation already removed: %s)", async (canonicalRemoved) => {
+		const tag = await signedIn
+			.from("tag")
+			.insert({ user_id: owner, name: "custom-period-cleanup", type: "expense" })
+			.select()
+			.single();
+		if (tag.error) throw tag.error;
+		expect(
+			(
+				await signedIn
+					.from("budget_config")
+					.insert({ user_id: owner, month: "2031-08", overall_centavos: 10000 })
+			).error,
+		).toBeNull();
+		expect(
+			(
+				await signedIn.from("budget_allocation").insert([
+					{ user_id: owner, month: "2031-08", tag_id: tag.data.id, amount_centavos: 3000 },
+					{ user_id: owner, month: "2031-08", tag_id: tagId, amount_centavos: 1500 },
+				])
+			).error,
+		).toBeNull();
+		const period = await signedIn
+			.from("budget_period")
+			.select()
+			.eq("legacy_month", "2031-08")
+			.single();
+		if (period.error) throw period.error;
+		expect(
+			(
+				await signedIn
+					.from("budget_period")
+					.update({ end_date: "2031-09-15" })
+					.eq("id", period.data.id)
+			).error,
+		).toBeNull();
+		const directDelete = await signedIn
+			.from("budget_allocation")
+			.delete()
+			.eq("tag_id", tag.data.id);
+		expect(directDelete.error?.message).toContain("custom dates");
+		if (canonicalRemoved) {
+			expect(
+				(await signedIn.from("budget_period_allocation").delete().eq("tag_id", tag.data.id)).error,
+			).toBeNull();
+		}
+		const deletion = await signedIn.from("tag").delete().eq("id", tag.data.id);
+		expect(deletion.error).toBeNull();
+		const legacy = await signedIn
+			.from("budget_allocation")
+			.select("tag_id,amount_centavos")
+			.eq("month", "2031-08");
+		const canonical = await signedIn
+			.from("budget_period_allocation")
+			.select("tag_id,amount_centavos")
+			.eq("period_id", period.data.id);
+		expect(legacy.error).toBeNull();
+		expect(canonical.error).toBeNull();
+		expect(legacy.data).toEqual([{ tag_id: tagId, amount_centavos: 1500 }]);
+		expect(canonical.data).toEqual([{ tag_id: tagId, amount_centavos: 1500 }]);
+		const retained = await signedIn
+			.from("budget_period")
+			.select("end_date,overall_centavos")
+			.eq("id", period.data.id)
+			.single();
+		expect(retained.data).toEqual({ end_date: "2031-09-15", overall_centavos: 10000 });
 	});
 
 	it("blocks foreign owners, foreign tags and foreign RPC targets", async () => {
