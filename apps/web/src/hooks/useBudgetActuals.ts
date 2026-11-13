@@ -70,3 +70,22 @@ export function useBudgetActualsRange(startMonth: string, endMonth: string) {
 	const { data, isLoading, error, refetch } = rangeStore.useStore(key);
 	return { actualsRange: data, isLoading, error, refetch };
 }
+
+// Empty key is a gap: no request, no zero-cap budget inferred.
+const periodStore = createKeyedSharedStore<string, ActualByTag>(
+	async (key) => {
+		if (!key) return new Map();
+		const [p_start, p_end] = key.split("..");
+		const { data, error } = await supabase.rpc("budget_range_actuals", { p_start, p_end });
+		if (error) throw new Error(error.message);
+		return new Map((data ?? []).map((row) => [row.tag_id ?? "", Number(row.actual_centavos)]));
+	},
+	new Map(),
+	["transaction", "split_event"],
+);
+
+export function useBudgetActualsByPeriod(range: { start_date: string; end_date: string } | null) {
+	const key = range ? `${range.start_date}..${range.end_date}` : "";
+	const state = periodStore.useStore(key);
+	return { ...state, actualsByTag: state.data };
+}

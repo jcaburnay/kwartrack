@@ -49,7 +49,9 @@ export function summarizeAccounts(accounts: Account[]) {
 	};
 }
 
-export function budgetRemaining(status: BudgetStatus) {
+export function budgetRemaining(
+	status: Pick<BudgetStatus, "overallBudgetCentavos" | "overallActualCentavos">,
+) {
 	return status.overallBudgetCentavos - status.overallActualCentavos;
 }
 

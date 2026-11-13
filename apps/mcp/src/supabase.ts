@@ -2,10 +2,12 @@ import { createClient } from "@supabase/supabase-js";
 import type {
 	Account,
 	AccountType,
+	BudgetPeriodSelector,
 	BudgetStatus,
 	CreateExpenseInput,
 	CreateExpenseResult,
 	FinanceDataSource,
+	PeriodBudgetStatus,
 	Profile,
 	TransactionResult,
 	TransactionSearch,
@@ -342,6 +344,67 @@ export class SupabaseFinanceDataSource implements FinanceDataSource {
 			overallActualCentavos,
 			allocations,
 			unbudgetedCentavos,
+		};
+	}
+
+	async getBudgetPeriodStatus(selector: BudgetPeriodSelector): Promise<PeriodBudgetStatus> {
+		let query = this.client.from("budget_period").select("id,start_date,end_date,overall_centavos");
+		if (selector.periodId) query = query.eq("id", selector.periodId);
+		else {
+			if (!selector.asOf) throw new Error("Provide an as-of date or period ID.");
+			query = query.lte("start_date", selector.asOf).gte("end_date", selector.asOf);
+		}
+		const result = await query.maybeSingle();
+		throwOnError(result.error);
+		const period = one<{
+			id: string;
+			start_date: string;
+			end_date: string;
+			overall_centavos: number | string;
+		}>(result.data);
+		if (!period) {
+			if (selector.periodId) throw new Error("Budget period not found.");
+			return {
+				period: null,
+				overallBudgetCentavos: 0,
+				overallActualCentavos: 0,
+				allocations: [],
+				unbudgetedCentavos: 0,
+			};
+		}
+		const [alloc, actual] = await Promise.all([
+			this.client
+				.from("budget_period_allocation")
+				.select("tag_id,amount_centavos,tag(name)")
+				.eq("period_id", period.id),
+			this.client.rpc("budget_range_actuals", {
+				p_start: period.start_date,
+				p_end: period.end_date,
+			}),
+		]);
+		throwOnError(alloc.error);
+		throwOnError(actual.error);
+		const actualByTag = new Map(
+			rows<BudgetActualRow>(actual.data).map((r) => [r.tag_id, numberValue(r.actual_centavos)]),
+		);
+		const allocated = new Set<string>();
+		const allocations = rows<BudgetAllocationRow>(alloc.data).map((a) => {
+			allocated.add(a.tag_id);
+			return {
+				tagName: relationName(a.tag) ?? "Unknown tag",
+				budgetCentavos: numberValue(a.amount_centavos),
+				actualCentavos: actualByTag.get(a.tag_id) ?? 0,
+			};
+		});
+		return {
+			period: { id: period.id, startDate: period.start_date, endDate: period.end_date },
+			overallBudgetCentavos: numberValue(period.overall_centavos),
+			overallActualCentavos: [...actualByTag.values()].reduce((s, v) => s + v, 0),
+			allocations,
+			unbudgetedCentavos: [...actualByTag].reduce(
+				(s, [id, v]) => s + (!id || !allocated.has(id) ? v : 0),
+				0,
+			),
 		};
 	}
 

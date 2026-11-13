@@ -321,6 +321,19 @@ describe("selectUpcoming", () => {
 		]);
 	});
 
+	it("uses an explicit period's end date for warnings and suppresses gaps", () => {
+		const actuals = new Map([["t1", 850_00]]);
+		const date = new Date("2026-04-15T08:00:00Z");
+		const result = selectUpcoming([], [], actuals, allocations, tags, date, "Asia/Manila", 5, {
+			start_date: "2026-04-01",
+			end_date: "2026-04-21",
+		});
+		expect(result[0]).toMatchObject({ kind: "budget-warning", daysLeftInMonth: 6 });
+		expect(
+			selectUpcoming([], [], actuals, allocations, tags, date, "Asia/Manila", 5, null),
+		).toEqual([]);
+	});
+
 	it("excludes budget warnings on the last day of the month", () => {
 		const lastDay = new Date("2026-04-30T08:00:00Z"); // Apr 30 in Asia/Manila
 		const actuals = new Map([["t1", 850_00]]);

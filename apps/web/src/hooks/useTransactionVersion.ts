@@ -18,19 +18,29 @@ import { useEffect, useState } from "react";
  *     legacy "any tx-shaped change" tick.
  */
 
-type TableName = "transaction" | "account" | "debt" | "split_event";
+export type TableName =
+	| "transaction"
+	| "account"
+	| "debt"
+	| "split_event"
+	| "budget_period"
+	| "budget_period_allocation";
 
 const versions: Record<TableName, number> = {
 	transaction: 0,
 	account: 0,
 	debt: 0,
 	split_event: 0,
+	budget_period: 0,
+	budget_period_allocation: 0,
 };
 const listeners: Record<TableName, Set<() => void>> = {
 	transaction: new Set(),
 	account: new Set(),
 	debt: new Set(),
 	split_event: new Set(),
+	budget_period: new Set(),
+	budget_period_allocation: new Set(),
 };
 
 export function bumpVersion(table: TableName): void {

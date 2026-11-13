@@ -61,7 +61,13 @@ describe("subscribeTransactionRealtime", () => {
 		expect(subscribe).toHaveBeenCalledTimes(1);
 
 		const tables = listeners.map((l) => l.config.table).sort();
-		expect(tables).toEqual(["account", "transaction"]);
+		expect(tables).toEqual([
+			"account",
+			"budget_period",
+			"budget_period_allocation",
+			"split_event",
+			"transaction",
+		]);
 
 		for (const l of listeners) {
 			expect(l.config.event).toBe("*");

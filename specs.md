@@ -81,18 +81,18 @@ Redesigned from the legacy implementation. Acts as the landing route. Layout:
 
 - **Monthly spend trend** — Recharts `LineChart`. Rolling last 12 months on the X-axis; total monthly `expense` amount (PHP) on the Y-axis. Single line. Tooltip on hover shows exact amount + month. Clicking a point drills to the Transactions page filtered to that month.
 
-- **Budget progress** — condensed version of the per-tag progress bars defined on the Budget page. Current month only. One horizontal bar for **Overall** (mirrors the Budget hero), plus the **top 3–5 tags by actual spend**. Clicking a row drills to that tag on the Budget page.
+- **Budget progress** — condensed version of the per-tag progress bars defined on the Budget page. Active budget period only. One horizontal bar for **Overall** (mirrors the Budget hero), plus the **top 3–5 tags by actual spend**. Clicking a row drills to that tag on the Budget page.
 
 - **Upcoming** — a "what needs attention soon" card listing up to ~5 items, mixed across three types:
     - **Recurrings firing in the next 7 days** — e.g. *"Spotify · ₱279 · in 3 days"*. Each item links to the recurring row.
     - **Unsettled loaned debts older than 14 days** — nudges collection. E.g. *"Bob owes ₱960 · Apr 10 (14 days)"*. Links to the debt in the Debts table.
-    - **Budget tags over 80% with time left in the month** — early overage warning. E.g. *"`foods` at 87% · 12 days left"*. Links to that tag on the Budget page.
+    - **Budget tags over 80% with time left in the active period** — early overage warning. E.g. *"`foods` at 87% · 12 days left"*. Links to that tag on the Budget page.
     - Each item has a type-indicator icon. Ordered by urgency: soonest recurrings first, then oldest debts, then budget warnings.
     - If there's nothing to show, the card renders a small empty state (*"You're all caught up 🎉"* or similar — nothing urgent).
 
 Links out to Accounts, Budget, and Debts/Splits for additional drill-downs.
 
-**No month-picker.** Overview is always a "right now" dashboard — Hero is current balances, Budget progress is current month, Upcoming is forward-looking, Monthly spend trend shows the rolling 12 months. Users who want a specific past month's Budget data go to the Budget page (which has its own picker); users who want to explore past transactions go to the Transactions filter bar.
+**No month-picker.** Overview is always a "right now" dashboard — Hero is current balances, Budget progress is the active period, Upcoming is forward-looking, Monthly spend trend shows the rolling 12 months. Users who want a specific past month's Budget data go to the Budget page (which has its own picker); users who want to explore past transactions go to the Transactions filter bar.
 
 **Responsiveness.** No dedicated mobile design — the dashboard just reflows:
 
@@ -521,14 +521,14 @@ When an installment's `remaining-occurrences` reaches `0`, the recurring is mark
 
 ### Budget
 
-Per-tag, per-calendar-month, report-only. Monthly is the only granularity in 1.0.0 — no weekly or annual budgets. Users who want week-level or year-level views drill into the Transactions table with date filters. Two levels:
+Per-tag, per-user-defined-date-range, report-only. Each budget has an inclusive start and end date. November 15–December 15 includes both 15ths. Periods cannot overlap, but gaps are allowed: the next budget may start December 21. Budgets are created manually; no automatic recurrence. Two levels:
 
-- **Overall cap** — a single monthly total across all expense transactions.
-- **Per-tag allocations** — one cap per tag; actual spend for a tag is computed by summing that month's `expense` transactions carrying that tag. **Special rule for split-linked expenses:** if an expense has `splitId IS NOT NULL`, it contributes only the user's share (`totalAmount − Σ(participant_shares)`), not the full amount. This keeps the Budget true to personal spending — a ₱4,800 group dinner where the user's share is ₱960 contributes ₱960 to the tag's actual, not ₱4,800. See [Splits ↔ Accounts integration](#splits--accounts-integration-auto-ledger) under Debts & Splits.
+- **Overall cap** — a single total across all expense transactions in the period.
+- **Per-tag allocations** — one cap per tag; actual spend for a tag is computed by summing the period's `expense` transactions carrying that tag. **Special rule for split-linked expenses:** if an expense has `splitId IS NOT NULL`, it contributes only the user's share (`totalAmount − Σ(participant_shares)`), not the full amount. This keeps the Budget true to personal spending — a ₱4,800 group dinner where the user's share is ₱960 contributes ₱960 to the tag's actual, not ₱4,800. See [Splits ↔ Accounts integration](#splits--accounts-integration-auto-ledger) under Debts & Splits.
 
 **Expense-only.** Budget in 1.0.0 targets `expense` transactions exclusively. Income is not budgeted. Users who want to see income trends look at Overview (monthly trend chart) or filter the Transactions table.
 
-**Unbudgeted tags ("Others").** Users aren't required to allocate every tag. Expenses tagged with a tag that has no allocation for the current month aggregate into a synthetic **"Others"** row at the bottom of the per-tag table:
+**Unbudgeted tags ("Others").** Users aren't required to allocate every tag. Expenses tagged with a tag that has no allocation for the selected period aggregate into a synthetic **"Others"** row at the bottom of the per-tag table:
 
 - Budget column: — (no allocation)
 - Actual column: sum of unallocated-tag expenses for the period
@@ -540,11 +540,17 @@ Per-tag, per-calendar-month, report-only. Monthly is the only granularity in 1.0
 
 Budgets don't block or prevent overspending at transaction time — they are purely a reporting view. Overages are shown in red on the Budget page. This is a port of the legacy `budget_config` and `budget_allocation` model.
 
-**No rollover in 1.0.0.** Each month is a fresh slate. Leftover allocation (or overage) in a period does not carry to the next. Keeps the model simple and easy to explain; per-tag rollover toggles can be revisited in 1.1.0 if real use reveals the need.
+**No rollover.** Each period has its own cap and allocations. Leftover budget and overspending do not carry forward, and caps are not prorated when dates change.
 
-**Historical view.** The Budget page has a **month-picker** at the top. Users can navigate to any past (or future) month and see its Budget / Actual / Remaining. Allocations are **snapshotted per-month**: the data model includes a `month` column on both the overall cap and the per-tag allocation rows (`YYYY-MM` granularity). Editing April's budget does not change what March's page shows; March stays as what the user set at that time.
+**Period selection and editing.** The Budget workspace selects the period containing today in the user's profile timezone. A saved-period picker also exposes historical and future budgets. In gaps, show “No active budget” and a create action; do not silently use the previous period. Expenses in a gap remain in calendar reports and transaction history but belong to no budget.
 
-When a user opens a month that has no allocations yet, the form starts empty. A small **"Copy from previous month"** action pre-fills the form with the most recent prior month's allocations so setup is a one-click move forward each cycle.
+Creating a budget asks for start date, end date, and Overall cap. End date defaults to the same day next month, clamped to that month's last day (January 31 → February 28/29). Until the user edits the end date, changing the start updates that suggestion; afterward their end-date edit is preserved. Both dates count. Same-day budgets are valid. Reject invalid/reversed dates and overlapping periods, including shared boundary dates, in both the UI and database. Editing dates recomputes actuals without changing transactions.
+
+**History and copying.** Caps and tag allocations belong to period IDs. History compares saved periods and labels the full date ranges; users may choose 3, 6, 12, or all periods. Copy previous budget copies the most recent earlier period's cap and allocations atomically into a period with no allocations; dates and actual spending do not copy.
+
+**Data compatibility.** Existing monthly budgets retain their amounts and are migrated into first-through-last-day periods, including zero-cap signup records. Canonical tables are `budget_period` and `budget_period_allocation`; monthly tables remain for older clients and explicit legacy MCP month reports. Exact migrated calendar months synchronize writes both ways during rollout. Once a migrated period's dates become custom, older-client writes to its month are rejected with a refresh message; legacy monthly reports retain the old monthly snapshot. New custom periods do not create synthetic monthly budgets. Remove legacy structures only in a separate rollout.
+
+**MCP and exports.** Budget reporting accepts a period ID or an as-of date and defaults to today in the profile timezone. An explicit `month` requests legacy calendar-month reporting; selectors cannot be combined. Summary cash flow remains calendar-based while budget fields identify their basis and period. JSON and CSV exports include canonical period records and their allocations alongside legacy records.
 
 #### Layout
 
@@ -577,9 +583,9 @@ The table header row shows the running total above: *"Per-tag allocation — Tot
 - **Orange** — 80–100%
 - **Red** — over 100%
 
-**Drill-in.** Clicking a tag row (or the hero card) opens the list of that tag's `expense` transactions for the selected month. "Others" drills into all unallocated-tag expenses.
+**Drill-in.** Clicking a tag row (or the hero card) opens the list of that tag's `expense` transactions for the selected period. "Others" drills into all unallocated-tag expenses.
 
-**Overage indicator.** When any per-tag actual exceeds its budget for the current month (including the Overall cap), a small red badge appears on the Budget nav link in the sidebar. Tapping the badge takes the user to the Budget page where the specific over-budget rows are visibly red. No toasts, push notifications, or emails in 1.0.0 — the in-page coloring + nav badge combination is enough for awareness without being intrusive.
+**Overage indicator.** When any per-tag actual exceeds its budget for the active period (including the Overall cap), a small red badge appears on the Budget nav link in the sidebar. Tapping the badge takes the user to the Budget page where the specific over-budget rows are visibly red. No toasts, push notifications, or emails in 1.0.0 — the in-page coloring + nav badge combination is enough for awareness without being intrusive.
 
 ### Debts & Splits
 
@@ -848,7 +854,7 @@ All empty states are short, second-person, and name the next step.
 | Transactions table (main) | No transactions yet | *"No transactions yet. Create one from the `+` button, or start by creating an account."* (If no accounts either: swap copy to *"Start by creating an account first."*) |
 | Transactions table (account-filtered) | This account has no transactions | *"No transactions in this account yet."* |
 | Recurring | No recurrings yet | *"No recurring transactions yet. Add subscriptions, installments, or salary via the `+` button."* |
-| Budget | No allocations for this month | *"No budget set for this month. Start by setting an Overall cap, then allocate per tag."* with a `[ + Set Budget ]` button that opens inline edit. |
+| Budget | No active budget period | *"No active budget. Create a budget for your next date range, then allocate per tag."* with a `[ + Set Budget ]` button that opens inline edit. |
 | Debts & Splits | No debts, no splits | *"No debts or splits tracked yet. Split a bill with friends or record an IOU via the `+` button."* |
 | Upcoming (Overview) | Nothing upcoming | *"You're all caught up 🎉 — no recurring due, no old debts, no budget overages."* |
 | Settings → Contacts | No contacts yet | *"No contacts yet. Add people when you create your first split or debt."* |

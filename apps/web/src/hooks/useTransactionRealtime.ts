@@ -26,6 +26,17 @@ export function subscribeTransactionRealtime(userId: string): () => void {
 		.on("postgres_changes", { event: "*", schema: "public", table: "account", filter }, () => {
 			bumpVersion("account");
 		})
+		.on("postgres_changes", { event: "*", schema: "public", table: "budget_period", filter }, () =>
+			bumpVersion("budget_period"),
+		)
+		.on(
+			"postgres_changes",
+			{ event: "*", schema: "public", table: "budget_period_allocation", filter },
+			() => bumpVersion("budget_period_allocation"),
+		)
+		.on("postgres_changes", { event: "*", schema: "public", table: "split_event", filter }, () =>
+			bumpVersion("split_event"),
+		)
 		.subscribe();
 
 	return () => {

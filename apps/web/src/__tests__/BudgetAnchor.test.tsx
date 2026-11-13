@@ -20,10 +20,10 @@ describe("BudgetAnchor", () => {
 				canCopy={false}
 			/>,
 		);
-		expect(screen.getByText(/Set a monthly budget/i)).toBeInTheDocument();
+		expect(screen.getByText(/Set a budget/i)).toBeInTheDocument();
 		expect(screen.getByRole("button", { name: /\+ Set Budget/i })).toBeInTheDocument();
 		expect(
-			screen.queryByRole("button", { name: /Copy from previous month/i }),
+			screen.queryByRole("button", { name: /Copy from previous budget/i }),
 		).not.toBeInTheDocument();
 	});
 
@@ -41,7 +41,7 @@ describe("BudgetAnchor", () => {
 				canCopy={true}
 			/>,
 		);
-		expect(screen.getByRole("button", { name: /Copy from previous month/i })).toBeInTheDocument();
+		expect(screen.getByRole("button", { name: /Copy from previous budget/i })).toBeInTheDocument();
 	});
 
 	it("renders the progress bar and days-remaining context when budget is set", () => {
@@ -79,7 +79,7 @@ describe("BudgetAnchor", () => {
 			/>,
 		);
 		fireEvent.click(screen.getByLabelText("Edit overall cap"));
-		const input = await screen.findByRole("spinbutton", { name: /Monthly cap/i });
+		const input = await screen.findByRole("spinbutton", { name: /Budget cap/i });
 		fireEvent.change(input, { target: { value: "40000" } });
 		fireEvent.click(screen.getByRole("button", { name: /Save/i }));
 		// onSetOverall takes pesos converted to centavos.

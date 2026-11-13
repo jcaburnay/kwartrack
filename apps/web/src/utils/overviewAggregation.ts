@@ -1,3 +1,4 @@
+import { type BudgetDateRange, periodPacing } from "./budgetPeriod";
 /**
  * Pure aggregation helpers for the Overview dashboard. No IO; deterministic;
  * fully unit-tested. The hooks layer (`useMonthlySpendTrend`,
@@ -163,6 +164,7 @@ export function selectUpcoming(
 	today: Date,
 	timezone: string,
 	max: number,
+	budgetPeriod?: BudgetDateRange | null,
 ): UpcomingItem[] {
 	const todayISO = ymdInTimezone(today, timezone);
 
@@ -216,7 +218,14 @@ export function selectUpcoming(
 		next.setUTCDate(next.getUTCDate() - 1);
 		return next.toISOString().slice(0, 10);
 	})();
-	const daysLeft = daysBetween(todayISO, lastDayISO);
+	const daysLeft =
+		budgetPeriod === null
+			? 0
+			: budgetPeriod
+				? todayISO >= budgetPeriod.start_date && todayISO <= budgetPeriod.end_date
+					? periodPacing(budgetPeriod, todayISO).daysLeft
+					: 0
+				: daysBetween(todayISO, lastDayISO);
 	const tagById = new Map(tags.map((t) => [t.id, t]));
 	const warningItems: UpcomingItem[] = [];
 	if (daysLeft >= 1) {
