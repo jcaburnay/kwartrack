@@ -201,8 +201,7 @@ Because migrations land in production automatically, **keep them additive** — 
 ## Repository pointers
 
 - [`specs.md`](specs.md) — authoritative feature spec and data model
-- [`AGENTS.md`](AGENTS.md) — canonical conventions for AI coding agents
-- [`CLAUDE.md`](CLAUDE.md) — Claude Code compatibility import of `AGENTS.md`
+- [`AGENTS.md`](AGENTS.md) — canonical conventions for AI coding agents (Claude Code and Codex both read it)
 - [`.impeccable.md`](.impeccable.md) — canonical design context
 - [GitHub Releases](https://github.com/jcaburnay/kwartrack/releases) — current release history and notes
 - `v1-final` git tag — archived SpacetimeDB + Clerk implementation
