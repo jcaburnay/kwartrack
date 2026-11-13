@@ -25,6 +25,7 @@ jobs:
           filters: |
             migrations:
               - 'supabase/migrations/**'
+              - '.github/workflows/ci.yml'
             mcp:
               - 'apps/mcp/**'
               - 'package.json'
@@ -94,13 +95,14 @@ jobs:
 
       - uses: supabase/setup-cli@v1
         with:
-          version: latest
+          # Match the CLI version used and verified in local development.
+          version: 2.116.0
 
       - name: Link to remote project
         run: supabase link --project-ref "$SUPABASE_PROJECT_ID"
 
       - name: Push migrations
-        run: supabase db push
+        run: supabase db push --linked --yes
 
   deploy:
     name: Deploy to Cloudflare Pages
